@@ -1,0 +1,107 @@
+#
+# Copyright (c) 2023, 2025 Oracle and/or its affiliates.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: "Release"
+
+on:
+  push:
+    branches:
+      - 'release-*'
+
+env:
+  JAVA_VERSION: 17
+  JAVA_DISTRO: oracle
+  MVN_ARGS: |
+    -B -e
+    -Dmaven.wagon.httpconnectionManager.ttlSeconds=60
+    -Dmaven.wagon.http.retryHandler.count=3
+    -Djdk.toolchain.version=${JAVA_VERSION}
+    -Dcache.enabled=true
+
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  create-tag:
+    runs-on: ubuntu-22.04
+    environment: release
+    outputs:
+      version: ${{ steps.create-tag.outputs.version }}
+      tag: ${{ steps.create-tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+          token: ${{ secrets.SERVICE_ACCOUNT_TOKEN }}
+      - id: create-tag
+        run: ./etc/scripts/release.sh create_tag >> "${GITHUB_OUTPUT}"
+  validate:
+    needs: create-tag
+    uses: ./.github/workflows/validate.yml
+    with:
+      ref: ${{ needs.create-tag.outputs.tag }}
+  stage:
+    needs: [ create-tag, validate ]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.create-tag.outputs.tag }}
+      - shell: bash
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        run: ./etc/scripts/setup-gpg.sh
+      - uses: ./.github/actions/common
+        with:
+          build-cache: read-only
+          artifact-name: io-helidon-mcp-artifacts-${{ github.ref_name }}
+          artifact-path: staging
+          run: |
+            mvn ${MVN_ARGS} \
+              -Prelease,no-snapshots \
+              -DskipTests \
+              -DaltDeploymentRepository=":::file://${PWD}/staging" \
+              deploy
+  deploy:
+    needs: [ create-tag, stage ]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+          ref: ${{ needs.create-tag.outputs.tag }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: io-helidon-mcp-artifacts-*
+          path: staging
+          merge-multiple: true
+      - shell: bash
+        env:
+          CENTRAL_USER: ${{ secrets.CENTRAL_USER }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+        run: |
+          etc/scripts/upload.sh upload_release \
+            --dir="staging" \
+            --description="Helidon MCP v%{version}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: io-helidon-mcp-artifacts-${{ needs.create-tag.outputs.version }}
+          path: staging
