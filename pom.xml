@@ -1,0 +1,421 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2025 Oracle and/or its affiliates.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>io.helidon.extensions.mcp</groupId>
+    <artifactId>helidon-extensions-mcp-project</artifactId>
+    <version>4.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <description>
+        Helidon MCP Integration
+    </description>
+
+    <properties>
+        <version.java>21</version.java>
+        <helidon.version>4.3.0-M1</helidon.version>
+
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <dependency-plugin-check-dependencies.skip>false</dependency-plugin-check-dependencies.skip>
+        <surefire.argLine>-Xmx1024m -Dfile.encoding=UTF-8</surefire.argLine>
+        <failsafe.argLine>-Xmx1024m -Dfile.encoding=UTF-8</failsafe.argLine>
+        <surefire.coverage.argline />
+        <failsafe.coverage.argline />
+        <checkstyle.skip>false</checkstyle.skip>
+
+        <version.lib.asm>9.8</version.lib.asm>
+        <version.lib.checkstyle>10.12.5</version.lib.checkstyle>
+
+        <version.plugin.helidon-build-tools>4.0.20</version.plugin.helidon-build-tools>
+
+        <version.plugin.buildnumber>3.1.0</version.plugin.buildnumber>
+        <version.plugin.checkstyle>3.3.1</version.plugin.checkstyle>
+        <version.plugin.compiler>3.11.0</version.plugin.compiler>
+        <version.plugin.dependency>3.6.0</version.plugin.dependency>
+        <version.plugin.dependency-check>12.1.3</version.plugin.dependency-check>
+        <version.plugin.directory>1.0</version.plugin.directory>
+        <version.plugin.enforcer>3.3.0</version.plugin.enforcer>
+        <version.plugin.failsafe>3.1.2</version.plugin.failsafe>
+        <version.plugin.findsecbugs>1.12.0</version.plugin.findsecbugs>
+        <version.plugin.install>3.1.2</version.plugin.install>
+        <version.plugin.jar>3.3.0</version.plugin.jar>
+        <version.plugin.resources>3.3.1</version.plugin.resources>
+        <version.plugin.source>3.0.1</version.plugin.source>
+        <version.plugin.surefire>3.1.0</version.plugin.surefire>
+        <version.plugin.spotbugs>4.7.3.5</version.plugin.spotbugs>
+    </properties>
+
+    <modules>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.helidon</groupId>
+                <artifactId>helidon-dependencies</artifactId>
+                <version>${helidon.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${version.plugin.compiler}</version>
+                    <configuration>
+                        <source>${version.java}</source>
+                        <target>${version.java}</target>
+                        <release>${version.java}</release>
+                        <forceJavacCompilerUse>true</forceJavacCompilerUse>
+                        <proc>full</proc>
+                        <compilerArgs>
+                            <arg>-Xlint:unchecked</arg>
+                            <!--
+                            https://issues.apache.org/jira/browse/MCOMPILER-368
+                             -->
+                            <arg>-Xpkginfo:always</arg>
+                        </compilerArgs>
+                    </configuration>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.ow2.asm</groupId>
+                            <artifactId>asm</artifactId>
+                            <version>${version.lib.asm}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>${version.plugin.source}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>${version.plugin.enforcer}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${version.plugin.surefire}</version>
+                    <configuration>
+                        <useModulePath>false</useModulePath>
+                        <trimStackTrace>false</trimStackTrace>
+                        <!-- DO NOT override argLine instead use surefire.argLine -->
+                        <argLine>${surefire.argLine} ${surefire.coverage.argline}</argLine>
+                        <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                    </configuration>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.ow2.asm</groupId>
+                            <artifactId>asm</artifactId>
+                            <version>${version.lib.asm}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>${version.plugin.failsafe}</version>
+                    <configuration>
+                        <useModulePath>false</useModulePath>
+                        <!-- DO NOT override argLine instead use failsafe.argLine -->
+                        <argLine>${failsafe.argLine} ${failsafe.coverage.argline}</argLine>
+                        <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>${version.plugin.dependency}</version>
+                    <executions>
+                        <execution>
+                            <id>check-dependencies</id>
+                            <goals>
+                                <goal>analyze-only</goal>
+                            </goals>
+                            <phase>none</phase>
+                            <configuration>
+                                <skip>${dependency-plugin-check-dependencies.skip}</skip>
+                                <ignoredPackagings>
+                                    <packaging>pom</packaging>
+                                </ignoredPackagings>
+                                <ignoreNonCompile>true</ignoreNonCompile>
+                                <failOnWarning>true</failOnWarning>
+                                <ignoredDependencies>
+                                    <dependency>io.helidon.common.features:helidon-common-features-api:*</dependency>
+                                </ignoredDependencies>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>${version.plugin.install}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <version>${version.plugin.checkstyle}</version>
+                    <configuration>
+                        <skip>${checkstyle.skip}</skip>
+                        <configLocation>/etc/checkstyle.xml</configLocation>
+                        <suppressionsLocation>/etc/checkstyle-suppressions.xml</suppressionsLocation>
+                        <sourceDirectories>
+                            <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
+                        </sourceDirectories>
+                    </configuration>
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.puppycrawl.tools</groupId>
+                            <artifactId>checkstyle</artifactId>
+                            <version>${version.lib.checkstyle}</version>
+                            <exclusions>
+                                <exclusion>
+                                    <groupId>com.sun</groupId>
+                                    <artifactId>tools</artifactId>
+                                </exclusion>
+                            </exclusions>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+                <plugin>
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-maven-plugin</artifactId>
+                    <version>${version.plugin.spotbugs}</version>
+                    <configuration>
+                        <omitVisitors>FindReturnRef</omitVisitors>
+                        <skip>${spotbugs.skip}</skip>
+                        <threshold>${spotbugs.threshold}</threshold>
+                        <!--suppress UnresolvedMavenProperty -->
+                        <excludeFilterFile>${spotbugs.exclude}</excludeFilterFile>
+                        <xmlOutput>true</xmlOutput>
+                        <plugins>
+                            <plugin>
+                                <groupId>com.h3xstream.findsecbugs</groupId>
+                                <artifactId>findsecbugs-plugin</artifactId>
+                                <version>${version.plugin.findsecbugs}</version>
+                            </plugin>
+                        </plugins>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.owasp</groupId>
+                    <artifactId>dependency-check-maven</artifactId>
+                    <version>${version.plugin.dependency-check}</version>
+                    <configuration>
+                        <skip>${dependency-check.skip}</skip>
+                        <skipTestScope>true</skipTestScope>
+                        <failBuildOnCVSS>0</failBuildOnCVSS>
+                        <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
+                        <!--suppress MavenModelInspection -->
+                        <nvdApiKey>${nvd-api-key}</nvdApiKey>
+                        <excludes>
+                            <!-- Exclude stuff we do not deploy -->
+                            <exclude>io.helidon.tracing:helidon-tracing-tests</exclude>
+                            <exclude>io.helidon.config.tests*</exclude>
+                            <exclude>io.helidon.test*</exclude>
+                            <exclude>io.helidon.examples*</exclude>
+                            <exclude>io.helidon.microprofile.tests*</exclude>
+                            <!-- This should be excluded by above, but for some reason it persists -->
+                            <exclude>org.testng:testng</exclude>
+                        </excludes>
+                        <formats>
+                            <format>HTML</format>
+                            <format>CSV</format>
+                        </formats>
+                        <suppressionFiles>
+                            <!--suppress UnresolvedMavenProperty -->
+                            <suppressionFile>${top.parent.basedir}/etc/dependency-check-suppression.xml</suppressionFile>
+                        </suppressionFiles>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${version.plugin.jar}</version>
+                    <configuration>
+                        <archive>
+                            <manifest>
+                                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            </manifest>
+                            <manifestEntries>
+                                <Implementation-URL>https://helidon.io</Implementation-URL>
+                                <Scm-Revision>${buildNumber}</Scm-Revision>
+                            </manifestEntries>
+                        </archive>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>${version.plugin.resources}</version>
+                </plugin>
+                <plugin>
+                    <groupId>io.helidon.build-tools</groupId>
+                    <artifactId>helidon-enforcer-plugin</artifactId>
+                    <version>${version.plugin.helidon-build-tools}</version>
+                    <configuration>
+                        <rules>
+                            <rule>copyright</rule>
+                            <rule>typos</rule>
+                        </rules>
+                        <copyrightConfig>
+                            <failOnError>true</failOnError>
+                            <!--suppress UnresolvedMavenProperty -->
+                            <templateFile>${top.parent.basedir}/etc/copyright.txt</templateFile>
+                            <!--suppress UnresolvedMavenProperty -->
+                            <excludeFile>${top.parent.basedir}/etc/copyright-exclude.txt</excludeFile>
+                        </copyrightConfig>
+                        <typosConfig>
+                            <failOnError>true</failOnError>
+                            <typos>
+                                <typo>heldion</typo>
+                                <typo>helidion</typo>
+                                <typo>buidler</typo>
+                                <typo>vuilder</typo>
+                                <typo>bidler</typo>
+                                <typo>microrpofile</typo>
+                                <typo>depenedency</typo>
+                                <typo>configuraiton</typo>
+                                <typo>Respnose</typo>
+                            </typos>
+                        </typosConfig>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-dependencies</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <dependencyConvergence>
+                                    <uniqueVersions>true</uniqueVersions>
+                                </dependencyConvergence>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.commonjava.maven.plugins</groupId>
+                <artifactId>directory-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>generate-top-parent-basedir</id>
+                        <goals>
+                            <goal>highest-basedir</goal>
+                        </goals>
+                        <phase>validate</phase>
+                        <configuration>
+                            <property>top.parent.basedir</property>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-license</id>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <phase>process-sources</phase>
+                        <configuration>
+                            <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <!--suppress UnresolvedMavenProperty -->
+                                    <directory>${top.parent.basedir}/licensing/templates</directory>
+                                    <targetPath>META-INF/</targetPath>
+                                    <filtering>true</filtering>
+                                    <includes>
+                                        <include>LICENSE.txt</include>
+                                        <include>NOTICE.txt</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+            </plugin>
+           <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <configuration>
+                    <configLocation>/etc/checkstyle.xml</configLocation>
+                    <suppressionsLocation>/etc/checkstyle-suppressions.xml</suppressionsLocation>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>checkstyle</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-checkstyle-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>run-checkstyle</id>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                                <phase>validate</phase>
+                                <configuration>
+                                    <!--suppress UnresolvedMavenProperty -->
+                                    <configLocation>${top.parent.basedir}/etc/checkstyle.xml</configLocation>
+                                    <!--suppress UnresolvedMavenProperty -->
+                                    <suppressionsLocation>${top.parent.basedir}/etc/checkstyle-suppressions.xml</suppressionsLocation>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>
