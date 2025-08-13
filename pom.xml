@@ -48,20 +48,20 @@
         <version.plugin.helidon-build-tools>4.0.20</version.plugin.helidon-build-tools>
 
         <version.plugin.buildnumber>3.1.0</version.plugin.buildnumber>
-        <version.plugin.checkstyle>3.3.1</version.plugin.checkstyle>
-        <version.plugin.compiler>3.11.0</version.plugin.compiler>
-        <version.plugin.dependency>3.6.0</version.plugin.dependency>
+        <version.plugin.checkstyle>3.6.0</version.plugin.checkstyle>
+        <version.plugin.compiler>3.14.0</version.plugin.compiler>
+        <version.plugin.dependency>3.8.1</version.plugin.dependency>
         <version.plugin.dependency-check>12.1.3</version.plugin.dependency-check>
         <version.plugin.directory>1.0</version.plugin.directory>
-        <version.plugin.enforcer>3.3.0</version.plugin.enforcer>
-        <version.plugin.failsafe>3.1.2</version.plugin.failsafe>
+        <version.plugin.enforcer>3.6.1</version.plugin.enforcer>
+        <version.plugin.failsafe>3.5.3</version.plugin.failsafe>
         <version.plugin.findsecbugs>1.12.0</version.plugin.findsecbugs>
-        <version.plugin.install>3.1.2</version.plugin.install>
-        <version.plugin.jar>3.3.0</version.plugin.jar>
+        <version.plugin.install>3.1.4</version.plugin.install>
+        <version.plugin.jar>3.4.2</version.plugin.jar>
         <version.plugin.resources>3.3.1</version.plugin.resources>
-        <version.plugin.source>3.0.1</version.plugin.source>
-        <version.plugin.surefire>3.1.0</version.plugin.surefire>
-        <version.plugin.spotbugs>4.7.3.5</version.plugin.spotbugs>
+        <version.plugin.source>3.3.1</version.plugin.source>
+        <version.plugin.surefire>3.5.3</version.plugin.surefire>
+        <version.plugin.spotbugs>4.9.3.2</version.plugin.spotbugs>
     </properties>
 
     <modules>
@@ -313,6 +313,11 @@
                     <artifactId>helidon-build-cache-maven-plugin</artifactId>
                     <version>${version.plugin.helidon-build-tools}</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.commonjava.maven.plugins</groupId>
+                    <artifactId>directory-maven-plugin</artifactId>
+                    <version>${version.plugin.directory}</version>
+                </plugin>
             </plugins>
         </pluginManagement>
 
@@ -331,6 +336,9 @@
                                 <dependencyConvergence>
                                     <uniqueVersions>true</uniqueVersions>
                                 </dependencyConvergence>
+                                <requireMavenVersion>
+                                    <version>3.8.0</version>
+                                </requireMavenVersion>
                             </rules>
                         </configuration>
                     </execution>
@@ -379,10 +387,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>buildnumber-maven-plugin</artifactId>
             </plugin>
            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
