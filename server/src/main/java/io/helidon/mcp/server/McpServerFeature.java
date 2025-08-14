@@ -145,6 +145,11 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         return builder.build();
     }
 
+    /**
+     * McpServer builder.
+     *
+     * @return McpServer builder
+     */
     public static McpServerConfig.Builder builder() {
         return McpServerConfig.builder();
     }

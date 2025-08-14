@@ -21,7 +21,6 @@ import java.util.Set;
 import java.util.function.Function;
 
 import io.helidon.common.media.type.MediaTypes;
-import io.helidon.mcp.server.McpServerFeature;
 import io.helidon.mcp.server.McpParameters;
 import io.helidon.mcp.server.McpPrompt;
 import io.helidon.mcp.server.McpPromptArgument;
@@ -30,6 +29,7 @@ import io.helidon.mcp.server.McpPromptContents;
 import io.helidon.mcp.server.McpRequest;
 import io.helidon.mcp.server.McpResourceContents;
 import io.helidon.mcp.server.McpRole;
+import io.helidon.mcp.server.McpServerFeature;
 import io.helidon.webserver.http.HttpRouting;
 
 class MultiplePrompt {

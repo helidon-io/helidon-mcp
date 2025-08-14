@@ -23,10 +23,10 @@ import java.util.function.Function;
 import io.helidon.common.media.type.MediaType;
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.mcp.server.McpFeatures;
-import io.helidon.mcp.server.McpServerFeature;
 import io.helidon.mcp.server.McpResource;
 import io.helidon.mcp.server.McpResourceContent;
 import io.helidon.mcp.server.McpResourceContents;
+import io.helidon.mcp.server.McpServerFeature;
 import io.helidon.webserver.http.HttpRouting;
 
 import static io.helidon.mcp.server.McpResourceContents.binaryContent;

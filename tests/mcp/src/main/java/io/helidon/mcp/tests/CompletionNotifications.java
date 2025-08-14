@@ -22,8 +22,8 @@ import java.util.function.Function;
 import io.helidon.mcp.server.McpCompletion;
 import io.helidon.mcp.server.McpCompletionContent;
 import io.helidon.mcp.server.McpCompletionContents;
-import io.helidon.mcp.server.McpServerFeature;
 import io.helidon.mcp.server.McpRequest;
+import io.helidon.mcp.server.McpServerFeature;
 import io.helidon.webserver.http.HttpRouting;
 
 class CompletionNotifications {
