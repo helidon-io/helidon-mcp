@@ -27,11 +27,30 @@ public sealed interface McpContent permits McpEmbeddedResource, McpImageContent,
      */
     ContentType type();
 
+    /**
+     * Content types.
+     */
     enum ContentType {
+        /**
+         * Text.
+         */
         TEXT,
+
+        /**
+         * Image.
+         */
         IMAGE,
+
+        /**
+         * RESOURCE.
+         */
         RESOURCE;
 
+        /**
+         * Return text representation.
+         *
+         * @return text representation
+         */
         public String text() {
             return this.name().toLowerCase();
         }
