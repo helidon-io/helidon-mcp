@@ -103,7 +103,7 @@ runs:
         # Include must not match top level directories
         path: |
           .m2/repository/**/*.*
-          !.m2/repository/io/helidon/build-tools/**
+          !.m2/repository/io/helidon/extensions/**
         enableCrossOsArchive: true
         # only hash top-level poms to keep it fast
         key: local-maven-${{ hashFiles('*/pom.xml', 'pom.xml') }}
@@ -115,7 +115,7 @@ runs:
       with:
         path: |
           .m2/repository/**/*.*
-          !.m2/repository/io/helidon/build-tools/**
+          !.m2/repository/io/helidon/extensions/**
         enableCrossOsArchive: true
         key: local-maven-${{ hashFiles('*/pom.xml', 'pom.xml') }}
         restore-keys: |
@@ -126,7 +126,7 @@ runs:
       with:
         path: |
           ./**/target/**
-          .m2/repository/io/helidon/build-tools/**
+          .m2/repository/io/helidon/extensions/**
         enableCrossOsArchive: true
         key: build-cache-${{ github.run_id }}-${{ github.run_attempt }}-${{ inputs.build-cache-id }}
         restore-keys: |
@@ -138,7 +138,7 @@ runs:
       with:
         path: |
           ./**/target/**
-          .m2/repository/io/helidon/build-tools/**
+          .m2/repository/io/helidon/extensions/**
         enableCrossOsArchive: true
         fail-on-cache-miss: true
         key: build-cache-${{ github.run_id }}-${{ github.run_attempt }}-${{ inputs.build-cache-id }}
