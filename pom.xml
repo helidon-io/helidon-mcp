@@ -44,8 +44,8 @@
 
         <version.lib.asm>9.8</version.lib.asm>
         <version.lib.checkstyle>10.12.5</version.lib.checkstyle>
-
-        <version.plugin.helidon-build-tools>4.0.20</version.plugin.helidon-build-tools>
+        <version.lib.langchain4j.mcp>1.1.0-beta7</version.lib.langchain4j.mcp>
+        <version.lib.mcp-sdk>0.10.0</version.lib.mcp-sdk>
 
         <version.plugin.buildnumber>3.1.0</version.plugin.buildnumber>
         <version.plugin.checkstyle>3.6.0</version.plugin.checkstyle>
@@ -56,6 +56,7 @@
         <version.plugin.enforcer>3.6.1</version.plugin.enforcer>
         <version.plugin.failsafe>3.5.3</version.plugin.failsafe>
         <version.plugin.findsecbugs>1.12.0</version.plugin.findsecbugs>
+        <version.plugin.helidon-build-tools>4.0.20</version.plugin.helidon-build-tools>
         <version.plugin.install>3.1.4</version.plugin.install>
         <version.plugin.jar>3.4.2</version.plugin.jar>
         <version.plugin.resources>3.3.1</version.plugin.resources>
@@ -65,6 +66,8 @@
     </properties>
 
     <modules>
+        <module>server</module>
+        <module>tests</module>
     </modules>
 
     <dependencyManagement>
@@ -75,6 +78,18 @@
                 <version>${helidon.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
+            </dependency>
+            <dependency>
+                <groupId>dev.langchain4j</groupId>
+                <artifactId>langchain4j-mcp</artifactId>
+                <version>${version.lib.langchain4j.mcp}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.modelcontextprotocol.sdk</groupId>
+                <artifactId>mcp</artifactId>
+                <version>${version.lib.mcp-sdk}</version>
+                <scope>test</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
