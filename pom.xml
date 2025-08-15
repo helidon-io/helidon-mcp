@@ -92,9 +92,11 @@
         <version.plugin.source>3.3.1</version.plugin.source>
         <version.plugin.surefire>3.5.3</version.plugin.surefire>
         <version.plugin.spotbugs>4.9.3.2</version.plugin.spotbugs>
+        <version.pluging.services>4.0.16</version.pluging.services>
     </properties>
 
     <modules>
+        <module>codegen</module>
         <module>server</module>
         <module>tests</module>
     </modules>
@@ -361,6 +363,20 @@
                     <groupId>org.commonjava.maven.plugins</groupId>
                     <artifactId>directory-maven-plugin</artifactId>
                     <version>${version.plugin.directory}</version>
+                </plugin>
+                <plugin>
+                    <groupId>io.helidon.build-tools</groupId>
+                    <artifactId>helidon-services-plugin</artifactId>
+                    <version>${version.pluging.services}</version>
+                    <executions>
+                        <execution>
+                            <id>generate-meta-inf-services</id>
+                            <phase>compile</phase>
+                            <goals>
+                                <goal>services</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
             </plugins>
         </pluginManagement>
