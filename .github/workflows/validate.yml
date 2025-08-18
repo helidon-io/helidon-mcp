@@ -153,8 +153,6 @@ jobs:
               -Pjavadoc,build-cache \
               package
   test-results:
-    # TODO: enable this when we have tests
-    if: false
     runs-on: ubuntu-24.04
     needs: [ tests ]
     name: tests/results
