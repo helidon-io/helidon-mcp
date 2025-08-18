@@ -18,9 +18,9 @@ package io.helidon.mcp.tests.declarative;
 
 import java.util.List;
 
+import io.helidon.mcp.server.Mcp;
 import io.helidon.mcp.server.McpCompletionContent;
 import io.helidon.mcp.server.McpCompletionContents;
-import io.helidon.mcp.server.Mcp;
 import io.helidon.mcp.server.McpFeatures;
 import io.helidon.mcp.server.McpParameters;
 

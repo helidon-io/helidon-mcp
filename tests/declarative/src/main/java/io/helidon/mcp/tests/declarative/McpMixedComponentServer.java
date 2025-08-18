@@ -19,9 +19,9 @@ package io.helidon.mcp.tests.declarative;
 import java.util.List;
 
 import io.helidon.common.media.type.MediaTypes;
+import io.helidon.mcp.server.Mcp;
 import io.helidon.mcp.server.McpCompletionContent;
 import io.helidon.mcp.server.McpCompletionContents;
-import io.helidon.mcp.server.Mcp;
 import io.helidon.mcp.server.McpPromptContent;
 import io.helidon.mcp.server.McpPromptContents;
 import io.helidon.mcp.server.McpResourceContent;

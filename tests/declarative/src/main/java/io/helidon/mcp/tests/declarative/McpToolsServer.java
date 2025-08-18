@@ -56,4 +56,10 @@ class McpToolsServer {
     List<McpToolContent> tool3(McpFeatures features) {
         return List.of(McpToolContents.textContent(TOOL_CONTENT));
     }
+
+    @Mcp.JsonSchema
+    public static class Foo {
+        public String foo;
+        public int bar;
+    }
 }

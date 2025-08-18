@@ -20,8 +20,7 @@
 <!DOCTYPE suppressions PUBLIC
         "-//Puppy Crawl//DTD Suppressions 1.1//EN"
         "http://checkstyle.sourceforge.net/dtds/suppressions_1_1.dtd">
-
 <suppressions>
-
+    <!-- Suppress visibility checks for @Mcp.JsonSchema annotated classes -->
+    <suppress files="tests/declarative/src/main/java/.*" checks="VisibilityModifier"/>
 </suppressions>
-

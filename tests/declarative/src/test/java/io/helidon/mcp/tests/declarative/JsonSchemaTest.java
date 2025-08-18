@@ -31,7 +31,7 @@ class JsonSchemaGenerationTest {
 
     @Test
     void testFooSchema() {
-        String s = Foo__JsonSchema.schema();
+        String s = McpToolsServer_Foo__JsonSchema.schema();
         JsonObject json = Json.createReader(new StringReader(s)).readObject();
         assertThat(json.getString("type"), is("object"));
         JsonValue properties = json.get("properties");
