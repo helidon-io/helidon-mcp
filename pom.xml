@@ -390,9 +390,9 @@
                             <resources>
                                 <resource>
                                     <!--suppress UnresolvedMavenProperty -->
-                                    <directory>${top.parent.basedir}/licensing/templates</directory>
+                                    <directory>${top.parent.basedir}</directory>
                                     <targetPath>META-INF/</targetPath>
-                                    <filtering>true</filtering>
+                                    <filtering>false</filtering>
                                     <includes>
                                         <include>LICENSE.txt</include>
                                         <include>NOTICE.txt</include>
