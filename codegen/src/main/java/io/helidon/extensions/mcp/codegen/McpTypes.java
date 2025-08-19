@@ -58,5 +58,7 @@ final class McpTypes {
     static final TypeName HTTP_FEATURE = TypeName.create("io.helidon.webserver.http.HttpFeature");
     static final TypeName HTTP_ROUTING_BUILDER = TypeName.create("io.helidon.webserver.http.HttpRouting.Builder");
     static final TypeName FUNCTION_REQUEST_LIST_COMPLETION_CONTENT = TypeName.create(
-            "java.util.function.Function<io.helidon.extensions.mcp.server.McpRequest, io.helidon.extensions.mcp.server.McpCompletionContent>");
+            "java.util.function.Function<"
+                    + "io.helidon.extensions.mcp.server.McpRequest, "
+                    + "io.helidon.extensions.mcp.server.McpCompletionContent>");
 }

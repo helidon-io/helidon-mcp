@@ -18,7 +18,6 @@ package io.helidon.extensions.mcp.weather.server.client;
 
 import io.helidon.common.config.Config;
 import io.helidon.logging.common.LogConfig;
-import io.helidon.service.registry.Services;
 import io.helidon.webserver.WebServer;
 
 class Main {

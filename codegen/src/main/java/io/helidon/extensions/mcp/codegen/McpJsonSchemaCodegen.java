@@ -25,7 +25,6 @@ import io.helidon.codegen.CodegenContext;
 import io.helidon.codegen.CodegenException;
 import io.helidon.codegen.CodegenLogger;
 import io.helidon.codegen.CodegenUtil;
-import io.helidon.codegen.ElementInfoPredicates;
 import io.helidon.codegen.RoundContext;
 import io.helidon.codegen.classmodel.ClassModel;
 import io.helidon.codegen.classmodel.Method;
