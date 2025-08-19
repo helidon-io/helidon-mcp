@@ -22,18 +22,18 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>io.helidon.extensions.mcp</groupId>
-        <artifactId>helidon-mcp-tests-project</artifactId>
+        <artifactId>helidon-extensions-mcp-tests-project</artifactId>
         <version>4.0.0-M1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>helidon-mcp-tests</artifactId>
-    <name>Helidon MCP Tests</name>
+    <artifactId>helidon-extensions-mcp-tests</artifactId>
+    <name>Helidon Extensions MCP Tests</name>
 
     <dependencies>
         <dependency>
             <groupId>io.helidon.extensions.mcp</groupId>
-            <artifactId>helidon-mcp-server</artifactId>
+            <artifactId>helidon-extensions-mcp-server</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -74,6 +74,11 @@
         <dependency>
             <groupId>io.modelcontextprotocol.sdk</groupId>
             <artifactId>mcp</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

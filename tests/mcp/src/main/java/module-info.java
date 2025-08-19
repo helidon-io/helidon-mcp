@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module helidon.integrations.mcp.tests.se {
+module helidon.extensions.mcp.tests {
     requires jakarta.json;
-    requires io.helidon.mcp.server;
+    requires io.helidon.extensions.mcp.server;
     requires io.helidon.webserver;
     requires io.helidon.service.registry;
 
-    exports io.helidon.mcp.tests;
+    exports io.helidon.extensions.mcp.tests;
 }

@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-module io.helidon.mcp.server {
+/**
+ * Helidon extensions MCP server module and API.
+ */
+module io.helidon.extensions.mcp.server {
     requires jakarta.json;
     requires io.helidon.common;
     requires io.helidon.jsonrpc.core;
@@ -22,5 +25,5 @@ module io.helidon.mcp.server {
     requires io.helidon.webserver.sse;
     requires io.helidon.webserver.jsonrpc;
 
-    exports io.helidon.mcp.server;
+    exports io.helidon.extensions.mcp.server;
 }

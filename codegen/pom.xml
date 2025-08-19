@@ -27,8 +27,8 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>helidon-mcp-codegen</artifactId>
-    <name>Helidon MCP Code Generator</name>
+    <artifactId>helidon-extensions-mcp-codegen</artifactId>
+    <name>Helidon Extensions MCP Code Generator</name>
 
     <dependencies>
         <dependency>

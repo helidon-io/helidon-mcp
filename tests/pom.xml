@@ -27,9 +27,9 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>helidon-mcp-tests-project</artifactId>
+    <artifactId>helidon-extensions-mcp-tests-project</artifactId>
     <packaging>pom</packaging>
-    <name>Helidon MCP Tests Project</name>
+    <name>Helidon Extensions MCP Tests Project</name>
 
     <properties>
         <maven.deploy.skip>true</maven.deploy.skip>

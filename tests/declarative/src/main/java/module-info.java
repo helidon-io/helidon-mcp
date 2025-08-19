@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-module io.helidon.mcp.declarative.tests {
+module io.helidon.extensions.mcp.tests.declarative {
     requires io.helidon.webserver;
-    requires io.helidon.config.yaml;
-    requires io.helidon.common.mapper;
     requires io.helidon.logging.common;
     requires io.helidon.service.registry;
     requires io.helidon.common.media.type;
-    requires io.helidon.mcp.server;
-    requires org.slf4j;
+    requires io.helidon.extensions.mcp.server;
 
-    exports io.helidon.mcp.tests.declarative;
+    exports io.helidon.extensions.mcp.tests.declarative;
 }

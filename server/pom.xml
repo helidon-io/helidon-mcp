@@ -27,8 +27,8 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>helidon-mcp-server</artifactId>
-    <name>Helidon MCP Server</name>
+    <artifactId>helidon-extensions-mcp-server</artifactId>
+    <name>Helidon Extensions MCP Server</name>
 
     <dependencies>
         <dependency>

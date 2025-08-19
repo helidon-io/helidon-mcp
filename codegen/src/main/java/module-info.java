@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-import io.helidon.mcp.codegen.McpCodegenProvider;
-import io.helidon.mcp.codegen.McpJsonSchemaCodegenProvider;
+import io.helidon.extensions.mcp.codegen.McpCodegenProvider;
+import io.helidon.extensions.mcp.codegen.McpJsonSchemaCodegenProvider;
 
-module io.helidon.mcp.codegen {
+/**
+ * Code generation for Helidon MCP server.
+ */
+module io.helidon.extensions.mcp.codegen {
 	requires transitive io.helidon.codegen;
 	requires io.helidon.service.codegen;
 
-    exports io.helidon.mcp.codegen;
+    exports io.helidon.extensions.mcp.codegen;
 
 	provides io.helidon.codegen.spi.CodegenExtensionProvider
 			with McpCodegenProvider, McpJsonSchemaCodegenProvider;

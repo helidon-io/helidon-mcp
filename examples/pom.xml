@@ -31,7 +31,7 @@
     <artifactId>helidon-extensions-mcp-examples-project</artifactId>
     <packaging>pom</packaging>
 
-    <name>Helidon MCP Examples Project</name>
+    <name>Helidon Extensions MCP Examples Project</name>
 
     <modules>
         <module>weather-application</module>
