@@ -75,7 +75,7 @@ public final class Mcp {
      * </ul>
      */
     @Target(TYPE)
-    @Retention(RUNTIME)
+    @Retention(CLASS)
     public @interface Server {
         /**
          * Name of the server.
