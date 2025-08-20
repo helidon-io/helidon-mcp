@@ -16,6 +16,7 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.net.URI;
 import java.util.Objects;
 
 import io.helidon.common.media.type.MediaType;
@@ -54,13 +55,13 @@ public final class McpToolContents {
     /**
      * Create a resource tool content instance.
      *
-     * @param uriTemplate resource uri template
+     * @param uri resource uri
      * @param content resource content
      * @return instance
      */
-    public static McpToolContent resourceContent(String uriTemplate, McpResourceContent content) {
-        Objects.requireNonNull(uriTemplate, "Tool resource URI must not be null");
+    public static McpToolContent resourceContent(URI uri, McpResourceContent content) {
+        Objects.requireNonNull(uri, "Tool resource URI must not be null");
         Objects.requireNonNull(content, "Tool resource content must not be null");
-        return new McpToolResourceContent(uriTemplate, content);
+        return new McpToolResourceContent(uri, content);
     }
 }

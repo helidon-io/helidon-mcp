@@ -25,15 +25,13 @@ import io.helidon.extensions.mcp.server.McpToolContents;
 import io.helidon.webclient.api.HttpClientResponse;
 import io.helidon.webclient.api.WebClient;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.annotation.JsonbProperty;
+import jakarta.json.bind.spi.JsonbProvider;
 
 @Mcp.Server("helidon-mcp-weather-server")
 class McpServer {
-
+    private static final Jsonb JSON = JsonbProvider.provider().create().build();
     private static final WebClient WEBCLIENT = WebClient.builder()
                                                         .baseUri("https://api.weather.gov")
                                                         .addHeader("Accept", "application/geo+json")
@@ -45,8 +43,8 @@ class McpServer {
         try (HttpClientResponse response = WEBCLIENT.get()
                 .path("/alerts/active/area/" + state)
                 .request()) {
-            Alert alert = new ObjectMapper().readValue(response.as(String.class), new TypeReference<>() { });
 
+            Alert alert = JSON.fromJson(response.as(String.class), Alert.class);
             String content = alert.features()
                     .stream()
                     .map(f -> String.format("""
@@ -62,25 +60,21 @@ class McpServer {
             if (content.isEmpty()) {
                 return List.of(McpToolContents.textContent("There is no alert for this state"));
             }
-
             return List.of(McpToolContents.textContent(content));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
         }
     }
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Alert(@JsonProperty("features") List<Feature> features) {
+    public record Alert(@JsonbProperty("features") List<Feature> features) {
 
-        @JsonIgnoreProperties(ignoreUnknown = true)
-        public record Feature(@JsonProperty("properties") Properties properties) { }
+        public record Feature(@JsonbProperty("properties") Properties properties) {
+        }
 
-        @JsonIgnoreProperties(ignoreUnknown = true)
-        public record Properties(@JsonProperty("event") String event,
-                                 @JsonProperty("id") String id,
-                                 @JsonProperty("areaDesc") String areaDesc,
-                                 @JsonProperty("severity") String severity,
-                                 @JsonProperty("description") String description,
-                                 @JsonProperty("instruction") String instruction) { }
+        public record Properties(@JsonbProperty("event") String event,
+                                 @JsonbProperty("id") String id,
+                                 @JsonbProperty("areaDesc") String areaDesc,
+                                 @JsonbProperty("severity") String severity,
+                                 @JsonbProperty("description") String description,
+                                 @JsonbProperty("instruction") String instruction) {
+        }
     }
 }

@@ -19,6 +19,7 @@ package io.helidon.extensions.mcp.weather.server;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import io.helidon.config.Config;
 import io.helidon.extensions.mcp.server.McpParameters;
 import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpServerConfig;
@@ -28,13 +29,12 @@ import io.helidon.webclient.api.HttpClientResponse;
 import io.helidon.webclient.api.WebClient;
 import io.helidon.webserver.WebServer;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.annotation.JsonbProperty;
+import jakarta.json.bind.spi.JsonbProvider;
 
 public class Main {
-
+    private static final Jsonb JSON = JsonbProvider.provider().create().build();
     private static final String WEATHER_SCHEMA = """
             {
                 "type": "object",
@@ -61,7 +61,9 @@ public class Main {
      * @param args command line arguments, currently ignored
      */
     public static void main(String[] args) {
+        Config config = Config.create();
         WebServer.builder()
+                .config(config.get("server"))
                 .routing(routing -> routing.addFeature(
                         McpServerConfig.builder()
                                 .name("helidon-mcp-weather-server-imperative")
@@ -81,7 +83,7 @@ public class Main {
                 .path("/alerts/active/area/" + state)
                 .request()) {
 
-            Alert alert = new ObjectMapper().readValue(response.as(String.class), new TypeReference<>() { });
+            Alert alert = JSON.fromJson(response.as(String.class), Alert.class);
             String content = alert.features()
                     .stream()
                     .map(f -> String.format("""
@@ -98,23 +100,20 @@ public class Main {
                 return List.of(McpToolContents.textContent("There is no alert for this state"));
             }
             return List.of(McpToolContents.textContent(content));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Alert(@JsonProperty("features") List<Feature> features) {
+    public record Alert(@JsonbProperty("features") List<Feature> features) {
 
-        @JsonIgnoreProperties(ignoreUnknown = true)
-        public record Feature(@JsonProperty("properties") Properties properties) { }
+        public record Feature(@JsonbProperty("properties") Properties properties) {
+        }
 
-        @JsonIgnoreProperties(ignoreUnknown = true)
-        public record Properties(@JsonProperty("event") String event,
-                                 @JsonProperty("id") String id,
-                                 @JsonProperty("areaDesc") String areaDesc,
-                                 @JsonProperty("severity") String severity,
-                                 @JsonProperty("description") String description,
-                                 @JsonProperty("instruction") String instruction) { }
+        public record Properties(@JsonbProperty("event") String event,
+                                 @JsonbProperty("id") String id,
+                                 @JsonbProperty("areaDesc") String areaDesc,
+                                 @JsonbProperty("severity") String severity,
+                                 @JsonbProperty("description") String description,
+                                 @JsonbProperty("instruction") String instruction) {
+        }
     }
 }

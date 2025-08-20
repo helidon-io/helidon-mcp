@@ -16,6 +16,7 @@
 
 package io.helidon.extensions.mcp.tests;
 
+import java.net.URI;
 import java.util.List;
 import java.util.function.Function;
 
@@ -60,7 +61,7 @@ class MultipleTool {
                                            .schema(SIMPLE_SCHEMA)
                                            .tool(request ->
                                                          List.of(resourceContent(
-                                                                 "http://resource",
+                                                                 URI.create("http://resource"),
                                                                  McpResourceContents.textContent(
                                                                          "resource")))))
                                    .addTool(tool -> tool.name("tool3")
@@ -68,7 +69,7 @@ class MultipleTool {
                                            .schema(SIMPLE_SCHEMA)
                                            .tool(request -> List.of(
                                                    imageContent("binary", MediaTypes.APPLICATION_OCTET_STREAM),
-                                                   resourceContent("http://resource",
+                                                   resourceContent(URI.create("http://resource"),
                                                                    McpResourceContents.textContent("resource")),
                                                    textContent("text"))))
                                    .addTool(new TownTool()));

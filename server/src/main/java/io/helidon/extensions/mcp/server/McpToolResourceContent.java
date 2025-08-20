@@ -16,26 +16,28 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.net.URI;
+
 /**
  * Tool resource content.
  */
 final class McpToolResourceContent implements McpToolContent, McpEmbeddedResource {
-    private final String uriTemplate;
+    private final URI uri;
     private final McpResourceContent content;
 
-    McpToolResourceContent(String uriTemplate, McpResourceContent content) {
-        this.uriTemplate = uriTemplate;
+    McpToolResourceContent(URI uri, McpResourceContent content) {
+        this.uri = uri;
         this.content = content;
+    }
+
+    @Override
+    public URI uri() {
+        return this.uri;
     }
 
     @Override
     public McpContent content() {
         return content;
-    }
-
-    @Override
-    public String uriTemplate() {
-        return this.uriTemplate;
     }
 
     @Override

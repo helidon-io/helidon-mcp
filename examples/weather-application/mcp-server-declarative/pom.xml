@@ -24,9 +24,10 @@
         <groupId>io.helidon.applications</groupId>
         <artifactId>helidon-se</artifactId>
         <version>4.3.0-M1</version>
+        <relativePath/>
     </parent>
 
-    <artifactId>helidon-extensions-mcp-weather-declarative</artifactId>
+    <artifactId>helidon-extensions-mcp-examples-weather-declarative</artifactId>
     <name>Helidon Extensions MCP Weather Server Declarative Example</name>
 
     <properties>
@@ -53,7 +54,7 @@
         </dependency>
         <dependency>
             <groupId>io.helidon.http.media</groupId>
-            <artifactId>helidon-http-media-jackson</artifactId>
+            <artifactId>helidon-http-media-jsonb</artifactId>
         </dependency>
         <dependency>
             <groupId>io.helidon.webclient</groupId>
@@ -67,31 +68,6 @@
             <groupId>io.helidon.logging</groupId>
             <artifactId>helidon-logging-jul</artifactId>
             <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.helidon.webserver.testing.junit5</groupId>
-            <artifactId>helidon-webserver-testing-junit5</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-mcp</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-all</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -147,5 +123,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

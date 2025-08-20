@@ -226,7 +226,7 @@ final class McpJsonRpc {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("type", content.type().text())
                 .add("resource", McpJsonRpc.toJson(content.content())
-                        .add("uri", content.uriTemplate()));
+                        .add("uri", content.uri().toASCIIString()));
     }
 
     static JsonObjectBuilder toJson(McpPrompt prompt) {
@@ -326,7 +326,7 @@ final class McpJsonRpc {
                 .add("content", JSON_BUILDER_FACTORY.createObjectBuilder()
                         .add("type", resource.type().text())
                         .add("resource", McpJsonRpc.toJson(resource.content())
-                                .add("uri", resource.uriTemplate())));
+                                .add("uri", resource.uri().toASCIIString())));
     }
 
     static JsonObjectBuilder toJson(McpPromptImageContent image) {

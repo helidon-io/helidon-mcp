@@ -57,7 +57,6 @@ import static io.helidon.extensions.mcp.server.McpSession.State.UNINITIALIZED;
 public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpServerConfig> {
     private static final int SESSION_CACHE_SIZE = 1000;
     private static final String PROTOCOL_VERSION = "2024-11-05";
-    private static final System.Logger LOGGER = System.getLogger(McpServerFeature.class.getName());
 
     private final String endpoint;
     private final McpServerConfig config;
@@ -507,11 +506,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
 
         @Override
         public Function<McpRequest, McpCompletionContent> completion() {
-            return this::complete;
-        }
-
-        McpCompletionContent complete(McpRequest request) {
-            return McpCompletionContents.completion("");
+            return request -> McpCompletionContents.completion("");
         }
     }
 }

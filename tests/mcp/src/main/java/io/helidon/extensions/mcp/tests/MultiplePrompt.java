@@ -16,6 +16,7 @@
 
 package io.helidon.extensions.mcp.tests;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -56,7 +57,7 @@ class MultiplePrompt {
                                            .description("Prompt 3")
                                            .prompt(request ->
                                                            List.of(McpPromptContents.resourceContent(
-                                                                   "http://resource",
+                                                                   URI.create("http://resource"),
                                                                    McpResourceContents.textContent("resource"),
                                                                    McpRole.ASSISTANT))))
                                    .addPrompt(new MyPrompt()));
@@ -93,7 +94,7 @@ class MultiplePrompt {
             return List.of(
                     McpPromptContents.imageContent("binary", MediaTypes.APPLICATION_OCTET_STREAM, McpRole.USER),
                     McpPromptContents.textContent(parameters.get("argument1").asString().orElse("missing"), McpRole.USER),
-                    McpPromptContents.resourceContent("http://resource",
+                    McpPromptContents.resourceContent(URI.create("http://resource"),
                                                       McpResourceContents.textContent("resource"),
                                                       McpRole.USER));
         }

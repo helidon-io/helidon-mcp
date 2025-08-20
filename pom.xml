@@ -96,6 +96,7 @@
     </properties>
 
     <modules>
+        <module>bom</module>
         <module>codegen</module>
         <module>server</module>
         <module>tests</module>

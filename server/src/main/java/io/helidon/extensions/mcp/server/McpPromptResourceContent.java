@@ -16,20 +16,22 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.net.URI;
+
 final class McpPromptResourceContent implements McpPromptContent, McpEmbeddedResource {
     private final McpRole role;
-    private final String uriTemplate;
+    private final URI uri;
     private final McpResourceContent content;
 
-    McpPromptResourceContent(String uriTemplate, McpResourceContent content, McpRole role) {
-        this.uriTemplate = uriTemplate;
+    McpPromptResourceContent(URI uri, McpResourceContent content, McpRole role) {
+        this.uri = uri;
         this.role = role;
         this.content = content;
     }
 
     @Override
-    public String uriTemplate() {
-        return uriTemplate;
+    public URI uri() {
+        return uri;
     }
 
     @Override

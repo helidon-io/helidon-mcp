@@ -20,21 +20,31 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <parent>
-        <groupId>io.helidon.extensions.mcp.examples</groupId>
-        <artifactId>helidon-extensions-mcp-examples-project</artifactId>
+        <groupId>io.helidon.extensions.mcp</groupId>
+        <artifactId>helidon-extensions-mcp-project</artifactId>
         <version>4.0.0-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
     </parent>
-
-    <artifactId>helidon-extensions-mcp-examples-weather-application-project</artifactId>
-    <name>Helidon Extensions MCP Weather Application Project</name>
+    <artifactId>helidon-extensions-mcp-bom</artifactId>
     <packaging>pom</packaging>
+    <name>Helidon Extensions MCP BOM</name>
 
-    <modules>
-        <module>mcp-client</module>
-        <module>mcp-server</module>
-        <module>mcp-server-declarative</module>
-    </modules>
+    <properties>
+        <helidon.mcp.version>4.0.0-SNAPSHOT</helidon.mcp.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.helidon.extensions.mcp</groupId>
+                <artifactId>helidon-extensions-mcp-codegen</artifactId>
+                <version>${helidon.mcp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.helidon.extensions.mcp</groupId>
+                <artifactId>helidon-extensions-mcp-server</artifactId>
+                <version>${helidon.mcp.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 </project>

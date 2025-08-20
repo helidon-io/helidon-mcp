@@ -16,6 +16,7 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.net.URI;
 import java.util.Objects;
 
 import io.helidon.common.media.type.MediaType;
@@ -58,15 +59,15 @@ public final class McpPromptContents {
     /**
      * Create a prompt resource content.
      *
-     * @param uriTemplate resource uri template
+     * @param uri resource uri
      * @param role role
      * @param content resource content
      * @return prompt resource content instance
      */
-    public static McpPromptContent resourceContent(String uriTemplate, McpResourceContent content, McpRole role) {
+    public static McpPromptContent resourceContent(URI uri, McpResourceContent content, McpRole role) {
         Objects.requireNonNull(role, "Prompt role must not be null");
-        Objects.requireNonNull(uriTemplate, "Prompt resource URI must not be null");
+        Objects.requireNonNull(uri, "Prompt resource URI must not be null");
         Objects.requireNonNull(content, "Prompt resource content must not be null");
-        return new McpPromptResourceContent(uriTemplate, content, role);
+        return new McpPromptResourceContent(uri, content, role);
     }
 }

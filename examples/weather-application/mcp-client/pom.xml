@@ -24,13 +24,14 @@
         <groupId>io.helidon.applications</groupId>
         <artifactId>helidon-se</artifactId>
         <version>4.3.0-M1</version>
+        <relativePath/>
     </parent>
 
-    <artifactId>helidon-extensions-mcp-weather-client</artifactId>
+    <artifactId>helidon-extensions-mcp-examples-weather-client</artifactId>
     <name>Helidon Extensions MCP Weather Client Example</name>
 
     <properties>
-        <mainClass>client.io.helidon.extensions.mcp.weather.server.Main</mainClass>
+        <mainClass>io.helidon.extensions.mcp.weather.server.client.Main</mainClass>
     </properties>
 
     <dependencies>
@@ -41,10 +42,6 @@
         <dependency>
             <groupId>io.helidon.config</groupId>
             <artifactId>helidon-config-yaml</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.helidon.service</groupId>
-            <artifactId>helidon-service-registry</artifactId>
         </dependency>
         <dependency>
             <groupId>dev.langchain4j</groupId>
@@ -81,39 +78,8 @@
                 <executions>
                     <execution>
                         <id>copy-libs</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/libs</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>false</overWriteSnapshots>
-                            <overWriteIfNewer>true</overWriteIfNewer>
-                            <overWriteIfNewer>true</overWriteIfNewer>
-                            <includeScope>runtime</includeScope>
-                        </configuration>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>${version.plugin.jar}</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <classpathPrefix>libs</classpathPrefix>
-                            <mainClass>${mainClass}</mainClass>
-                            <useUniqueVersions>false</useUniqueVersions>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
             </plugin>
         </plugins>
     </build>

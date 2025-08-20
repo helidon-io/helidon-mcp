@@ -16,15 +16,17 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.net.URI;
+
 /**
  * Reference a resource, used by {@link McpTool} and {@link McpPrompt}.
  */
 sealed interface McpEmbeddedResource extends McpContent permits McpPromptResourceContent, McpToolResourceContent {
 
     /**
-     * Resource URI or URI template containing variables such as {@code {{variable}}}.
+     * A valid resource URI that points to a resource registered on this MCP server.
      *
-     * @return uri template
+     * @return a valid uri
      */
-    String uriTemplate();
+    URI uri();
 }
