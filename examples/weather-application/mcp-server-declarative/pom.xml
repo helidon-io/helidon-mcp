@@ -72,6 +72,7 @@
     </dependencies>
 
     <build>
+        <finalName>helidon-mcp-weather-server-declarative</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

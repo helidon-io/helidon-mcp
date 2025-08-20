@@ -71,6 +71,7 @@
     </dependencies>
 
     <build>
+        <finalName>helidon-mcp-weather-client</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
