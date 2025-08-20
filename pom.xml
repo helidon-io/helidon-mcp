@@ -25,8 +25,10 @@
     <version>4.0.0-M1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
+    <name>Helidon MCP Extension</name>
+
     <description>
-        Helidon MCP Extension
+        Extension that adds Model Context Protocol support to Helidon
     </description>
 
     <url>https://helidon.io</url>
@@ -51,6 +53,10 @@
         <tag>HEAD</tag>
         <url>https://github.com/helidon-io/helidon-mcp</url>
     </scm>
+
+    <developers>
+        <developer/>
+    </developers>
 
     <properties>
         <version.java>21</version.java>
