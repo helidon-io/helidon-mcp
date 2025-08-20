@@ -31,6 +31,13 @@
     <packaging>pom</packaging>
     <name>Helidon MCP Tests Project</name>
 
+    <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
+        <maven.sources.skip>true</maven.sources.skip>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
+        <dependency-check.skip>true</dependency-check.skip>
+    </properties>
+
     <modules>
         <module>mcp</module>
     </modules>
