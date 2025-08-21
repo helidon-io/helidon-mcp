@@ -120,11 +120,41 @@ public final class McpParameters {
     }
 
     /**
-     * Get optional value of the parameter as an integer.
+     * Get optional value of the parameter as a Byte.
+     *
+     * @return optional byte value
+     */
+    public OptionalValue<Byte> asByte() {
+        if (value instanceof JsonNumber number) {
+            return OptionalValue.create(MAPPERS, key, number.numberValue().byteValue());
+        }
+        if (value == JsonValue.NULL) {
+            return empty();
+        }
+        throw new IllegalStateException("Cannot get " + value.getValueType() + "as a byte");
+    }
+
+    /**
+     * Get optional value of the parameter as a Short.
+     *
+     * @return optional short value
+     */
+    public OptionalValue<Short> asShort() {
+        if (value instanceof JsonNumber number) {
+            return OptionalValue.create(MAPPERS, key, number.bigDecimalValue().shortValue());
+        }
+        if (value == JsonValue.NULL) {
+            return empty();
+        }
+        throw new IllegalStateException("Cannot get " + value.getValueType() + "as a short");
+    }
+
+    /**
+     * Get optional value of the parameter as an Integer.
      *
      * @return optional integer value
      */
-    public OptionalValue<Integer> asInt() {
+    public OptionalValue<Integer> asInteger() {
         if (value instanceof JsonNumber number) {
             return OptionalValue.create(MAPPERS, key, number.intValue());
         }
@@ -132,6 +162,51 @@ public final class McpParameters {
             return empty();
         }
         throw new IllegalStateException("Cannot get " + value.getValueType() + "as an integer");
+    }
+
+    /**
+     * Get optional value of the parameter as a Long.
+     *
+     * @return optional long value
+     */
+    public OptionalValue<Long> asLong() {
+        if (value instanceof JsonNumber number) {
+            return OptionalValue.create(MAPPERS, key, number.longValue());
+        }
+        if (value == JsonValue.NULL) {
+            return empty();
+        }
+        throw new IllegalStateException("Cannot get " + value.getValueType() + "as a long");
+    }
+
+    /**
+     * Get optional value of the parameter as a Double.
+     *
+     * @return optional double value
+     */
+    public OptionalValue<Double> asDouble() {
+        if (value instanceof JsonNumber number) {
+            return OptionalValue.create(MAPPERS, key, number.doubleValue());
+        }
+        if (value == JsonValue.NULL) {
+            return empty();
+        }
+        throw new IllegalStateException("Cannot get " + value.getValueType() + "as a double");
+    }
+
+    /**
+     * Get optional value of the parameter as a Float.
+     *
+     * @return optional float value
+     */
+    public OptionalValue<Float> asFloat() {
+        if (value instanceof JsonNumber number) {
+            return OptionalValue.create(MAPPERS, key, number.bigDecimalValue().floatValue());
+        }
+        if (value == JsonValue.NULL) {
+            return empty();
+        }
+        throw new IllegalStateException("Cannot get " + value.getValueType() + "as a float");
     }
 
     /**

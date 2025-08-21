@@ -57,6 +57,36 @@ class McpToolsServer {
         return List.of(McpToolContents.textContent(TOOL_CONTENT));
     }
 
+    @Mcp.Tool(TOOL_DESCRIPTION)
+    List<McpToolContent> tool4(Byte aByte) {
+        return List.of(McpToolContents.textContent(aByte.toString()));
+    }
+
+    @Mcp.Tool(TOOL_DESCRIPTION)
+    List<McpToolContent> tool5(Short aShort) {
+        return List.of(McpToolContents.textContent(aShort.toString()));
+    }
+
+    @Mcp.Tool(TOOL_DESCRIPTION)
+    List<McpToolContent> tool6(Integer aInteger) {
+        return List.of(McpToolContents.textContent(aInteger.toString()));
+    }
+
+    @Mcp.Tool(TOOL_DESCRIPTION)
+    List<McpToolContent> tool7(Long aLong) {
+        return List.of(McpToolContents.textContent(aLong.toString()));
+    }
+
+    @Mcp.Tool(TOOL_DESCRIPTION)
+    List<McpToolContent> tool8(Double aDouble) {
+        return List.of(McpToolContents.textContent(aDouble.toString()));
+    }
+
+    @Mcp.Tool(TOOL_DESCRIPTION)
+    List<McpToolContent> tool9(Float aFloat) {
+        return List.of(McpToolContents.textContent(aFloat.toString()));
+    }
+
     @Mcp.JsonSchema("""
             {
                 "type": "object",

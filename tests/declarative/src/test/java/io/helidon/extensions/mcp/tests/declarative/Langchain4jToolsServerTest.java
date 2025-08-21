@@ -25,6 +25,7 @@ import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.transport.McpTransport;
 import dev.langchain4j.mcp.client.transport.http.HttpMcpTransport;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -83,7 +84,63 @@ class Langchain4jToolsServerTest {
             "tool1", "tool3"
     })
     void runToolTest(String name) {
-        var result = client.executeTool(ToolExecutionRequest.builder().name(name).build());
+        var result = client.executeTool(ToolExecutionRequest.builder()
+                                                .name(name)
+                                                .build());
         assertThat(result, is(TOOL_CONTENT));
+    }
+
+    @Test
+    void testToolByte() {
+        var result = client.executeTool(ToolExecutionRequest.builder()
+                                                .name("tool4")
+                                                .arguments("{ \"aByte\": 0}")
+                                                .build());
+        assertThat(result, is("0"));
+    }
+
+    @Test
+    void testToolShort() {
+        var result = client.executeTool(ToolExecutionRequest.builder()
+                                                .name("tool5")
+                                                .arguments("{ \"aShort\": 0}")
+                                                .build());
+        assertThat(result, is("0"));
+    }
+
+    @Test
+    void testToolInteger() {
+        var result = client.executeTool(ToolExecutionRequest.builder()
+                                                .name("tool6")
+                                                .arguments("{ \"aInteger\": 0}")
+                                                .build());
+        assertThat(result, is("0"));
+    }
+
+    @Test
+    void testToolLong() {
+        var result = client.executeTool(ToolExecutionRequest.builder()
+                                                .name("tool7")
+                                                .arguments("{ \"aLong\": 0}")
+                                                .build());
+        assertThat(result, is("0"));
+    }
+
+    @Test
+    void testToolDouble() {
+        var result = client.executeTool(ToolExecutionRequest.builder()
+                                                .name("tool8")
+                                                .arguments("{ \"aDouble\": 0.0}")
+                                                .build());
+        assertThat(result, is("0.0"));
+    }
+
+    @Test
+    void testToolFloat() {
+        var result = client.executeTool(ToolExecutionRequest.builder()
+                                                .name("tool9")
+                                                .arguments("{ \"aFloat\": 0.0}")
+                                                .build());
+        assertThat(result, is("0.0"));
     }
 }

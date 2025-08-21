@@ -107,7 +107,7 @@ class MultipleTool {
         List<McpToolContent> process(McpRequest request) {
             McpParameters parameters = request.parameters();
             String name = parameters.get("name").asString().orElse("unknown");
-            int population = parameters.get("population").asInt().orElse(-1);
+            int population = parameters.get("population").asInteger().orElse(-1);
             String content = String.format("%s has a population of %d inhabitants", name, population);
             return List.of(textContent(content));
         }

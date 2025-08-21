@@ -114,8 +114,8 @@ class McpJsonSchemaCodegen implements CodegenExtension {
 
     static void addSchemaMethodBody(Method.Builder method, List<TypedElementInfo> fields) {
         method.addContentLine("var builder = new StringBuilder();");
-        method.addContentLine("builder.append(\"{\");")
-                        .addContent("builder.append(\"\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\");");
+        method.addContentLine("builder.append(\"{\");");
+        method.addContentLine("builder.append(\"\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\");");
 
         int n = fields.size();
         for (int i = 0; i < n; i++) {
@@ -143,29 +143,29 @@ class McpJsonSchemaCodegen implements CodegenExtension {
         if (isPrimitiveJsonSchemaType(typeName)) {
             method.addContent("builder.append(\"\\\"")
                     .addContent(element.elementName())
-                    .addContent("\\\": {\");");
+                    .addContentLine("\\\": {\");");
 
             description.ifPresent(desc -> addDescription(method, desc));
 
             method.addContent("builder.append(\"\\\"type\\\": \\\"")
                     .addContent(mapTypeName(typeName))
-                    .addContent("\\\"\");")
-                            .addContent("builder.append(\"}\");");
+                    .addContentLine("\\\"\");")
+                    .addContentLine("builder.append(\"}\");");
             return;
         }
         if (isCollection(typeName)) {
             TypeName argument = typeName.boxed().typeArguments().getFirst();
             method.addContent("builder.append(\"\\\"")
                     .addContent(element.elementName())
-                    .addContent("\\\"\": {\");");
+                    .addContentLine("\\\"\": {\");");
 
             description.ifPresent(desc -> addDescription(method, desc));
 
-            method.addContent("builder.append(\"\\\"type\\\": \\\"array\\\",\");")
+            method.addContentLine("builder.append(\"\\\"type\\\": \\\"array\\\",\");")
                     .addContent("builder.append(\"\\\"items\\\": {\\\"type\\\": \\\"")
                     .addContent(mapTypeName(argument))
-                    .addContent("\\\" }\");")
-                    .addContent("builder.append(\"}\");");
+                    .addContentLine("\\\" }\");")
+                    .addContentLine("builder.append(\"}\");");
             return;
         }
 
@@ -180,7 +180,7 @@ class McpJsonSchemaCodegen implements CodegenExtension {
     private static void addDescription(Method.Builder method, String description) {
         method.addContent("builder.append(\"\\\"description\\\": \\\"")
                 .addContent(description)
-                .addContent("\\\",\");");
+                .addContentLine("\\\",\");");
     }
 
     private static boolean isCollection(TypeName typeName) {

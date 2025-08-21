@@ -54,14 +54,69 @@ class McpParametersTest {
     }
 
     @Test
+    void testSimpleByte() {
+        JsonObject object = Json.createObjectBuilder()
+                .add("foo", 1)
+                .build();
+        JsonRpcParams rpcParams = JsonRpcParams.create(object);
+        McpParameters parameters = new McpParameters(rpcParams, object);
+        byte foo = parameters.get("foo").asByte().orElse(null);
+        assertThat(foo, is((byte) 1));
+    }
+
+    @Test
+    void testSimpleShort() {
+        JsonObject object = Json.createObjectBuilder()
+                .add("foo", 1)
+                .build();
+        JsonRpcParams rpcParams = JsonRpcParams.create(object);
+        McpParameters parameters = new McpParameters(rpcParams, object);
+        short foo = parameters.get("foo").asShort().orElse(null);
+        assertThat(foo, is((short) 1));
+    }
+
+    @Test
     void testSimpleInteger() {
         JsonObject object = Json.createObjectBuilder()
                 .add("foo", 1)
                 .build();
         JsonRpcParams rpcParams = JsonRpcParams.create(object);
         McpParameters parameters = new McpParameters(rpcParams, object);
-        int foo = parameters.get("foo").asInt().orElse(null);
+        int foo = parameters.get("foo").asInteger().orElse(null);
         assertThat(foo, is(1));
+    }
+
+    @Test
+    void testSimpleLong() {
+        JsonObject object = Json.createObjectBuilder()
+                .add("foo", 1L)
+                .build();
+        JsonRpcParams rpcParams = JsonRpcParams.create(object);
+        McpParameters parameters = new McpParameters(rpcParams, object);
+        long foo = parameters.get("foo").asLong().orElse(null);
+        assertThat(foo, is(1L));
+    }
+
+    @Test
+    void testSimpleDouble() {
+        JsonObject object = Json.createObjectBuilder()
+                .add("foo", 1.0D)
+                .build();
+        JsonRpcParams rpcParams = JsonRpcParams.create(object);
+        McpParameters parameters = new McpParameters(rpcParams, object);
+        double foo = parameters.get("foo").asDouble().orElse(null);
+        assertThat(foo, is(1.0D));
+    }
+
+    @Test
+    void testSimpleFloat() {
+        JsonObject object = Json.createObjectBuilder()
+                .add("foo", 1.0F)
+                .build();
+        JsonRpcParams rpcParams = JsonRpcParams.create(object);
+        McpParameters parameters = new McpParameters(rpcParams, object);
+        float foo = parameters.get("foo").asFloat().orElse(null);
+        assertThat(foo, is(1.0F));
     }
 
     @Test
@@ -93,7 +148,7 @@ class McpParametersTest {
         JsonRpcParams rpcParams = JsonRpcParams.create(object);
         McpParameters parameters = new McpParameters(rpcParams, object);
         String name = parameters.get("person").get("name").asString().orElse(null);
-        int age = parameters.get("person").get("age").asInt().orElse(-1);
+        int age = parameters.get("person").get("age").asInteger().orElse(-1);
 
         assertThat(name, is("Frank"));
         assertThat(age, is(10));

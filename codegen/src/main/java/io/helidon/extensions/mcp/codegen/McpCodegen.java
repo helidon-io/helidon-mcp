@@ -708,11 +708,13 @@ final class McpCodegen implements CodegenExtension {
                     parametersLocalVar = true;
                 }
                 parameters.add(param.elementName());
-                builder.addContent(param.typeName().declaredName())
+                builder.addContent("var ")
                         .addContent(param.elementName())
                         .addContent(" = parameters.get(\"")
                         .addContent(param.elementName())
-                        .addContentLine("\").asBoolean().orElse(false);");
+                        .addContent("\").as")
+                        .addContent(param.typeName().className())
+                        .addContentLine("().orElse(null);");
                 continue;
             }
             if (!parametersLocalVar) {
