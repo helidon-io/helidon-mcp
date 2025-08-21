@@ -21,8 +21,8 @@ import io.helidon.common.features.api.HelidonFlavor;
  * Helidon extension for MCP server module and API.
  */
 @Features.Incubating
-@Features.Name("Helidon MCP Extension")
-@Features.Description("Support for Model Context Protocol.")
+@Features.Name("MCP Server")
+@Features.Description("Support for Model Context Protocol Server.")
 @Features.Flavor({HelidonFlavor.SE, HelidonFlavor.MP})
 module io.helidon.extensions.mcp.server {
     requires jakarta.json;
