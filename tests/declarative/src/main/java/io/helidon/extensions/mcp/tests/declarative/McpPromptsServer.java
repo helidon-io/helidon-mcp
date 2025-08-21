@@ -51,6 +51,24 @@ class McpPromptsServer {
     }
 
     @Mcp.Prompt(PROMPT_DESCRIPTION)
+    @Mcp.Role(McpRole.USER)
+    String promptRoleUser() {
+        return PROMPT_CONTENT;
+    }
+
+    @Mcp.Prompt(PROMPT_DESCRIPTION)
+    @Mcp.Role(McpRole.ASSISTANT)
+    String promptRoleAssistant() {
+        return PROMPT_CONTENT;
+    }
+
+    @Mcp.Prompt(PROMPT_DESCRIPTION)
+    @Mcp.Role
+    String promptRoleDefault() {
+        return PROMPT_CONTENT;
+    }
+
+    @Mcp.Prompt(PROMPT_DESCRIPTION)
     List<McpPromptContent> prompt4(String prompt) {
         return List.of(McpPromptContents.textContent(PROMPT_CONTENT, McpRole.USER));
     }

@@ -100,7 +100,7 @@ public final class Mcp {
     }
 
     /**
-     * Annotation to define the {@link Mcp.Server} version.
+     * Annotation to define the {@link io.helidon.extensions.mcp.server.Mcp.Server} version.
      */
     @Target(TYPE)
     @Retention(RUNTIME)
@@ -114,7 +114,7 @@ public final class Mcp {
     }
 
     /**
-     * Annotation to define the {@link Mcp.Server} path.
+     * Annotation to define the {@link io.helidon.extensions.mcp.server.Mcp.Server} path.
      */
     @Target(TYPE)
     @Retention(RUNTIME)
@@ -207,8 +207,8 @@ public final class Mcp {
     }
 
     /**
-     * Annotation to define a completion for {@link io.helidon.extensions.mcp.server.Mcp.Prompt} argument
-     * and {@link io.helidon.extensions.mcp.server.Mcp.Resource} template uri.
+     * Annotation to define a completion for {@link io.helidon.extensions.mcp.server.Mcp.Prompt}
+     * argument and {@link io.helidon.extensions.mcp.server.Mcp.Resource} template uri.
      */
     @Target(METHOD)
     @Retention(RUNTIME)
@@ -245,5 +245,20 @@ public final class Mcp {
          * @return name
          */
         String value();
+    }
+
+    /**
+     * Annotation to define prompt content {@link io.helidon.extensions.mcp.server.McpRole}
+     * when used on a method that return a {@code String}. Otherwise, this annotation is ignored.
+     */
+    @Target(METHOD)
+    @Retention(CLASS)
+    public @interface Role {
+        /**
+         * Role with {@code ASSISTANT} as default value.
+         *
+         * @return role
+         */
+        McpRole value() default McpRole.ASSISTANT;
     }
 }

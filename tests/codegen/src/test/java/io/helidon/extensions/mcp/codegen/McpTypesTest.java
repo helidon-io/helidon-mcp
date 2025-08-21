@@ -18,33 +18,17 @@ package io.helidon.extensions.mcp.codegen;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.net.URI;
-import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-import io.helidon.builder.api.BuilderSupport;
-import io.helidon.builder.api.Description;
-import io.helidon.builder.api.GeneratedBuilder;
-import io.helidon.builder.api.Option;
-import io.helidon.builder.api.Prototype;
-import io.helidon.builder.api.RuntimeType;
-import io.helidon.common.Generated;
-import io.helidon.common.config.Config;
-import io.helidon.common.config.ConfigBuilderSupport;
 import io.helidon.common.media.type.MediaType;
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.common.types.TypeName;
-import io.helidon.common.types.TypeNames;
 import io.helidon.extensions.mcp.server.Mcp;
 import io.helidon.extensions.mcp.server.McpCompletion;
-import io.helidon.extensions.mcp.server.McpCompletionContent;
 import io.helidon.extensions.mcp.server.McpCompletionContents;
 import io.helidon.extensions.mcp.server.McpFeatures;
 import io.helidon.extensions.mcp.server.McpLogger;
@@ -52,21 +36,13 @@ import io.helidon.extensions.mcp.server.McpParameters;
 import io.helidon.extensions.mcp.server.McpProgress;
 import io.helidon.extensions.mcp.server.McpPrompt;
 import io.helidon.extensions.mcp.server.McpPromptArgument;
-import io.helidon.extensions.mcp.server.McpPromptContent;
 import io.helidon.extensions.mcp.server.McpPromptContents;
 import io.helidon.extensions.mcp.server.McpResource;
-import io.helidon.extensions.mcp.server.McpResourceContent;
 import io.helidon.extensions.mcp.server.McpResourceContents;
 import io.helidon.extensions.mcp.server.McpRole;
 import io.helidon.extensions.mcp.server.McpServerConfig;
 import io.helidon.extensions.mcp.server.McpTool;
-import io.helidon.extensions.mcp.server.McpToolContent;
 import io.helidon.extensions.mcp.server.McpToolContents;
-import io.helidon.http.Http;
-import io.helidon.service.registry.GlobalServiceRegistry;
-import io.helidon.service.registry.RegistryBuilderSupport;
-import io.helidon.service.registry.ServiceRegistry;
-import io.helidon.service.registry.Services;
 import io.helidon.webserver.http.HttpFeature;
 import io.helidon.webserver.http.HttpRouting;
 
@@ -113,6 +89,7 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "MCP_NAME", Mcp.Name.class);
         checkField(toCheck, checked, fields, "MCP_PATH", Mcp.Path.class);
         checkField(toCheck, checked, fields, "MCP_TOOL", Mcp.Tool.class);
+        checkField(toCheck, checked, fields, "MCP_ROLE", Mcp.Role.class);
         checkField(toCheck, checked, fields, "MCP_SERVER", Mcp.Server.class);
         checkField(toCheck, checked, fields, "MCP_PROMPT", Mcp.Prompt.class);
         checkField(toCheck, checked, fields, "MCP_VERSION", Mcp.Version.class);
@@ -146,7 +123,7 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "FUNCTION_REQUEST_LIST_TOOL_CONTENT", Function.class);
         checkField(toCheck, checked, fields, "FUNCTION_REQUEST_LIST_PROMPT_CONTENT", Function.class);
 
-        assertThat(toCheck, IsEmptyCollection.empty());
+        assertThat("All the types from McpTypes must be tested.", toCheck, IsEmptyCollection.empty());
     }
 
     private void checkField(Set<String> namesToCheck,

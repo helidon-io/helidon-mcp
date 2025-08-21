@@ -38,7 +38,6 @@ import io.helidon.common.types.AccessModifier;
 import io.helidon.common.types.Annotation;
 import io.helidon.common.types.Annotations;
 import io.helidon.common.types.ElementKind;
-import io.helidon.common.types.EnumValue;
 import io.helidon.common.types.ResolvedType;
 import io.helidon.common.types.TypeInfo;
 import io.helidon.common.types.TypeName;
@@ -72,6 +71,7 @@ import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_INTERFACE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_CONTENTS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_INTERFACE;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ROLE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ROLE_ENUM;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SERVER;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SERVER_CONFIG;
@@ -449,8 +449,8 @@ final class McpCodegen implements CodegenExtension {
     private void addPromptMethod(Method.Builder builder, ClassModel.Builder classModel, TypedElementInfo element) {
         List<String> parameters = new ArrayList<>();
         TypeName returnType = element.signature().type();
-        // hardcoded to assistant, as there is no annotation for this
-        EnumValue role = EnumValue.create(MCP_ROLE_ENUM, "ASSISTANT");
+        Optional<String> role = element.findAnnotation(MCP_ROLE)
+                .flatMap(annotation -> annotation.value());
 
         builder.name("prompt")
                 .returnType(returned -> returned.type(FUNCTION_REQUEST_LIST_PROMPT_CONTENT))
@@ -511,9 +511,9 @@ final class McpCodegen implements CodegenExtension {
                     .addContent(params)
                     .addContent(")")
                     .addContent(", ")
-                    .addContent(role.type())
+                    .addContent(MCP_ROLE_ENUM)
                     .addContent(".")
-                    .addContent(role.name())
+                    .addContent(role.orElse("ASSISTANT"))
                     .addContentLine("));")
                     .addContentLine("};");
             return;

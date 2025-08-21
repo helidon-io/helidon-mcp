@@ -26,6 +26,7 @@ final class McpTypes {
     //Annotations
     static final TypeName MCP_NAME = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Name");
     static final TypeName MCP_PATH = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Path");
+    static final TypeName MCP_ROLE = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Role");
     static final TypeName MCP_TOOL = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Tool");
     static final TypeName MCP_SERVER = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Server");
     static final TypeName MCP_PROMPT = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Prompt");
