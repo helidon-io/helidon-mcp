@@ -23,8 +23,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import io.helidon.codegen.CodegenContext;
@@ -47,7 +45,11 @@ import io.helidon.common.types.TypedElementInfo;
 
 import static io.helidon.extensions.mcp.codegen.McpJsonSchemaCodegen.addSchemaMethodBody;
 import static io.helidon.extensions.mcp.codegen.McpJsonSchemaCodegen.getDescription;
-import static io.helidon.extensions.mcp.codegen.McpTypes.FUNCTION_REQUEST_LIST_COMPLETION_CONTENT;
+import static io.helidon.extensions.mcp.codegen.McpTypes.FUNCTION_REQUEST_COMPLETION_CONTENT;
+import static io.helidon.extensions.mcp.codegen.McpTypes.FUNCTION_REQUEST_LIST_PROMPT_CONTENT;
+import static io.helidon.extensions.mcp.codegen.McpTypes.FUNCTION_REQUEST_LIST_RESOURCE_CONTENT;
+import static io.helidon.extensions.mcp.codegen.McpTypes.FUNCTION_REQUEST_LIST_TOOL_CONTENT;
+import static io.helidon.extensions.mcp.codegen.McpTypes.HELIDON_MEDIA_TYPE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.HTTP_FEATURE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.HTTP_ROUTING_BUILDER;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_COMPLETION;
@@ -61,12 +63,9 @@ import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PARAMETERS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PATH;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROGRESS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_CONTENT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_CONTENTS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_INTERFACE;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_REQUEST;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_CONTENT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_CONTENTS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_INTERFACE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ROLE;
@@ -74,10 +73,10 @@ import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ROLE_ENUM;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SERVER;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SERVER_CONFIG;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_CONTENT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_CONTENTS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_INTERFACE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_VERSION;
+import static io.helidon.extensions.mcp.codegen.McpTypes.SET_MCP_PROMPT_ARGUMENT;
 import static io.helidon.service.codegen.ServiceCodegenTypes.SERVICE_ANNOTATION_SINGLETON;
 
 final class McpCodegen implements CodegenExtension {
@@ -223,7 +222,7 @@ final class McpCodegen implements CodegenExtension {
         String returnType = element.signature().type().toString();
 
         builder.name("completion")
-                .returnType(returned -> returned.type(FUNCTION_REQUEST_LIST_COMPLETION_CONTENT))
+                .returnType(returned -> returned.type(FUNCTION_REQUEST_COMPLETION_CONTENT))
                 .addAnnotation(Annotations.OVERRIDE);
         builder.addContentLine("return request -> {");
 
@@ -283,10 +282,7 @@ final class McpCodegen implements CodegenExtension {
             return;
         }
 
-        TypeName mediaType = TypeName.create("io.helidon.common.media.type.MediaType");
-
         classModel.addImport("io.helidon.common.media.type.MediaTypes");
-        classModel.addImport(mediaType);
 
         for (TypedElementInfo element : elements) {
             String className = createClassName(element, "__Resource");
@@ -308,7 +304,7 @@ final class McpCodegen implements CodegenExtension {
                     .addMethod(method -> addResourceNameMethod(method, element))
                     .addMethod(method -> addResourceDescriptionMethod(method, description))
                     .addMethod(method -> addResourceUriMethod(method, uri))
-                    .addMethod(method -> addResourceMediaTypeMethod(method, mediaType, mediaTypeContent))
+                    .addMethod(method -> addResourceMediaTypeMethod(method, mediaTypeContent))
                     .addMethod(method -> addResourceMethod(method, classModel, element)));
         }
     }
@@ -339,10 +335,10 @@ final class McpCodegen implements CodegenExtension {
                 .addContentLine("return \"" + uri + "\";");
     }
 
-    private void addResourceMediaTypeMethod(Method.Builder builder, TypeName mediaType, String mediaTypeContent) {
+    private void addResourceMediaTypeMethod(Method.Builder builder, String mediaTypeContent) {
         builder.name("mediaType")
                 .addAnnotation(Annotations.OVERRIDE)
-                .returnType(mediaType)
+                .returnType(HELIDON_MEDIA_TYPE)
                 .addContentLine("return MediaTypes.create(\"" + mediaTypeContent + "\");");
     }
 
@@ -350,29 +346,22 @@ final class McpCodegen implements CodegenExtension {
         List<String> parameters = new ArrayList<>();
         String returnType = element.signature().type().fqName();
 
-        classModel.addImport(Function.class);
-        classModel.addImport(TypeNames.LIST);
-        classModel.addImport(MCP_FEATURES);
         builder.name("resource")
-                .returnType(returned -> returned.type("Function<McpFeatures, List<" + MCP_RESOURCE_CONTENT + ">>"))
+                .returnType(returned -> returned.type(FUNCTION_REQUEST_LIST_RESOURCE_CONTENT))
                 .addAnnotation(Annotations.OVERRIDE);
-        builder.addContentLine("return features -> {");
+        builder.addContentLine("return request -> {");
 
         for (TypedElementInfo parameter : element.parameterArguments()) {
             if (MCP_FEATURES.equals(parameter.typeName())) {
-                parameters.add("features");
+                parameters.add("request.features()");
                 continue;
             }
             if (MCP_LOGGER.equals(parameter.typeName())) {
-                parameters.add("logger");
-                classModel.addImport(MCP_LOGGER);
-                builder.addContentLine("McpLogger logger = features.logger();");
+                parameters.add("request.features().logger()");
                 continue;
             }
             if (MCP_PROGRESS.equals(parameter.typeName())) {
-                parameters.add("progress");
-                classModel.addImport(MCP_PROGRESS);
-                builder.addContentLine("McpProgress progress = features.progress();");
+                parameters.add("request.features().progress()");
             }
         }
         String params = String.join(", ", parameters);
@@ -399,9 +388,6 @@ final class McpCodegen implements CodegenExtension {
         if (elements.isEmpty()) {
             return;
         }
-
-        classModel.addImport(Set.class)
-                .addImport(TypeName.create("io.helidon.extensions.mcp.server.McpPromptArgument"));
 
         for (TypedElementInfo element : elements) {
             String className = createClassName(element, "__Prompt");
@@ -447,11 +433,8 @@ final class McpCodegen implements CodegenExtension {
         String returnType = element.signature().type().fqName();
         Optional<String> role = element.findAnnotation(MCP_ROLE).flatMap(annotation -> annotation.value());
 
-        classModel.addImport(Function.class);
-        classModel.addImport(MCP_REQUEST);
-        classModel.addImport(TypeNames.LIST);
         builder.name("prompt")
-                .returnType(returned -> returned.type("Function<McpRequest, List<" + MCP_PROMPT_CONTENT + ">>"))
+                .returnType(returned -> returned.type(FUNCTION_REQUEST_LIST_PROMPT_CONTENT))
                 .addAnnotation(Annotations.OVERRIDE);
         builder.addContentLine("return request -> {");
 
@@ -525,7 +508,7 @@ final class McpCodegen implements CodegenExtension {
 
         builder.name("arguments")
                 .addAnnotation(Annotations.OVERRIDE)
-                .returnType(TypeName.create("Set<McpPromptArgument>"));
+                .returnType(SET_MCP_PROMPT_ARGUMENT);
 
         for (TypedElementInfo param : element.parameterArguments()) {
             if (MCP_FEATURES.equals(param.typeName())) {
@@ -632,11 +615,8 @@ final class McpCodegen implements CodegenExtension {
         List<String> parameters = new ArrayList<>();
         String returnType = element.signature().type().fqName();
 
-        classModel.addImport(Function.class);
-        classModel.addImport(MCP_REQUEST);
-        classModel.addImport(TypeNames.LIST);
         builder.name("tool")
-                .returnType(returned -> returned.type("Function<McpRequest, List<" + MCP_TOOL_CONTENT + ">>"))
+                .returnType(returned -> returned.type(FUNCTION_REQUEST_LIST_TOOL_CONTENT))
                 .addAnnotation(Annotations.OVERRIDE);
         builder.addContentLine("return request -> {");
 

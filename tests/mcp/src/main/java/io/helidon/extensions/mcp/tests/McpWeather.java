@@ -21,7 +21,6 @@ import java.util.List;
 import io.helidon.common.media.type.MediaType;
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.extensions.mcp.server.McpCompletionContents;
-import io.helidon.extensions.mcp.server.McpFeatures;
 import io.helidon.extensions.mcp.server.McpPromptContent;
 import io.helidon.extensions.mcp.server.McpPromptContents;
 import io.helidon.extensions.mcp.server.McpRequest;
@@ -60,15 +59,15 @@ class McpWeather {
                                            .description(TOOL_DESCRIPTION)
                                            .tool(McpWeather::process)
                                            .schema("""
-                                                 {
-                                                   "type": "object",
-                                                   "properties": {
-                                                     "town": {
-                                                       "type": "string"
-                                                     }
-                                                   },
-                                                   "required": [ "town" ]
-                                                  }"""))
+                                                           {
+                                                             "type": "object",
+                                                             "properties": {
+                                                               "town": {
+                                                                 "type": "string"
+                                                               }
+                                                             },
+                                                             "required": [ "town" ]
+                                                            }"""))
 
                                    .addResource(resource -> resource.name(RESOURCE_NAME)
                                            .description(RESOURCE_DESCRIPTION)
@@ -99,7 +98,7 @@ class McpWeather {
         return List.of(McpPromptContents.textContent(content, McpRole.USER));
     }
 
-    static List<McpResourceContent> read(McpFeatures features) {
+    static List<McpResourceContent> read(McpRequest features) {
         return List.of(McpResourceContents.textContent("There are severe weather alerts in Praha"));
     }
 }

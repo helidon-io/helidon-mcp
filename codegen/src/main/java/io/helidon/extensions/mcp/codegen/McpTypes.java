@@ -50,15 +50,31 @@ final class McpTypes {
     static final TypeName MCP_RESOURCE_INTERFACE = TypeName.create("io.helidon.extensions.mcp.server.McpResource");
     static final TypeName MCP_PROMPT_CONTENT = TypeName.create("io.helidon.extensions.mcp.server.McpPromptContent");
     static final TypeName MCP_PROMPT_CONTENTS = TypeName.create("io.helidon.extensions.mcp.server.McpPromptContents");
+    static final TypeName MCP_PROMPT_ARGUMENT = TypeName.create("io.helidon.extensions.mcp.server.McpPromptArgument");
     static final TypeName MCP_COMPLETION_INTERFACE = TypeName.create("io.helidon.extensions.mcp.server.McpCompletion");
     static final TypeName MCP_RESOURCE_CONTENT = TypeName.create("io.helidon.extensions.mcp.server.McpResourceContent");
     static final TypeName MCP_RESOURCE_CONTENTS = TypeName.create("io.helidon.extensions.mcp.server.McpResourceContents");
     static final TypeName MCP_COMPLETION_CONTENTS = TypeName.create("io.helidon.extensions.mcp.server.McpCompletionContents");
     //others
     static final TypeName HTTP_FEATURE = TypeName.create("io.helidon.webserver.http.HttpFeature");
+    static final TypeName HELIDON_MEDIA_TYPE = TypeName.create("io.helidon.common.media.type.MediaType");
     static final TypeName HTTP_ROUTING_BUILDER = TypeName.create("io.helidon.webserver.http.HttpRouting.Builder");
-    static final TypeName FUNCTION_REQUEST_LIST_COMPLETION_CONTENT = TypeName.create(
+    static final TypeName SET_MCP_PROMPT_ARGUMENT = TypeName.create(
+            "java.util.Set<io.helidon.extensions.mcp.server.McpPromptArgument>");
+    static final TypeName FUNCTION_REQUEST_COMPLETION_CONTENT = TypeName.create(
             "java.util.function.Function<"
                     + "io.helidon.extensions.mcp.server.McpRequest, "
                     + "io.helidon.extensions.mcp.server.McpCompletionContent>");
+    static final TypeName FUNCTION_REQUEST_LIST_RESOURCE_CONTENT = TypeName.create(
+            "java.util.function.Function<"
+                    + "io.helidon.extensions.mcp.server.McpRequest, "
+                    + "java.util.List<io.helidon.extensions.mcp.server.McpResourceContent>>");
+    static final TypeName FUNCTION_REQUEST_LIST_TOOL_CONTENT = TypeName.create(
+            "java.util.function.Function<"
+                    + "io.helidon.extensions.mcp.server.McpRequest, "
+                    + "java.util.List<io.helidon.extensions.mcp.server.McpToolContent>>");
+    static final TypeName FUNCTION_REQUEST_LIST_PROMPT_CONTENT = TypeName.create(
+            "java.util.function.Function<"
+                    + "io.helidon.extensions.mcp.server.McpRequest, "
+                    + "java.util.List<io.helidon.extensions.mcp.server.McpPromptContent>>");
 }

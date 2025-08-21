@@ -351,7 +351,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         McpSession session = foundSession.get();
 
         McpParameters parameters = new McpParameters(req.params(), req.params().asJsonObject());
-        String resourceUri = parameters.get("uri").asString().orElse(null);
+        String resourceUri = parameters.get("uri").asString().orElse("");
         Optional<McpResource> resource = resources.values()
                 .stream()
                 .filter(it -> Objects.equals(it.uri(), resourceUri))
@@ -363,7 +363,10 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         }
 
         enableProgress(session, parameters);
-        List<McpResourceContent> contents = resource.get().resource().apply(session.features());
+        List<McpResourceContent> contents = resource.get().resource().apply(McpRequest.builder()
+                                                                                    .parameters(parameters)
+                                                                                    .features(session.features())
+                                                                                    .build());
         session.features().progress().stopSending();
         session.send(res.result(McpJsonRpc.readResource(resourceUri, contents)));
     }

@@ -75,7 +75,6 @@ class McpSession {
         }
     }
 
-
     void capabilities(McpCapability capability) {
         capabilities.add(capability);
     }

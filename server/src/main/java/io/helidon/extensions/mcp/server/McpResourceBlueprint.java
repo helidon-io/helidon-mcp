@@ -63,6 +63,6 @@ interface McpResourceBlueprint {
      *
      * @return resource content as a {@link McpResourceContent}
      */
-    Function<McpFeatures, List<McpResourceContent>> resource();
+    Function<McpRequest, List<McpResourceContent>> resource();
 
 }

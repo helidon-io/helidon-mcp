@@ -21,11 +21,11 @@ import io.helidon.extensions.mcp.codegen.McpJsonSchemaCodegenProvider;
  * Code generation for Helidon MCP server.
  */
 module io.helidon.extensions.mcp.codegen {
-	requires transitive io.helidon.codegen;
-	requires io.helidon.service.codegen;
+    requires transitive io.helidon.codegen;
+    requires io.helidon.service.codegen;
 
     exports io.helidon.extensions.mcp.codegen;
 
-	provides io.helidon.codegen.spi.CodegenExtensionProvider
-			with McpCodegenProvider, McpJsonSchemaCodegenProvider;
+    provides io.helidon.codegen.spi.CodegenExtensionProvider
+            with McpCodegenProvider, McpJsonSchemaCodegenProvider;
 }

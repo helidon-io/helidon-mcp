@@ -21,7 +21,7 @@ import java.util.Objects;
 /**
  * Mcp logger to send notification to the client.
  */
-public final class McpLogger  {
+public final class McpLogger {
     private final String name;
     private final boolean isActive;
     private final McpSession session;

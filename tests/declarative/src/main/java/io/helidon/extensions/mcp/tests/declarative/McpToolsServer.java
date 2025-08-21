@@ -46,10 +46,10 @@ class McpToolsServer {
     @Mcp.Tool(TOOL_DESCRIPTION)
     List<McpToolContent> tool2(String value, Foo foo) {
         return List.of(McpToolContents.textContent("""
-                value=%s
-                foo=%s
-                bar=%d
-                """.formatted(value, foo.foo, foo.bar)));
+                                                           value=%s
+                                                           foo=%s
+                                                           bar=%d
+                                                           """.formatted(value, foo.foo, foo.bar)));
     }
 
     @Mcp.Tool(TOOL_DESCRIPTION)

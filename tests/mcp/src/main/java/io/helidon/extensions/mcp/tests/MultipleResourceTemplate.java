@@ -22,7 +22,7 @@ import java.util.function.Function;
 
 import io.helidon.common.media.type.MediaType;
 import io.helidon.common.media.type.MediaTypes;
-import io.helidon.extensions.mcp.server.McpFeatures;
+import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpResource;
 import io.helidon.extensions.mcp.server.McpResourceContent;
 import io.helidon.extensions.mcp.server.McpServerFeature;
@@ -83,14 +83,14 @@ class MultipleResourceTemplate {
         }
 
         @Override
-        public Function<McpFeatures, List<McpResourceContent>> resource() {
+        public Function<McpRequest, List<McpResourceContent>> resource() {
             return this::read;
         }
 
-        List<McpResourceContent> read(McpFeatures features) {
+        List<McpResourceContent> read(McpRequest features) {
             return List.of(textContent("text"),
                            binaryContent("binary".getBytes(StandardCharsets.UTF_8),
-                                                           MediaTypes.APPLICATION_JSON));
+                                         MediaTypes.APPLICATION_JSON));
         }
     }
 }
