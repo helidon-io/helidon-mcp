@@ -17,6 +17,7 @@
 package io.helidon.extensions.mcp.server;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 import io.helidon.common.media.type.MediaType;
@@ -53,7 +54,7 @@ public final class McpPromptContents {
         Objects.requireNonNull(data, "Prompt image data must not be null");
         Objects.requireNonNull(type, "Prompt image MIME type must not be null");
         Objects.requireNonNull(role, "Prompt role must not be null");
-        return new McpPromptImageContent(data.getBytes(), type, role);
+        return new McpPromptImageContent(data.getBytes(StandardCharsets.UTF_8), type, role);
     }
 
     /**

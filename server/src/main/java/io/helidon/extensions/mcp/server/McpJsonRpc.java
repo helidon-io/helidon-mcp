@@ -17,6 +17,7 @@
 package io.helidon.extensions.mcp.server;
 
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
@@ -350,7 +351,7 @@ final class McpJsonRpc {
     static JsonObjectBuilder toJson(McpImageContent content) {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("type", content.type().text())
-                .add("data", new String(content.data()))
+                .add("data", new String(content.data(), StandardCharsets.UTF_8))
                 .add("mimeType", content.mediaType().text());
     }
 
@@ -363,7 +364,7 @@ final class McpJsonRpc {
     static JsonObjectBuilder toJson(McpResourceTextContent content) {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("mimeType", content.mimeType().text())
-                .add("text", new String(content.data()));
+                .add("text", new String(content.data(), StandardCharsets.UTF_8));
     }
 
     static JsonObject toJson(McpProgress progress, int newProgress) {

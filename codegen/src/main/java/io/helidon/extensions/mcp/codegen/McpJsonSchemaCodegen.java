@@ -43,7 +43,7 @@ import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_JSON_SCHEMA;
 import static io.helidon.service.codegen.ServiceCodegenTypes.SERVICE_ANNOTATION_SINGLETON;
 
 /**
- * For each class annotated with {@link io.helidon.extensions.mcp.server.Mcp.JsonSchema},
+ * For each class annotated with {@code io.helidon.extensions.mcp.server.Mcp.JsonSchema},
  * generate a class with single public static method that returns a JSON
  * schema representation of that class as a string.
  */
@@ -51,9 +51,6 @@ class McpJsonSchemaCodegen implements CodegenExtension {
     private static final TypeName GENERATOR = TypeName.create(McpCodegen.class);
     private static final TypeName COLLECTION = TypeName.create(Collection.class);
     private final CodegenLogger logger;
-    static final String OBJECT_PROPERTY_SCHEMA = """
-            builder.append("\\"%s\\": " + %s);
-            """;
 
     McpJsonSchemaCodegen(CodegenContext context) {
         logger = context.logger();
@@ -117,10 +114,9 @@ class McpJsonSchemaCodegen implements CodegenExtension {
 
     static void addSchemaMethodBody(Method.Builder method, List<TypedElementInfo> fields) {
         method.addContentLine("var builder = new StringBuilder();");
-        method.addContentLine("builder.append(\"{\");");
-        method.addContent("""
-                                  builder.append("\\"type\\": \\"object\\", \\"properties\\": {");
-                                  """);
+        method.addContentLine("builder.append(\"{\");")
+                        .addContent("builder.append(\"\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\");");
+
         int n = fields.size();
         for (int i = 0; i < n; i++) {
             TypedElementInfo field = fields.get(i);
@@ -145,44 +141,46 @@ class McpJsonSchemaCodegen implements CodegenExtension {
         TypeName typeName = element.typeName();
         Optional<String> description = getDescription(element);
         if (isPrimitiveJsonSchemaType(typeName)) {
-            method.addContent("""
-                                      builder.append("\\"%s\\": {");
-                                      """.formatted(element.elementName()));
+            method.addContent("builder.append(\"\\\"")
+                    .addContent(element.elementName())
+                    .addContent("\\\": {\");");
+
             description.ifPresent(desc -> addDescription(method, desc));
-            method.addContent("""
-                                      builder.append("\\"type\\": \\"%s\\"");
-                                      """.formatted(mapTypeName(typeName)));
-            method.addContent("""
-                                      builder.append("}");
-                                      """);
+
+            method.addContent("builder.append(\"\\\"type\\\": \\\"")
+                    .addContent(mapTypeName(typeName))
+                    .addContent("\\\"\");")
+                            .addContent("builder.append(\"}\");");
             return;
         }
         if (isCollection(typeName)) {
             TypeName argument = typeName.boxed().typeArguments().getFirst();
-            method.addContent("""
-                                      builder.append("\\"%s\\": {");
-                                      """.formatted(element.elementName()));
+            method.addContent("builder.append(\"\\\"")
+                    .addContent(element.elementName())
+                    .addContent("\\\"\": {\");");
+
             description.ifPresent(desc -> addDescription(method, desc));
-            method.addContent("""
-                                      builder.append("\\"type\\": \\"array\\",");
-                                      """);
-            method.addContent("""
-                                      builder.append("\\"items\\": { \\"type\\": \\"%s\\" }");
-                                      """.formatted(mapTypeName(argument)));
-            method.addContent("""
-                                      builder.append("}");
-                                      """);
+
+            method.addContent("builder.append(\"\\\"type\\\": \\\"array\\\",\");")
+                    .addContent("builder.append(\"\\\"items\\\": {\\\"type\\\": \\\"")
+                    .addContent(mapTypeName(argument))
+                    .addContent("\\\" }\");")
+                    .addContent("builder.append(\"}\");");
             return;
         }
-        method.addContent(String.format(OBJECT_PROPERTY_SCHEMA,
-                                        element.elementName(),
-                                        mapElementName(element) + ".schema()"));
+
+
+        method.addContent("builder.append(\"\\\"")
+                .addContent(element.elementName())
+                .addContent("\\\": \" + ")
+                .addContent(mapElementName(element))
+                .addContentLine(".schema());");
     }
 
     private static void addDescription(Method.Builder method, String description) {
-        method.addContent("""
-                                  builder.append("\\"description\\": \\"%s\\",");
-                                  """.formatted(description));
+        method.addContent("builder.append(\"\\\"description\\\": \\\"")
+                .addContent(description)
+                .addContent("\\\",\");");
     }
 
     private static boolean isCollection(TypeName typeName) {

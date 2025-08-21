@@ -18,11 +18,12 @@ package io.helidon.extensions.mcp.codegen;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.helidon.codegen.CodegenContext;
@@ -31,13 +32,14 @@ import io.helidon.codegen.CodegenLogger;
 import io.helidon.codegen.CodegenUtil;
 import io.helidon.codegen.RoundContext;
 import io.helidon.codegen.classmodel.ClassModel;
-import io.helidon.codegen.classmodel.Field;
 import io.helidon.codegen.classmodel.Method;
 import io.helidon.codegen.spi.CodegenExtension;
 import io.helidon.common.types.AccessModifier;
 import io.helidon.common.types.Annotation;
 import io.helidon.common.types.Annotations;
 import io.helidon.common.types.ElementKind;
+import io.helidon.common.types.EnumValue;
+import io.helidon.common.types.ResolvedType;
 import io.helidon.common.types.TypeInfo;
 import io.helidon.common.types.TypeName;
 import io.helidon.common.types.TypeNames;
@@ -50,6 +52,7 @@ import static io.helidon.extensions.mcp.codegen.McpTypes.FUNCTION_REQUEST_LIST_P
 import static io.helidon.extensions.mcp.codegen.McpTypes.FUNCTION_REQUEST_LIST_RESOURCE_CONTENT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.FUNCTION_REQUEST_LIST_TOOL_CONTENT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.HELIDON_MEDIA_TYPE;
+import static io.helidon.extensions.mcp.codegen.McpTypes.HELIDON_MEDIA_TYPES;
 import static io.helidon.extensions.mcp.codegen.McpTypes.HTTP_FEATURE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.HTTP_ROUTING_BUILDER;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_COMPLETION;
@@ -63,12 +66,12 @@ import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PARAMETERS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PATH;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROGRESS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_ARGUMENT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_CONTENTS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_INTERFACE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_CONTENTS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_INTERFACE;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ROLE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ROLE_ENUM;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SERVER;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SERVER_CONFIG;
@@ -81,17 +84,19 @@ import static io.helidon.service.codegen.ServiceCodegenTypes.SERVICE_ANNOTATION_
 
 final class McpCodegen implements CodegenExtension {
     private static final TypeName GENERATOR = TypeName.create(McpCodegen.class);
-    private static final String STRING_FQN = String.class.getName();
-    private final CodegenLogger logger;
+    private static final ResolvedType STRING_LIST = ResolvedType.create(TypeName.builder(TypeNames.LIST)
+                                                                                .addTypeArgument(TypeNames.STRING)
+                                                                                .build());
 
-    /**
+    /*
      * Map of MCP component kind associated with their generated class name.
      */
-    private final Map<McpKind, List<String>> components;
+    private final Map<McpKind, List<TypeName>> components = new EnumMap<>(McpKind.class);
+    private final CodegenLogger logger;
 
     McpCodegen(CodegenContext context) {
         logger = context.logger();
-        components = new HashMap<>();
+
         initializeComponents();
     }
 
@@ -129,80 +134,84 @@ final class McpCodegen implements CodegenExtension {
                 .accessModifier(AccessModifier.PACKAGE_PRIVATE)
                 .addAnnotation(Annotation.create(SERVICE_ANNOTATION_SINGLETON));
 
-        serverClassModel.addField(Field.builder()
-                                          .accessModifier(AccessModifier.PRIVATE)
-                                          .isFinal(true)
-                                          .name("delegate")
-                                          .type(type.typeName())
-                                          .addContent("new ")
-                                          .addContent(type.typeName().className())
-                                          .addContent("()")
-                                          .build());
+        serverClassModel.addField(delegate -> delegate
+                .accessModifier(AccessModifier.PRIVATE)
+                .isFinal(true)
+                .name("delegate")
+                .type(type.typeName())
+                .addContent("new ")
+                .addContent(type.typeName())
+                .addContent("()"));
 
-        generateTools(serverClassModel, type);
-        generatePrompts(serverClassModel, type);
-        generateResources(serverClassModel, type);
-        generateCompletions(serverClassModel, type);
+        generateTools(generatedType, serverClassModel, type);
+        generatePrompts(generatedType, serverClassModel, type);
+        generateResources(generatedType, serverClassModel, type);
+        generateCompletions(generatedType, serverClassModel, type);
 
         serverClassModel.addMethod(method -> addRoutingMethod(method, type));
         roundCtx.addGeneratedType(generatedType, serverClassModel, mcpServerType, type.originatingElementValue());
     }
 
     private void addRoutingMethod(Method.Builder method, TypeInfo type) {
+        String defaultServerName = type.typeName().className() + " mcp server";
+        String serverName = type.annotation(MCP_SERVER)
+                .value()
+                .orElse(defaultServerName);
+
         method.name("setup")
                 .accessModifier(AccessModifier.PUBLIC)
-                .returnType(TypeNames.PRIMITIVE_VOID)
                 .addAnnotation(Annotations.OVERRIDE)
-                .addParameter(rules -> rules.type(HTTP_ROUTING_BUILDER).name("routing"));
+                .addParameter(rules -> rules.type(HTTP_ROUTING_BUILDER)
+                        .name("routing"))
+                .addContent(MCP_SERVER_CONFIG)
+                .addContent(".Builder builder =")
+                .addContent(MCP_SERVER_CONFIG)
+                .addContentLine(".builder();")
+                .addContent("builder.name(")
+                .addContentLiteral(serverName)
+                .addContentLine(");");
 
-        method.addContent("McpServerConfig.Builder builder =");
-        method.addContent(MCP_SERVER_CONFIG);
-        method.addContentLine(".builder();");
+        type.findAnnotation(MCP_VERSION)
+                .flatMap(Annotation::value)
+                .ifPresent(ver -> method.addContent("builder.version(")
+                        .addContentLiteral(ver)
+                        .addContentLine(");"));
 
-        String defaultServerName = type.typeName().className() + " mcp server";
-        Annotation description = type.annotation(MCP_SERVER);
-        method.addContentLine("builder.name(\"" + description.value().orElse(defaultServerName) + "\");");
+        type.findAnnotation(MCP_PATH)
+                .flatMap(Annotation::value)
+                .ifPresent(path -> method.addContent("builder.path(")
+                        .addContentLiteral(path)
+                        .addContentLine(");"));
 
-        if (type.hasAnnotation(MCP_VERSION)) {
-            Annotation version = type.annotation(MCP_VERSION);
-            method.addContentLine("builder.version(\"" + version.value().orElse("0.0.1") + "\");");
-        }
-
-        if (type.hasAnnotation(MCP_PATH)) {
-            Annotation path = type.annotation(MCP_PATH);
-            method.addContentLine("builder.path(\"" + path.value().orElse("") + "\");");
-        }
-
-        for (Map.Entry<McpKind, List<String>> entry : components.entrySet()) {
-            for (String value : entry.getValue()) {
-                switch (entry.getKey()) {
-                case TOOL -> method.addContentLine("builder.addTool(new " + value + "());");
-                case RESOURCE -> method.addContentLine("builder.addResource(new " + value + "());");
-                case PROMPT -> method.addContentLine("builder.addPrompt(new " + value + "());");
-                case COMPLETION -> method.addContentLine("builder.addCompletion(new " + value + "());");
-                default -> throw new CodegenException("Unknown mcp component: " + entry.getKey());
-                }
+        components.forEach((mcpKind, typeNames) -> {
+            for (TypeName typeName : typeNames) {
+                method.addContent("builder.")
+                        .addContent(mcpKind.methodName)
+                        .addContent("(new ")
+                        .addContent(typeName)
+                        .addContentLine("());");
             }
-        }
+        });
 
         method.addContentLine("builder.build().setup(routing);");
         // Clear the components map as code generation if over for this server.
         initializeComponents();
     }
 
-    private void generateCompletions(ClassModel.Builder classModel, TypeInfo type) {
+    private void generateCompletions(TypeName generatedType, ClassModel.Builder classModel, TypeInfo type) {
         List<TypedElementInfo> elements = getElementsWithAnnotation(type, MCP_COMPLETION);
         if (elements.isEmpty()) {
             return;
         }
 
         for (TypedElementInfo element : elements) {
-            String className = createClassName(element, "__Completion");
+
+            TypeName innerTypeName = createClassName(generatedType, element, "__Completion");
             String reference = element.annotation(MCP_COMPLETION).value().orElse("");
 
-            components.get(McpKind.COMPLETION).add(className);
+            components.get(McpKind.COMPLETION).add(innerTypeName);
             classModel.addInnerClass(clazz -> clazz
-                    .name(className)
+                    .name(innerTypeName.className())
                     .addInterface(MCP_COMPLETION_INTERFACE)
                     .accessModifier(AccessModifier.PRIVATE)
                     .addMethod(method -> addCompletionReferenceMethod(method, reference))
@@ -219,7 +228,7 @@ final class McpCodegen implements CodegenExtension {
 
     private void addCompletionMethod(Method.Builder builder, ClassModel.Builder classModel, TypedElementInfo element) {
         List<String> parameters = new ArrayList<>();
-        String returnType = element.signature().type().toString();
+        TypeName returnType = element.typeName();
 
         builder.name("completion")
                 .returnType(returned -> returned.type(FUNCTION_REQUEST_COMPLETION_CONTENT))
@@ -241,13 +250,13 @@ final class McpCodegen implements CodegenExtension {
                 parametersLocalVar = true;
                 continue;
             }
-            if (STRING_FQN.equals(param.typeName().fqName())) {
+            if (param.typeName().equals(TypeNames.STRING)) {
                 if (!parametersLocalVar) {
                     addParametersLocalVar(builder, classModel);
                     parametersLocalVar = true;
                 }
                 parameters.add(param.elementName());
-                builder.addContent("String ")
+                builder.addContent("var ")
                         .addContent(param.elementName())
                         .addContentLine(" = parameters.get(\"value\").asString().orElse(\"\");");
                 continue;
@@ -258,9 +267,11 @@ final class McpCodegen implements CodegenExtension {
         }
 
         String params = String.join(", ", parameters);
-        if ("java.util.List<java.lang.String>".equals(returnType)) {
+        if (ResolvedType.create(returnType).equals(STRING_LIST)) {
             classModel.addImport(MCP_COMPLETION_CONTENTS);
-            builder.addContent("return McpCompletionContents.completion(delegate.")
+            builder.addContent("return ")
+                    .addContent(MCP_COMPLETION_CONTENTS)
+                    .addContent(".completion(delegate.")
                     .addContent(element.elementName())
                     .addContent("(")
                     .addContent(params)
@@ -276,29 +287,30 @@ final class McpCodegen implements CodegenExtension {
                 .addContentLine("};");
     }
 
-    private void generateResources(ClassModel.Builder classModel, TypeInfo type) {
+    private void generateResources(TypeName generatedType, ClassModel.Builder classModel, TypeInfo type) {
         List<TypedElementInfo> elements = getElementsWithAnnotation(type, MCP_RESOURCE);
         if (elements.isEmpty()) {
             return;
         }
 
-        classModel.addImport("io.helidon.common.media.type.MediaTypes");
-
         for (TypedElementInfo element : elements) {
-            String className = createClassName(element, "__Resource");
+            TypeName innerTypeName = createClassName(generatedType, element, "__Resource");
             String uri = element.findAnnotation(MCP_RESOURCE)
                     .flatMap(annotation -> annotation.stringValue("uri"))
-                    .orElseThrow(() -> new CodegenException("Resource " + element.elementName() + " must have a URI."));
+                    .orElseThrow(() -> new CodegenException("Resource " + element.elementName() + " must have a URI.",
+                                                            element.originatingElementValue()));
             String description = element.findAnnotation(MCP_RESOURCE)
                     .flatMap(annotation -> annotation.stringValue("description"))
-                    .orElseThrow(() -> new CodegenException("Resource " + element.elementName() + " must have a description."));
+                    .orElseThrow(() -> new CodegenException("Resource " + element.elementName() + " must have a description.",
+                                                            element.originatingElementValue()));
             String mediaTypeContent = element.findAnnotation(MCP_RESOURCE)
                     .flatMap(annotation -> annotation.stringValue("mediaType"))
-                    .orElseThrow(() -> new CodegenException("Resource " + element.elementName() + " must have a Media Type."));
-            components.get(McpKind.RESOURCE).add(className);
+                    .orElseThrow(() -> new CodegenException("Resource " + element.elementName() + " must have a Media Type.",
+                                                            element.originatingElementValue()));
+            components.get(McpKind.RESOURCE).add(innerTypeName);
 
             classModel.addInnerClass(clazz -> clazz
-                    .name(className)
+                    .name(innerTypeName.className())
                     .addInterface(MCP_RESOURCE_INTERFACE)
                     .accessModifier(AccessModifier.PRIVATE)
                     .addMethod(method -> addResourceNameMethod(method, element))
@@ -339,12 +351,14 @@ final class McpCodegen implements CodegenExtension {
         builder.name("mediaType")
                 .addAnnotation(Annotations.OVERRIDE)
                 .returnType(HELIDON_MEDIA_TYPE)
-                .addContentLine("return MediaTypes.create(\"" + mediaTypeContent + "\");");
+                .addContent("return ")
+                .addContent(HELIDON_MEDIA_TYPES)
+                .addContentLine(".create(\"" + mediaTypeContent + "\");");
     }
 
     private void addResourceMethod(Method.Builder builder, ClassModel.Builder classModel, TypedElementInfo element) {
         List<String> parameters = new ArrayList<>();
-        String returnType = element.signature().type().fqName();
+        TypeName returnType = element.signature().type();
 
         builder.name("resource")
                 .returnType(returned -> returned.type(FUNCTION_REQUEST_LIST_RESOURCE_CONTENT))
@@ -365,9 +379,13 @@ final class McpCodegen implements CodegenExtension {
             }
         }
         String params = String.join(", ", parameters);
-        if (STRING_FQN.equals(returnType)) {
+        if (returnType.equals(TypeNames.STRING)) {
             classModel.addImport(MCP_RESOURCE_CONTENTS);
-            builder.addContent("return List.of(McpResourceContents.textContent(delegate.")
+            builder.addContent("return ")
+                    .addContent(List.class)
+                    .addContent(".of(")
+                    .addContent(MCP_RESOURCE_CONTENTS)
+                    .addContent(".textContent(delegate.")
                     .addContent(element.elementName())
                     .addContent("(")
                     .addContent(params)
@@ -383,25 +401,25 @@ final class McpCodegen implements CodegenExtension {
                 .addContentLine("};");
     }
 
-    private void generatePrompts(ClassModel.Builder classModel, TypeInfo type) {
+    private void generatePrompts(TypeName generatedType, ClassModel.Builder classModel, TypeInfo type) {
         List<TypedElementInfo> elements = getElementsWithAnnotation(type, MCP_PROMPT);
         if (elements.isEmpty()) {
             return;
         }
 
         for (TypedElementInfo element : elements) {
-            String className = createClassName(element, "__Prompt");
+            TypeName innerTypeName = createClassName(generatedType, element, "__Prompt");
             String description = element.annotation(MCP_PROMPT).value().orElse("");
-            List<String> prompts = components.get(McpKind.PROMPT);
-            if (prompts.contains(className)) {
+            List<TypeName> prompts = components.get(McpKind.PROMPT);
+            if (prompts.contains(innerTypeName)) {
                 logger.log(System.Logger.Level.WARNING,
                            "Prompt '%s' already exists. Use @Mcp.Name or change the method name."
                                    .formatted(element.elementName()));
             }
-            components.get(McpKind.PROMPT).add(className);
+            components.get(McpKind.PROMPT).add(innerTypeName);
 
             classModel.addInnerClass(clazz -> clazz
-                    .name(className)
+                    .name(innerTypeName.className())
                     .addInterface(MCP_PROMPT_INTERFACE)
                     .accessModifier(AccessModifier.PRIVATE)
                     .addMethod(method -> addPromptNameMethod(method, element))
@@ -430,8 +448,9 @@ final class McpCodegen implements CodegenExtension {
 
     private void addPromptMethod(Method.Builder builder, ClassModel.Builder classModel, TypedElementInfo element) {
         List<String> parameters = new ArrayList<>();
-        String returnType = element.signature().type().fqName();
-        Optional<String> role = element.findAnnotation(MCP_ROLE).flatMap(annotation -> annotation.value());
+        TypeName returnType = element.signature().type();
+        // hardcoded to assistant, as there is no annotation for this
+        EnumValue role = EnumValue.create(MCP_ROLE_ENUM, "ASSISTANT");
 
         builder.name("prompt")
                 .returnType(returned -> returned.type(FUNCTION_REQUEST_LIST_PROMPT_CONTENT))
@@ -454,7 +473,7 @@ final class McpCodegen implements CodegenExtension {
                 }
                 parameters.add("logger");
                 classModel.addImport(MCP_LOGGER);
-                builder.addContentLine("McpLogger logger = features.logger();");
+                builder.addContentLine("var logger = features.logger();");
                 continue;
             }
             if (MCP_PROGRESS.equals(param.typeName())) {
@@ -464,7 +483,7 @@ final class McpCodegen implements CodegenExtension {
                 }
                 parameters.add("progress");
                 classModel.addImport(MCP_PROGRESS);
-                builder.addContentLine("McpProgress progress = features.progress();");
+                builder.addContentLine("var progress = features.progress();");
                 continue;
             }
             if (!parametersLocalVar) {
@@ -481,17 +500,22 @@ final class McpCodegen implements CodegenExtension {
         }
 
         String params = String.join(", ", parameters);
-        if (STRING_FQN.equals(returnType)) {
-            classModel.addImport(MCP_ROLE_ENUM);
-            classModel.addImport(MCP_PROMPT_CONTENTS);
-            builder.addContent("return List.of(McpPromptContents.textContent(delegate.")
+        if (returnType.equals(TypeNames.STRING)) {
+            builder.addContent("return ")
+                    .addContent(List.class)
+                    .addContent(".of(")
+                    .addContent(MCP_PROMPT_CONTENTS)
+                    .addContent(".textContent(delegate.")
                     .addContent(element.elementName())
                     .addContent("(")
                     .addContent(params)
-                    .addContent(")");
-            role.ifPresentOrElse(it -> builder.addContentLine(", " + it + "));"),
-                                 () -> builder.addContentLine(", McpRole.ASSISTANT));"));
-            builder.addContentLine("};");
+                    .addContent(")")
+                    .addContent(", ")
+                    .addContent(role.type())
+                    .addContent(".")
+                    .addContent(role.name())
+                    .addContentLine("));")
+                    .addContentLine("};");
             return;
         }
         builder.addContent("return delegate.")
@@ -518,7 +542,9 @@ final class McpCodegen implements CodegenExtension {
 
             builder.addContent("var ")
                     .addContent(builderName)
-                    .addContentLine(" = McpPromptArgument.builder();");
+                    .addContent(" = ")
+                    .addContent(MCP_PROMPT_ARGUMENT)
+                    .addContentLine(".builder();");
             builder.addContent(builderName)
                     .addContent(".name(\"")
                     .addContent(param.elementName())
@@ -541,24 +567,26 @@ final class McpCodegen implements CodegenExtension {
                     .addContent(param.elementName())
                     .addContentLine("\");");
         }
-        builder.addContent("return Set.of(")
+        builder.addContent("return ")
+                .addContent(Set.class)
+                .addContent(".of(")
                 .addContent(String.join(", ", promptArgs))
                 .addContent(");");
     }
 
-    private void generateTools(ClassModel.Builder classModel, TypeInfo type) {
+    private void generateTools(TypeName generatedType, ClassModel.Builder classModel, TypeInfo type) {
         List<TypedElementInfo> elements = getElementsWithAnnotation(type, MCP_TOOL);
         if (elements.isEmpty()) {
             return;
         }
 
         for (TypedElementInfo element : elements) {
-            String className = createClassName(element, "__Tool");
+            TypeName innerTypeName = createClassName(generatedType, element, "__Tool");
             String description = element.annotation(MCP_TOOL).value().orElse("No description available.");
-            components.get(McpKind.TOOL).add(className);
+            components.get(McpKind.TOOL).add(innerTypeName);
 
             classModel.addInnerClass(clazz -> clazz
-                    .name(className)
+                    .name(innerTypeName.className())
                     .addInterface(MCP_TOOL_INTERFACE)
                     .accessModifier(AccessModifier.PRIVATE)
                     .addMethod(method -> addToolNameMethod(method, element))
@@ -613,7 +641,7 @@ final class McpCodegen implements CodegenExtension {
 
     private void addToolMethod(Method.Builder builder, ClassModel.Builder classModel, TypedElementInfo element) {
         List<String> parameters = new ArrayList<>();
-        String returnType = element.signature().type().fqName();
+        TypeName returnType = element.signature().type();
 
         builder.name("tool")
                 .returnType(returned -> returned.type(FUNCTION_REQUEST_LIST_TOOL_CONTENT))
@@ -635,8 +663,7 @@ final class McpCodegen implements CodegenExtension {
                     featuresLocalVar = true;
                 }
                 parameters.add("logger");
-                classModel.addImport(MCP_LOGGER);
-                builder.addContentLine("McpLogger logger = features.logger();");
+                builder.addContentLine("var logger = features.logger();");
                 continue;
             }
             if (MCP_PROGRESS.equals(param.typeName())) {
@@ -646,7 +673,7 @@ final class McpCodegen implements CodegenExtension {
                 }
                 parameters.add("progress");
                 classModel.addImport(MCP_PROGRESS);
-                builder.addContentLine("McpProgress progress = features.progress();");
+                builder.addContentLine("var progress = features.progress();");
                 continue;
             }
             if (TypeNames.STRING.equals(param.typeName())) {
@@ -655,7 +682,7 @@ final class McpCodegen implements CodegenExtension {
                     parametersLocalVar = true;
                 }
                 parameters.add(param.elementName());
-                builder.addContent("String ")
+                builder.addContent("var ")
                         .addContent(param.elementName())
                         .addContent(" = parameters.get(\"")
                         .addContent(param.elementName())
@@ -699,14 +726,18 @@ final class McpCodegen implements CodegenExtension {
                     .addContent(" = parameters.get(\"")
                     .addContent(param.elementName())
                     .addContent("\").as(")
-                    .addContent(param.typeName().classNameWithEnclosingNames())
+                    .addContent(param.typeName())
                     .addContentLine(".class).orElse(null);");
         }
 
         String params = String.join(", ", parameters);
-        if (STRING_FQN.equals(returnType)) {
+        if (returnType.equals(TypeNames.STRING)) {
             classModel.addImport(MCP_TOOL_CONTENTS);
-            builder.addContent("return List.of(McpToolContents.textContent(delegate.")
+            builder.addContent("return ")
+                    .addContent(List.class)
+                    .addContent(".of(")
+                    .addContent(MCP_TOOL_CONTENTS)
+                    .addContent(".textContent(delegate.")
                     .addContent(element.elementName())
                     .addContent("(")
                     .addContent(params)
@@ -760,10 +791,15 @@ final class McpCodegen implements CodegenExtension {
                 || TypeNames.PRIMITIVE_DOUBLE.equals(type);
     }
 
-    private String createClassName(TypedElementInfo element, String suffix) {
-        return element.findAnnotation(MCP_NAME)
-                .flatMap(name -> name.value())
-                .orElse(element.elementName()) + suffix;
+    private TypeName createClassName(TypeName generatedType, TypedElementInfo element, String suffix) {
+        return TypeName.builder()
+                .className(
+                        element.findAnnotation(MCP_NAME)
+                                .flatMap(name -> name.value())
+                                .orElse(element.elementName()) + suffix)
+                .addEnclosingName(generatedType.className())
+                .packageName(generatedType.packageName())
+                .build();
     }
 
     private List<TypedElementInfo> getElementsWithAnnotation(TypeInfo type, TypeName target) {
@@ -787,9 +823,15 @@ final class McpCodegen implements CodegenExtension {
     }
 
     private enum McpKind {
-        TOOL,
-        RESOURCE,
-        PROMPT,
-        COMPLETION
+        TOOL("addTool"),
+        RESOURCE("addResource"),
+        PROMPT("addPrompt"),
+        COMPLETION("addCompletion");
+
+        private final String methodName;
+
+        McpKind(String methodName) {
+            this.methodName = methodName;
+        }
     }
 }

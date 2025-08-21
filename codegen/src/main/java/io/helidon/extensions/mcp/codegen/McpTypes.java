@@ -26,7 +26,6 @@ final class McpTypes {
     //Annotations
     static final TypeName MCP_NAME = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Name");
     static final TypeName MCP_PATH = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Path");
-    static final TypeName MCP_ROLE = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Role");
     static final TypeName MCP_TOOL = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Tool");
     static final TypeName MCP_SERVER = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Server");
     static final TypeName MCP_PROMPT = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Prompt");
@@ -38,26 +37,23 @@ final class McpTypes {
     //Implementations
     static final TypeName MCP_LOGGER = TypeName.create("io.helidon.extensions.mcp.server.McpLogger");
     static final TypeName MCP_ROLE_ENUM = TypeName.create("io.helidon.extensions.mcp.server.McpRole");
-    static final TypeName MCP_REQUEST = TypeName.create("io.helidon.extensions.mcp.server.McpRequest");
     static final TypeName MCP_FEATURES = TypeName.create("io.helidon.extensions.mcp.server.McpFeatures");
     static final TypeName MCP_PROGRESS = TypeName.create("io.helidon.extensions.mcp.server.McpProgress");
     static final TypeName MCP_TOOL_INTERFACE = TypeName.create("io.helidon.extensions.mcp.server.McpTool");
     static final TypeName MCP_PARAMETERS = TypeName.create("io.helidon.extensions.mcp.server.McpParameters");
     static final TypeName MCP_PROMPT_INTERFACE = TypeName.create("io.helidon.extensions.mcp.server.McpPrompt");
-    static final TypeName MCP_TOOL_CONTENT = TypeName.create("io.helidon.extensions.mcp.server.McpToolContent");
     static final TypeName MCP_SERVER_CONFIG = TypeName.create("io.helidon.extensions.mcp.server.McpServerConfig");
     static final TypeName MCP_TOOL_CONTENTS = TypeName.create("io.helidon.extensions.mcp.server.McpToolContents");
     static final TypeName MCP_RESOURCE_INTERFACE = TypeName.create("io.helidon.extensions.mcp.server.McpResource");
-    static final TypeName MCP_PROMPT_CONTENT = TypeName.create("io.helidon.extensions.mcp.server.McpPromptContent");
     static final TypeName MCP_PROMPT_CONTENTS = TypeName.create("io.helidon.extensions.mcp.server.McpPromptContents");
     static final TypeName MCP_PROMPT_ARGUMENT = TypeName.create("io.helidon.extensions.mcp.server.McpPromptArgument");
     static final TypeName MCP_COMPLETION_INTERFACE = TypeName.create("io.helidon.extensions.mcp.server.McpCompletion");
-    static final TypeName MCP_RESOURCE_CONTENT = TypeName.create("io.helidon.extensions.mcp.server.McpResourceContent");
     static final TypeName MCP_RESOURCE_CONTENTS = TypeName.create("io.helidon.extensions.mcp.server.McpResourceContents");
     static final TypeName MCP_COMPLETION_CONTENTS = TypeName.create("io.helidon.extensions.mcp.server.McpCompletionContents");
     //others
     static final TypeName HTTP_FEATURE = TypeName.create("io.helidon.webserver.http.HttpFeature");
     static final TypeName HELIDON_MEDIA_TYPE = TypeName.create("io.helidon.common.media.type.MediaType");
+    static final TypeName HELIDON_MEDIA_TYPES = TypeName.create("io.helidon.common.media.type.MediaTypes");
     static final TypeName HTTP_ROUTING_BUILDER = TypeName.create("io.helidon.webserver.http.HttpRouting.Builder");
     static final TypeName SET_MCP_PROMPT_ARGUMENT = TypeName.create(
             "java.util.Set<io.helidon.extensions.mcp.server.McpPromptArgument>");

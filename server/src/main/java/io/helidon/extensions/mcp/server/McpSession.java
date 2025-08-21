@@ -71,7 +71,7 @@ class McpSession {
 
     void disconnect() {
         if (active.compareAndSet(true, false)) {
-            queue.offer(McpJsonRpc.disconnectSession());
+            queue.add(McpJsonRpc.disconnectSession());
         }
     }
 
