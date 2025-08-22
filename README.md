@@ -11,11 +11,11 @@ Helidon MCP supports MCP version 2024-11-05, and planning to support latest vers
 
 ## Documentation
 
-Documentation is available under /docs/src/main/asciidoc/mcp.adoc.
+See [docs](docs/README.md)
 
 ## Examples
 
-Examples using Helidon SE and Helidon Declarative are available under example directory.
+See [examples](examples/README.md).
 
 ## Help
 
