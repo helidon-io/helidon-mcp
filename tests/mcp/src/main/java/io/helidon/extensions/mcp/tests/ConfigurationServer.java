@@ -22,6 +22,8 @@ import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.webserver.http.HttpRouting;
 
 class ConfigurationServer {
+    private ConfigurationServer() {
+    }
 
     static void setUpRoute(HttpRouting.Builder builder) {
         Config mcpServerConfig = Config.just(ConfigSources.classpath("application-mcp-server.yaml"));

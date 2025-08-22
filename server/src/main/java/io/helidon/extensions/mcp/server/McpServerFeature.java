@@ -358,7 +358,11 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 .findFirst();
 
         if (resource.isEmpty()) {
-            session.send(res.error(JsonRpcError.INVALID_REQUEST, "No resource"));
+            session.send(res.error(JsonRpcError.INVALID_REQUEST, "Resource does not exist"));
+            return;
+        }
+        if (isTemplate(resource.get())) {
+            session.send(res.error(JsonRpcError.INVALID_REQUEST, "Resource Template cannot be read."));
             return;
         }
 
@@ -496,7 +500,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
 
     private boolean isTemplate(McpResource resource) {
         String uri = resource.uri();
-        return uri.contains("{") && uri.contains("}");
+        return uri.contains("{") || uri.contains("}");
     }
 
     private static final class NoopCompletion implements McpCompletion {

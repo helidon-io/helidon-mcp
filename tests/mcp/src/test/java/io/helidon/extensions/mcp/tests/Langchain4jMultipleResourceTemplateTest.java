@@ -16,8 +16,6 @@
 
 package io.helidon.extensions.mcp.tests;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.List;
 
 import io.helidon.common.media.type.MediaTypes;
@@ -27,12 +25,9 @@ import io.helidon.webserver.testing.junit5.ServerTest;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
 
 import dev.langchain4j.mcp.client.DefaultMcpClient;
-import dev.langchain4j.mcp.client.McpBlobResourceContents;
 import dev.langchain4j.mcp.client.McpClient;
-import dev.langchain4j.mcp.client.McpReadResourceResult;
-import dev.langchain4j.mcp.client.McpResourceContents;
+import dev.langchain4j.mcp.client.McpException;
 import dev.langchain4j.mcp.client.McpResourceTemplate;
-import dev.langchain4j.mcp.client.McpTextResourceContents;
 import dev.langchain4j.mcp.client.transport.McpTransport;
 import dev.langchain4j.mcp.client.transport.http.HttpMcpTransport;
 import org.junit.jupiter.api.AfterAll;
@@ -42,8 +37,8 @@ import static io.helidon.extensions.mcp.tests.MultipleResourceTemplate.RESOURCE1
 import static io.helidon.extensions.mcp.tests.MultipleResourceTemplate.RESOURCE2_URI;
 import static io.helidon.extensions.mcp.tests.MultipleResourceTemplate.RESOURCE3_URI;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @ServerTest
 class Langchain4jMultipleResourceTemplateTest {
@@ -73,53 +68,36 @@ class Langchain4jMultipleResourceTemplateTest {
     @Test
     void listResources() {
         List<McpResourceTemplate> list = client.listResourceTemplates();
+        list = list.reversed();
         assertThat(list.size(), is(3));
 
-        List<String> names = list.stream().map(McpResourceTemplate::name).toList();
-        assertThat(names, hasItems("resource1", "resource2", "resource3"));
+        var resource1 = list.getFirst();
+        assertThat(resource1.name(), is("resource1"));
+        assertThat(resource1.description(), is("Resource 1"));
+        assertThat(resource1.uriTemplate(), is(RESOURCE1_URI));
+        assertThat(resource1.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
+
+        var resource2 = list.get(1);
+        assertThat(resource2.name(), is("resource2"));
+        assertThat(resource2.description(), is("Resource 2"));
+        assertThat(resource2.uriTemplate(), is(RESOURCE2_URI));
+        assertThat(resource2.mimeType(), is(MediaTypes.APPLICATION_JSON_VALUE));
+
+        var resource3 = list.get(2);
+        assertThat(resource3.name(), is("resource3"));
+        assertThat(resource3.description(), is("Resource 3"));
+        assertThat(resource3.uriTemplate(), is(RESOURCE3_URI));
+        assertThat(resource3.mimeType(), is(MediaTypes.APPLICATION_OCTET_STREAM_VALUE));
     }
 
     @Test
-    void readResource1() {
-        McpReadResourceResult resource = client.readResource(RESOURCE1_URI);
-
-        List<McpResourceContents> contents = resource.contents();
-        assertThat(contents.size(), is(1));
-
-        McpTextResourceContents first = (McpTextResourceContents) contents.getFirst();
-        assertThat(first.uri(), is(RESOURCE1_URI));
-        assertThat(first.text(), is("text"));
-        assertThat(first.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
+    void readResourceTemplate() {
+        try {
+            client.readResource(RESOURCE1_URI);
+            fail("Attempt to read resource template must fail");
+        } catch (McpException e) {
+            assertThat(e.getMessage(), is("Code: -32600, message: Resource Template cannot be read."));
+        }
     }
 
-    @Test
-    void readResource2() {
-        McpReadResourceResult resource = client.readResource(RESOURCE2_URI);
-
-        List<McpResourceContents> contents = resource.contents();
-        assertThat(contents.size(), is(1));
-
-        McpBlobResourceContents first = (McpBlobResourceContents) contents.getFirst();
-        assertThat(first.uri(), is(RESOURCE2_URI));
-        assertThat(first.blob(), is(Base64.getEncoder().encodeToString("binary".getBytes(StandardCharsets.UTF_8))));
-        assertThat(first.mimeType(), is(MediaTypes.APPLICATION_JSON_VALUE));
-    }
-
-    @Test
-    void readResource3() {
-        McpReadResourceResult resource = client.readResource(RESOURCE3_URI);
-
-        List<McpResourceContents> contents = resource.contents();
-        assertThat(contents.size(), is(2));
-
-        McpTextResourceContents text = (McpTextResourceContents) contents.getFirst();
-        assertThat(text.uri(), is(RESOURCE3_URI));
-        assertThat(text.text(), is("text"));
-        assertThat(text.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
-
-        McpBlobResourceContents binary = (McpBlobResourceContents) contents.get(1);
-        assertThat(binary.uri(), is(RESOURCE3_URI));
-        assertThat(binary.blob(), is(Base64.getEncoder().encodeToString("binary".getBytes(StandardCharsets.UTF_8))));
-        assertThat(binary.mimeType(), is(MediaTypes.APPLICATION_JSON_VALUE));
-    }
 }
