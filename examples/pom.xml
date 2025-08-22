@@ -31,9 +31,16 @@
     <artifactId>helidon-extensions-mcp-examples-project</artifactId>
     <packaging>pom</packaging>
 
+    <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
+        <maven.sources.skip>true</maven.sources.skip>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
+    </properties>
+
     <name>Helidon Extensions MCP Examples Project</name>
 
     <modules>
         <module>weather-application</module>
     </modules>
 </project>
+
