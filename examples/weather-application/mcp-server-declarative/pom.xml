@@ -27,7 +27,9 @@
         <relativePath/>
     </parent>
 
+    <groupId>io.helidon.examples.extensions.mcp</groupId>
     <artifactId>helidon-extensions-mcp-examples-weather-declarative</artifactId>
+    <version>4.0.0-M1-SNAPSHOT</version>
     <name>Helidon Extensions MCP Weather Server Declarative Example</name>
 
     <properties>
