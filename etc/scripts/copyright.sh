@@ -54,7 +54,7 @@ mvn ${MVN_ARGS} \
         -Dhelidon.enforcer.output.file="${RESULT_FILE}" \
         -Dhelidon.enforcer.rules=copyright \
         -Dhelidon.enforcer.failOnError=false \
-        -Pcopyright \
+        -Pcopyright,tests,examples \
         -N \
         validate > ${LOG_FILE} 2>&1 || (cat ${LOG_FILE} ; exit 1)
 

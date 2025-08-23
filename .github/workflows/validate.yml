@@ -94,7 +94,6 @@ jobs:
             mvn ${MVN_ARGS} -T8 \
               -Dorg.slf4j.simpleLogger.showThreadName=true \
               -DskipTests \
-              -P tests \
               install
   tests:
     needs: build
@@ -119,6 +118,7 @@ jobs:
             mvn ${MVN_ARGS} \
               -DreactorRule=tests \
               -Dsurefire.reportNameSuffix=${{ matrix.platform }} \
+              -Ptests,examples \
               verify
   spotbugs:
     needs: build
