@@ -193,6 +193,11 @@ update_version(){
     --pattern="<version>${current_version}</version>" \
     --replace="<version>${version}</version>" \
     --include="pom.xml"
+
+  replace \
+    --pattern="<helidon.mcp.version>.*</helidon.mcp.version>" \
+    --value="${version}" \
+    --include="pom.xml"
 }
 
 create_tag() {
