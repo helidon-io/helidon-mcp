@@ -23,13 +23,13 @@
 
     <parent>
         <groupId>io.helidon.extensions.mcp.examples</groupId>
-        <artifactId>helidon-extensions-mcp-examples-project</artifactId>
+        <artifactId>helidon4-extensions-mcp-examples-project</artifactId>
         <version>4.0.0-M1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>helidon-extensions-mcp-examples-weather-application-project</artifactId>
-    <name>Helidon Extensions MCP Weather Application Project</name>
+    <artifactId>helidon4-extensions-mcp-examples-weather-application-project</artifactId>
+    <name>Helidon 4 Extensions MCP Weather Application Project</name>
     <packaging>pom</packaging>
 
     <modules>

@@ -22,13 +22,13 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>io.helidon.extensions.mcp</groupId>
-        <artifactId>helidon-extensions-mcp-project</artifactId>
+        <artifactId>helidon4-extensions-mcp-project</artifactId>
         <version>4.0.0-M1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <groupId>io.helidon.extensions.mcp.examples</groupId>
-    <artifactId>helidon-extensions-mcp-examples-project</artifactId>
+    <artifactId>helidon4-extensions-mcp-examples-project</artifactId>
     <packaging>pom</packaging>
 
     <properties>

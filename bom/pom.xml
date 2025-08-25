@@ -22,10 +22,10 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>io.helidon.extensions.mcp</groupId>
-        <artifactId>helidon-extensions-mcp-project</artifactId>
+        <artifactId>helidon4-extensions-mcp-project</artifactId>
         <version>4.0.0-M1-SNAPSHOT</version>
     </parent>
-    <artifactId>helidon-extensions-mcp-bom</artifactId>
+    <artifactId>helidon4-extensions-mcp-bom</artifactId>
     <packaging>pom</packaging>
     <name>Helidon Extensions MCP BOM</name>
 
@@ -37,12 +37,12 @@
         <dependencies>
             <dependency>
                 <groupId>io.helidon.extensions.mcp</groupId>
-                <artifactId>helidon-extensions-mcp-codegen</artifactId>
+                <artifactId>helidon4-extensions-mcp-codegen</artifactId>
                 <version>${helidon.mcp.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.helidon.extensions.mcp</groupId>
-                <artifactId>helidon-extensions-mcp-server</artifactId>
+                <artifactId>helidon4-extensions-mcp-server</artifactId>
                 <version>${helidon.mcp.version}</version>
             </dependency>
         </dependencies>

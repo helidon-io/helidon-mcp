@@ -22,13 +22,13 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>io.helidon.extensions.mcp</groupId>
-        <artifactId>helidon-extensions-mcp-project</artifactId>
+        <artifactId>helidon4-extensions-mcp-project</artifactId>
         <version>4.0.0-M1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>helidon-extensions-mcp-server</artifactId>
-    <name>Helidon Extensions MCP Server</name>
+    <artifactId>helidon4-extensions-mcp-server</artifactId>
+    <name>Helidon 4 Extensions MCP Server</name>
 
     <dependencies>
         <dependency>

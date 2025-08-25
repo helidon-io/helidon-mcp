@@ -28,7 +28,7 @@
     </parent>
 
     <groupId>io.helidon.examples.extensions.mcp</groupId>
-    <artifactId>helidon-extensions-mcp-examples-weather-declarative</artifactId>
+    <artifactId>helidon4-extensions-mcp-examples-weather-declarative</artifactId>
     <version>4.0.0-M1-SNAPSHOT</version>
     <name>Helidon Extensions MCP Weather Server Declarative Example</name>
 
@@ -39,7 +39,7 @@
     <dependencies>
         <dependency>
             <groupId>io.helidon.extensions.mcp</groupId>
-            <artifactId>helidon-extensions-mcp-server</artifactId>
+            <artifactId>helidon4-extensions-mcp-server</artifactId>
             <version>4.0.0-M1-SNAPSHOT</version>
         </dependency>
         <dependency>
@@ -104,7 +104,7 @@
                         </path>
                         <path>
                             <groupId>io.helidon.extensions.mcp</groupId>
-                            <artifactId>helidon-extensions-mcp-codegen</artifactId>
+                            <artifactId>helidon4-extensions-mcp-codegen</artifactId>
                             <version>4.0.0-M1-SNAPSHOT</version>
                         </path>
                     </annotationProcessorPaths>

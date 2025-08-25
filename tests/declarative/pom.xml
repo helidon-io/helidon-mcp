@@ -22,18 +22,18 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>io.helidon.extensions.mcp</groupId>
-        <artifactId>helidon-extensions-mcp-tests-project</artifactId>
+        <artifactId>helidon4-extensions-mcp-tests-project</artifactId>
         <version>4.0.0-M1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>helidon-extensions-mcp-tests-declarative</artifactId>
+    <artifactId>helidon4-extensions-mcp-tests-declarative</artifactId>
     <name>Helidon Extensions MCP Tests Declarative</name>
 
     <dependencies>
         <dependency>
             <groupId>io.helidon.extensions.mcp</groupId>
-            <artifactId>helidon-extensions-mcp-server</artifactId>
+            <artifactId>helidon4-extensions-mcp-server</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -106,7 +106,7 @@
                         </path>
                         <path>
                             <groupId>io.helidon.extensions.mcp</groupId>
-                            <artifactId>helidon-extensions-mcp-codegen</artifactId>
+                            <artifactId>helidon4-extensions-mcp-codegen</artifactId>
                             <version>${project.version}</version>
                         </path>
                         <path>
@@ -124,7 +124,7 @@
                 <dependencies>
                     <dependency>
                         <groupId>io.helidon.extensions.mcp</groupId>
-                        <artifactId>helidon-extensions-mcp-codegen</artifactId>
+                        <artifactId>helidon4-extensions-mcp-codegen</artifactId>
                         <version>${project.version}</version>
                     </dependency>
                 </dependencies>

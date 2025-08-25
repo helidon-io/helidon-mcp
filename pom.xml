@@ -21,11 +21,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.helidon.extensions.mcp</groupId>
-    <artifactId>helidon-extensions-mcp-project</artifactId>
+    <artifactId>helidon4-extensions-mcp-project</artifactId>
     <version>4.0.0-M1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>Helidon MCP Extension</name>
+    <name>Helidon 4 MCP Extension</name>
 
     <description>
         Extension that adds Model Context Protocol support to Helidon

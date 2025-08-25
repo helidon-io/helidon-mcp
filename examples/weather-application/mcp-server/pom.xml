@@ -28,9 +28,9 @@
     </parent>
 
     <groupId>io.helidon.examples.extensions.mcp</groupId>
-    <artifactId>helidon-extensions-mcp-examples-weather</artifactId>
+    <artifactId>helidon4-extensions-mcp-examples-weather</artifactId>
     <version>4.0.0-M1-SNAPSHOT</version>
-    <name>Helidon Extensions MCP Weather Server Example</name>
+    <name>Helidon 4 Extensions MCP Weather Server Example</name>
 
     <properties>
         <mainClass>io.helidon.extensions.mcp.weather.server.Main</mainClass>
@@ -39,7 +39,7 @@
     <dependencies>
         <dependency>
             <groupId>io.helidon.extensions.mcp</groupId>
-            <artifactId>helidon-extensions-mcp-server</artifactId>
+            <artifactId>helidon4-extensions-mcp-server</artifactId>
             <version>4.0.0-M1-SNAPSHOT</version>
         </dependency>
         <dependency>
