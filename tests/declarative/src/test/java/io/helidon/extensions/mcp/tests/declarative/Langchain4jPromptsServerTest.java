@@ -62,7 +62,7 @@ class Langchain4jPromptsServerTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-            "prompt1", "prompt2", "prompt3", "promptRoleAssistant", "promptRoleDefault"
+            "prompt1", "prompt2", "prompt3", "prompt8", "promptRoleAssistant", "promptRoleDefault"
     })
     void assistantTest(String promptName) {
         runTest(promptName, McpRole.ASSISTANT);
@@ -70,7 +70,7 @@ class Langchain4jPromptsServerTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-            "prompt4", "prompt5", "prompt6", "promptRoleUser"
+            "prompt4", "prompt5", "prompt6", "prompt7", "promptRoleUser"
     })
     void userTest(String promptName) {
         runTest(promptName, McpRole.USER);

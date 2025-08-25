@@ -23,11 +23,11 @@ import io.helidon.extensions.mcp.server.McpCompletionContent;
 import io.helidon.extensions.mcp.server.McpCompletionContents;
 import io.helidon.extensions.mcp.server.McpFeatures;
 import io.helidon.extensions.mcp.server.McpParameters;
+import io.helidon.extensions.mcp.server.McpRequest;
 
 @Mcp.Server
 @Mcp.Path("/completions")
 class McpCompletionsServer {
-
     @Mcp.Completion("prompt1")
     McpCompletionContent completionPrompt(McpParameters parameters) {
         String argument = parameters.get("value").asString().orElse(null);
@@ -75,6 +75,17 @@ class McpCompletionsServer {
     @Mcp.Completion("resource/{path2}")
     McpCompletionContent completionResourceArgument(String path2) {
         return McpCompletionContents.completion(path2);
+    }
+
+    @Mcp.Completion("resource/{path8}")
+    McpCompletionContent completionMcpRequest(McpRequest request) {
+        String argument = request.parameters().get("value").asString().orElse(null);
+        return McpCompletionContents.completion(argument);
+    }
+
+    @Mcp.Completion("resource/{path10}")
+    McpCompletionContent completion1StringMcpRequest(String argument, McpRequest request) {
+        return McpCompletionContents.completion(argument);
     }
 
     @Mcp.Completion("prompt8")
@@ -140,5 +151,16 @@ class McpCompletionsServer {
     @Mcp.Completion("resource/{path7}")
     List<String> completionResourceListFeatures(McpFeatures features) {
         return List.of("path7");
+    }
+
+    @Mcp.Completion("resource/{path9}")
+    List<String> completion1McpRequest(McpRequest request) {
+        String argument = request.parameters().get("value").asString().orElse(null);
+        return List.of(argument);
+    }
+
+    @Mcp.Completion("resource/{path9}")
+    List<String> completionStringMcpRequest(String argument, McpRequest request) {
+        return List.of(argument);
     }
 }

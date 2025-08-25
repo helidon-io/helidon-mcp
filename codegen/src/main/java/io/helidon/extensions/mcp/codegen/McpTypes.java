@@ -38,6 +38,7 @@ final class McpTypes {
     //Implementations
     static final TypeName MCP_LOGGER = TypeName.create("io.helidon.extensions.mcp.server.McpLogger");
     static final TypeName MCP_ROLE_ENUM = TypeName.create("io.helidon.extensions.mcp.server.McpRole");
+    static final TypeName MCP_REQUEST = TypeName.create("io.helidon.extensions.mcp.server.McpRequest");
     static final TypeName MCP_FEATURES = TypeName.create("io.helidon.extensions.mcp.server.McpFeatures");
     static final TypeName MCP_PROGRESS = TypeName.create("io.helidon.extensions.mcp.server.McpProgress");
     static final TypeName MCP_TOOL_INTERFACE = TypeName.create("io.helidon.extensions.mcp.server.McpTool");

@@ -22,6 +22,7 @@ import io.helidon.extensions.mcp.server.Mcp;
 import io.helidon.extensions.mcp.server.McpFeatures;
 import io.helidon.extensions.mcp.server.McpPromptContent;
 import io.helidon.extensions.mcp.server.McpPromptContents;
+import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpRole;
 
 @Mcp.Server
@@ -81,5 +82,15 @@ class McpPromptsServer {
     @Mcp.Prompt(PROMPT_DESCRIPTION)
     List<McpPromptContent> prompt6(McpFeatures features) {
         return List.of(McpPromptContents.textContent(PROMPT_CONTENT, McpRole.USER));
+    }
+
+    @Mcp.Prompt(PROMPT_DESCRIPTION)
+    List<McpPromptContent> prompt7(McpRequest request) {
+        return List.of(McpPromptContents.textContent(PROMPT_CONTENT, McpRole.USER));
+    }
+
+    @Mcp.Prompt(PROMPT_DESCRIPTION)
+    String prompt8(McpRequest request) {
+        return PROMPT_CONTENT;
     }
 }

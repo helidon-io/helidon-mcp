@@ -90,7 +90,8 @@ class MultipleTool {
         @Override
         public String schema() {
             return """
-                    { "type" : "object",
+                    {
+                      "type" : "object",
                       "properties" : {
                         "name": { "type" : "string" },
                         "population": { "type" : "number" }

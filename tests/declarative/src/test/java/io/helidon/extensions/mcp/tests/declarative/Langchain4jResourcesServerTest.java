@@ -61,6 +61,7 @@ class Langchain4jResourcesServerTest {
     @ParameterizedTest
     @ValueSource(strings = {
             "resource", "resource1", "resource2", "resource3",
+            "resource4", "resource5"
     })
     void readResource(String uri) {
         var result = client.readResource(uri);

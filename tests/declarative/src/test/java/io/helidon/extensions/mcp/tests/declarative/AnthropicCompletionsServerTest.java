@@ -55,9 +55,9 @@ class AnthropicCompletionsServerTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-            "prompt1", "prompt2", "prompt3", "prompt4",
-            "prompt5", "prompt6", "prompt7", "prompt8", "prompt9",
-            "prompt10", "prompt11", "prompt12", "prompt13", "prompt14",
+            "prompt1", "prompt2", "prompt3", "prompt4", "prompt5",
+            "prompt6", "prompt7", "prompt8", "prompt9", "prompt10",
+            "prompt11", "prompt12", "prompt13", "prompt14",
     })
     void testCompletionPrompt(String name) {
         McpSchema.CompleteResult.CompleteCompletion result = client.completeCompletion(new McpSchema.CompleteRequest(
@@ -74,7 +74,8 @@ class AnthropicCompletionsServerTest {
     @ValueSource(strings = {
             "resource/{path1}", "resource/{path2}", "resource/{path3}",
             "resource/{path4}", "resource/{path5}", "resource/{path6}",
-            "resource/{path7}",
+            "resource/{path7}", "resource/{path8}", "resource/{path9}",
+            "resource/{path10}"
     })
     void testCompletionResource(String name) {
         String argument = name.substring(10, name.length() - 1);

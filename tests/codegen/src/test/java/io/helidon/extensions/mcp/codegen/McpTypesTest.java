@@ -37,6 +37,7 @@ import io.helidon.extensions.mcp.server.McpProgress;
 import io.helidon.extensions.mcp.server.McpPrompt;
 import io.helidon.extensions.mcp.server.McpPromptArgument;
 import io.helidon.extensions.mcp.server.McpPromptContents;
+import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpResource;
 import io.helidon.extensions.mcp.server.McpResourceContents;
 import io.helidon.extensions.mcp.server.McpRole;
@@ -99,6 +100,7 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "MCP_DESCRIPTION", Mcp.Description.class);
         checkField(toCheck, checked, fields, "MCP_LOGGER", McpLogger.class);
         checkField(toCheck, checked, fields, "MCP_ROLE_ENUM", McpRole.class);
+        checkField(toCheck, checked, fields, "MCP_REQUEST", McpRequest.class);
         checkField(toCheck, checked, fields, "MCP_FEATURES", McpFeatures.class);
         checkField(toCheck, checked, fields, "MCP_PROGRESS", McpProgress.class);
         checkField(toCheck, checked, fields, "MCP_TOOL_INTERFACE", McpTool.class);

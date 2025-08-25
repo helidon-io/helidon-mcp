@@ -68,6 +68,7 @@ import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_ARGUMENT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_CONTENTS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_INTERFACE;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_REQUEST;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_CONTENTS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_INTERFACE;
@@ -238,6 +239,10 @@ final class McpCodegen implements CodegenExtension {
         boolean featuresLocalVar = false;
         boolean parametersLocalVar = false;
         for (TypedElementInfo param : element.parameterArguments()) {
+            if (MCP_REQUEST.equals(param.typeName())) {
+                parameters.add("request");
+                continue;
+            }
             if (MCP_FEATURES.equals(param.typeName()) && !featuresLocalVar) {
                 addFeaturesLocalVar(builder, classModel);
                 parameters.add("features");
@@ -366,6 +371,10 @@ final class McpCodegen implements CodegenExtension {
         builder.addContentLine("return request -> {");
 
         for (TypedElementInfo parameter : element.parameterArguments()) {
+            if (MCP_REQUEST.equals(parameter.typeName())) {
+                parameters.add("request");
+                continue;
+            }
             if (MCP_FEATURES.equals(parameter.typeName())) {
                 parameters.add("request.features()");
                 continue;
@@ -390,6 +399,7 @@ final class McpCodegen implements CodegenExtension {
                     .addContent("(")
                     .addContent(params)
                     .addContentLine(")));")
+                    .decreaseContentPadding()
                     .addContentLine("};");
             return;
         }
@@ -460,6 +470,10 @@ final class McpCodegen implements CodegenExtension {
         boolean featuresLocalVar = false;
         boolean parametersLocalVar = false;
         for (TypedElementInfo param : element.parameterArguments()) {
+            if (MCP_REQUEST.equals(param.typeName())) {
+                parameters.add("request");
+                continue;
+            }
             if (MCP_FEATURES.equals(param.typeName()) && !featuresLocalVar) {
                 addFeaturesLocalVar(builder, classModel);
                 parameters.add("features");
@@ -515,6 +529,7 @@ final class McpCodegen implements CodegenExtension {
                     .addContent(".")
                     .addContent(role.orElse("ASSISTANT"))
                     .addContentLine("));")
+                    .decreaseContentPadding()
                     .addContentLine("};");
             return;
         }
@@ -523,6 +538,7 @@ final class McpCodegen implements CodegenExtension {
                 .addContent("(")
                 .addContent(params)
                 .addContentLine(");")
+                .decreaseContentPadding()
                 .addContentLine("};");
     }
 
@@ -603,13 +619,7 @@ final class McpCodegen implements CodegenExtension {
 
         List<TypedElementInfo> fields = new ArrayList<>();
         for (TypedElementInfo param : element.parameterArguments()) {
-            if (MCP_FEATURES.equals(param.typeName())) {
-                continue;
-            }
-            if (MCP_PROGRESS.equals(param.typeName())) {
-                continue;
-            }
-            if (MCP_LOGGER.equals(param.typeName())) {
+            if (isIgnoredSchemaElement(param.typeName())) {
                 continue;
             }
             Optional<String> description = getDescription(param);
@@ -651,6 +661,10 @@ final class McpCodegen implements CodegenExtension {
         boolean featuresLocalVar = false;
         boolean parametersLocalVar = false;
         for (TypedElementInfo param : element.parameterArguments()) {
+            if (MCP_REQUEST.equals(param.typeName())) {
+                parameters.add("request");
+                continue;
+            }
             if (MCP_FEATURES.equals(param.typeName()) && !featuresLocalVar) {
                 addFeaturesLocalVar(builder, classModel);
                 parameters.add("features");
@@ -744,6 +758,7 @@ final class McpCodegen implements CodegenExtension {
                     .addContent("(")
                     .addContent(params)
                     .addContentLine(")));")
+                    .decreaseContentPadding()
                     .addContentLine("};");
             return;
         }
@@ -752,6 +767,7 @@ final class McpCodegen implements CodegenExtension {
                 .addContent("(")
                 .addContent(params)
                 .addContentLine(");")
+                .decreaseContentPadding()
                 .addContentLine("};");
     }
 
@@ -795,8 +811,7 @@ final class McpCodegen implements CodegenExtension {
 
     private TypeName createClassName(TypeName generatedType, TypedElementInfo element, String suffix) {
         return TypeName.builder()
-                .className(
-                        element.findAnnotation(MCP_NAME)
+                .className(element.findAnnotation(MCP_NAME)
                                 .flatMap(name -> name.value())
                                 .orElse(element.elementName()) + suffix)
                 .addEnclosingName(generatedType.className())
@@ -815,6 +830,13 @@ final class McpCodegen implements CodegenExtension {
                 .packageName(factoryTypeName.packageName())
                 .className(factoryTypeName.classNameWithEnclosingNames().replace('.', '_') + "__" + suffix)
                 .build();
+    }
+
+    private boolean isIgnoredSchemaElement(TypeName typeName) {
+        return MCP_REQUEST.equals(typeName)
+                || MCP_FEATURES.equals(typeName)
+                || MCP_PROGRESS.equals(typeName)
+                || MCP_LOGGER.equals(typeName);
     }
 
     private void initializeComponents() {

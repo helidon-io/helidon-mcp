@@ -20,6 +20,7 @@ import java.util.List;
 
 import io.helidon.extensions.mcp.server.Mcp;
 import io.helidon.extensions.mcp.server.McpFeatures;
+import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpToolContent;
 import io.helidon.extensions.mcp.server.McpToolContents;
 
@@ -85,6 +86,16 @@ class McpToolsServer {
     @Mcp.Tool(TOOL_DESCRIPTION)
     List<McpToolContent> tool9(Float aFloat) {
         return List.of(McpToolContents.textContent(aFloat.toString()));
+    }
+
+    @Mcp.Tool(TOOL_DESCRIPTION)
+    String tool10(McpRequest request) {
+        return TOOL_CONTENT;
+    }
+
+    @Mcp.Tool(TOOL_DESCRIPTION)
+    List<McpToolContent> tool11(McpRequest request) {
+        return List.of(McpToolContents.textContent(TOOL_CONTENT));
     }
 
     @Mcp.JsonSchema("""

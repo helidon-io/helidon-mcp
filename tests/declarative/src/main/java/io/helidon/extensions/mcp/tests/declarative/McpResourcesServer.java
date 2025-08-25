@@ -21,6 +21,7 @@ import java.util.List;
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.extensions.mcp.server.Mcp;
 import io.helidon.extensions.mcp.server.McpFeatures;
+import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpResourceContent;
 import io.helidon.extensions.mcp.server.McpResourceContents;
 
@@ -48,6 +49,14 @@ class McpResourcesServer {
     }
 
     @Mcp.Resource(
+            uri = "resource4",
+            mediaType = RESOURCE_MEDIA_TYPE,
+            description = RESOURCE_DESCRIPTION)
+    String resource4(McpRequest request) {
+        return RESOURCE_CONTENT;
+    }
+
+    @Mcp.Resource(
             uri = "resource2",
             mediaType = RESOURCE_MEDIA_TYPE,
             description = RESOURCE_DESCRIPTION)
@@ -60,6 +69,14 @@ class McpResourcesServer {
             mediaType = RESOURCE_MEDIA_TYPE,
             description = RESOURCE_DESCRIPTION)
     List<McpResourceContent> resource3(McpFeatures features) {
+        return List.of(McpResourceContents.textContent(RESOURCE_CONTENT));
+    }
+
+    @Mcp.Resource(
+            uri = "resource5",
+            mediaType = RESOURCE_MEDIA_TYPE,
+            description = RESOURCE_DESCRIPTION)
+    List<McpResourceContent> resource5(McpRequest request) {
         return List.of(McpResourceContents.textContent(RESOURCE_CONTENT));
     }
 }

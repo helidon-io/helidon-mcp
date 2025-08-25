@@ -81,7 +81,7 @@ class Langchain4jToolsServerTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-            "tool1", "tool3"
+            "tool1", "tool3", "tool10", "tool11"
     })
     void runToolTest(String name) {
         var result = client.executeTool(ToolExecutionRequest.builder()
