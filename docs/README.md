@@ -1,3 +1,6 @@
 # Helidon MCP Documentation
 
-Coming soon!
+[MCP for Helidon SE](mcp/README.md)
+
+[MCP for Helidon SE Declarative](mcp-declarative/README.md)
+
