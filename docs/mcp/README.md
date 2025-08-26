@@ -78,14 +78,24 @@ class MyTool implements McpTool {
     public String schema() {
         return """
                     {
-                        "title": "My Title"
+                        "type": "object",
+                        "properties": {
+                            "productId": {
+                                "description": "The unique identifier for a product",
+                                "type": "integer"
+                            }
+                        }
                     }
                     """;
     }
 
     @Override
     public List<McpToolContent> process(McpRequest request) {
-        return List.of(McpToolContents.textContent("text"));
+        int productId = request.parameters()
+                .get("productId")
+                .asInteger()
+                .orElse(0);
+        return List.of(McpToolContents.textContent("productId: " + productId));
     }
 }
 ```
