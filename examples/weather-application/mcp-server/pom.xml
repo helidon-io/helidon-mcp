@@ -29,7 +29,7 @@
 
     <groupId>io.helidon.examples.extensions.mcp</groupId>
     <artifactId>helidon4-extensions-mcp-examples-weather</artifactId>
-    <version>1.0.0-M1-SNAPSHOT</version>
+    <version>1.0.0-M1</version>
     <name>Helidon 4 Extensions MCP Weather Server Example</name>
 
     <properties>
@@ -40,7 +40,7 @@
         <dependency>
             <groupId>io.helidon.extensions.mcp</groupId>
             <artifactId>helidon4-extensions-mcp-server</artifactId>
-            <version>1.0.0-M1-SNAPSHOT</version>
+            <version>1.0.0-M1</version>
         </dependency>
         <dependency>
             <groupId>io.helidon.webclient</groupId>
