@@ -23,13 +23,11 @@ import java.util.Objects;
  */
 public final class McpLogger {
     private final String name;
-    private final boolean isActive;
     private final McpSession session;
     private Level level;
 
-    McpLogger(McpSession session, boolean active) {
+    McpLogger(McpSession session) {
         this.session = session;
-        this.isActive = active;
         this.level = Level.INFO;
         this.name = "helidon-logger";
     }
@@ -43,7 +41,7 @@ public final class McpLogger {
     public void log(Level level, String message) {
         Objects.requireNonNull(level, "level must not be null");
         Objects.requireNonNull(message, "message must not be null");
-        if (isActive && level.ordinal() >= this.level.ordinal()) {
+        if (level.ordinal() >= this.level.ordinal()) {
             session.send(McpJsonRpc.toJson(level, name, message));
         }
     }

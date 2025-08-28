@@ -14,21 +14,7 @@
  * limitations under the License.
  */
 
-package io.helidon.extensions.mcp.server;
-
-enum McpCapability {
-    TOOL_LIST_CHANGED,
-    RESOURCE_LIST_CHANGED,
-    RESOURCE_SUBSCRIBE,
-    PROMPT_LIST_CHANGED,
-    LOGGING,
-    COMPLETION,
-    PAGINATION,
-    SAMPLING,
-    ROOT,
-    PROGRESS;
-
-    String text() {
-        return this.name().toLowerCase();
-    }
-}
+/**
+ * Helidon MCP Calendar application example.
+ */
+package io.helidon.extensions.mcp.examples.calendar;

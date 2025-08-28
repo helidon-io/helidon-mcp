@@ -266,13 +266,9 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
 
     private void parseClientCapabilities(McpSession session, McpParameters parameters) {
         var capabilities = parameters.get("capabilities");
-        capabilities.get("sampling")
-                .asBoolean()
-                .ifPresent(sampling -> {
-                    if (sampling) {
-                        session.capabilities(McpCapability.SAMPLING);
-                    }
-                });
+        if (capabilities.get(McpCapability.SAMPLING.text()).isPresent()) {
+            session.capabilities(McpCapability.SAMPLING);
+        }
         capabilities.get("roots")
                 .get("listChanged")
                 .asBoolean()
@@ -339,7 +335,10 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             return;
         }
         McpSession session = foundSession.get();
-        session.send(res.result(McpJsonRpc.listResources(resources.values())));
+        List<McpResource> resourceList = resources.values().stream()
+                .filter(this::isNotTemplate)
+                .toList();
+        session.send(res.result(McpJsonRpc.listResources(resourceList)));
     }
 
     private void resourcesReadRpc(JsonRpcRequest req, JsonRpcResponse res) {
@@ -448,9 +447,10 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
 
         McpParameters parameters = new McpParameters(req.params(), req.params().asJsonObject());
         parameters.get("level").asString().ifPresent(level -> {
-            McpLogger.Level logLevel = McpLogger.Level.valueOf(level);
+            McpLogger.Level logLevel = McpLogger.Level.valueOf(level.toUpperCase());
             session.features().logger().setLevel(logLevel);
         });
+        session.send(res.result(McpJsonRpc.empty()));
     }
 
     private void completionRpc(JsonRpcRequest req, JsonRpcResponse res) {
@@ -492,15 +492,29 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     }
 
     private void enableProgress(McpSession session, McpParameters parameters) {
-        var token = parameters.get("_meta").get("progressToken").asString();
-        if (token.isPresent()) {
-            session.features().progress().token(token.get());
+        var progressToken = parameters.get("_meta").get("progressToken");
+        if (progressToken.isEmpty()) {
+            return;
+        }
+        if (progressToken.isNumber()) {
+            session.features()
+                    .progress()
+                    .token(progressToken.asInteger().get());
+        }
+        if (progressToken.isString()) {
+            session.features()
+                    .progress()
+                    .token(progressToken.asString().get());
         }
     }
 
     private boolean isTemplate(McpResource resource) {
         String uri = resource.uri();
         return uri.contains("{") || uri.contains("}");
+    }
+
+    private boolean isNotTemplate(McpResource resource) {
+        return !isTemplate(resource);
     }
 
     private static final class NoopCompletion implements McpCompletion {

@@ -32,15 +32,16 @@ import static io.helidon.extensions.mcp.server.McpSession.State.INITIALIZED;
 import static io.helidon.extensions.mcp.server.McpSession.State.UNINITIALIZED;
 
 class McpSession {
+    private final McpFeatures features;
     private final Set<McpCapability> capabilities;
     private final AtomicBoolean active = new AtomicBoolean(true);
     private final BlockingQueue<JsonObject> queue = new LinkedBlockingQueue<>();
 
-    private volatile McpFeatures features;
     private volatile State state = UNINITIALIZED;
 
     McpSession(Set<McpCapability> capabilities) {
         this.capabilities = capabilities;
+        this.features = new McpFeatures(this);
     }
 
     void poll(Consumer<JsonObject> consumer) {
@@ -89,9 +90,6 @@ class McpSession {
 
     void state(State state) {
         this.state = state;
-        if (state == INITIALIZED) {
-            this.features = new McpFeatures(this, capabilities);
-        }
     }
 
     enum State {

@@ -28,7 +28,7 @@
     </parent>
 
     <artifactId>helidon4-extensions-mcp-tests-declarative</artifactId>
-    <name>Helidon Extensions MCP Tests Declarative</name>
+    <name>Helidon 4 Extensions MCP Tests Declarative</name>
 
     <dependencies>
         <dependency>

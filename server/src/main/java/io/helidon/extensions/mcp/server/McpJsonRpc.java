@@ -369,12 +369,17 @@ final class McpJsonRpc {
 
     static JsonObject toJson(McpProgress progress, int newProgress) {
         JsonObjectBuilder response = JSON_BUILDER_FACTORY.createObjectBuilder();
-        response.add("jsonRpc", "2.0");
-        response.add("method", McpJsonRpc.METHOD_NOTIFICATION_PROGRESS);
-        response.add("params", JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("progressToken", progress.token())
+        JsonObjectBuilder params = JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("progress", newProgress)
-                .add("total", progress.total()));
+                .add("total", progress.total());
+        if (progress.token().isBlank()) {
+            params.add("progressToken", progress.tokenInt());
+        } else {
+            params.add("progressToken", progress.token());
+        }
+        response.add("jsonrpc", "2.0");
+        response.add("method", McpJsonRpc.METHOD_NOTIFICATION_PROGRESS);
+        response.add("params", params);
         return response.build();
     }
 
@@ -400,5 +405,9 @@ final class McpJsonRpc {
 
     static JsonObject disconnectSession() {
         return JSON_BUILDER_FACTORY.createObjectBuilder().add("disconnect", true).build();
+    }
+
+    public static JsonObject empty() {
+        return JSON_BUILDER_FACTORY.createObjectBuilder().build();
     }
 }

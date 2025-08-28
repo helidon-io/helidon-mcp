@@ -183,6 +183,66 @@ class McpParametersTest {
         assertThat(foo.bar, is("value2"));
     }
 
+    @Test
+    void testIsNumberInt() {
+        JsonStructure object = Json.createObjectBuilder()
+                .add("foo", 1)
+                .build();
+        JsonRpcParams params = JsonRpcParams.create(object);
+        McpParameters parameters = new McpParameters(params, object);
+        boolean isNumber = parameters.get("foo").isNumber();
+
+        assertThat(isNumber, is(true));
+    }
+
+    @Test
+    void testIsNumberDouble() {
+        JsonStructure object = Json.createObjectBuilder()
+                .add("foo", 1.0)
+                .build();
+        JsonRpcParams params = JsonRpcParams.create(object);
+        McpParameters parameters = new McpParameters(params, object);
+        boolean isNumber = parameters.get("foo").isNumber();
+
+        assertThat(isNumber, is(true));
+    }
+
+    @Test
+    void testIsNumberString() {
+        JsonStructure object = Json.createObjectBuilder()
+                .add("foo", "notANumber")
+                .build();
+        JsonRpcParams params = JsonRpcParams.create(object);
+        McpParameters parameters = new McpParameters(params, object);
+        boolean isNumber = parameters.get("foo").isNumber();
+
+        assertThat(isNumber, is(false));
+    }
+
+    @Test
+    void testIsString() {
+        JsonStructure object = Json.createObjectBuilder()
+                .add("foo", "notANumber")
+                .build();
+        JsonRpcParams params = JsonRpcParams.create(object);
+        McpParameters parameters = new McpParameters(params, object);
+        boolean isNumber = parameters.get("foo").isString();
+
+        assertThat(isNumber, is(true));
+    }
+
+    @Test
+    void testIsStringNumber() {
+        JsonStructure object = Json.createObjectBuilder()
+                .add("foo", 1)
+                .build();
+        JsonRpcParams params = JsonRpcParams.create(object);
+        McpParameters parameters = new McpParameters(params, object);
+        boolean isNumber = parameters.get("foo").isString();
+
+        assertThat(isNumber, is(false));
+    }
+
     public static class Foo {
         public String foo;
         public String bar;

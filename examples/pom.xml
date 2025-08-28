@@ -30,6 +30,7 @@
     <groupId>io.helidon.extensions.mcp.examples</groupId>
     <artifactId>helidon4-extensions-mcp-examples-project</artifactId>
     <packaging>pom</packaging>
+    <name>Helidon 4 Extensions MCP Examples Project</name>
 
     <properties>
         <maven.deploy.skip>true</maven.deploy.skip>
@@ -37,10 +38,9 @@
         <maven.javadoc.skip>true</maven.javadoc.skip>
     </properties>
 
-    <name>Helidon Extensions MCP Examples Project</name>
-
     <modules>
         <module>weather-application</module>
+        <module>calendar</module>
     </modules>
 </project>
 

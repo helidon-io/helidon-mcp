@@ -21,14 +21,14 @@ package io.helidon.extensions.mcp.server;
  */
 public final class McpProgress {
     private final McpSession session;
-    private final boolean isActive;
     private int total;
+    private int tokenInt;
     private String token;
     private boolean isSending;
 
-    McpProgress(McpSession session, boolean isActive) {
+    McpProgress(McpSession session) {
         this.session = session;
-        this.isActive = isActive;
+        this.token = "";
     }
 
     /**
@@ -46,13 +46,13 @@ public final class McpProgress {
      * @param progress progress
      */
     public void send(int progress) {
-        if (!isActive || progress > total) {
+        if (progress > total) {
             return;
         }
         if (isSending) {
             session.send(McpJsonRpc.toJson(this, progress));
         }
-        if (progress == total) {
+        if (progress >= total) {
             isSending = false;
         }
     }
@@ -62,8 +62,17 @@ public final class McpProgress {
         isSending = true;
     }
 
+    void token(int token) {
+        this.tokenInt = token;
+        isSending = true;
+    }
+
     String token() {
         return token;
+    }
+
+    int tokenInt() {
+        return tokenInt;
     }
 
     int total() {
@@ -71,6 +80,7 @@ public final class McpProgress {
     }
 
     void stopSending() {
+        token = "";
         isSending = false;
     }
 }

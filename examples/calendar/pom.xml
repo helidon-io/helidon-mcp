@@ -16,8 +16,8 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://maven.apache.org/POM/4.0.0"
         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
@@ -28,12 +28,13 @@
     </parent>
 
     <groupId>io.helidon.examples.extensions.mcp</groupId>
-    <artifactId>helidon4-extensions-mcp-examples-weather</artifactId>
+    <artifactId>helidon4-extensions-mcp-examples-calendar</artifactId>
     <version>1.0.0-M1-SNAPSHOT</version>
-    <name>Helidon 4 Extensions MCP Weather Server Example</name>
+    <name>Helidon 4 Extensions MCP Calendar Example</name>
 
     <properties>
-        <mainClass>io.helidon.extensions.mcp.weather.server.Main</mainClass>
+        <mainClass>io.helidon.extensions.mcp.examples.calendar.Main</mainClass>
+        <version.lib.mcp-sdk>0.10.0</version.lib.mcp-sdk>
     </properties>
 
     <dependencies>
@@ -55,14 +56,44 @@
             <artifactId>helidon-config-yaml</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.eclipse</groupId>
+            <artifactId>yasson</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.helidon.logging</groupId>
             <artifactId>helidon-logging-jul</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>io.helidon.webserver.testing.junit5</groupId>
+            <artifactId>helidon-webserver-testing-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-all</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.modelcontextprotocol.sdk</groupId>
+            <artifactId>mcp</artifactId>
+            <version>${version.lib.mcp-sdk}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
-        <finalName>helidon-mcp-weather-server</finalName>
+        <finalName>helidon-mcp-calendar-server</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -75,4 +106,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>

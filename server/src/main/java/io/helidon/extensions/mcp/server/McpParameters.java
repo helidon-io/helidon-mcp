@@ -120,6 +120,24 @@ public final class McpParameters {
     }
 
     /**
+     * If the value is a JSON number, returns {@code true}, otherwise {code false}.
+     *
+     * @return  {@code true} if value is a JSON number, otherwise {@code false}
+     */
+    public boolean isNumber() {
+        return value instanceof JsonNumber;
+    }
+
+    /**
+     * If the value is a JSON string, returns {@code true}, otherwise {code false}.
+     *
+     * @return  {@code true} if value is a JSON string, otherwise {@code false}
+     */
+    public boolean isString() {
+        return value instanceof JsonString;
+    }
+
+    /**
      * Get optional value of the parameter as a Byte.
      *
      * @return optional byte value

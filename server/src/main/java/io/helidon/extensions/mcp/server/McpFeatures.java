@@ -16,8 +16,6 @@
 
 package io.helidon.extensions.mcp.server;
 
-import java.util.Set;
-
 /**
  * Support for optional client features like {@link McpProgress} and {@link McpLogger}.
  */
@@ -25,9 +23,9 @@ public final class McpFeatures {
     private final McpProgress progress;
     private final McpLogger logger;
 
-    McpFeatures(McpSession session, Set<McpCapability> capabilities) {
-        this.logger = new McpLogger(session, capabilities.contains(McpCapability.LOGGING));
-        this.progress = new McpProgress(session, capabilities.contains(McpCapability.PROGRESS));
+    McpFeatures(McpSession session) {
+        this.logger = new McpLogger(session);
+        this.progress = new McpProgress(session);
     }
 
     /**

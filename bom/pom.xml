@@ -27,7 +27,7 @@
     </parent>
     <artifactId>helidon4-extensions-mcp-bom</artifactId>
     <packaging>pom</packaging>
-    <name>Helidon Extensions MCP BOM</name>
+    <name>Helidon 4 Extensions MCP BOM</name>
 
     <properties>
         <helidon.mcp.version>1.0.0-M1-SNAPSHOT</helidon.mcp.version>
