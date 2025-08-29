@@ -20,14 +20,10 @@ import java.util.List;
 import java.util.Map;
 
 import io.helidon.common.media.type.MediaTypes;
-import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
-import io.helidon.webserver.testing.junit5.ServerTest;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
 
-import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -40,27 +36,19 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 
-@ServerTest
-class MainTest {
-    private final McpSyncClient client;
-
-    MainTest(WebServer server) {
-        this.client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
-                                             .sseEndpoint("/calendar")
-                                             .build())
-                .build();
-        client.initialize();
-    }
+abstract class BaseTest {
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {
         Main.setUpRoute(builder);
     }
 
+    abstract McpSyncClient client();
+    
     @Test
     @Order(1)
     void testToolList() {
-        McpSchema.ListToolsResult listTool = client.listTools();
+        McpSchema.ListToolsResult listTool = client().listTools();
         List<McpSchema.Tool> tools = listTool.tools();
         assertThat(tools.size(), is(1));
 
@@ -78,7 +66,7 @@ class MainTest {
     void testToolCall() {
         Map<String, Object> arguments = Map.of("name", "Franck-birthday", "date", "2021-04-20", "attendees", List.of("Franck"));
         McpSchema.CallToolRequest request = new McpSchema.CallToolRequest("add-calendar-event", arguments);
-        McpSchema.CallToolResult result = client.callTool(request);
+        McpSchema.CallToolResult result = client().callTool(request);
         assertThat(result.isError(), nullValue());
 
         List<McpSchema.Content> contents = result.content();
@@ -95,7 +83,7 @@ class MainTest {
     @Test
     @Order(3)
     void testPromptList() {
-        McpSchema.ListPromptsResult listPrompt = client.listPrompts();
+        McpSchema.ListPromptsResult listPrompt = client().listPrompts();
         List<McpSchema.Prompt> prompts = listPrompt.prompts();
         assertThat(prompts.size(), is(1));
 
@@ -128,7 +116,7 @@ class MainTest {
     void testPromptCall() {
         Map<String, Object> arguments = Map.of("name", "Franck-birthday", "date", "2021-04-20", "attendees", "Franck");
         McpSchema.GetPromptRequest request = new McpSchema.GetPromptRequest("create-event", arguments);
-        McpSchema.GetPromptResult promptResult = client.getPrompt(request);
+        McpSchema.GetPromptResult promptResult = client().getPrompt(request);
         assertThat(promptResult.description(), is("Create a new event and add it to the calendar"));
 
         List<McpSchema.PromptMessage> messages = promptResult.messages();
@@ -148,7 +136,7 @@ class MainTest {
     @Test
     @Order(5)
     void testResourceList() {
-        McpSchema.ListResourcesResult result = client.listResources();
+        McpSchema.ListResourcesResult result = client().listResources();
         List<McpSchema.Resource> resources = result.resources();
         assertThat(resources.size(), is(1));
 
@@ -162,9 +150,9 @@ class MainTest {
     @Test
     @Order(6)
     void testResourceCall() {
-        String uri = client.listResources().resources().getFirst().uri();
+        String uri = client().listResources().resources().getFirst().uri();
         McpSchema.ReadResourceRequest request = new McpSchema.ReadResourceRequest(uri);
-        McpSchema.ReadResourceResult result = client.readResource(request);
+        McpSchema.ReadResourceResult result = client().readResource(request);
 
         List<McpSchema.ResourceContents> contents = result.contents();
         assertThat(contents.size(), is(1));
@@ -181,7 +169,7 @@ class MainTest {
     @Test
     @Order(7)
     void testResourceTemplateList() {
-        McpSchema.ListResourceTemplatesResult result = client.listResourceTemplates();
+        McpSchema.ListResourceTemplatesResult result = client().listResourceTemplates();
         List<McpSchema.ResourceTemplate> templates = result.resourceTemplates();
         assertThat(templates.size(), is(1));
 

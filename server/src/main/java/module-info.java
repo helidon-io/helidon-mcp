@@ -33,6 +33,7 @@ module io.helidon.extensions.mcp.server {
     requires io.helidon.webserver.jsonrpc;
 
     requires static io.helidon.common.features.api;
+    requires java.logging;
 
     exports io.helidon.extensions.mcp.server;
 }

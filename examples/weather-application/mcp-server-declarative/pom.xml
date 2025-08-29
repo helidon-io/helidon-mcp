@@ -30,7 +30,7 @@
     <groupId>io.helidon.examples.extensions.mcp</groupId>
     <artifactId>helidon4-extensions-mcp-examples-weather-declarative</artifactId>
     <version>1.0.0-M1-SNAPSHOT</version>
-    <name>Helidon 4 Extensions MCP Weather Server Declarative Example</name>
+    <name>Helidon 4 Extensions MCP Weather Declarative Example</name>
 
     <properties>
         <mainClass>io.helidon.extensions.mcp.weather.server.declarative.Main</mainClass>

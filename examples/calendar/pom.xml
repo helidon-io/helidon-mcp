@@ -34,7 +34,7 @@
 
     <properties>
         <mainClass>io.helidon.extensions.mcp.examples.calendar.Main</mainClass>
-        <version.lib.mcp-sdk>0.10.0</version.lib.mcp-sdk>
+        <version.lib.mcp-sdk>0.11.3</version.lib.mcp-sdk>
     </properties>
 
     <dependencies>

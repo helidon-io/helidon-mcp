@@ -16,6 +16,7 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -28,16 +29,20 @@ import io.helidon.webserver.jsonrpc.JsonRpcResponse;
 
 import jakarta.json.JsonObject;
 
-import static io.helidon.extensions.mcp.server.McpSession.State.INITIALIZED;
 import static io.helidon.extensions.mcp.server.McpSession.State.UNINITIALIZED;
 
 class McpSession {
+
     private final McpFeatures features;
     private final Set<McpCapability> capabilities;
     private final AtomicBoolean active = new AtomicBoolean(true);
     private final BlockingQueue<JsonObject> queue = new LinkedBlockingQueue<>();
 
     private volatile State state = UNINITIALIZED;
+
+    McpSession() {
+        this(new HashSet<>());
+    }
 
     McpSession(Set<McpCapability> capabilities) {
         this.capabilities = capabilities;
