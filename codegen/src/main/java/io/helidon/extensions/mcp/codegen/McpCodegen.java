@@ -65,18 +65,22 @@ import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PARAMETERS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PATH;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROGRESS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPTS_PAGE_SIZE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_ARGUMENT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_CONTENTS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_INTERFACE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_REQUEST;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCES_PAGE_SIZE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_CONTENTS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_INTERFACE;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_TEMPLATES_PAGE_SIZE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ROLE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ROLE_ENUM;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SERVER;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SERVER_CONFIG;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOLS_PAGE_SIZE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_CONTENTS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_INTERFACE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_VERSION;
@@ -184,6 +188,11 @@ final class McpCodegen implements CodegenExtension {
                         .addContentLiteral(path)
                         .addContentLine(");"));
 
+        addPagination(type, method, MCP_TOOLS_PAGE_SIZE, "toolsPageSize");
+        addPagination(type, method, MCP_PROMPTS_PAGE_SIZE, "promptsPageSize");
+        addPagination(type, method, MCP_RESOURCES_PAGE_SIZE, "resourcesPageSize");
+        addPagination(type, method, MCP_RESOURCE_TEMPLATES_PAGE_SIZE, "resourceTemplatesPageSize");
+
         components.forEach((mcpKind, typeNames) -> {
             for (TypeName typeName : typeNames) {
                 method.addContent("builder.")
@@ -197,6 +206,18 @@ final class McpCodegen implements CodegenExtension {
         method.addContentLine("builder.build().setup(routing);");
         // Clear the components map as code generation if over for this server.
         initializeComponents();
+    }
+
+    private void addPagination(TypeInfo type, Method.Builder method, TypeName annotation, String pageSizeSetter) {
+        type.findAnnotation(annotation)
+                .map(it -> it.value())
+                .map(pageSizeValue -> pageSizeValue.orElse("0"))
+                .map(pageSize -> method.addContent("builder.")
+                        .addContent(pageSizeSetter)
+                        .addContent("(")
+                        .addContent(pageSize)
+                        .addContentLine(");"));
+
     }
 
     private void generateCompletions(TypeName generatedType, ClassModel.Builder classModel, TypeInfo type) {
@@ -812,8 +833,8 @@ final class McpCodegen implements CodegenExtension {
     private TypeName createClassName(TypeName generatedType, TypedElementInfo element, String suffix) {
         return TypeName.builder()
                 .className(element.findAnnotation(MCP_NAME)
-                                .flatMap(name -> name.value())
-                                .orElse(element.elementName()) + suffix)
+                                   .flatMap(name -> name.value())
+                                   .orElse(element.elementName()) + suffix)
                 .addEnclosingName(generatedType.className())
                 .packageName(generatedType.packageName())
                 .build();

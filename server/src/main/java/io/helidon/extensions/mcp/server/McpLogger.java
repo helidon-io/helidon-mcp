@@ -42,7 +42,7 @@ public final class McpLogger {
         Objects.requireNonNull(level, "level must not be null");
         Objects.requireNonNull(message, "message must not be null");
         if (level.ordinal() >= this.level.ordinal()) {
-            session.send(McpJsonRpc.toJson(level, name, message));
+            session.send(McpJsonRpc.createLoggingNotification(level, name, message));
         }
     }
 

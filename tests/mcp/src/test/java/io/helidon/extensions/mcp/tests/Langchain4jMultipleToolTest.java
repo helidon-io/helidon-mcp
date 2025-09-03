@@ -35,6 +35,9 @@ import org.junit.jupiter.api.Test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+/*
+ * With current langchain4j version, it supports only text as tool returned content type.
+ */
 @ServerTest
 class Langchain4jMultipleToolTest {
     private static McpClient client;
@@ -65,10 +68,25 @@ class Langchain4jMultipleToolTest {
         List<ToolSpecification> tools = client.listTools();
         assertThat(tools.size(), is(4));
 
-        ToolSpecification tool1 = tools.getLast();
+        ToolSpecification tool1 = tools.getFirst();
         assertThat(tool1.name(), is("tool1"));
         assertThat(tool1.description(), is("Tool 1"));
         assertThat(tool1.parameters().properties().isEmpty(), is(false));
+
+        ToolSpecification tool2 = tools.get(1);
+        assertThat(tool2.name(), is("tool2"));
+        assertThat(tool2.description(), is("Tool 2"));
+        assertThat(tool2.parameters().properties().isEmpty(), is(false));
+
+        ToolSpecification tool3 = tools.get(2);
+        assertThat(tool3.name(), is("tool3"));
+        assertThat(tool3.description(), is("Tool 3"));
+        assertThat(tool3.parameters().properties().isEmpty(), is(false));
+
+        ToolSpecification tool4 = tools.get(3);
+        assertThat(tool4.name(), is("tool4"));
+        assertThat(tool4.description(), is("Tool 4"));
+        assertThat(tool4.parameters().properties().isEmpty(), is(false));
     }
 
     @Test

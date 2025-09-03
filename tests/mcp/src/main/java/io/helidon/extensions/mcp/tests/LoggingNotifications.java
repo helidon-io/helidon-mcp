@@ -34,7 +34,6 @@ class LoggingNotifications {
     static void setUpRoute(HttpRouting.Builder builder) {
         builder.addFeature(McpServerFeature.builder()
                                    .path("/")
-                                   .logging(true)
                                    .addTool(McpTool.builder()
                                                     .tool(new LoggingTool())
                                                     .description("A tool that uses logging")

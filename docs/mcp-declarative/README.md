@@ -364,6 +364,22 @@ class Server {
 }
 ```
 
+### Pagination
+
+Pagination enables the server to return results in smaller, manageable chunks instead of delivering the entire dataset at once.
+In MCP servers, pagination is applied when clients request lists of components, such as tools. The page size can be configured 
+using the following set of annotations:
+
+```java
+@Mcp.Server
+@Mcp.ToolsPageSize(1)
+@Mcp.PromptsPageSize(1)
+@Mcp.ResourcesPageSize(1)
+@Mcp.ResourceTemplatesPageSize(1)
+class Server {
+}
+```
+
 ## References
 
 - [MCP Specification](https://modelcontextprotocol.io/introduction)

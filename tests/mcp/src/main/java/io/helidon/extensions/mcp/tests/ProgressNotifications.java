@@ -34,7 +34,6 @@ class ProgressNotifications {
     static void setUpRoute(HttpRouting.Builder builder) {
         builder.addFeature(McpServerFeature.builder()
                                    .path("/")
-                                   .logging(true)
                                    .addTool(new ProgressTool()));
     }
 

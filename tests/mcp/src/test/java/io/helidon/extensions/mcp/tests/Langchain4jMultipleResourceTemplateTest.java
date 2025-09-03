@@ -71,17 +71,17 @@ class Langchain4jMultipleResourceTemplateTest {
         list = list.reversed();
         assertThat(list.size(), is(3));
 
-        var resource1 = list.getFirst();
-        assertThat(resource1.name(), is("resource1"));
-        assertThat(resource1.description(), is("Resource 1"));
-        assertThat(resource1.uriTemplate(), is(RESOURCE1_URI));
-        assertThat(resource1.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
-
-        var resource2 = list.get(1);
+        var resource2 = list.getFirst();
         assertThat(resource2.name(), is("resource2"));
         assertThat(resource2.description(), is("Resource 2"));
         assertThat(resource2.uriTemplate(), is(RESOURCE2_URI));
         assertThat(resource2.mimeType(), is(MediaTypes.APPLICATION_JSON_VALUE));
+
+        var resource1 = list.get(1);
+        assertThat(resource1.name(), is("resource1"));
+        assertThat(resource1.description(), is("Resource 1"));
+        assertThat(resource1.uriTemplate(), is(RESOURCE1_URI));
+        assertThat(resource1.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
 
         var resource3 = list.get(2);
         assertThat(resource3.name(), is("resource3"));
@@ -96,7 +96,7 @@ class Langchain4jMultipleResourceTemplateTest {
             client.readResource(RESOURCE1_URI);
             fail("Attempt to read resource template must fail");
         } catch (McpException e) {
-            assertThat(e.getMessage(), is("Code: -32600, message: Resource Template cannot be read."));
+            assertThat(e.getMessage(), is("Code: -32600, message: Resource does not exist"));
         }
     }
 

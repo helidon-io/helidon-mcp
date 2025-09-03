@@ -249,7 +249,7 @@ public final class Mcp {
 
     /**
      * Annotation to define prompt content {@link io.helidon.extensions.mcp.server.McpRole}
-     * when used on a method that return a {@code String}. Otherwise, this annotation is ignored.
+     * when used on a prompt that return a {@code String}. Otherwise, this annotation is ignored.
      */
     @Target(METHOD)
     @Retention(CLASS)
@@ -260,5 +260,81 @@ public final class Mcp {
          * @return role
          */
         McpRole value() default McpRole.ASSISTANT;
+    }
+
+    /**
+     * Annotation to define {@code Tools} page size.
+     * <p>
+     * Pagination occurs when client uses JSON-RPC listing methods. It enables the server to return results in smaller,
+     * manageable chunks rather than delivering the entire dataset at once. This class maintains a map of pages, where each key
+     * represents a unique cursor associated with a specific page. Each page also contains a cursor pointing to the next page in
+     * the sequence.
+     */
+    @Target(TYPE)
+    @Retention(CLASS)
+    public @interface ToolsPageSize {
+        /**
+         * Configure page size for {@code Tool} list.
+         *
+         * @return page size
+         */
+        int value() default McpPagination.DEFAULT_PAGE_SIZE;
+    }
+
+    /**
+     * Annotation to define {@code Prompts} page size.
+     * <p>
+     * Pagination occurs when client uses JSON-RPC listing methods. It enables the server to return results in smaller,
+     * manageable chunks rather than delivering the entire dataset at once. This class maintains a map of pages, where each key
+     * represents a unique cursor associated with a specific page. Each page also contains a cursor pointing to the next page in
+     * the sequence.
+     */
+    @Target(TYPE)
+    @Retention(CLASS)
+    public @interface PromptsPageSize {
+        /**
+         * Configure page size for {@code Prompt} list.
+         *
+         * @return page size
+         */
+        int value() default McpPagination.DEFAULT_PAGE_SIZE;
+    }
+
+    /**
+     * Annotation to define {@code Resources} page size.
+     * <p>
+     * Pagination occurs when client uses JSON-RPC listing methods. It enables the server to return results in smaller,
+     * manageable chunks rather than delivering the entire dataset at once. This class maintains a map of pages, where each key
+     * represents a unique cursor associated with a specific page. Each page also contains a cursor pointing to the next page in
+     * the sequence.
+     */
+    @Target(TYPE)
+    @Retention(CLASS)
+    public @interface ResourcesPageSize {
+        /**
+         * Configure page size for {@code Resource} list.
+         *
+         * @return page size
+         */
+        int value() default McpPagination.DEFAULT_PAGE_SIZE;
+    }
+
+    /**
+     * Annotation to define {@code Resource Templates} page size.
+     * <p>
+     * Pagination occurs when client uses JSON-RPC listing methods. It enables the server to return results in smaller,
+     * manageable chunks rather than delivering the entire dataset at once. This class maintains a map of pages, where each key
+     * represents a unique cursor associated with a specific page. Each page also contains a cursor pointing to the next page in
+     * the sequence.
+     */
+    @Target(TYPE)
+    @Retention(CLASS)
+    public @interface ResourceTemplatesPageSize {
+        /**
+         * Configure page size for {@code Resource Template} list.
+         *
+         * @return page size
+         */
+        int value() default McpPagination.DEFAULT_PAGE_SIZE;
     }
 }

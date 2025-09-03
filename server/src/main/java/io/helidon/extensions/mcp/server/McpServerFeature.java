@@ -20,11 +20,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -45,8 +45,34 @@ import io.helidon.webserver.jsonrpc.JsonRpcRouting;
 import io.helidon.webserver.sse.SseSink;
 
 import jakarta.json.JsonObject;
+import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
 
+import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_COMPLETION_COMPLETE;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_INITIALIZE;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_LOGGING_SET_LEVEL;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_NOTIFICATION_CANCELED;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_NOTIFICATION_INITIALIZED;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_PING;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_PROMPT_GET;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_PROMPT_LIST;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_RESOURCES_LIST;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_RESOURCES_READ;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_RESOURCES_SUBSCRIBE;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_RESOURCES_TEMPLATES_LIST;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_RESOURCES_UNSUBSCRIBE;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_SESSION_DISCONNECT;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_TOOLS_CALL;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_TOOLS_LIST;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.empty;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.isResponse;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.listPrompts;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.listResourceTemplates;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.listResources;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.listTools;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.readResource;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.toJson;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.toolCall;
 import static io.helidon.extensions.mcp.server.McpSession.State.INITIALIZING;
 import static io.helidon.extensions.mcp.server.McpSession.State.UNINITIALIZED;
 
@@ -61,24 +87,29 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     private final String endpoint;
     private final McpServerConfig config;
     private final JsonRpcHandlers jsonRpcHandlers;
-    private final LruCache<String, McpSession> sessions = LruCache.create(SESSION_CACHE_SIZE);
+    private final McpPagination<McpTool> tools;
+    private final McpPagination<McpPrompt> prompts;
+    private final McpPagination<McpResource> resources;
+    private final McpPagination<McpResource> resourceTemplates;
     private final Set<McpCapability> capabilities = new HashSet<>();
-    private final Map<String, McpTool> tools = new ConcurrentHashMap<>();
-    private final Map<String, McpPrompt> prompts = new ConcurrentHashMap<>();
-    private final Map<String, McpResource> resources = new ConcurrentHashMap<>();
     private final Map<String, McpCompletion> completions = new ConcurrentHashMap<>();
-    private final Map<String, McpResource> resourceTemplates = new ConcurrentHashMap<>();
+    private final LruCache<String, McpSession> sessions = LruCache.create(SESSION_CACHE_SIZE);
 
     private McpServerFeature(McpServerConfig config) {
         String path = config.path();
+        Map<String, McpTool> tools = new ConcurrentSkipListMap<>();
+        Map<String, McpPrompt> prompts = new ConcurrentSkipListMap<>();
+        Map<String, McpResource> resources = new ConcurrentSkipListMap<>();
+        Map<String, McpResource> templates = new ConcurrentSkipListMap<>();
         JsonRpcHandlers.Builder builder = JsonRpcHandlers.builder();
 
         this.config = config;
         this.endpoint = path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
         for (McpResource resource : config.resources()) {
-            resources.put(resource.uri(), resource);
             if (isTemplate(resource)) {
-                resourceTemplates.put(resource.uri(), resource);
+                templates.put(resource.uri(), resource);
+            } else {
+                resources.put(resource.uri(), resource);
             }
         }
         for (McpTool tool : config.tools()) {
@@ -91,43 +122,46 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             completions.put(completion.reference(), completion);
         }
 
-        builder.putMethod(McpJsonRpc.METHOD_PING, this::pingRpc);
-        builder.putMethod(McpJsonRpc.METHOD_INITIALIZE, this::initializeRpc);
+        this.tools = new McpPagination<>(tools, config.toolsPageSize());
+        this.prompts = new McpPagination<>(prompts, config.promptsPageSize());
+        this.resources = new McpPagination<>(resources, config.resourcesPageSize());
+        this.resourceTemplates = new McpPagination<>(templates, config.resourceTemplatesPageSize());
+
+        builder.putMethod(METHOD_PING, this::pingRpc);
+        builder.putMethod(METHOD_INITIALIZE, this::initializeRpc);
 
         if (!config.tools().isEmpty()) {
             capabilities.add(McpCapability.TOOL_LIST_CHANGED);
-            builder.putMethod(McpJsonRpc.METHOD_TOOLS_LIST, this::toolsListRpc);
-            builder.putMethod(McpJsonRpc.METHOD_TOOLS_CALL, this::toolsCallRpc);
+            builder.putMethod(METHOD_TOOLS_LIST, this::toolsListRpc);
+            builder.putMethod(METHOD_TOOLS_CALL, this::toolsCallRpc);
         }
 
         if (!config.resources().isEmpty()) {
             capabilities.add(McpCapability.RESOURCE_LIST_CHANGED);
             capabilities.add(McpCapability.RESOURCE_SUBSCRIBE);
-            builder.putMethod(McpJsonRpc.METHOD_RESOURCES_LIST, this::resourcesListRpc);
-            builder.putMethod(McpJsonRpc.METHOD_RESOURCES_READ, this::resourcesReadRpc);
-            builder.putMethod(McpJsonRpc.METHOD_RESOURCES_TEMPLATES_LIST, this::resourceTemplateListRpc);
-            builder.putMethod(McpJsonRpc.METHOD_RESOURCES_SUBSCRIBE, this::resourceSubscribeRpc);
-            builder.putMethod(McpJsonRpc.METHOD_RESOURCES_UNSUBSCRIBE, this::resourceUnsubscribeRpc);
+            builder.putMethod(METHOD_RESOURCES_LIST, this::resourcesListRpc);
+            builder.putMethod(METHOD_RESOURCES_READ, this::resourcesReadRpc);
+            builder.putMethod(METHOD_RESOURCES_TEMPLATES_LIST, this::resourceTemplateListRpc);
+            builder.putMethod(METHOD_RESOURCES_SUBSCRIBE, this::resourceSubscribeRpc);
+            builder.putMethod(METHOD_RESOURCES_UNSUBSCRIBE, this::resourceUnsubscribeRpc);
         }
 
         if (!config.prompts().isEmpty()) {
             capabilities.add(McpCapability.PROMPT_LIST_CHANGED);
-            builder.putMethod(McpJsonRpc.METHOD_PROMPT_LIST, this::promptsListRpc);
-            builder.putMethod(McpJsonRpc.METHOD_PROMPT_GET, this::promptsGetRpc);
+            builder.putMethod(METHOD_PROMPT_LIST, this::promptsListRpc);
+            builder.putMethod(METHOD_PROMPT_GET, this::promptsGetRpc);
         }
 
-        if (config.logging()) {
-            capabilities.add(McpCapability.LOGGING);
-            builder.putMethod(McpJsonRpc.METHOD_LOGGING_SET_LEVEL, this::loggingLogLevelRpc);
-        }
+        capabilities.add(McpCapability.LOGGING);
+        builder.putMethod(METHOD_LOGGING_SET_LEVEL, this::loggingLogLevelRpc);
 
         capabilities.add(McpCapability.COMPLETION);
         completions.put(NoopCompletion.REFERENCE, new NoopCompletion());
-        builder.putMethod(McpJsonRpc.METHOD_COMPLETION_COMPLETE, this::completionRpc);
+        builder.putMethod(METHOD_COMPLETION_COMPLETE, this::completionRpc);
 
-        builder.putMethod(McpJsonRpc.METHOD_NOTIFICATION_INITIALIZED, this::notificationInitRpc);
-        builder.putMethod(McpJsonRpc.METHOD_NOTIFICATION_CANCELED, this::notificationCancelRpc);
-        builder.putMethod(McpJsonRpc.METHOD_SESSION_DISCONNECT, this::disconnect);
+        builder.putMethod(METHOD_NOTIFICATION_INITIALIZED, this::notificationInitRpc);
+        builder.putMethod(METHOD_NOTIFICATION_CANCELED, this::notificationCancelRpc);
+        builder.putMethod(METHOD_SESSION_DISCONNECT, this::disconnect);
 
         builder.errorHandler(this::handleErrorRequest);
 
@@ -226,7 +260,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
      * @return whether error was handled or not
      */
     private Optional<JsonRpcError> handleErrorRequest(ServerRequest req, JsonObject object) {
-        if (McpJsonRpc.isResponse(object)) {
+        if (isResponse(object)) {
             Optional<McpSession> session = findSession(req);
             if (session.isPresent()) {
                 session.get().send(object);
@@ -261,7 +295,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             McpParameters params = new McpParameters(req.params(), req.params().asJsonObject());
             parseClientCapabilities(session, params);
         }
-        session.send(res.result(McpJsonRpc.toJson(PROTOCOL_VERSION, capabilities, config)));
+        session.send(res.result(toJson(PROTOCOL_VERSION, capabilities, config)));
     }
 
     private void parseClientCapabilities(McpSession session, McpParameters parameters) {
@@ -294,7 +328,21 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             res.status(Status.NOT_FOUND_404).send();
             return;
         }
-        foundSession.get().send(res.result(McpJsonRpc.listTools(tools.values())));
+        McpSession session = foundSession.get();
+        Optional<JsonValue> cursor = req.params().find("cursor");
+        if (cursor.isPresent()) {
+            String cursorString = cursor.map(JsonString.class::cast)
+                    .get()
+                    .getString();
+            McpPage<McpTool> page = tools.page(cursorString);
+            if (page == null) {
+                session.send(res.error(JsonRpcError.INVALID_PARAMS, "Wrong cursor provided."));
+                return;
+            }
+            session.send(res.result(listTools(page)));
+            return;
+        }
+        session.send(res.result(listTools(tools.firstPage())));
     }
 
     private void toolsCallRpc(JsonRpcRequest req, JsonRpcResponse res) {
@@ -308,24 +356,20 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         enableProgress(session, parameters);
 
         String name = parameters.get("name").asString().orElse("");
-        Optional<McpTool> tool = tools.values()
-                .stream()
-                .filter(t -> name.equals(t.name()))
-                .findAny();
+        McpTool tool = tools.get(name);
 
-        if (tool.isEmpty()) {
+        if (tool == null) {
             session.send(res.error(JsonRpcError.INVALID_PARAMS, "Tool with name %s is not available".formatted(name)));
             return;
         }
 
-        List<McpToolContent> contents = tool.get()
-                .tool()
+        List<McpToolContent> contents = tool.tool()
                 .apply(McpRequest.builder()
                                .parameters(parameters.get("arguments"))
                                .features(session.features())
                                .build());
         session.features().progress().stopSending();
-        session.send(res.result(McpJsonRpc.toolCall(contents).build()));
+        session.send(res.result(toolCall(contents)));
     }
 
     private void resourcesListRpc(JsonRpcRequest req, JsonRpcResponse res) {
@@ -335,10 +379,22 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             return;
         }
         McpSession session = foundSession.get();
-        List<McpResource> resourceList = resources.values().stream()
-                .filter(this::isNotTemplate)
-                .toList();
-        session.send(res.result(McpJsonRpc.listResources(resourceList)));
+        Optional<JsonValue> cursor = req.params().find("cursor");
+        if (cursor.isPresent()) {
+            String cursorString = cursor.map(JsonString.class::cast)
+                    .get()
+                    .getString();
+            McpPage<McpResource> page = resources.page(cursorString);
+            if (page == null) {
+                session.send(res.error(JsonRpcError.INVALID_PARAMS, "Wrong cursor provided."));
+                return;
+            }
+            session.send(res.result(listResources(page)));
+            return;
+        }
+        var resourceList = listResources(resources.firstPage());
+        var response = res.result(resourceList);
+        session.send(response);
     }
 
     private void resourcesReadRpc(JsonRpcRequest req, JsonRpcResponse res) {
@@ -351,27 +407,21 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
 
         McpParameters parameters = new McpParameters(req.params(), req.params().asJsonObject());
         String resourceUri = parameters.get("uri").asString().orElse("");
-        Optional<McpResource> resource = resources.values()
-                .stream()
-                .filter(it -> Objects.equals(it.uri(), resourceUri))
-                .findFirst();
+        McpResource resource = resources.get(resourceUri);
 
-        if (resource.isEmpty()) {
+        if (resource == null) {
             session.send(res.error(JsonRpcError.INVALID_REQUEST, "Resource does not exist"));
-            return;
-        }
-        if (isTemplate(resource.get())) {
-            session.send(res.error(JsonRpcError.INVALID_REQUEST, "Resource Template cannot be read."));
             return;
         }
 
         enableProgress(session, parameters);
-        List<McpResourceContent> contents = resource.get().resource().apply(McpRequest.builder()
-                                                                                    .parameters(parameters)
-                                                                                    .features(session.features())
-                                                                                    .build());
+        List<McpResourceContent> contents = resource.resource()
+                .apply(McpRequest.builder()
+                               .parameters(parameters)
+                               .features(session.features())
+                               .build());
         session.features().progress().stopSending();
-        session.send(res.result(McpJsonRpc.readResource(resourceUri, contents)));
+        session.send(res.result(readResource(resourceUri, contents)));
     }
 
     private void resourceSubscribeRpc(JsonRpcRequest req, JsonRpcResponse res) {
@@ -387,7 +437,20 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             return;
         }
         McpSession session = foundSession.get();
-        session.send(res.result(McpJsonRpc.listResourceTemplates(resourceTemplates.values())));
+        Optional<JsonValue> cursor = req.params().find("cursor");
+        if (cursor.isPresent()) {
+            String cursorString = cursor.map(JsonString.class::cast)
+                    .get()
+                    .getString();
+            McpPage<McpResource> page = resourceTemplates.page(cursorString);
+            if (page == null) {
+                session.send(res.error(JsonRpcError.INVALID_PARAMS, "Wrong cursor provided."));
+                return;
+            }
+            session.send(res.result(listResourceTemplates(page)));
+            return;
+        }
+        session.send(res.result(listResourceTemplates(resourceTemplates.firstPage())));
     }
 
     private void promptsListRpc(JsonRpcRequest req, JsonRpcResponse res) {
@@ -397,7 +460,20 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             return;
         }
         McpSession session = foundSession.get();
-        session.send(res.result(McpJsonRpc.listPrompts(prompts.values())));
+        Optional<JsonValue> cursor = req.params().find("cursor");
+        if (cursor.isPresent()) {
+            String cursorString = cursor.map(JsonString.class::cast)
+                    .get()
+                    .getString();
+            McpPage<McpPrompt> page = prompts.page(cursorString);
+            if (page == null) {
+                session.send(res.error(JsonRpcError.INVALID_PARAMS, "Wrong cursor provided."));
+                return;
+            }
+            session.send(res.result(listPrompts(page)));
+            return;
+        }
+        session.send(res.result(listPrompts(prompts.firstPage())));
     }
 
     private void promptsGetRpc(JsonRpcRequest req, JsonRpcResponse res) {
@@ -417,24 +493,20 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             return;
         }
 
-        var prompt = prompts.values()
-                .stream()
-                .filter(p -> Objects.equals(p.name(), name))
-                .findFirst();
-        if (prompt.isEmpty()) {
+        McpPrompt prompt = prompts.get(name);
+        if (prompt == null) {
             session.features().progress().stopSending();
             session.send(res.error(JsonRpcError.INVALID_PARAMS, "Wrong prompt name: " + name));
             return;
         }
 
-        List<McpPromptContent> contents = prompt.get()
-                .prompt()
+        List<McpPromptContent> contents = prompt.prompt()
                 .apply(McpRequest.builder()
                                .parameters(parameters.get("arguments"))
                                .features(session.features())
                                .build());
         session.features().progress().stopSending();
-        session.send(res.result(McpJsonRpc.toJson(contents, prompt.get().description())));
+        session.send(res.result(toJson(contents, prompt.description())));
     }
 
     private void loggingLogLevelRpc(JsonRpcRequest req, JsonRpcResponse res) {
@@ -450,7 +522,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             McpLogger.Level logLevel = McpLogger.Level.valueOf(level.toUpperCase());
             session.features().logger().setLevel(logLevel);
         });
-        session.send(res.result(McpJsonRpc.empty()));
+        session.send(res.result(empty()));
     }
 
     private void completionRpc(JsonRpcRequest req, JsonRpcResponse res) {
@@ -476,7 +548,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                                .parameters(parameters.get("argument"))
                                .features(session.features())
                                .build());
-        session.send(res.result(McpJsonRpc.toJson(result)));
+        session.send(res.result(toJson(result)));
     }
 
     private String parseCompletionName(McpParameters completion) {
@@ -511,10 +583,6 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     private boolean isTemplate(McpResource resource) {
         String uri = resource.uri();
         return uri.contains("{") || uri.contains("}");
-    }
-
-    private boolean isNotTemplate(McpResource resource) {
-        return !isTemplate(resource);
     }
 
     private static final class NoopCompletion implements McpCompletion {

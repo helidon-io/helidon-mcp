@@ -95,6 +95,10 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "MCP_PROMPT", Mcp.Prompt.class);
         checkField(toCheck, checked, fields, "MCP_VERSION", Mcp.Version.class);
         checkField(toCheck, checked, fields, "MCP_RESOURCE", Mcp.Resource.class);
+        checkField(toCheck, checked, fields, "MCP_TOOLS_PAGE_SIZE", Mcp.ToolsPageSize.class);
+        checkField(toCheck, checked, fields, "MCP_PROMPTS_PAGE_SIZE", Mcp.PromptsPageSize.class);
+        checkField(toCheck, checked, fields, "MCP_RESOURCES_PAGE_SIZE", Mcp.ResourcesPageSize.class);
+        checkField(toCheck, checked, fields, "MCP_RESOURCE_TEMPLATES_PAGE_SIZE", Mcp.ResourceTemplatesPageSize.class);
         checkField(toCheck, checked, fields, "MCP_COMPLETION", Mcp.Completion.class);
         checkField(toCheck, checked, fields, "MCP_JSON_SCHEMA", Mcp.JsonSchema.class);
         checkField(toCheck, checked, fields, "MCP_DESCRIPTION", Mcp.Description.class);

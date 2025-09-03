@@ -21,18 +21,39 @@ import java.util.List;
 import io.helidon.builder.api.Option;
 import io.helidon.builder.api.Prototype;
 
-@Prototype.Blueprint
-@Prototype.Configured("mcp.server")
-interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
+import static io.helidon.extensions.mcp.server.McpPagination.DEFAULT_PAGE_SIZE;
 
+/**
+ * Configuration of an MCP server.
+ */
+@Prototype.Blueprint
+@Prototype.Configured(McpServerConfigBlueprint.CONFIG_ROOT)
+interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
+    String CONFIG_ROOT = "mcp.server";
+
+    /**
+     * Server path configuration.
+     *
+     * @return path
+     */
     @Option.Configured
     @Option.Default("/mcp")
     String path();
 
+    /**
+     * Server name configuration.
+     *
+     * @return name
+     */
     @Option.Configured
     @Option.Default("mcp-server")
     String name();
 
+    /**
+     * Server version configuration.
+     *
+     * @return version
+     */
     @Option.Configured
     @Option.Default("0.0.1")
     String version();
@@ -41,15 +62,75 @@ interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
     @Option.DefaultBoolean(true)
     boolean logging();
 
+    /**
+     * Server tools page size configuration.
+     *
+     * @return page size
+     */
+    @Option.Configured
+    @Option.DefaultInt(DEFAULT_PAGE_SIZE)
+    @Option.Decorator(McpPagination.PageSizeDecorator.class)
+    int toolsPageSize();
+
+    /**
+     * Server prompts page size configuration.
+     *
+     * @return page size
+     */
+    @Option.Configured
+    @Option.DefaultInt(DEFAULT_PAGE_SIZE)
+    @Option.Decorator(McpPagination.PageSizeDecorator.class)
+    int promptsPageSize();
+
+    /**
+     * Server resources page size configuration.
+     *
+     * @return page size
+     */
+    @Option.Configured
+    @Option.DefaultInt(DEFAULT_PAGE_SIZE)
+    @Option.Decorator(McpPagination.PageSizeDecorator.class)
+    int resourcesPageSize();
+
+    /**
+     * Server resource templates page size configuration.
+     *
+     * @return page size
+     */
+    @Option.Configured
+    @Option.DefaultInt(DEFAULT_PAGE_SIZE)
+    @Option.Decorator(McpPagination.PageSizeDecorator.class)
+    int resourceTemplatesPageSize();
+
+    /**
+     * List of tools registered to this server.
+     *
+     * @return tools
+     */
     @Option.Singular
     List<McpTool> tools();
 
+    /**
+     * List of prompts registered to this server.
+     *
+     * @return prompts
+     */
     @Option.Singular
     List<McpPrompt> prompts();
 
+    /**
+     * List of resources registered to this server.
+     *
+     * @return resources
+     */
     @Option.Singular
     List<McpResource> resources();
 
+    /**
+     * List of completions registered to this server.
+     *
+     * @return completions
+     */
     @Option.Singular
     List<McpCompletion> completions();
 }

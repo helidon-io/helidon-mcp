@@ -441,6 +441,31 @@ class ProgressTool implements McpTool {
 }
 ```
 
+### Pagination
+
+Pagination enables the server to return results in smaller, manageable chunks instead of delivering the entire dataset at once. 
+In MCP servers, pagination is automatically applied when clients request lists of components, such as tools. The size of each 
+paginated response can be configured using the `*-page-size` property.
+
+```yaml
+mcp:
+  server:
+    tools-page-size: "1"
+    prompts-page-size: "1"
+    resources-page-size: "1"
+    resource-templates-page-size: "1"
+```
+
+Or directly on the server configuration builder:
+
+```java
+McpServerFeature.builder()
+               .toolsPageSize(1)
+               .promptsPageSize(1)
+               .resourcesPageSize(1)
+               .resourceTemplatesPageSize(1)
+```
+
 ## Configuration
 
 MCP server configuration can be defined using Helidon configuration files. Example in YAML:

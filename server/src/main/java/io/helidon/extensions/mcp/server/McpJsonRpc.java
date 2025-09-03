@@ -19,7 +19,6 @@ package io.helidon.extensions.mcp.server;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -180,7 +179,7 @@ final class McpJsonRpc {
                 .add("inputSchema", jsonSchema);
     }
 
-    static JsonObjectBuilder toolCall(List<McpToolContent> contents) {
+    static JsonObject toolCall(List<McpToolContent> contents) {
         JsonArrayBuilder array = JSON_BUILDER_FACTORY.createArrayBuilder();
         for (McpToolContent content : contents) {
             if (content instanceof McpToolResourceContent trc) {
@@ -189,38 +188,59 @@ final class McpJsonRpc {
             }
             array.add(toJson(content.content()));
         }
-        return JSON_BUILDER_FACTORY.createObjectBuilder().add("content", array);
+        return JSON_BUILDER_FACTORY.createObjectBuilder().add("content", array).build();
     }
 
-    static JsonObject listResources(Collection<McpResource> resources) {
+    static JsonObject listResources(McpPage<McpResource> page) {
         JsonArrayBuilder builder = JSON_BUILDER_FACTORY.createArrayBuilder();
-        resources.stream().map(McpJsonRpc::toJson).forEach(builder::add);
-        return JSON_BUILDER_FACTORY.createObjectBuilder().add("resources", builder).build();
-    }
-
-    static JsonObject listTools(Collection<McpTool> tools) {
-        JsonArrayBuilder builder = JSON_BUILDER_FACTORY.createArrayBuilder();
-        tools.stream().map(McpJsonRpc::toJson).forEach(builder::add);
-        return JSON_BUILDER_FACTORY.createObjectBuilder().add("tools", builder.build()).build();
-    }
-
-    static JsonObject listResourceTemplates(Collection<McpResource> resources) {
-        JsonArrayBuilder templates = JSON_BUILDER_FACTORY.createArrayBuilder();
-        resources.stream()
-                .map(McpJsonRpc::resourceTemplates)
-                .forEach(templates::add);
-        return JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("resourceTemplates", templates)
-                .build();
-    }
-
-    static JsonObject listPrompts(Collection<McpPrompt> prompts) {
-        List<JsonObjectBuilder> list = prompts.stream()
+        page.components().stream()
                 .map(McpJsonRpc::toJson)
-                .toList();
-        return JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("prompts", JSON_BUILDER_FACTORY.createArrayBuilder(list))
-                .build();
+                .forEach(builder::add);
+        JsonObjectBuilder resources = JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("resources", builder);
+        if (!page.cursor().isBlank()) {
+            resources.add("nextCursor", page.cursor());
+        }
+        return resources.build();
+    }
+
+    static JsonObject listTools(McpPage<McpTool> page) {
+        JsonArrayBuilder builder = JSON_BUILDER_FACTORY.createArrayBuilder();
+        page.components().stream()
+                .map(McpJsonRpc::toJson)
+                .forEach(builder::add);
+        JsonObjectBuilder resources = JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("tools", builder);
+        if (!page.cursor().isBlank()) {
+            resources.add("nextCursor", page.cursor());
+        }
+        return resources.build();
+    }
+
+    static JsonObject listResourceTemplates(McpPage<McpResource> page) {
+        JsonArrayBuilder builder = JSON_BUILDER_FACTORY.createArrayBuilder();
+        page.components().stream()
+                .map(McpJsonRpc::resourceTemplates)
+                .forEach(builder::add);
+        JsonObjectBuilder resources = JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("resourceTemplates", builder);
+        if (!page.cursor().isBlank()) {
+            resources.add("nextCursor", page.cursor());
+        }
+        return resources.build();
+    }
+
+    static JsonObject listPrompts(McpPage<McpPrompt> page) {
+        JsonArrayBuilder builder = JSON_BUILDER_FACTORY.createArrayBuilder();
+        page.components().stream()
+                .map(McpJsonRpc::toJson)
+                .forEach(builder::add);
+        JsonObjectBuilder resources = JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("prompts", builder);
+        if (!page.cursor().isBlank()) {
+            resources.add("nextCursor", page.cursor());
+        }
+        return resources.build();
     }
 
     static JsonObjectBuilder toJson(McpToolResourceContent content) {
@@ -383,7 +403,7 @@ final class McpJsonRpc {
         return response.build();
     }
 
-    static JsonObject toJson(McpLogger.Level level, String name, String message) {
+    static JsonObject createLoggingNotification(McpLogger.Level level, String name, String message) {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("jsonrpc", "2.0")
                 .add("method", METHOD_NOTIFICATION_MESSAGE)
