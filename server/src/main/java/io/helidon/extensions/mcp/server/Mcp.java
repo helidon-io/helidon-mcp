@@ -265,7 +265,7 @@ public final class Mcp {
     /**
      * Annotation to define {@code Tools} page size.
      * <p>
-     * Pagination occurs when client uses JSON-RPC listing methods. It enables the server to return results in smaller,
+     * Pagination occurs when client uses MCP listing methods. It enables the server to return results in smaller,
      * manageable chunks rather than delivering the entire dataset at once. This class maintains a map of pages, where each key
      * represents a unique cursor associated with a specific page. Each page also contains a cursor pointing to the next page in
      * the sequence.
@@ -284,7 +284,7 @@ public final class Mcp {
     /**
      * Annotation to define {@code Prompts} page size.
      * <p>
-     * Pagination occurs when client uses JSON-RPC listing methods. It enables the server to return results in smaller,
+     * Pagination occurs when client uses MCP listing methods. It enables the server to return results in smaller,
      * manageable chunks rather than delivering the entire dataset at once. This class maintains a map of pages, where each key
      * represents a unique cursor associated with a specific page. Each page also contains a cursor pointing to the next page in
      * the sequence.
@@ -303,7 +303,7 @@ public final class Mcp {
     /**
      * Annotation to define {@code Resources} page size.
      * <p>
-     * Pagination occurs when client uses JSON-RPC listing methods. It enables the server to return results in smaller,
+     * Pagination occurs when client uses MCP listing methods. It enables the server to return results in smaller,
      * manageable chunks rather than delivering the entire dataset at once. This class maintains a map of pages, where each key
      * represents a unique cursor associated with a specific page. Each page also contains a cursor pointing to the next page in
      * the sequence.
@@ -322,7 +322,7 @@ public final class Mcp {
     /**
      * Annotation to define {@code Resource Templates} page size.
      * <p>
-     * Pagination occurs when client uses JSON-RPC listing methods. It enables the server to return results in smaller,
+     * Pagination occurs when client uses MCP listing methods. It enables the server to return results in smaller,
      * manageable chunks rather than delivering the entire dataset at once. This class maintains a map of pages, where each key
      * represents a unique cursor associated with a specific page. Each page also contains a cursor pointing to the next page in
      * the sequence.

@@ -18,16 +18,17 @@ package io.helidon.extensions.mcp.server;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 import io.helidon.builder.api.Prototype;
 
 /**
  * Support for MCP pagination feature.
  * <p>
- * Pagination is supported by the following JSON-RPC methods:
+ * Pagination is supported by the following MCP methods:
  * <ul>
  *     <li>
  *         {@link io.helidon.extensions.mcp.server.McpJsonRpc#METHOD_TOOLS_LIST}
@@ -56,29 +57,11 @@ import io.helidon.builder.api.Prototype;
  */
 class McpPagination<T> {
     static final int DEFAULT_PAGE_SIZE = 0;
-    private final Map<String, T> components;
-    private final Map<String, McpPage<T>> pages;
+    private final ConcurrentMap<String, McpPage<T>> pages;
     private final String initialCursor = UUID.randomUUID().toString();
-
-    McpPagination(Map<String, T> mcpComponents, int pageSize) {
-        this.components = mcpComponents;
-        this.pages = new ConcurrentHashMap<>();
-        List<T> components = mcpComponents.values()
-                .stream()
-                .toList();
-        createPages(components, pageSize);
-    }
 
     McpPagination(List<T> components, int pageSize) {
         this.pages = new ConcurrentHashMap<>();
-        this.components = new ConcurrentHashMap<>();
-        for (int i = 0; i < components.size(); i++) {
-            this.components.put("key" + i, components.get(i));
-        }
-        createPages(components, pageSize);
-    }
-
-    private void createPages(List<T> components, int pageSize) {
         String prevCursor = initialCursor;
         int total = components.size();
 
@@ -91,7 +74,7 @@ class McpPagination<T> {
         for (int i = pageSize; i <= total; i += pageSize) {
             String nextCursor = UUID.randomUUID().toString();
             List<T> pageItems = components.subList(i - pageSize, i);
-            boolean isLast = i == total;
+            boolean isLast = (i == total);
             String cursor = isLast ? "" : nextCursor;
             pages.put(prevCursor, new McpPage<>(pageItems, cursor, isLast));
             prevCursor = nextCursor;
@@ -112,12 +95,11 @@ class McpPagination<T> {
         return pages.get(cursor);
     }
 
-    T get(String key) {
-        return components.get(key);
-    }
-
-    Collection<T> content() {
-        return components.values();
+    List<T> content() {
+        return pages.values().stream()
+                .map(McpPage::components)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
     }
 
     static class PageSizeDecorator implements Prototype.OptionDecorator<McpServerConfig.BuilderBase<?, ?>, Integer> {

@@ -19,7 +19,7 @@ mcp:
     name: "helidon-mcp-server"
     version: "1.0.0"
     path: "/path"
-    tools-page-size: "10"
-    prompts-page-size: "10"
-    resources-page-size: "10"
-    resource-templates-page-size: "10"
+    tools-page-size: 10
+    prompts-page-size: 10
+    resources-page-size: 10
+    resource-templates-page-size: 10

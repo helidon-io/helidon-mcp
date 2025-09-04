@@ -23,7 +23,6 @@ import java.util.List;
  *
  * @param <T> MCP component such as Tool, Prompt, Resource.
  */
-@SuppressWarnings("ClassCanBeRecord")
 class McpPage<T> {
     private final List<T> components;
     private final String cursor;
