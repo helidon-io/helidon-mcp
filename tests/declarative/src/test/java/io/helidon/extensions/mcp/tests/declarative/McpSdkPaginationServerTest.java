@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package io.helidon.extensions.mcp.tests;
+package io.helidon.extensions.mcp.tests.declarative;
 
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.webserver.WebServer;
-import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.testing.junit5.ServerTest;
-import io.helidon.webserver.testing.junit5.SetUpRoute;
 
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
@@ -34,20 +32,15 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 @ServerTest
-class AnthropicPaginationTest {
+class McpSdkPaginationServerTest {
     private static McpSyncClient client;
 
-    AnthropicPaginationTest(WebServer server) {
+    McpSdkPaginationServerTest(WebServer server) {
         client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
                                         .sseEndpoint("/pagination")
                                         .build())
                 .build();
         client.initialize();
-    }
-
-    @SetUpRoute
-    static void routing(HttpRouting.Builder builder) {
-        PaginationServer.setUpRoute(builder);
     }
 
     @AfterAll
@@ -64,7 +57,7 @@ class AnthropicPaginationTest {
         assertThat(cursor, notNullValue());
 
         var tool = tools.getFirst();
-        assertThat(tool.name(), is("tool-1"));
+        assertThat(tool.name(), is("tool1"));
         assertThat(tool.description(), is("Tool description"));
 
         result = client.listTools(cursor);
@@ -73,7 +66,7 @@ class AnthropicPaginationTest {
         assertThat(result.nextCursor(), nullValue());
 
         tool = tools.getFirst();
-        assertThat(tool.name(), is("tool-2"));
+        assertThat(tool.name(), is("tool2"));
         assertThat(tool.description(), is("Tool description"));
     }
 
@@ -86,7 +79,7 @@ class AnthropicPaginationTest {
         assertThat(cursor, notNullValue());
 
         var prompt = prompts.getFirst();
-        assertThat(prompt.name(), is("prompt-1"));
+        assertThat(prompt.name(), is("prompt1"));
         assertThat(prompt.description(), is("Prompt description"));
 
         result = client.listPrompts(cursor);
@@ -95,7 +88,7 @@ class AnthropicPaginationTest {
         assertThat(result.nextCursor(), nullValue());
 
         prompt = prompts.getFirst();
-        assertThat(prompt.name(), is("prompt-2"));
+        assertThat(prompt.name(), is("prompt2"));
         assertThat(prompt.description(), is("Prompt description"));
     }
 
@@ -108,7 +101,7 @@ class AnthropicPaginationTest {
         assertThat(cursor, notNullValue());
 
         var resource = resources.getFirst();
-        assertThat(resource.name(), is("Resource"));
+        assertThat(resource.name(), is("resource1"));
         assertThat(resource.uri(), is("https://path1"));
         assertThat(resource.description(), is("Resource description"));
         assertThat(resource.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
@@ -119,7 +112,7 @@ class AnthropicPaginationTest {
         assertThat(result.nextCursor(), nullValue());
 
         resource = resources.getFirst();
-        assertThat(resource.name(), is("Resource"));
+        assertThat(resource.name(), is("resource2"));
         assertThat(resource.uri(), is("https://path2"));
         assertThat(resource.description(), is("Resource description"));
         assertThat(resource.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
@@ -134,7 +127,7 @@ class AnthropicPaginationTest {
         assertThat(cursor, notNullValue());
 
         var resource = resources.getFirst();
-        assertThat(resource.name(), is("ResourceTemplate"));
+        assertThat(resource.name(), is("resourceTemplate1"));
         assertThat(resource.uriTemplate(), is("https://{path1}"));
         assertThat(resource.description(), is("Resource Template description"));
         assertThat(resource.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
@@ -145,7 +138,7 @@ class AnthropicPaginationTest {
         assertThat(result.nextCursor(), nullValue());
 
         resource = resources.getFirst();
-        assertThat(resource.name(), is("ResourceTemplate"));
+        assertThat(resource.name(), is("resourceTemplate2"));
         assertThat(resource.uriTemplate(), is("https://{path2}"));
         assertThat(resource.description(), is("Resource Template description"));
         assertThat(resource.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));

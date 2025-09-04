@@ -37,11 +37,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @ServerTest
-class AnthropicLoggingTest {
+class McpSdkLoggingTest {
     private static McpSyncClient client;
     private CountDownLatch latch;
 
-    AnthropicLoggingTest(WebServer server) {
+    McpSdkLoggingTest(WebServer server) {
         client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
                                         .sseEndpoint("/logging")
                                         .build())

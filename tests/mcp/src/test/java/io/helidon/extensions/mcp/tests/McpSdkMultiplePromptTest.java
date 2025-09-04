@@ -35,10 +35,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @ServerTest
-class AnthropicMultipleToolTest {
+class McpSdkMultiplePromptTest {
     private static McpSyncClient client;
 
-    AnthropicMultipleToolTest(WebServer server) {
+    McpSdkMultiplePromptTest(WebServer server) {
         client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
                                         .sseEndpoint("/")
                                         .build())
@@ -48,7 +48,7 @@ class AnthropicMultipleToolTest {
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {
-        MultipleTool.setUpRoute(builder);
+        MultiplePrompt.setUpRoute(builder);
     }
 
     @AfterAll
@@ -57,31 +57,47 @@ class AnthropicMultipleToolTest {
     }
 
     @Test
-    void testListTools() {
-        McpSchema.ListToolsResult result = client.listTools();
-        assertThat(result.tools().size(), is(4));
+    void testListPrompts() {
+        McpSchema.ListPromptsResult result = client.listPrompts();
+        assertThat(result.prompts().size(), is(4));
     }
 
     @Test
-    void testTool1() {
-        McpSchema.CallToolResult tool1 = client.callTool(new McpSchema.CallToolRequest("tool1", Map.of()));
-        assertThat(tool1.content().size(), is(1));
+    void testPrompt1() {
+        McpSchema.GetPromptResult prompt1 = client.getPrompt(new McpSchema.GetPromptRequest("prompt1", Map.of()));
+        assertThat(prompt1.messages().size(), is(1));
 
-        McpSchema.Content content = tool1.content().getFirst();
-        assertThat(content.type(), is("image"));
+        McpSchema.PromptMessage message = prompt1.messages().getFirst();
+        assertThat(message.content().type(), is("text"));
+        assertThat(message.role(), is(McpSchema.Role.USER));
 
-        McpSchema.ImageContent image = (McpSchema.ImageContent) content;
+        McpSchema.TextContent text = (McpSchema.TextContent) message.content();
+        assertThat(text.text(), is("text"));
+    }
+
+    @Test
+    void testPrompt2() {
+        McpSchema.GetPromptResult prompt2 = client.getPrompt(new McpSchema.GetPromptRequest("prompt2", Map.of()));
+        assertThat(prompt2.messages().size(), is(1));
+
+        McpSchema.PromptMessage message = prompt2.messages().getFirst();
+        assertThat(message.content().type(), is("image"));
+        assertThat(message.role(), is(McpSchema.Role.ASSISTANT));
+
+        var image = (McpSchema.ImageContent) message.content();
         assertThat(image.data(), is("binary"));
         assertThat(image.mimeType(), is(MediaTypes.APPLICATION_OCTET_STREAM_VALUE));
     }
 
     @Test
-    void testTool2() {
-        McpSchema.CallToolResult tool2 = client.callTool(new McpSchema.CallToolRequest("tool2", Map.of()));
-        assertThat(tool2.content().size(), is(1));
+    void testPrompt3() {
+        McpSchema.GetPromptResult prompt3 = client.getPrompt(new McpSchema.GetPromptRequest("prompt3", Map.of()));
+        assertThat(prompt3.messages().size(), is(1));
 
-        McpSchema.Content first = tool2.content().getFirst();
+        McpSchema.PromptMessage message = prompt3.messages().getFirst();
+        McpSchema.Content first = message.content();
         assertThat(first.type(), is("resource"));
+        assertThat(message.role(), is(McpSchema.Role.ASSISTANT));
 
         var resource = (McpSchema.EmbeddedResource) first;
         var text = (McpSchema.TextResourceContents) resource.resource();
@@ -91,36 +107,25 @@ class AnthropicMultipleToolTest {
     }
 
     @Test
-    void testTool3() {
-        McpSchema.CallToolResult tool3 = client.callTool(new McpSchema.CallToolRequest("tool3", Map.of()));
-        assertThat(tool3.content().size(), is(3));
+    void testPrompt4() {
+        McpSchema.GetPromptResult prompt4 = client.getPrompt(new McpSchema.GetPromptRequest("prompt4",
+                                                                                            Map.of("argument1", "text")));
+        assertThat(prompt4.messages().size(), is(3));
 
-        McpSchema.Content first = tool3.content().getFirst();
-        McpSchema.Content second = tool3.content().get(1);
-        McpSchema.Content third = tool3.content().get(2);
+        McpSchema.Content first = prompt4.messages().getFirst().content();
+        McpSchema.Content second = prompt4.messages().get(1).content();
+        McpSchema.Content third = prompt4.messages().get(2).content();
         assertThat(first.type(), is("image"));
-        assertThat(second.type(), is("resource"));
-        assertThat(third.type(), is("text"));
+        assertThat(second.type(), is("text"));
+        assertThat(third.type(), is("resource"));
 
         McpSchema.ImageContent image = (McpSchema.ImageContent) first;
-        assertThat(image.mimeType(), is(MediaTypes.APPLICATION_OCTET_STREAM_VALUE));
+        McpSchema.TextContent text = (McpSchema.TextContent) second;
+        McpSchema.EmbeddedResource resource = (McpSchema.EmbeddedResource) third;
+        assertThat(text.text(), is("text"));
         assertThat(image.data(), is("binary"));
-
-        McpSchema.EmbeddedResource resource = (McpSchema.EmbeddedResource) second;
+        assertThat(image.mimeType(), is(MediaTypes.APPLICATION_OCTET_STREAM_VALUE));
         assertThat(resource.resource().uri(), is("http://resource"));
         assertThat(resource.resource().mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
-
-        McpSchema.TextContent text = (McpSchema.TextContent) third;
-        assertThat(text.text(), is("text"));
-    }
-
-    @Test
-    void testTool4() {
-        McpSchema.CallToolResult tool4 = client.callTool(
-                new McpSchema.CallToolRequest("tool4", Map.of("name", "Paris", "population", 10)));
-        assertThat(tool4.content().size(), is(1));
-
-        McpSchema.TextContent text = (McpSchema.TextContent) tool4.content().getFirst();
-        assertThat(text.text(), is("Paris has a population of 10 inhabitants"));
     }
 }

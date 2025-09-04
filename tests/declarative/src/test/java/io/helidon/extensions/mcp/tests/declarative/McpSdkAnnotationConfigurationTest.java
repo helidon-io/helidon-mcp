@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-package io.helidon.extensions.mcp.tests;
+package io.helidon.extensions.mcp.tests.declarative;
+
+import java.time.Duration;
 
 import io.helidon.webserver.WebServer;
-import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.testing.junit5.ServerTest;
-import io.helidon.webserver.testing.junit5.SetUpRoute;
 
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
+import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
@@ -31,19 +32,16 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @ServerTest
-class AnthropicConfigurationTest {
+class McpSdkAnnotationConfigurationTest {
     private static McpSyncClient client;
 
-    AnthropicConfigurationTest(WebServer server) {
+    McpSdkAnnotationConfigurationTest(WebServer server) {
         client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
-                                        .sseEndpoint("/config/path")
-                                        .build())
+                                            .sseEndpoint("/mcp-custom")
+                                            .build())
+                .capabilities(McpSchema.ClientCapabilities.builder().build())
+                .requestTimeout(Duration.ofSeconds(1))
                 .build();
-    }
-
-    @SetUpRoute
-    static void routing(HttpRouting.Builder builder) {
-        ConfigurationServer.setUpRoute(builder);
     }
 
     @AfterAll
@@ -56,7 +54,7 @@ class AnthropicConfigurationTest {
         var result = client.initialize();
         var infos = result.serverInfo();
 
-        assertThat(infos.version(), is("1.0.0-CONFIG"));
-        assertThat(infos.name(), is("Config Named"));
+        assertThat(infos.version(), is("0.0.1-SNAPSHOT"));
+        assertThat(infos.name(), is("mcp-server-custom-path"));
     }
 }

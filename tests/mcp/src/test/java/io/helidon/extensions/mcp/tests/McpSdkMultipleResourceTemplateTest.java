@@ -41,10 +41,10 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @ServerTest
-class AnthropicMultipleResourceTemplateTest {
+class McpSdkMultipleResourceTemplateTest {
     private static McpSyncClient client;
 
-    AnthropicMultipleResourceTemplateTest(WebServer server) {
+    McpSdkMultipleResourceTemplateTest(WebServer server) {
         client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
                                         .sseEndpoint("/")
                                         .build())

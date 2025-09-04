@@ -38,10 +38,10 @@ import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 
 @ServerTest
-class AnthropicMultipleResourceTest {
+class McpSdkMultipleResourceTest {
     private static McpSyncClient client;
 
-    AnthropicMultipleResourceTest(WebServer server) {
+    McpSdkMultipleResourceTest(WebServer server) {
         client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
                                         .sseEndpoint("/")
                                         .build())

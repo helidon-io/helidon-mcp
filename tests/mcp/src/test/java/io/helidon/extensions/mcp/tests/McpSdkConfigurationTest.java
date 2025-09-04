@@ -16,8 +16,6 @@
 
 package io.helidon.extensions.mcp.tests;
 
-import java.util.Map;
-
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.testing.junit5.ServerTest;
@@ -26,36 +24,39 @@ import io.helidon.webserver.testing.junit5.SetUpRoute;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
-import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+
 @ServerTest
-class AnthropicProgressTest {
+class McpSdkConfigurationTest {
     private static McpSyncClient client;
 
-    AnthropicProgressTest(WebServer server) {
+    McpSdkConfigurationTest(WebServer server) {
         client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
-                                        .sseEndpoint("/")
+                                        .sseEndpoint("/config/path")
                                         .build())
-                .capabilities(McpSchema.ClientCapabilities.builder().build())
                 .build();
-        client.initialize();
     }
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {
-        ProgressNotifications.setUpRoute(builder);
+        ConfigurationServer.setUpRoute(builder);
     }
 
     @AfterAll
-    static void closeClient() {
+    static void close() {
         client.close();
     }
 
     @Test
-    void testAnthropicProgress() {
-        client.callTool(new McpSchema.CallToolRequest("progress", Map.of()));
-    }
+    void toolAnnotationConfig() {
+        var result = client.initialize();
+        var infos = result.serverInfo();
 
+        assertThat(infos.version(), is("1.0.0-CONFIG"));
+        assertThat(infos.name(), is("Config Named"));
+    }
 }

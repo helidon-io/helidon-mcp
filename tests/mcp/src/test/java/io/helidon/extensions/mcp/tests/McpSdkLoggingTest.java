@@ -16,6 +16,8 @@
 
 package io.helidon.extensions.mcp.tests;
 
+import java.util.Map;
+
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.testing.junit5.ServerTest;
@@ -32,20 +34,25 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @ServerTest
-class AnthropicCompletionTest {
+class McpSdkLoggingTest {
     private static McpSyncClient client;
 
-    AnthropicCompletionTest(WebServer server) {
+    McpSdkLoggingTest(WebServer server) {
         client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
                                         .sseEndpoint("/")
                                         .build())
+                .loggingConsumer(notification -> {
+                    assertThat(notification.level(), is(McpSchema.LoggingLevel.INFO));
+                    assertThat(notification.logger(), is("helidon-logger"));
+                    assertThat(notification.data(), is("Logging data"));
+                })
                 .build();
         client.initialize();
     }
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {
-        CompletionNotifications.setUpRoute(builder);
+        LoggingNotifications.setUpRoute(builder);
     }
 
     @AfterAll
@@ -54,30 +61,7 @@ class AnthropicCompletionTest {
     }
 
     @Test
-    void testAnthropicCompletion() {
-        McpSchema.CompleteRequest request = new McpSchema.CompleteRequest(
-                new McpSchema.PromptReference("prompt"),
-                new McpSchema.CompleteRequest.CompleteArgument("argument", "Hel"));
-        McpSchema.CompleteResult.CompleteCompletion result = client.completeCompletion(request).completion();
-        assertThat(result.total(), is(1));
-        assertThat(result.hasMore(), is(false));
-
-        var list = result.values();
-        assertThat(list.size(), is(1));
-        assertThat(list.getFirst(), is("Helidon"));
-    }
-
-    @Test
-    void testAnthropicMissingPrompt() {
-        McpSchema.CompleteRequest request = new McpSchema.CompleteRequest(
-                new McpSchema.PromptReference("Unknown"),
-                new McpSchema.CompleteRequest.CompleteArgument("foo", "bar"));
-        McpSchema.CompleteResult.CompleteCompletion result = client.completeCompletion(request).completion();
-        assertThat(result.total(), is(1));
-        assertThat(result.hasMore(), is(false));
-
-        var list = result.values();
-        assertThat(list.size(), is(1));
-        assertThat(list.getFirst(), is(""));
+    void testMcpSdkProgress() {
+        client.callTool(new McpSchema.CallToolRequest("logging", Map.of("question", "")));
     }
 }

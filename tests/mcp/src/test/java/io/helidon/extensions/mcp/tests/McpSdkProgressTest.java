@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package io.helidon.extensions.mcp.tests.declarative;
+package io.helidon.extensions.mcp.tests;
 
-import java.time.Duration;
+import java.util.Map;
 
 import io.helidon.webserver.WebServer;
+import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.testing.junit5.ServerTest;
+import io.helidon.webserver.testing.junit5.SetUpRoute;
 
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
@@ -28,33 +30,32 @@ import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-
 @ServerTest
-class AnthropicAnnotationConfigurationTest {
+class McpSdkProgressTest {
     private static McpSyncClient client;
 
-    AnthropicAnnotationConfigurationTest(WebServer server) {
+    McpSdkProgressTest(WebServer server) {
         client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
-                                            .sseEndpoint("/mcp-custom")
-                                            .build())
+                                        .sseEndpoint("/")
+                                        .build())
                 .capabilities(McpSchema.ClientCapabilities.builder().build())
-                .requestTimeout(Duration.ofSeconds(1))
                 .build();
+        client.initialize();
+    }
+
+    @SetUpRoute
+    static void routing(HttpRouting.Builder builder) {
+        ProgressNotifications.setUpRoute(builder);
     }
 
     @AfterAll
-    static void close() {
+    static void closeClient() {
         client.close();
     }
 
     @Test
-    void toolAnnotationConfig() {
-        var result = client.initialize();
-        var infos = result.serverInfo();
-
-        assertThat(infos.version(), is("0.0.1-SNAPSHOT"));
-        assertThat(infos.name(), is("mcp-server-custom-path"));
+    void testMcpSdkProgress() {
+        client.callTool(new McpSchema.CallToolRequest("progress", Map.of()));
     }
+
 }

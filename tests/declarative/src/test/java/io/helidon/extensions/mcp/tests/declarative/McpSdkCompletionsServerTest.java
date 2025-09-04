@@ -33,10 +33,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @ServerTest
-class AnthropicCompletionsServerTest {
+class McpSdkCompletionsServerTest {
     private static McpSyncClient client;
 
-    AnthropicCompletionsServerTest(WebServer server) {
+    McpSdkCompletionsServerTest(WebServer server) {
         client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
                                         .sseEndpoint("/completions")
                                         .build())

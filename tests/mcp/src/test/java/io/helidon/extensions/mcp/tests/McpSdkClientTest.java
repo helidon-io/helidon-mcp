@@ -49,13 +49,13 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 /**
- * {@link McpWeather} test using Anthropic client.
+ * {@link McpWeather} test using McpSdk client.
  */
 @ServerTest
-class AnthropicClientTest {
+class McpSdkClientTest {
     private static McpSyncClient client;
 
-    AnthropicClientTest(WebServer server) {
+    McpSdkClientTest(WebServer server) {
         client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
                                         .sseEndpoint("/")
                                         .build())
