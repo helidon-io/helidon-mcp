@@ -18,16 +18,30 @@ package io.helidon.extensions.mcp.server;
 
 import java.util.Objects;
 
+import io.helidon.http.sse.SseEvent;
+import io.helidon.webserver.sse.SseSink;
+
 /**
  * Mcp logger to send notification to the client.
  */
 public final class McpLogger {
     private final String name;
     private final McpSession session;
+    private final SseSink sseSink;
     private Level level;
 
     McpLogger(McpSession session) {
+        Objects.requireNonNull(session, "session is null");
         this.session = session;
+        this.sseSink = null;
+        this.level = Level.INFO;
+        this.name = "helidon-logger";
+    }
+
+    McpLogger(SseSink sseSink) {
+        Objects.requireNonNull(sseSink, "sseSink is null");
+        this.session = null;
+        this.sseSink = sseSink;
         this.level = Level.INFO;
         this.name = "helidon-logger";
     }
@@ -41,8 +55,18 @@ public final class McpLogger {
     public void log(Level level, String message) {
         Objects.requireNonNull(level, "level must not be null");
         Objects.requireNonNull(message, "message must not be null");
+
         if (level.ordinal() >= this.level.ordinal()) {
-            session.send(McpJsonRpc.createLoggingNotification(level, name, message));
+            if (sseSink != null) {
+                sseSink.emit(SseEvent.builder()
+                                     .name("message")
+                                     .data(McpJsonRpc.createLoggingNotification(level, name, message))
+                                     .build());
+            } else if (session != null) {
+                session.send(McpJsonRpc.createLoggingNotification(level, name, message));
+            } else {
+                throw new IllegalStateException("Session and sink are null");
+            }
         }
     }
 

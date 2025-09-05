@@ -16,18 +16,34 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.util.Objects;
+
+import io.helidon.http.sse.SseEvent;
+import io.helidon.webserver.sse.SseSink;
+
 /**
  * Progress notification to the client.
  */
 public final class McpProgress {
     private final McpSession session;
+    private final SseSink sseSink;
+
     private int total;
     private int tokenInt;
     private String token;
     private boolean isSending;
 
     McpProgress(McpSession session) {
+        Objects.requireNonNull(session, "session is null");
         this.session = session;
+        this.sseSink = null;
+        this.token = "";
+    }
+
+    McpProgress(SseSink sseSink) {
+        Objects.requireNonNull(sseSink, "sseSink is null");
+        this.session = null;
+        this.sseSink = sseSink;
         this.token = "";
     }
 
@@ -50,7 +66,16 @@ public final class McpProgress {
             return;
         }
         if (isSending) {
-            session.send(McpJsonRpc.toJson(this, progress));
+            if (sseSink != null) {
+                sseSink.emit(SseEvent.builder()
+                                     .name("message")
+                                     .data(McpJsonRpc.toJson(this, progress))
+                                     .build());
+            } else if (session != null) {
+                session.send(McpJsonRpc.toJson(this, progress));
+            } else {
+                throw new IllegalStateException("Session and sink are null");
+            }
         }
         if (progress >= total) {
             isSending = false;
