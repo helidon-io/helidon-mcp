@@ -16,16 +16,33 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.util.Objects;
+import java.util.Optional;
+
+import io.helidon.webserver.jsonrpc.JsonRpcResponse;
+import io.helidon.webserver.sse.SseSink;
+
 /**
  * Support for optional client features like {@link McpProgress} and {@link McpLogger}.
  */
 public final class McpFeatures {
-    private final McpProgress progress;
-    private final McpLogger logger;
+    private final JsonRpcResponse response;
+    private final McpSession session;
+
+    private McpProgress progress;
+    private McpLogger logger;
+    private SseSink sseSink;
 
     McpFeatures(McpSession session) {
-        this.logger = new McpLogger(session);
-        this.progress = new McpProgress(session);
+        Objects.requireNonNull(session, "session is null");
+        this.session = session;
+        this.response = null;
+    }
+
+    McpFeatures(JsonRpcResponse response) {
+        Objects.requireNonNull(response, "response is null");
+        this.response = response;
+        this.session = null;
     }
 
     /**
@@ -34,6 +51,14 @@ public final class McpFeatures {
      * @return progress
      */
     public McpProgress progress() {
+        if (progress == null) {
+            if (response != null) {
+                sseSink = getOrCreateSseSink();
+                progress = new McpProgress(sseSink);
+            } else if (session != null) {
+                progress = new McpProgress(session);
+            }
+        }
         return progress;
     }
 
@@ -43,6 +68,33 @@ public final class McpFeatures {
      * @return logging
      */
     public McpLogger logger() {
+        if (logger == null) {
+            if (response != null) {
+                sseSink = getOrCreateSseSink();
+                logger = new McpLogger(sseSink);
+            } else if (session != null) {
+                logger = new McpLogger(session);
+            }
+        }
         return logger;
+    }
+
+    /**
+     * Get access to underlying SSE sink, if available. This method is package private.
+     *
+     * @return optional SSE sink
+     */
+    Optional<SseSink> sseSink() {
+        return Optional.ofNullable(sseSink);
+    }
+
+    /**
+     * Get or create an SSE sink.
+     *
+     * @return the SSE sink
+     */
+    private SseSink getOrCreateSseSink() {
+        Objects.requireNonNull(response, "response is null");
+        return sseSink != null ? sseSink : response.sink(SseSink.TYPE);
     }
 }

@@ -131,41 +131,41 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         this.resources = new McpPagination<>(resources, config.resourcesPageSize());
         this.resourceTemplates = new McpPagination<>(templates, config.resourceTemplatesPageSize());
 
-        builder.putMethod(METHOD_PING, this::pingRpc);
-        builder.putMethod(METHOD_INITIALIZE, this::initializeRpc);
+        builder.method(METHOD_PING, this::pingRpc);
+        builder.method(METHOD_INITIALIZE, this::initializeRpc);
 
         if (!config.tools().isEmpty()) {
             capabilities.add(McpCapability.TOOL_LIST_CHANGED);
-            builder.putMethod(METHOD_TOOLS_LIST, this::toolsListRpc);
-            builder.putMethod(METHOD_TOOLS_CALL, this::toolsCallRpc);
+            builder.method(METHOD_TOOLS_LIST, this::toolsListRpc);
+            builder.method(METHOD_TOOLS_CALL, this::toolsCallRpc);
         }
 
         if (!config.resources().isEmpty()) {
             capabilities.add(McpCapability.RESOURCE_LIST_CHANGED);
             capabilities.add(McpCapability.RESOURCE_SUBSCRIBE);
-            builder.putMethod(METHOD_RESOURCES_LIST, this::resourcesListRpc);
-            builder.putMethod(METHOD_RESOURCES_READ, this::resourcesReadRpc);
-            builder.putMethod(METHOD_RESOURCES_SUBSCRIBE, this::resourceSubscribeRpc);
-            builder.putMethod(METHOD_RESOURCES_UNSUBSCRIBE, this::resourceUnsubscribeRpc);
-            builder.putMethod(METHOD_RESOURCES_TEMPLATES_LIST, this::resourceTemplateListRpc);
+            builder.method(METHOD_RESOURCES_LIST, this::resourcesListRpc);
+            builder.method(METHOD_RESOURCES_READ, this::resourcesReadRpc);
+            builder.method(METHOD_RESOURCES_SUBSCRIBE, this::resourceSubscribeRpc);
+            builder.method(METHOD_RESOURCES_UNSUBSCRIBE, this::resourceUnsubscribeRpc);
+            builder.method(METHOD_RESOURCES_TEMPLATES_LIST, this::resourceTemplateListRpc);
         }
 
         if (!config.prompts().isEmpty()) {
             capabilities.add(McpCapability.PROMPT_LIST_CHANGED);
-            builder.putMethod(METHOD_PROMPT_LIST, this::promptsListRpc);
-            builder.putMethod(METHOD_PROMPT_GET, this::promptsGetRpc);
+            builder.method(METHOD_PROMPT_LIST, this::promptsListRpc);
+            builder.method(METHOD_PROMPT_GET, this::promptsGetRpc);
         }
 
         capabilities.add(McpCapability.LOGGING);
-        builder.putMethod(METHOD_LOGGING_SET_LEVEL, this::loggingLogLevelRpc);
+        builder.method(METHOD_LOGGING_SET_LEVEL, this::loggingLogLevelRpc);
 
         capabilities.add(McpCapability.COMPLETION);
         completions.put(NoopCompletion.REFERENCE, new NoopCompletion());
-        builder.putMethod(METHOD_COMPLETION_COMPLETE, this::completionRpc);
+        builder.method(METHOD_COMPLETION_COMPLETE, this::completionRpc);
 
-        builder.putMethod(METHOD_SESSION_DISCONNECT, this::disconnect);
-        builder.putMethod(METHOD_NOTIFICATION_CANCELED, this::notificationCancelRpc);
-        builder.putMethod(METHOD_NOTIFICATION_INITIALIZED, this::notificationInitRpc);
+        builder.method(METHOD_SESSION_DISCONNECT, this::disconnect);
+        builder.method(METHOD_NOTIFICATION_CANCELED, this::notificationCancelRpc);
+        builder.method(METHOD_NOTIFICATION_INITIALIZED, this::notificationInitRpc);
 
         builder.errorHandler(this::handleErrorRequest);
 
@@ -409,7 +409,8 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         }
         McpSession session = foundSession.get();
         McpParameters parameters = new McpParameters(req.params(), req.params().asJsonObject());
-        enableProgress(session, parameters);
+        McpFeatures features = mcpFeatures(req, res, session);
+        enableProgress(session, parameters, features);
 
         String name = parameters.get("name").asString().orElse("");
         Optional<McpTool> tool = tools.content().stream()
@@ -426,12 +427,13 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 .tool()
                 .apply(McpRequest.builder()
                                .parameters(parameters.get("arguments"))
-                               .features(session.features())
+                               .features(features)
                                .build());
-        session.features().progress().stopSending();
+        features.progress().stopSending();
         res.result(toolCall(contents));
-        sendResponse(req, res, session);
+        sendResponse(req, res, session, features);
     }
+
 
     private void resourcesListRpc(JsonRpcRequest req, JsonRpcResponse res) {
         Optional<McpSession> foundSession = findSession(req);
@@ -477,16 +479,17 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             return;
         }
 
-        enableProgress(session, parameters);
+        McpFeatures features = mcpFeatures(req, res, session);
+        enableProgress(session, parameters, features);
         List<McpResourceContent> contents = resource.get()
                 .resource()
                 .apply(McpRequest.builder()
                                .parameters(parameters)
-                               .features(session.features())
+                               .features(features)
                                .build());
-        session.features().progress().stopSending();
+        features.progress().stopSending();
         res.result(readResource(resourceUri, contents));
-        sendResponse(req, res, session);
+        sendResponse(req, res, session, features);
     }
 
     private void resourceSubscribeRpc(JsonRpcRequest req, JsonRpcResponse res) {
@@ -537,7 +540,8 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         }
         McpSession session = foundSession.get();
         McpParameters parameters = new McpParameters(req.params(), req.params().asJsonObject());
-        enableProgress(session, parameters);
+        McpFeatures features = mcpFeatures(req, res, session);
+        enableProgress(session, parameters, features);
 
         String name = parameters.get("name").asString().orElse(null);
         if (name == null) {
@@ -550,7 +554,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 .filter(p -> name.equals(p.name()))
                 .findFirst();
         if (prompt.isEmpty()) {
-            session.features().progress().stopSending();
+            features.progress().stopSending();
             res.error(INVALID_PARAMS, "Wrong prompt name: " + name);
             sendResponse(req, res, session);
             return;
@@ -560,11 +564,11 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 .prompt()
                 .apply(McpRequest.builder()
                                .parameters(parameters.get("arguments"))
-                               .features(session.features())
+                               .features(features)
                                .build());
-        session.features().progress().stopSending();
+        features.progress().stopSending();
         res.result(toJson(contents, prompt.get().description()));
-        sendResponse(req, res, session);
+        sendResponse(req, res, session, features);
     }
 
     private void loggingLogLevelRpc(JsonRpcRequest req, JsonRpcResponse res) {
@@ -572,7 +576,8 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             McpParameters parameters = new McpParameters(req.params(), req.params().asJsonObject());
             parameters.get("level").asString().ifPresent(level -> {
                 McpLogger.Level logLevel = McpLogger.Level.valueOf(level.toUpperCase());
-                session.features().logger().setLevel(logLevel);
+                McpFeatures features = mcpFeatures(req, res, session);
+                features.logger().setLevel(logLevel);
             });
             res.result(empty());
         });
@@ -597,13 +602,14 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         if (completion == null) {
             completion = completions.get(NoopCompletion.REFERENCE);
         }
+        McpFeatures features = mcpFeatures(req, res, session);
         McpCompletionContent result = completion.completion()
                 .apply(McpRequest.builder()
                                .parameters(parameters.get("argument"))
-                               .features(session.features())
+                               .features(features)
                                .build());
         res.result(toJson(result));
-        sendResponse(req, res, session);
+        sendResponse(req, res, session, features);
     }
 
     private String parseCompletionName(McpParameters completion) {
@@ -618,20 +624,16 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         return null;
     }
 
-    private void enableProgress(McpSession session, McpParameters parameters) {
+    private void enableProgress(McpSession session, McpParameters parameters, McpFeatures features) {
         var progressToken = parameters.get("_meta").get("progressToken");
         if (progressToken.isEmpty()) {
             return;
         }
         if (progressToken.isNumber()) {
-            session.features()
-                    .progress()
-                    .token(progressToken.asInteger().get());
+            features.progress().token(progressToken.asInteger().get());
         }
         if (progressToken.isString()) {
-            session.features()
-                    .progress()
-                    .token(progressToken.asString().get());
+            features.progress().token(progressToken.asString().get());
         }
     }
 
@@ -687,6 +689,53 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                        () -> String.format("SSE: %s", res.asJsonObject()));
             session.send(res);
         }
+    }
+
+    /**
+     * Sends response according to the protocol in use.
+     *
+     * @param req the request
+     * @param res the response
+     * @param session the active session
+     * @param features the MCP features
+     */
+    private void sendResponse(JsonRpcRequest req,
+                              JsonRpcResponse res,
+                              McpSession session,
+                              McpFeatures features) {
+        Optional<SseSink> sseSink = features.sseSink();
+
+        // have we switched to SSE?
+        if (sseSink.isPresent()) {
+            try (var sink = sseSink.get()) {
+                LOGGER.log(Level.FINEST,
+                           () -> String.format("Streamable HTTP: %s", res.asJsonObject()));
+                sink.emit(SseEvent.builder()
+                                  .name("message")
+                                  .data(res.asJsonObject())
+                                  .build());
+            }
+        } else if (isStreamableHttp(req.headers())) {
+            LOGGER.log(Level.FINEST,
+                       () -> String.format("HTTP: %s", res.asJsonObject()));
+            res.send();
+        } else {
+            LOGGER.log(Level.FINEST,
+                       () -> String.format("SSE: %s", res.asJsonObject()));
+            session.send(res);
+        }
+    }
+
+    /**
+     * Get or create MCP features based on transport.
+     *
+     * @param req the request
+     * @param res the response
+     * @param session the session
+     * @return instance of MCP features
+     */
+    private McpFeatures mcpFeatures(JsonRpcRequest req, JsonRpcResponse res, McpSession session) {
+        return isStreamableHttp(req.headers()) ? new McpFeatures(res) : session.features();
     }
 
     private static final class NoopCompletion implements McpCompletion {
