@@ -16,14 +16,8 @@
 
 package io.helidon.extensions.mcp.tests.declarative;
 
-import io.helidon.webserver.WebServer;
-import io.helidon.webserver.testing.junit5.ServerTest;
-
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClient;
-import dev.langchain4j.mcp.client.transport.McpTransport;
-import dev.langchain4j.mcp.client.transport.http.HttpMcpTransport;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -34,20 +28,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
-@ServerTest
-class Langchain4jToolsServerTest {
-    private static McpClient client;
-
-    Langchain4jToolsServerTest(WebServer server) {
-        McpTransport transport = new HttpMcpTransport.Builder()
-                .sseUrl("http://localhost:" + server.port() + "/tools")
-                .logRequests(true)
-                .logResponses(true)
-                .build();
-        client = new DefaultMcpClient.Builder()
-                .transport(transport)
-                .build();
-    }
+abstract class AbstractLangchain4jToolsServerTest {
+    protected static McpClient client;
 
     @AfterAll
     static void afterAll() throws Exception {

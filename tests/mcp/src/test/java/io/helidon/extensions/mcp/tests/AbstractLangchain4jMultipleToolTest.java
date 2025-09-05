@@ -18,17 +18,12 @@ package io.helidon.extensions.mcp.tests;
 
 import java.util.List;
 
-import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
-import io.helidon.webserver.testing.junit5.ServerTest;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClient;
-import dev.langchain4j.mcp.client.transport.McpTransport;
-import dev.langchain4j.mcp.client.transport.http.HttpMcpTransport;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
@@ -38,20 +33,8 @@ import static org.hamcrest.Matchers.is;
 /*
  * With current langchain4j version, it supports only text as tool returned content type.
  */
-@ServerTest
-class Langchain4jMultipleToolTest {
-    private static McpClient client;
-
-    Langchain4jMultipleToolTest(WebServer server) {
-        McpTransport transport = new HttpMcpTransport.Builder()
-                .sseUrl("http://localhost:" + server.port())
-                .logRequests(true)
-                .logResponses(true)
-                .build();
-        client = new DefaultMcpClient.Builder()
-                .transport(transport)
-                .build();
-    }
+abstract class AbstractLangchain4jMultipleToolTest {
+    protected static McpClient client;
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {

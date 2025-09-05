@@ -42,20 +42,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 
-@ServerTest
-class Langchain4jMultipleResourceTest {
-    private static McpClient client;
-
-    Langchain4jMultipleResourceTest(WebServer server) {
-        McpTransport transport = new HttpMcpTransport.Builder()
-                .sseUrl("http://localhost:" + server.port())
-                .logRequests(true)
-                .logResponses(true)
-                .build();
-        client = new DefaultMcpClient.Builder()
-                .transport(transport)
-                .build();
-    }
+abstract class AbstractLangchain4jMultipleResourceTest {
+    protected static McpClient client;
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {

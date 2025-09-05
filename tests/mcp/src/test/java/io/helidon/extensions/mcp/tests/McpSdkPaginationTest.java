@@ -57,7 +57,7 @@ class McpSdkPaginationTest {
 
     @Test
     void testListToolsWithPagination() {
-        var result = client.listTools();
+        var result = client.listTools(null);
         var tools = result.tools();
         String cursor = result.nextCursor();
         assertThat(tools.size(), is(1));
@@ -79,7 +79,7 @@ class McpSdkPaginationTest {
 
     @Test
     void testListPromptsWithPagination() {
-        var result = client.listPrompts();
+        var result = client.listPrompts(null);
         var prompts = result.prompts();
         String cursor = result.nextCursor();
         assertThat(prompts.size(), is(1));
@@ -101,7 +101,7 @@ class McpSdkPaginationTest {
 
     @Test
     void testListResourcesWithPagination() {
-        var result = client.listResources();
+        var result = client.listResources(null);
         var resources = result.resources();
         String cursor = result.nextCursor();
         assertThat(resources.size(), is(1));
@@ -127,7 +127,7 @@ class McpSdkPaginationTest {
 
     @Test
     void testListResourceTemplatesWithPagination() {
-        var result = client.listResourceTemplates();
+        var result = client.listResourceTemplates(null);
         var resources = result.resourceTemplates();
         String cursor = result.nextCursor();
         assertThat(resources.size(), is(1));

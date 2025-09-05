@@ -16,6 +16,8 @@
 
 package io.helidon.extensions.mcp.tests.declarative;
 
+import java.time.Duration;
+
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.testing.junit5.ServerTest;
@@ -39,6 +41,7 @@ class McpSdkPaginationServerTest {
         client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
                                         .sseEndpoint("/pagination")
                                         .build())
+                .requestTimeout(Duration.ofSeconds(60000))
                 .build();
         client.initialize();
     }
@@ -50,7 +53,7 @@ class McpSdkPaginationServerTest {
 
     @Test
     void testListToolsWithPagination() {
-        var result = client.listTools();
+        var result = client.listTools(null);
         var tools = result.tools();
         String cursor = result.nextCursor();
         assertThat(tools.size(), is(1));
@@ -72,7 +75,7 @@ class McpSdkPaginationServerTest {
 
     @Test
     void testListPromptsWithPagination() {
-        var result = client.listPrompts();
+        var result = client.listPrompts(null);
         var prompts = result.prompts();
         String cursor = result.nextCursor();
         assertThat(prompts.size(), is(1));
@@ -94,7 +97,7 @@ class McpSdkPaginationServerTest {
 
     @Test
     void testListResourcesWithPagination() {
-        var result = client.listResources();
+        var result = client.listResources(null);
         var resources = result.resources();
         String cursor = result.nextCursor();
         assertThat(resources.size(), is(1));
@@ -120,7 +123,7 @@ class McpSdkPaginationServerTest {
 
     @Test
     void testListResourceTemplatesWithPagination() {
-        var result = client.listResourceTemplates();
+        var result = client.listResourceTemplates(null);
         var resources = result.resourceTemplates();
         String cursor = result.nextCursor();
         assertThat(resources.size(), is(1));

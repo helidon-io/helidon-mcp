@@ -13,26 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.helidon.extensions.mcp.tests;
 
 import java.util.Map;
 
 import io.helidon.common.media.type.MediaTypes;
-import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
-import io.helidon.webserver.testing.junit5.ServerTest;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.McpPromptContent;
 import dev.langchain4j.mcp.client.McpResourceContents;
 import dev.langchain4j.mcp.client.McpRole;
 import dev.langchain4j.mcp.client.McpTextContent;
 import dev.langchain4j.mcp.client.McpTextResourceContents;
-import dev.langchain4j.mcp.client.transport.McpTransport;
-import dev.langchain4j.mcp.client.transport.http.HttpMcpTransport;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
@@ -50,25 +46,8 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
-/**
- * {@link McpWeather} tests using Langchain4j client.
- */
-@ServerTest
-class Langchain4jClientTest {
-
-    private static McpClient client;
-
-    Langchain4jClientTest(WebServer server) {
-        McpTransport transport = new HttpMcpTransport.Builder()
-                .sseUrl("http://localhost:" + server.port())
-                .logRequests(true)
-                .logResponses(true)
-                .build();
-
-        client = new DefaultMcpClient.Builder()
-                .transport(transport)
-                .build();
-    }
+abstract class AbstractLangchain4jClientTest {
+    protected static McpClient client;
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {
@@ -174,5 +153,4 @@ class Langchain4jClientTest {
         assertThat(text.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
         assertThat(text.text(), is("There are severe weather alerts in Praha"));
     }
-
 }

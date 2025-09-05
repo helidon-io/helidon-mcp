@@ -16,41 +16,22 @@
 
 package io.helidon.extensions.mcp.tests;
 
-import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
-import io.helidon.webserver.testing.junit5.ServerTest;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.logging.McpLogLevel;
 import dev.langchain4j.mcp.client.logging.McpLogMessage;
 import dev.langchain4j.mcp.client.logging.McpLogMessageHandler;
-import dev.langchain4j.mcp.client.transport.McpTransport;
-import dev.langchain4j.mcp.client.transport.http.HttpMcpTransport;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-@ServerTest
-class Langchain4jLoggingTest {
-    private static McpClient client;
-
-    Langchain4jLoggingTest(WebServer server) {
-        McpTransport transport = new HttpMcpTransport.Builder()
-                .sseUrl("http://localhost:" + server.port())
-                .logRequests(true)
-                .logResponses(true)
-                .build();
-
-        client = new DefaultMcpClient.Builder()
-                .transport(transport)
-                .logHandler(new MyLogMessageHandler())
-                .build();
-    }
+abstract class AbstractLangchain4jLoggingTest {
+    protected static McpClient client;
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {
@@ -67,7 +48,7 @@ class Langchain4jLoggingTest {
         client.executeTool(ToolExecutionRequest.builder().name("logging").build());
     }
 
-    private static class MyLogMessageHandler implements McpLogMessageHandler {
+    protected static class MyLogMessageHandler implements McpLogMessageHandler {
         @Override
         public void handleLogMessage(McpLogMessage message) {
             assertThat(message.level(), is(McpLogLevel.INFO));

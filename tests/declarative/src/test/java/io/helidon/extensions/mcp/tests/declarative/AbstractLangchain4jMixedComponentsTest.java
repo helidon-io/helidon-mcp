@@ -16,17 +16,13 @@
 
 package io.helidon.extensions.mcp.tests.declarative;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
 import io.helidon.common.media.type.MediaTypes;
-import io.helidon.webserver.WebServer;
-import io.helidon.webserver.testing.junit5.ServerTest;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.McpGetPromptResult;
 import dev.langchain4j.mcp.client.McpPrompt;
@@ -37,8 +33,6 @@ import dev.langchain4j.mcp.client.McpResource;
 import dev.langchain4j.mcp.client.McpRole;
 import dev.langchain4j.mcp.client.McpTextContent;
 import dev.langchain4j.mcp.client.McpTextResourceContents;
-import dev.langchain4j.mcp.client.transport.McpTransport;
-import dev.langchain4j.mcp.client.transport.http.HttpMcpTransport;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import dev.langchain4j.model.chat.request.json.JsonSchemaElement;
 import dev.langchain4j.model.chat.request.json.JsonStringSchema;
@@ -49,22 +43,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 
-@ServerTest
-class Langchain4jMixedComponentTest {
-    private static McpClient client;
-
-    Langchain4jMixedComponentTest(WebServer server) {
-        McpTransport transport = new HttpMcpTransport.Builder()
-                .sseUrl("http://localhost:" + server.port() + "/mcp")
-                .logRequests(true)
-                .logResponses(true)
-                .timeout(Duration.ofSeconds(1))
-                .build();
-        client = new DefaultMcpClient.Builder()
-                .transport(transport)
-                .initializationTimeout(Duration.ofSeconds(1))
-                .build();
-    }
+abstract class AbstractLangchain4jMixedComponentsTest {
+    protected static McpClient client;
 
     @AfterAll
     static void afterAll() throws Exception {
