@@ -16,6 +16,7 @@
 package io.helidon.extensions.mcp.server;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import io.helidon.common.context.Context;
 import io.helidon.webserver.sse.SseSink;
@@ -45,8 +46,8 @@ class McpFeature {
         return session;
     }
 
-    protected SseSink sseSink() {
-        return sseSink;
+    protected Optional<SseSink> sseSink() {
+        return Optional.ofNullable(sseSink);
     }
 
     protected Context context() {

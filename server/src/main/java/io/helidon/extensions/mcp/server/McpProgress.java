@@ -58,8 +58,8 @@ public final class McpProgress extends McpFeature {
             return;
         }
         if (isSending) {
-            if (sseSink() != null) {
-                sseSink().emit(SseEvent.builder()
+            if (sseSink().isPresent()) {
+                sseSink().get().emit(SseEvent.builder()
                                      .name("message")
                                      .data(McpJsonRpc.toJson(this, progress))
                                      .build());

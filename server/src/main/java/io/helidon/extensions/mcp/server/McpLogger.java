@@ -49,8 +49,8 @@ public final class McpLogger extends McpFeature {
         Objects.requireNonNull(message, "message must not be null");
 
         if (level.ordinal() >= level().ordinal()) {
-            if (sseSink() != null) {
-                sseSink().emit(SseEvent.builder()
+            if (sseSink().isPresent()) {
+                sseSink().get().emit(SseEvent.builder()
                                      .name("message")
                                      .data(McpJsonRpc.createLoggingNotification(level, name, message))
                                      .build());
