@@ -32,6 +32,7 @@ import java.util.logging.Logger;
 
 import io.helidon.builder.api.RuntimeType;
 import io.helidon.common.LruCache;
+import io.helidon.common.mapper.OptionalValue;
 import io.helidon.http.HeaderName;
 import io.helidon.http.HeaderNames;
 import io.helidon.http.ServerRequestHeaders;
@@ -575,15 +576,29 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     }
 
     private void loggingLogLevelRpc(JsonRpcRequest req, JsonRpcResponse res) {
-        processSimpleCall(req, res, session -> {
-            McpParameters parameters = new McpParameters(req.params(), req.params().asJsonObject());
-            parameters.get("level").asString().ifPresent(level -> {
-                McpLogger.Level logLevel = McpLogger.Level.valueOf(level.toUpperCase());
+        Optional<McpSession> foundSession = findSession(req);
+        if (foundSession.isEmpty()) {
+            res.status(Status.NOT_FOUND_404).send();
+            return;
+        }
+
+        McpSession session = foundSession.get();
+        McpParameters parameters = new McpParameters(req.params(), req.params().asJsonObject());
+        OptionalValue<String> level = parameters.get("level").asString();
+        if (level.isPresent()) {
+            try {
+                McpLogger.Level logLevel = McpLogger.Level.valueOf(level.get().toUpperCase());
                 McpFeatures features = mcpFeatures(req, res, session);
                 features.logger().setLevel(logLevel);
-            });
-            res.result(empty());
-        });
+                res.result(empty());
+                sendResponse(req, res, session, features);
+                return;
+
+            } catch (IllegalArgumentException e) {
+                // falls through
+            }
+        }
+        res.error(INVALID_PARAMS, "Invalid log level");
     }
 
     private void completionRpc(JsonRpcRequest req, JsonRpcResponse res) {
@@ -740,7 +755,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
      * @return instance of MCP features
      */
     private McpFeatures mcpFeatures(JsonRpcRequest req, JsonRpcResponse res, McpSession session) {
-        return isStreamableHttp(req.headers()) ? new McpFeatures(res) : session.features();
+        return isStreamableHttp(req.headers()) ? new McpFeatures(session, res) : session.features();
     }
 
     private static final class NoopCompletion implements McpCompletion {

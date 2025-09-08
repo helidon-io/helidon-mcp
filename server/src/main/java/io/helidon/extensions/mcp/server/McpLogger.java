@@ -24,25 +24,17 @@ import io.helidon.webserver.sse.SseSink;
 /**
  * Mcp logger to send notification to the client.
  */
-public final class McpLogger {
+public final class McpLogger extends McpFeature {
+
     private final String name;
-    private final McpSession session;
-    private final SseSink sseSink;
-    private Level level;
 
     McpLogger(McpSession session) {
-        Objects.requireNonNull(session, "session is null");
-        this.session = session;
-        this.sseSink = null;
-        this.level = Level.INFO;
+        super(session);
         this.name = "helidon-logger";
     }
 
-    McpLogger(SseSink sseSink) {
-        Objects.requireNonNull(sseSink, "sseSink is null");
-        this.session = null;
-        this.sseSink = sseSink;
-        this.level = Level.INFO;
+    McpLogger(McpSession session, SseSink sseSink) {
+        super(session, sseSink);
         this.name = "helidon-logger";
     }
 
@@ -56,16 +48,14 @@ public final class McpLogger {
         Objects.requireNonNull(level, "level must not be null");
         Objects.requireNonNull(message, "message must not be null");
 
-        if (level.ordinal() >= this.level.ordinal()) {
-            if (sseSink != null) {
-                sseSink.emit(SseEvent.builder()
+        if (level.ordinal() >= level().ordinal()) {
+            if (sseSink() != null) {
+                sseSink().emit(SseEvent.builder()
                                      .name("message")
                                      .data(McpJsonRpc.createLoggingNotification(level, name, message))
                                      .build());
-            } else if (session != null) {
-                session.send(McpJsonRpc.createLoggingNotification(level, name, message));
             } else {
-                throw new IllegalStateException("Session and sink are null");
+                session().send(McpJsonRpc.createLoggingNotification(level, name, message));
             }
         }
     }
@@ -133,8 +123,23 @@ public final class McpLogger {
         log(Level.ALERT, message);
     }
 
+    /**
+     * Get level for this logger.
+     *
+     * @return the level
+     */
+    McpLogger.Level level() {
+        return context().get(Level.class).orElse(Level.INFO);
+    }
+
+    /**
+     * Set level on the session since there could be multiple instances of this
+     * class with streamable HTTP.
+     *
+     * @param level the level
+     */
     void setLevel(McpLogger.Level level) {
-        this.level = level;
+        context().register(level);
     }
 
     /**

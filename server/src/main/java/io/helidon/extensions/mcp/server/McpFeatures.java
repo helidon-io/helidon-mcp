@@ -39,10 +39,11 @@ public final class McpFeatures {
         this.response = null;
     }
 
-    McpFeatures(JsonRpcResponse response) {
+    McpFeatures(McpSession session, JsonRpcResponse response) {
         Objects.requireNonNull(response, "response is null");
+        Objects.requireNonNull(session, "session is null");
         this.response = response;
-        this.session = null;
+        this.session = session;
     }
 
     /**
@@ -54,11 +55,9 @@ public final class McpFeatures {
         if (progress == null) {
             if (response != null) {
                 sseSink = getOrCreateSseSink();
-                progress = new McpProgress(sseSink);
-            } else if (session != null) {
-                progress = new McpProgress(session);
+                progress = new McpProgress(session, sseSink);
             } else {
-                throw new IllegalStateException("Session and response are null");
+                progress = new McpProgress(session);
             }
         }
         return progress;
@@ -73,11 +72,9 @@ public final class McpFeatures {
         if (logger == null) {
             if (response != null) {
                 sseSink = getOrCreateSseSink();
-                logger = new McpLogger(sseSink);
-            } else if (session != null) {
-                logger = new McpLogger(session);
+                logger = new McpLogger(session, sseSink);
             } else {
-                throw new IllegalStateException("Session and response are null");
+                logger = new McpLogger(session);
             }
         }
         return logger;
