@@ -16,52 +16,39 @@
 
 package io.helidon.extensions.mcp.tests;
 
-import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 import io.helidon.webserver.WebServer;
-import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.testing.junit5.ServerTest;
-import io.helidon.webserver.testing.junit5.SetUpRoute;
 
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Test;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
 
 @ServerTest
-class McpSdkLoggingTest {
-    private static McpSyncClient client;
+class McpSdkSseLoggingTest extends AbstractMcpSdkLoggingTest {
 
-    McpSdkLoggingTest(WebServer server) {
-        client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
+    private final McpSyncClient client;
+    private final CountDownLatch latch;
+
+    McpSdkSseLoggingTest(WebServer server) {
+        this.client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
                                         .sseEndpoint("/")
                                         .build())
-                .loggingConsumer(notification -> {
-                    assertThat(notification.level(), is(McpSchema.LoggingLevel.INFO));
-                    assertThat(notification.logger(), is("helidon-logger"));
-                    assertThat(notification.data(), is("Logging data"));
-                })
+                .loggingConsumer(new LoggingConsumer(McpSchema.LoggingLevel.INFO))
                 .build();
+        this.latch = new CountDownLatch(1);
         client.initialize();
     }
 
-    @SetUpRoute
-    static void routing(HttpRouting.Builder builder) {
-        LoggingNotifications.setUpRoute(builder);
+    @Override
+    McpSyncClient client() {
+        return client;
     }
 
-    @AfterAll
-    static void closeClient() {
-        client.close();
-    }
-
-    @Test
-    void testMcpSdkProgress() {
-        client.callTool(new McpSchema.CallToolRequest("logging", Map.of("question", "")));
+    @Override
+    CountDownLatch latch() {
+        return latch;
     }
 }

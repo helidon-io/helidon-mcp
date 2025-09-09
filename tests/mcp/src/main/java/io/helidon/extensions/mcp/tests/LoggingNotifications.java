@@ -47,6 +47,7 @@ class LoggingNotifications {
         @Override
         public List<McpToolContent> apply(McpRequest request) {
             request.features().logger().info("Logging data");
+            request.features().logger().debug("Logging data");
             return List.of(McpToolContents.textContent("Dummy text"));
         }
     }
