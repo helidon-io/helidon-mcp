@@ -19,52 +19,31 @@ package io.helidon.extensions.mcp.tests;
 import java.util.Map;
 
 import io.helidon.common.media.type.MediaTypes;
-import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
-import io.helidon.webserver.testing.junit5.ServerTest;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
 
-import io.modelcontextprotocol.client.McpClient;
-import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-@ServerTest
-class McpSdkMultipleToolTest {
-    private static McpSyncClient client;
-
-    McpSdkMultipleToolTest(WebServer server) {
-        client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
-                                        .sseEndpoint("/")
-                                        .build())
-                .build();
-        client.initialize();
-    }
+abstract class AbstractMcpSdkMultipleToolTest extends AbstractMcpSdkTest {
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {
         MultipleTool.setUpRoute(builder);
     }
 
-    @AfterAll
-    static void closeClient() {
-        client.close();
-    }
-
     @Test
     void testListTools() {
-        McpSchema.ListToolsResult result = client.listTools();
+        McpSchema.ListToolsResult result = client().listTools();
         assertThat(result.tools().size(), is(4));
     }
 
     @Test
     void testTool1() {
-        McpSchema.CallToolResult tool1 = client.callTool(new McpSchema.CallToolRequest("tool1", Map.of()));
+        McpSchema.CallToolResult tool1 = client().callTool(new McpSchema.CallToolRequest("tool1", Map.of()));
         assertThat(tool1.content().size(), is(1));
 
         McpSchema.Content content = tool1.content().getFirst();
@@ -77,7 +56,7 @@ class McpSdkMultipleToolTest {
 
     @Test
     void testTool2() {
-        McpSchema.CallToolResult tool2 = client.callTool(new McpSchema.CallToolRequest("tool2", Map.of()));
+        McpSchema.CallToolResult tool2 = client().callTool(new McpSchema.CallToolRequest("tool2", Map.of()));
         assertThat(tool2.content().size(), is(1));
 
         McpSchema.Content first = tool2.content().getFirst();
@@ -92,7 +71,7 @@ class McpSdkMultipleToolTest {
 
     @Test
     void testTool3() {
-        McpSchema.CallToolResult tool3 = client.callTool(new McpSchema.CallToolRequest("tool3", Map.of()));
+        McpSchema.CallToolResult tool3 = client().callTool(new McpSchema.CallToolRequest("tool3", Map.of()));
         assertThat(tool3.content().size(), is(3));
 
         McpSchema.Content first = tool3.content().getFirst();
@@ -116,7 +95,7 @@ class McpSdkMultipleToolTest {
 
     @Test
     void testTool4() {
-        McpSchema.CallToolResult tool4 = client.callTool(
+        McpSchema.CallToolResult tool4 = client().callTool(
                 new McpSchema.CallToolRequest("tool4", Map.of("name", "Paris", "population", 10)));
         assertThat(tool4.content().size(), is(1));
 

@@ -18,44 +18,21 @@ package io.helidon.extensions.mcp.tests;
 
 import java.util.Map;
 
-import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
-import io.helidon.webserver.testing.junit5.ServerTest;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
 
-import io.modelcontextprotocol.client.McpClient;
-import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
-@ServerTest
-class McpSdkProgressTest {
-    private static McpSyncClient client;
-
-    McpSdkProgressTest(WebServer server) {
-        client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
-                                        .sseEndpoint("/")
-                                        .build())
-                .capabilities(McpSchema.ClientCapabilities.builder().build())
-                .build();
-        client.initialize();
-    }
+abstract class AbstractMcpSdkProgressTest extends AbstractMcpSdkTest {
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {
         ProgressNotifications.setUpRoute(builder);
     }
 
-    @AfterAll
-    static void closeClient() {
-        client.close();
-    }
-
     @Test
     void testMcpSdkProgress() {
-        client.callTool(new McpSchema.CallToolRequest("progress", Map.of()));
+        client().callTool(new McpSchema.CallToolRequest("progress", Map.of()));
     }
-
 }
