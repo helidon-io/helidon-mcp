@@ -217,7 +217,7 @@ final class McpJsonRpc {
         return resources.build();
     }
 
-    static JsonObject listResourceTemplates(McpPage<McpResource> page) {
+    static JsonObject listResourceTemplates(McpPage<McpResourceTemplate> page) {
         JsonArrayBuilder builder = JSON_BUILDER_FACTORY.createArrayBuilder();
         page.components().stream()
                 .map(McpJsonRpc::resourceTemplates)

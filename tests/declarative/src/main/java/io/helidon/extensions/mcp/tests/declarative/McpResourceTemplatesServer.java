@@ -21,6 +21,8 @@ import java.util.List;
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.extensions.mcp.server.Mcp;
 import io.helidon.extensions.mcp.server.McpFeatures;
+import io.helidon.extensions.mcp.server.McpParameters;
+import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpResourceContent;
 import io.helidon.extensions.mcp.server.McpResourceContents;
 
@@ -61,5 +63,21 @@ class McpResourceTemplatesServer {
             description = RESOURCE_DESCRIPTION)
     List<McpResourceContent> resource3(McpFeatures features) {
         return List.of(McpResourceContents.textContent(RESOURCE_CONTENT));
+    }
+
+    @Mcp.Resource(
+            uri = "https://{path}/foo",
+            mediaType = RESOURCE_MEDIA_TYPE,
+            description = RESOURCE_DESCRIPTION)
+    String resource4(String path) {
+        return path;
+    }
+
+    @Mcp.Resource(
+            uri = "{protocol}://{path}",
+            mediaType = RESOURCE_MEDIA_TYPE,
+            description = RESOURCE_DESCRIPTION)
+    String resource5(String protocol, String path, McpRequest request, McpFeatures features, McpParameters parameters) {
+        return protocol + path;
     }
 }

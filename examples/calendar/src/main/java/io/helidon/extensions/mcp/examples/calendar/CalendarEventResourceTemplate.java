@@ -21,10 +21,10 @@ import java.util.function.Function;
 
 import io.helidon.common.media.type.MediaType;
 import io.helidon.common.media.type.MediaTypes;
-import io.helidon.extensions.mcp.server.McpException;
 import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpResource;
 import io.helidon.extensions.mcp.server.McpResourceContent;
+import io.helidon.extensions.mcp.server.McpResourceContents;
 
 /**
  * Resource template to help accessing to the event registry.
@@ -48,7 +48,7 @@ final class CalendarEventResourceTemplate implements McpResource {
 
     @Override
     public String description() {
-        return "Resource Template to find calendar events registry, path is \"calendar\"";
+        return "Resource Template to find calendar events with name";
     }
 
     @Override
@@ -58,6 +58,13 @@ final class CalendarEventResourceTemplate implements McpResource {
 
     @Override
     public Function<McpRequest, List<McpResourceContent>> resource() {
-        throw new McpException("Resource template cannot be read.");
+        return request -> {
+          String name = request.parameters()
+                  .get("name")
+                  .asString()
+                  .orElse("Unknown");
+          String content = calendar.readContentMatchesLine(line -> line.startsWith("Event: { name: " + name + ","));
+          return List.of(McpResourceContents.textContent(content));
+        };
     }
 }

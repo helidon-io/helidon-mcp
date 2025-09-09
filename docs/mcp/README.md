@@ -221,10 +221,6 @@ McpPromptContent image = McpPromptContents.imageContent("base64", MediaTypes.APP
 `Resources` allow servers to share data that provides context to language models, such as files, database schemas, or
 application-specific information. Clients can list and read resources, which are defined by name, description, and media type.
 
-**Resource Templates** use [URI templates](https://datatracker.ietf.org/doc/html/rfc6570) to enable dynamic discovery. They cannot 
-be read but serve as placeholders for real resources. To define a resource or a template, use the same API. Parameters enclosed 
-in `{}` indicate template variables.
-
 #### Interface
 
 Implement the `McpResource` interface and register it via `addResource`.
@@ -233,7 +229,7 @@ Implement the `McpResource` interface and register it via `addResource`.
 class MyResource implements McpResource {
     @Override
     public String uri() {
-        return "http://path";
+        return "https://path";
     }
 
     @Override
@@ -269,10 +265,80 @@ class McpServer {
             .routing(routing -> routing.addFeature(
                 McpServerFeature.builder()
                     .addResource(resource -> resource.name("MyResource")
-                        .uri("http://path")
+                        .uri("https://path")
                         .description("Resource description")
                         .mediaType(MediaTypes.TEXT_PLAIN)
                         .ressource(request -> McpResourceContents.textContent("text"))
+                        .build())));
+    }
+}
+```
+
+### Resource Templates
+
+Resource Templates utilize [URI templates](https://datatracker.ietf.org/doc/html/rfc6570) to facilitate dynamic resource discovery. 
+The URI template is matched against the corresponding URI in the client request. To define a resource or template, the same 
+API as `McpResource` is employed. Parameters enclosed in `{}` denote template variables, which can be accessed via `McpParameters` 
+using keys that correspond to these variables.
+
+#### Interface
+
+Implement the `McpResource` interface and register it via `addResource`.
+
+```java
+class MyResource implements McpResource {
+    @Override
+    public String uri() {
+        return "https://{path}";
+    }
+
+    @Override
+    public String name() {
+        return "MyResource";
+    }
+
+    @Override
+    public String description() {
+        return "Resource description";
+    }
+
+    @Override
+    public MediaType mediaType() {
+        return MediaTypes.TEXT_PLAIN;
+    }
+
+    @Override
+    public List<McpResourceContent> read(McpRequest request) {
+        String path = request.parameters()
+                .get("path")
+                .asString()
+                .orElse("Unknown");
+        return List.of(McpResourceContents.textContent(path));
+    }
+}
+```
+
+#### Builder
+
+Define a resource in the builder using `addResource`.
+
+```java
+class McpServer {
+    public static void main(String[] args) {
+        WebServer.builder()
+            .routing(routing -> routing.addFeature(
+                McpServerFeature.builder()
+                    .addResource(resource -> resource.name("MyResource")
+                        .uri("https://{path}")
+                        .description("Resource description")
+                        .mediaType(MediaTypes.TEXT_PLAIN)
+                        .ressource(request -> {
+                            String path = request.parameters()
+                                    .get("path")
+                                    .asString()
+                                    .orElse("Unknown");
+                            return McpResourceContents.textContent(path);
+                        })
                         .build())));
     }
 }

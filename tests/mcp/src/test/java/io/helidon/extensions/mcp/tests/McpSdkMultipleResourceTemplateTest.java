@@ -31,12 +31,14 @@ import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static io.helidon.extensions.mcp.tests.MultipleResourceTemplate.RESOURCE1_URI;
 import static io.helidon.extensions.mcp.tests.MultipleResourceTemplate.RESOURCE2_URI;
 import static io.helidon.extensions.mcp.tests.MultipleResourceTemplate.RESOURCE3_URI;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -88,13 +90,52 @@ class McpSdkMultipleResourceTemplateTest {
     }
 
     @Test
-    void readResourceTemplate() {
-        try {
-            client.readResource(new McpSchema.ReadResourceRequest(RESOURCE1_URI));
-            fail("Attempt to read resource template must fail");
-        } catch (McpError e) {
-            assertThat(e.getMessage(), is("Resource does not exist"));
-            assertThat(e.getJsonRpcError().code(), is(JsonRpcError.INVALID_REQUEST));
-        }
+    void readResource1Template() {
+        var result = client.readResource(new McpSchema.ReadResourceRequest("https://foo"));
+        assertThat(result.contents().size(), is(1));
+
+        var resource = result.contents().getFirst();
+        assertThat(resource, instanceOf(McpSchema.TextResourceContents.class));
+
+        var text = (McpSchema.TextResourceContents) resource;
+        assertThat(text.text(), is("foo"));
+        assertThat(text.uri(), is("https://foo"));
+        assertThat(text.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
+    }
+
+    @Test
+    void readResource2Template() {
+        var result = client.readResource(new McpSchema.ReadResourceRequest("https://foo/foo1/foo2"));
+        assertThat(result.contents().size(), is(1));
+
+        var content = result.contents().getFirst();
+        assertThat(content, instanceOf(McpSchema.TextResourceContents.class));
+
+        var text = (McpSchema.TextResourceContents) content;
+        assertThat(text.text(), is("foo2"));
+        assertThat(text.uri(), is("https://foo/foo1/foo2"));
+        assertThat(text.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
+    }
+
+    @Test
+    void readResource3Template() {
+        var result = client.readResource(new McpSchema.ReadResourceRequest("https://foo/bar"));
+        assertThat(result.contents().size(), is(2));
+
+        var content = result.contents().getFirst();
+        assertThat(content, instanceOf(McpSchema.TextResourceContents.class));
+
+        var text = (McpSchema.TextResourceContents) content;
+        assertThat(text.text(), is("foo"));
+        assertThat(text.uri(), is("https://foo/bar"));
+        assertThat(text.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
+
+        var content1 = result.contents().get(1);
+        assertThat(content1, instanceOf(McpSchema.TextResourceContents.class));
+
+        var text1 = (McpSchema.TextResourceContents) content1;
+        assertThat(text1.text(), is("bar"));
+        assertThat(text1.uri(), is("https://foo/bar"));
+        assertThat(text1.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
     }
 }

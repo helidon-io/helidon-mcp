@@ -25,8 +25,10 @@ import io.helidon.webserver.testing.junit5.SetUpRoute;
 
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -36,6 +38,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 
+@TestMethodOrder(OrderAnnotation.class)
 abstract class BaseTest {
 
     @SetUpRoute
@@ -174,10 +177,27 @@ abstract class BaseTest {
         assertThat(templates.size(), is(1));
 
         McpSchema.ResourceTemplate template = templates.getFirst();
-        assertThat(template.uriTemplate(), containsString("{path}"));
+        assertThat(template.uriTemplate(), containsString("{name}"));
         assertThat(template.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
         assertThat(template.name(), is("calendar-events-resource-template"));
-        assertThat(template.description(), is("Resource Template to find calendar events registry, path is \"calendar\""));
+        assertThat(template.description(), is("Resource Template to find calendar events with name"));
+    }
+
+    @Test
+    @Order(8)
+    void testResourceTemplateCall() {
+        McpSchema.ReadResourceRequest request = new McpSchema.ReadResourceRequest("file://events/Franck-birthday");
+        McpSchema.ReadResourceResult result = client().readResource(request);
+        var contents = result.contents();
+        assertThat(contents.size(), is(1));
+
+        McpSchema.ResourceContents content = contents.getFirst();
+        assertThat(content, instanceOf(McpSchema.TextResourceContents.class));
+
+        McpSchema.TextResourceContents text = (McpSchema.TextResourceContents) content;
+        assertThat(content.uri(), is("file://events/Franck-birthday"));
+        assertThat(content.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
+        assertThat(text.text(), is("Event: { name: Franck-birthday, date: 2021-04-20, attendees: [Franck] }"));
     }
 
     private int sortArguments(McpSchema.PromptArgument first, McpSchema.PromptArgument second) {

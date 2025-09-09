@@ -22,6 +22,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import io.helidon.extensions.mcp.server.McpException;
 
@@ -37,7 +39,7 @@ final class Calendar {
         try {
             this.file = Files.createTempFile("calendar", "-calendar");
             this.uri = file.toUri().toString();
-            this.uriTemplate = uri.substring(0, uri.lastIndexOf('-') + 1) + "{path}";
+            this.uriTemplate = "file://events/{name}";
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }
@@ -55,7 +57,18 @@ final class Calendar {
         try {
             return Files.readString(file);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    String readContentMatchesLine(Predicate<String> lineMatcher) {
+        try {
+            return Files.readAllLines(file)
+                    .stream()
+                    .filter(lineMatcher)
+                    .collect(Collectors.joining("\n"));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 

@@ -339,11 +339,11 @@ final class McpCodegen implements CodegenExtension {
                     .name(innerTypeName.className())
                     .addInterface(MCP_RESOURCE_INTERFACE)
                     .accessModifier(AccessModifier.PRIVATE)
+                    .addMethod(method -> addResourceUriMethod(method, uri))
                     .addMethod(method -> addResourceNameMethod(method, element))
                     .addMethod(method -> addResourceDescriptionMethod(method, description))
-                    .addMethod(method -> addResourceUriMethod(method, uri))
-                    .addMethod(method -> addResourceMediaTypeMethod(method, mediaTypeContent))
-                    .addMethod(method -> addResourceMethod(method, classModel, element)));
+                    .addMethod(method -> addResourceMethod(method, uri, classModel, element))
+                    .addMethod(method -> addResourceMediaTypeMethod(method, mediaTypeContent)));
         }
     }
 
@@ -382,13 +382,13 @@ final class McpCodegen implements CodegenExtension {
                 .addContentLine(".create(\"" + mediaTypeContent + "\");");
     }
 
-    private void addResourceMethod(Method.Builder builder, ClassModel.Builder classModel, TypedElementInfo element) {
+    private void addResourceMethod(Method.Builder builder, String uri, ClassModel.Builder classModel, TypedElementInfo element) {
         List<String> parameters = new ArrayList<>();
         TypeName returnType = element.signature().type();
 
         builder.name("resource")
-                .returnType(returned -> returned.type(FUNCTION_REQUEST_LIST_RESOURCE_CONTENT))
-                .addAnnotation(Annotations.OVERRIDE);
+                .addAnnotation(Annotations.OVERRIDE)
+                .returnType(returned -> returned.type(FUNCTION_REQUEST_LIST_RESOURCE_CONTENT));
         builder.addContentLine("return request -> {");
 
         for (TypedElementInfo parameter : element.parameterArguments()) {
@@ -406,11 +406,25 @@ final class McpCodegen implements CodegenExtension {
             }
             if (MCP_PROGRESS.equals(parameter.typeName())) {
                 parameters.add("request.features().progress()");
+                continue;
+            }
+            if (isResourceTemplate(uri)) {
+                if (MCP_PARAMETERS.equals(parameter.typeName())) {
+                    parameters.add("request.parameters()");
+                    continue;
+                }
+                if (TypeNames.STRING.equals(parameter.typeName())) {
+                    parameters.add(parameter.elementName());
+                    builder.addContent("String ")
+                            .addContent(parameter.elementName())
+                            .addContent(" = request.parameters().get(\"")
+                            .addContent(parameter.elementName())
+                            .addContentLine("\").asString().orElse(\"\");");
+                }
             }
         }
         String params = String.join(", ", parameters);
         if (returnType.equals(TypeNames.STRING)) {
-            classModel.addImport(MCP_RESOURCE_CONTENTS);
             builder.addContent("return ")
                     .addContent(List.class)
                     .addContent(".of(")
@@ -858,6 +872,10 @@ final class McpCodegen implements CodegenExtension {
                 || MCP_FEATURES.equals(typeName)
                 || MCP_PROGRESS.equals(typeName)
                 || MCP_LOGGER.equals(typeName);
+    }
+
+    private boolean isResourceTemplate(String uri) {
+        return uri.contains("{") || uri.contains("}");
     }
 
     private void initializeComponents() {

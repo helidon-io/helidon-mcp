@@ -21,17 +21,17 @@ import java.util.function.Function;
 
 import io.helidon.common.media.type.MediaType;
 import io.helidon.common.media.type.MediaTypes;
-import io.helidon.extensions.mcp.server.McpException;
 import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpResource;
 import io.helidon.extensions.mcp.server.McpResourceContent;
+import io.helidon.extensions.mcp.server.McpResourceContents;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.webserver.http.HttpRouting;
 
 class MultipleResourceTemplate {
-    static final String RESOURCE1_URI = "http://{path}";
-    static final String RESOURCE2_URI = "http://{path}/{path}";
-    static final String RESOURCE3_URI = "http://{foo}/{bar}";
+    static final String RESOURCE1_URI = "https://{path}";
+    static final String RESOURCE2_URI = "https://{path}/{path}/{path}";
+    static final String RESOURCE3_URI = "https://{foo}/{bar}";
 
     private MultipleResourceTemplate() {
     }
@@ -44,19 +44,23 @@ class MultipleResourceTemplate {
                                            .uri(RESOURCE1_URI)
                                            .description("Resource 1")
                                            .mediaType(MediaTypes.TEXT_PLAIN)
-                                           .resource(param -> {
-                                               throw new McpException("Resource Template does not provide resource content");
-                                           }))
+                                           .resource(MultipleResourceTemplate::resource))
 
                                    .addResource(resource -> resource
                                            .name("resource2")
                                            .uri(RESOURCE2_URI)
                                            .description("Resource 2")
                                            .mediaType(MediaTypes.APPLICATION_JSON)
-                                           .resource(param -> {
-                                               throw new McpException("Resource Template does not provide resource content");
-                                           }))
+                                           .resource(MultipleResourceTemplate::resource))
                                    .addResource(new MyResource()));
+    }
+
+    private static List<McpResourceContent> resource(McpRequest request) {
+        String path = request.parameters()
+                .get("path")
+                .asString()
+                .orElse("Unknown");
+        return List.of(McpResourceContents.textContent(path));
     }
 
     private static final class MyResource implements McpResource {
@@ -85,8 +89,18 @@ class MultipleResourceTemplate {
             return this::read;
         }
 
-        List<McpResourceContent> read(McpRequest features) {
-            throw new McpException("Resource Template does not provide resource content");
+        List<McpResourceContent> read(McpRequest request) {
+            String foo = request.parameters()
+                    .get("foo")
+                    .asString()
+                    .orElse("Unknown");
+            String bar = request.parameters()
+                    .get("bar")
+                    .asString()
+                    .orElse("Unknown");
+            return List.of(
+                    McpResourceContents.textContent(foo),
+                    McpResourceContents.textContent(bar));
         }
     }
 }

@@ -100,7 +100,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     private final McpPagination<McpTool> tools;
     private final McpPagination<McpPrompt> prompts;
     private final McpPagination<McpResource> resources;
-    private final McpPagination<McpResource> resourceTemplates;
+    private final McpPagination<McpResourceTemplate> resourceTemplates;
     private final Set<McpCapability> capabilities = new HashSet<>();
     private final Map<String, McpCompletion> completions = new ConcurrentHashMap<>();
     private final LruCache<String, McpSession> sessions = LruCache.create(SESSION_CACHE_SIZE);
@@ -110,14 +110,14 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         List<McpTool> tools = new CopyOnWriteArrayList<>(config.tools());
         List<McpPrompt> prompts = new CopyOnWriteArrayList<>(config.prompts());
         List<McpResource> resources = new CopyOnWriteArrayList<>();
-        List<McpResource> templates = new CopyOnWriteArrayList<>();
+        List<McpResourceTemplate> templates = new CopyOnWriteArrayList<>();
         JsonRpcHandlers.Builder builder = JsonRpcHandlers.builder();
 
         this.config = config;
         this.endpoint = path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
         for (McpResource resource : config.resources()) {
             if (isTemplate(resource)) {
-                templates.add(resource);
+                templates.add(new McpResourceTemplate(resource));
             } else {
                 resources.add(resource);
             }
@@ -465,16 +465,20 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 .filter(r -> resourceUri.equals(r.uri()))
                 .findFirst();
 
+        // Fall back on resource template processing if resource is not found
         if (resource.isEmpty()) {
-            res.error(INVALID_REQUEST, "Resource does not exist");
-            sendResponse(req, res, session);
-            return;
-        }
+            var templates = resourceTemplates.content().stream()
+                    .filter(template -> template.matches(resourceUri))
+                    .findFirst();
 
-        if (isTemplate(resource.get())) {
-            res.error(INVALID_REQUEST, "Resource Template cannot be read.");
-            sendResponse(req, res, session);
-            return;
+            if (templates.isEmpty()) {
+                session.send(res.error(JsonRpcError.INVALID_REQUEST, "Resource does not exist"));
+                return;
+            }
+
+            McpResourceTemplate template = templates.get();
+            parameters = template.parameters(req.params(), resourceUri);
+            resource = templates.map(Function.identity());
         }
 
         enableProgress(session, parameters);
@@ -502,7 +506,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             return;
         }
         McpSession session = foundSession.get();
-        McpPage<McpResource> page = page(resourceTemplates, req.params());
+        McpPage<McpResourceTemplate> page = page(resourceTemplates, req.params());
         if (page == null) {
             res.error(INVALID_PARAMS, "Wrong cursor provided.");
             sendResponse(req, res, session);

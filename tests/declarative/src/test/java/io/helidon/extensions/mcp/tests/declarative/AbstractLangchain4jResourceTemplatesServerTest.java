@@ -19,13 +19,17 @@ package io.helidon.extensions.mcp.tests.declarative;
 import java.util.List;
 
 import dev.langchain4j.mcp.client.McpClient;
+import dev.langchain4j.mcp.client.McpReadResourceResult;
+import dev.langchain4j.mcp.client.McpResourceContents;
 import dev.langchain4j.mcp.client.McpResourceTemplate;
+import dev.langchain4j.mcp.client.McpTextResourceContents;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
 import static io.helidon.extensions.mcp.tests.declarative.McpResourceTemplatesServer.RESOURCE_DESCRIPTION;
 import static io.helidon.extensions.mcp.tests.declarative.McpResourceTemplatesServer.RESOURCE_MEDIA_TYPE;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 
 abstract class AbstractLangchain4jResourceTemplatesServerTest {
@@ -41,7 +45,7 @@ abstract class AbstractLangchain4jResourceTemplatesServerTest {
     @Test
     void readResource() {
         List<McpResourceTemplate> result = client.listResourceTemplates();
-        assertThat(result.size(), is(4));
+        assertThat(result.size(), is(6));
 
         McpResourceTemplate first = result.getFirst();
         assertThat(first.name(), is("resource"));
@@ -66,5 +70,47 @@ abstract class AbstractLangchain4jResourceTemplatesServerTest {
         assertThat(fourth.uriTemplate(), is("git://{path}"));
         assertThat(fourth.mimeType(), is(RESOURCE_MEDIA_TYPE));
         assertThat(fourth.description(), is(RESOURCE_DESCRIPTION));
+
+        McpResourceTemplate fifth = result.get(4);
+        assertThat(fifth.name(), is("resource4"));
+        assertThat(fifth.uriTemplate(), is("https://{path}/foo"));
+        assertThat(fifth.mimeType(), is(RESOURCE_MEDIA_TYPE));
+        assertThat(fifth.description(), is(RESOURCE_DESCRIPTION));
+
+        McpResourceTemplate sixth = result.get(5);
+        assertThat(sixth.name(), is("resource5"));
+        assertThat(sixth.uriTemplate(), is("{protocol}://{path}"));
+        assertThat(sixth.mimeType(), is(RESOURCE_MEDIA_TYPE));
+        assertThat(sixth.description(), is(RESOURCE_DESCRIPTION));
+    }
+
+    @Test
+    void readResource4() {
+        McpReadResourceResult result = client.readResource("https://foo/foo");
+        List<McpResourceContents> contents = result.contents();
+        assertThat(contents.size(), is(1));
+
+        McpResourceContents content = contents.getFirst();
+        assertThat(content, instanceOf(McpTextResourceContents.class));
+
+        McpTextResourceContents text = (McpTextResourceContents) content;
+        assertThat(text.text(), is("foo"));
+        assertThat(text.uri(), is("https://foo/foo"));
+        assertThat(text.mimeType(), is(RESOURCE_MEDIA_TYPE));
+    }
+
+    @Test
+    void readResource5() {
+        McpReadResourceResult result = client.readResource("foo://bar");
+        List<McpResourceContents> contents = result.contents();
+        assertThat(contents.size(), is(1));
+
+        McpResourceContents content = contents.getFirst();
+        assertThat(content, instanceOf(McpTextResourceContents.class));
+
+        McpTextResourceContents text = (McpTextResourceContents) content;
+        assertThat(text.text(), is("foobar"));
+        assertThat(text.uri(), is("foo://bar"));
+        assertThat(text.mimeType(), is(RESOURCE_MEDIA_TYPE));
     }
 }

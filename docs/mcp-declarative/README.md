@@ -205,10 +205,7 @@ McpPromptContent image = McpPromptContents.imageContent("base64", MediaTypes.cre
 
 `Resources` allow servers to share data that provides context to language models, such as files, database schemas, or 
 application-specific information. Clients can list and read them. Resources are identified by name, description, and media type.
-
-**Resource Templates** use [URI templates](https://datatracker.ietf.org/doc/html/rfc6570) to define parameterized URIs. They help 
-clients discover dynamic content; note that templates are not directly readable. 
-Define both resources and templates using `@Mcp.Resource`:
+Define resources using `@Mcp.Resource`:
 
 ```java
 @Mcp.Server
@@ -239,6 +236,32 @@ class Server {
     @Mcp.Name("MyResource")
     String resource(McpRequest request) {
         return "text";
+    }
+}
+```
+
+### Resource Templates
+
+Resource Templates utilize [URI templates](https://datatracker.ietf.org/doc/html/rfc6570) to facilitate dynamic resource discovery.
+The URI template is matched against the corresponding URI in the client request. To define a resource or template, the same
+API as `McpResource` is employed. Parameters enclosed in `{}` denote template variables, which can be accessed via `McpParameters`
+using keys that correspond to these variables.
+
+#### Configuration
+
+Use `String` return types for text-only resources. The `@Mcp.Name` annotation lets you override the default resource name.
+
+```java
+@Mcp.Server
+class Server {
+    
+    @Mcp.Resource(
+            uri = "file://{path}",
+            description = "Resource description",
+            mediaType = MediaTypes.TEXT_PLAIN_VALUE)
+    @Mcp.Name("MyResource")
+    String resource(String path) {
+        return "File at path " + path + " does not exist.";
     }
 }
 ```

@@ -22,10 +22,8 @@ import io.helidon.webserver.testing.junit5.ServerTest;
 import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.transport.McpTransport;
 import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
-import org.junit.jupiter.api.Disabled;
 
 @ServerTest
-@Disabled
 class Langchain4jStreamableMultipleResourceTemplateTest extends AbstractLangchain4jMultipleResourceTemplateTest {
 
     Langchain4jStreamableMultipleResourceTemplateTest(WebServer server) {
