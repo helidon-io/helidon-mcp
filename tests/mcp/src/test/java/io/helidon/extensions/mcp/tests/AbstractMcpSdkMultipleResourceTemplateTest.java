@@ -20,17 +20,11 @@ import java.util.List;
 
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.jsonrpc.core.JsonRpcError;
-import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
-import io.helidon.webserver.testing.junit5.ServerTest;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
 
-import io.modelcontextprotocol.client.McpClient;
-import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
 import static io.helidon.extensions.mcp.tests.MultipleResourceTemplate.RESOURCE1_URI;
@@ -40,31 +34,16 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.fail;
 
-@ServerTest
-class McpSdkMultipleResourceTemplateTest {
-    private static McpSyncClient client;
-
-    McpSdkMultipleResourceTemplateTest(WebServer server) {
-        client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
-                                        .sseEndpoint("/")
-                                        .build())
-                .build();
-        client.initialize();
-    }
+abstract class AbstractMcpSdkMultipleResourceTemplateTest extends AbstractMcpSdkTest {
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {
         MultipleResourceTemplate.setUpRoute(builder);
     }
 
-    @AfterAll
-    static void closeClient() {
-        client.close();
-    }
-
     @Test
     void listResourceTemplates() {
-        List<McpSchema.ResourceTemplate> list = client.listResourceTemplates().resourceTemplates();
+        List<McpSchema.ResourceTemplate> list = client().listResourceTemplates().resourceTemplates();
         list = list.reversed();
         assertThat(list.size(), is(3));
 
@@ -90,7 +69,7 @@ class McpSdkMultipleResourceTemplateTest {
     @Test
     void readResourceTemplate() {
         try {
-            client.readResource(new McpSchema.ReadResourceRequest(RESOURCE1_URI));
+            client().readResource(new McpSchema.ReadResourceRequest(RESOURCE1_URI));
             fail("Attempt to read resource template must fail");
         } catch (McpError e) {
             assertThat(e.getMessage(), is("Resource does not exist"));

@@ -18,16 +18,10 @@ package io.helidon.extensions.mcp.tests;
 import java.util.Map;
 
 import io.helidon.common.media.type.MediaTypes;
-import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
-import io.helidon.webserver.testing.junit5.ServerTest;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
 
-import io.modelcontextprotocol.client.McpClient;
-import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
 import static io.helidon.extensions.mcp.tests.McpWeather.PROMPT_ARGUMENT_DESCRIPTION;
@@ -45,38 +39,23 @@ import static io.helidon.extensions.mcp.tests.McpWeather.TOOL_NAME;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.isOneOf;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 /**
  * {@link McpWeather} test using McpSdk client.
  */
-@ServerTest
-class McpSdkClientTest {
-    private static McpSyncClient client;
-
-    McpSdkClientTest(WebServer server) {
-        client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
-                                        .sseEndpoint("/")
-                                        .build())
-                .capabilities(McpSchema.ClientCapabilities.builder().roots(true).build())
-                .build();
-        client.initialize();
-    }
+abstract class AbstractMcpSdkClientTest extends AbstractMcpSdkTest {
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {
         McpWeather.setUpRoute(builder);
     }
 
-    @AfterAll
-    static void stopServer() {
-        client.close();
-    }
-
     @Test
     void testClientInitialize() {
-        McpSchema.InitializeResult result = client.initialize();
+        McpSchema.InitializeResult result = client().initialize();
 
         var implementation = result.serverInfo();
         assertThat(implementation.name(), is(SERVER_NAME));
@@ -94,18 +73,18 @@ class McpSdkClientTest {
         var tools = capabilities.tools();
         assertThat(tools.listChanged(), is(true));
         assertThat(result.instructions(), is(""));
-        assertThat(result.protocolVersion(), is(PROTOCOL_VERSION));
+        assertThat(result.protocolVersion(), isOneOf(PROTOCOL_VERSION));
     }
 
     @Test
     void testPing() {
-        var ping = client.ping();
+        var ping = client().ping();
         assertThat(ping.toString(), is("{}"));
     }
 
     @Test
     void testToolList() {
-        McpSchema.ListToolsResult result = client.listTools();
+        McpSchema.ListToolsResult result = client().listTools();
         assertThat(result.nextCursor(), is(nullValue()));
 
         var tools = result.tools();
@@ -121,7 +100,7 @@ class McpSdkClientTest {
 
     @Test
     void testPromptList() {
-        McpSchema.ListPromptsResult listPrompt = client.listPrompts();
+        McpSchema.ListPromptsResult listPrompt = client().listPrompts();
         assertThat(listPrompt.nextCursor(), is(nullValue()));
 
         var list = listPrompt.prompts();
@@ -141,7 +120,7 @@ class McpSdkClientTest {
 
     @Test
     void testResourceList() {
-        McpSchema.ListResourcesResult result = client.listResources();
+        McpSchema.ListResourcesResult result = client().listResources();
         assertThat(result.nextCursor(), is(nullValue()));
 
         var list = result.resources();
@@ -155,7 +134,7 @@ class McpSdkClientTest {
 
     @Test
     void testToolCall() {
-        McpSchema.CallToolResult result = client.callTool(
+        McpSchema.CallToolResult result = client().callTool(
                 new McpSchema.CallToolRequest(TOOL_NAME, Map.of("town", "Praha")));
 
         assertThat(result.isError(), is(nullValue()));
@@ -174,7 +153,7 @@ class McpSdkClientTest {
 
     @Test
     void testPromptCall() {
-        var result = client.getPrompt(
+        var result = client().getPrompt(
                 new McpSchema.GetPromptRequest(PROMPT_NAME, Map.of(PROMPT_ARGUMENT_NAME, "Praha")));
         assertThat(result.description(), is(PROMPT_DESCRIPTION));
 
@@ -193,7 +172,7 @@ class McpSdkClientTest {
 
     @Test
     void testResourceCall() {
-        var result = client.readResource(new McpSchema.ReadResourceRequest(RESOURCE_URI));
+        var result = client().readResource(new McpSchema.ReadResourceRequest(RESOURCE_URI));
 
         var contents = result.contents();
         assertThat(contents.size(), is(1));
@@ -209,7 +188,7 @@ class McpSdkClientTest {
 
     @Test
     void testCompletion() {
-        var result = client.completeCompletion(new McpSchema.CompleteRequest(
+        var result = client().completeCompletion(new McpSchema.CompleteRequest(
                 new McpSchema.PromptReference("ref/prompt", PROMPT_NAME),
                 new McpSchema.CompleteRequest.CompleteArgument(PROMPT_ARGUMENT_NAME, "f")));
 

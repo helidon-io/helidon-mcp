@@ -21,47 +21,26 @@ import java.util.Base64;
 import java.util.List;
 
 import io.helidon.common.media.type.MediaTypes;
-import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
-import io.helidon.webserver.testing.junit5.ServerTest;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
 
-import io.modelcontextprotocol.client.McpClient;
-import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 
-@ServerTest
-class McpSdkMultipleResourceTest {
-    private static McpSyncClient client;
-
-    McpSdkMultipleResourceTest(WebServer server) {
-        client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
-                                        .sseEndpoint("/")
-                                        .build())
-                .build();
-        client.initialize();
-    }
+abstract class AbstractMcpSdkMultipleResourceTest extends AbstractMcpSdkTest {
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {
         MultipleResource.setUpRoute(builder);
     }
 
-    @AfterAll
-    static void closeClient() {
-        client.close();
-    }
-
     @Test
     void listResources() {
-        McpSchema.ListResourcesResult list = client.listResources();
+        McpSchema.ListResourcesResult list = client().listResources();
         assertThat(list.resources().size(), is(3));
 
         List<String> names = list.resources().stream().map(McpSchema.Resource::name).toList();
@@ -70,7 +49,7 @@ class McpSdkMultipleResourceTest {
 
     @Test
     void testReadResource1() {
-        McpSchema.ReadResourceResult resource = client.readResource(new McpSchema.ReadResourceRequest("http://resource1"));
+        McpSchema.ReadResourceResult resource = client().readResource(new McpSchema.ReadResourceRequest("http://resource1"));
         assertThat(resource.contents().size(), is(1));
 
         McpSchema.TextResourceContents first = (McpSchema.TextResourceContents) resource.contents().getFirst();
@@ -81,7 +60,7 @@ class McpSdkMultipleResourceTest {
 
     @Test
     void testReadResource2() {
-        McpSchema.ReadResourceResult resource = client.readResource(new McpSchema.ReadResourceRequest("http://resource2"));
+        McpSchema.ReadResourceResult resource = client().readResource(new McpSchema.ReadResourceRequest("http://resource2"));
         assertThat(resource.contents().size(), is(1));
 
         McpSchema.BlobResourceContents first = (McpSchema.BlobResourceContents) resource.contents().getFirst();
@@ -92,7 +71,7 @@ class McpSdkMultipleResourceTest {
 
     @Test
     void testReadResource3() {
-        McpSchema.ReadResourceResult resource = client.readResource(new McpSchema.ReadResourceRequest("http://resource3"));
+        McpSchema.ReadResourceResult resource = client().readResource(new McpSchema.ReadResourceRequest("http://resource3"));
         assertThat(resource.contents().size(), is(2));
 
         McpSchema.TextResourceContents first = (McpSchema.TextResourceContents) resource.contents().getFirst();
