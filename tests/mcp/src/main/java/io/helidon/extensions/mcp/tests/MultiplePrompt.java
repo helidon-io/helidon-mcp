@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-import io.helidon.common.media.type.MediaTypes;
 import io.helidon.extensions.mcp.server.McpParameters;
 import io.helidon.extensions.mcp.server.McpPrompt;
 import io.helidon.extensions.mcp.server.McpPromptArgument;
@@ -49,8 +48,8 @@ class MultiplePrompt {
                                            .description("Prompt 2")
                                            .prompt(request ->
                                                            List.of(McpPromptContents.imageContent(
-                                                                   "binary",
-                                                                   MediaTypes.APPLICATION_OCTET_STREAM,
+                                                                   McpMedia.base64Media("helidon.png"),
+                                                                   McpMedia.IMAGE_PNG,
                                                                    McpRole.ASSISTANT))))
 
                                    .addPrompt(prompt -> prompt.name("prompt3")
@@ -60,7 +59,16 @@ class MultiplePrompt {
                                                                    URI.create("http://resource"),
                                                                    McpResourceContents.textContent("resource"),
                                                                    McpRole.ASSISTANT))))
-                                   .addPrompt(new MyPrompt()));
+
+                                   .addPrompt(new MyPrompt())
+
+                                   .addPrompt(prompt -> prompt.name("prompt5")
+                                           .description("Prompt 5")
+                                           .prompt(request ->
+                                                           List.of(McpPromptContents.audioContent(
+                                                                   McpMedia.base64Media("helidon.wav"),
+                                                                   McpMedia.AUDIO_WAV,
+                                                                   McpRole.ASSISTANT)))));
     }
 
     private static class MyPrompt implements McpPrompt {
@@ -92,7 +100,9 @@ class MultiplePrompt {
         public List<McpPromptContent> prompts(McpRequest request) {
             McpParameters parameters = request.parameters();
             return List.of(
-                    McpPromptContents.imageContent("binary", MediaTypes.APPLICATION_OCTET_STREAM, McpRole.USER),
+                    McpPromptContents.imageContent(McpMedia.base64Media("helidon.png"),
+                                                   McpMedia.IMAGE_PNG,
+                                                   McpRole.USER),
                     McpPromptContents.textContent(parameters.get("argument1").asString().orElse("missing"), McpRole.USER),
                     McpPromptContents.resourceContent(URI.create("http://resource"),
                                                       McpResourceContents.textContent("resource"),

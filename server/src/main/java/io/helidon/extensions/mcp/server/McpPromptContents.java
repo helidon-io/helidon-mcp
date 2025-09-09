@@ -71,4 +71,19 @@ public final class McpPromptContents {
         Objects.requireNonNull(content, "Prompt resource content must not be null");
         return new McpPromptResourceContent(uri, content, role);
     }
+
+    /**
+     * Create a prompt audio content.
+     *
+     * @param data content
+     * @param type media type
+     * @param role role
+     * @return image prompt content instance
+     */
+    public static McpPromptContent audioContent(String data, MediaType type, McpRole role) {
+        Objects.requireNonNull(data, "Prompt audio data must not be null");
+        Objects.requireNonNull(type, "Prompt audio MIME type must not be null");
+        Objects.requireNonNull(role, "Prompt role must not be null");
+        return new McpPromptAudioContent(data.getBytes(StandardCharsets.UTF_8), type, role);
+    }
 }

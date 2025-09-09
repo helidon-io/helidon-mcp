@@ -55,7 +55,7 @@ abstract class AbstractLangchain4jMultiplePromptTest {
     void listPrompts() {
         List<McpPrompt> prompts = client.listPrompts();
 
-        assertThat(prompts.size(), is(4));
+        assertThat(prompts.size(), is(5));
     }
 
     @Test
@@ -85,8 +85,8 @@ abstract class AbstractLangchain4jMultiplePromptTest {
         assertThat(message.role(), is(McpRole.ASSISTANT));
 
         McpImageContent content = (McpImageContent) message.content();
-        assertThat(content.data(), is("binary"));
-        assertThat(content.mimeType(), is(MediaTypes.APPLICATION_OCTET_STREAM_VALUE));
+        assertThat(content.data(), is(McpMedia.base64Media("helidon.png")));
+        assertThat(content.mimeType(), is(McpMedia.IMAGE_PNG_VALUE));
     }
 
     @Test
@@ -122,8 +122,8 @@ abstract class AbstractLangchain4jMultiplePromptTest {
         assertThat(third.role(), is(McpRole.USER));
 
         McpImageContent image = (McpImageContent) first.content();
-        assertThat(image.data(), is("binary"));
-        assertThat(image.mimeType(), is(MediaTypes.APPLICATION_OCTET_STREAM_VALUE));
+        assertThat(image.data(), is(McpMedia.base64Media("helidon.png")));
+        assertThat(image.mimeType(), is(McpMedia.IMAGE_PNG_VALUE));
 
         McpTextContent text = (McpTextContent) second.content();
         assertThat(text.text(), is("text"));

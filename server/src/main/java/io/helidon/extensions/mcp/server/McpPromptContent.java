@@ -19,7 +19,10 @@ package io.helidon.extensions.mcp.server;
 /**
  * Prompt contents that can be returned by the prompt execution.
  */
-public sealed interface McpPromptContent permits McpPromptImageContent, McpPromptResourceContent, McpPromptTextContent {
+public sealed interface McpPromptContent permits McpPromptImageContent,
+                                                 McpPromptResourceContent,
+                                                 McpPromptTextContent,
+                                                 McpPromptAudioContent {
     /**
      * Prompt role.
      *

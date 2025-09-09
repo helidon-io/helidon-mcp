@@ -43,3 +43,4 @@ expected-config
 .helidon
 jvm.config
 .loader
+.wav
