@@ -16,18 +16,26 @@
 
 package io.helidon.extensions.mcp.server;
 
+import io.helidon.http.sse.SseEvent;
+import io.helidon.webserver.sse.SseSink;
+
 /**
  * Progress notification to the client.
  */
-public final class McpProgress {
-    private final McpSession session;
+public final class McpProgress extends McpFeature {
+
     private int total;
     private int tokenInt;
     private String token;
     private boolean isSending;
 
     McpProgress(McpSession session) {
-        this.session = session;
+        super(session);
+        this.token = "";
+    }
+
+    McpProgress(McpSession session, SseSink sseSink) {
+        super(session, sseSink);
         this.token = "";
     }
 
@@ -50,7 +58,14 @@ public final class McpProgress {
             return;
         }
         if (isSending) {
-            session.send(McpJsonRpc.toJson(this, progress));
+            if (sseSink().isPresent()) {
+                sseSink().get().emit(SseEvent.builder()
+                                     .name("message")
+                                     .data(McpJsonRpc.toJson(this, progress))
+                                     .build());
+            } else {
+                session().send(McpJsonRpc.toJson(this, progress));
+            }
         }
         if (progress >= total) {
             isSending = false;

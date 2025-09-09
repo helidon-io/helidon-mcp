@@ -60,7 +60,7 @@
 
     <properties>
         <version.java>21</version.java>
-        <helidon.version>4.3.0-M1</helidon.version>
+        <helidon.version>4.3.0-SNAPSHOT</helidon.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -591,4 +591,24 @@
             </modules>
         </profile>
     </profiles>
+
+    <repositories>
+        <repository>
+            <id>central-snapshot</id>
+            <url>https://central.sonatype.com/repository/maven-snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>central-snapshot</id>
+            <url>https://central.sonatype.com/repository/maven-snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
 </project>

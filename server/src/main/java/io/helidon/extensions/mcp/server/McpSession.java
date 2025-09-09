@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import io.helidon.common.UncheckedException;
+import io.helidon.common.context.Context;
 import io.helidon.http.Status;
 import io.helidon.webserver.jsonrpc.JsonRpcResponse;
 
@@ -37,6 +38,7 @@ class McpSession {
     private final Set<McpCapability> capabilities;
     private final AtomicBoolean active = new AtomicBoolean(true);
     private final BlockingQueue<JsonObject> queue = new LinkedBlockingQueue<>();
+    private final Context context = Context.create();
 
     private volatile State state = UNINITIALIZED;
 
@@ -91,6 +93,10 @@ class McpSession {
 
     State state() {
         return state;
+    }
+
+    Context context() {
+        return context;
     }
 
     void state(State state) {
