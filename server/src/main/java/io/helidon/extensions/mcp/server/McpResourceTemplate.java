@@ -25,9 +25,10 @@ import java.util.regex.Pattern;
 import io.helidon.common.media.type.MediaType;
 import io.helidon.jsonrpc.core.JsonRpcParams;
 
-import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
+
+import static io.helidon.extensions.mcp.server.McpJsonRpc.JSON_BUILDER_FACTORY;
 
 class McpResourceTemplate implements McpResource {
     private final Pattern pattern;
@@ -70,7 +71,7 @@ class McpResourceTemplate implements McpResource {
     }
 
     McpParameters parameters(JsonRpcParams params, String uri) {
-        JsonObjectBuilder builder = Json.createObjectBuilder();
+        JsonObjectBuilder builder = JSON_BUILDER_FACTORY.createObjectBuilder();
         Matcher matcher = pattern.matcher(uri);
         if (matcher.matches()) {
             for (int i = 0; i < matcher.groupCount(); i++) {

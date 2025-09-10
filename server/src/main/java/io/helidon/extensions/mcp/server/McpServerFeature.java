@@ -472,7 +472,8 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                     .findFirst();
 
             if (templates.isEmpty()) {
-                session.send(res.error(JsonRpcError.INVALID_REQUEST, "Resource does not exist"));
+                res.error(JsonRpcError.INVALID_REQUEST, "Resource does not exist");
+                sendResponse(req, res, session);
                 return;
             }
 

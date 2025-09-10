@@ -29,7 +29,6 @@ import static org.hamcrest.Matchers.is;
 
 class McpResourceTemplateParameterTest {
     private final McpResource.Builder builder = McpResource.builder()
-            .uri("https://{path}")
             .name("name")
             .description("description")
             .mediaType(MediaTypes.TEXT_PLAIN)
@@ -38,9 +37,7 @@ class McpResourceTemplateParameterTest {
     @Test
     void testSimpleParameter() {
         JsonRpcParams params = JsonRpcParams.create(JsonValue.EMPTY_JSON_OBJECT);
-        var resource = builder
-                .uri("https://{path}")
-                .build();
+        var resource = builder.uri("https://{path}").build();
         McpResourceTemplate template = new McpResourceTemplate(resource);
         McpParameters parameters = template.parameters(params, "https://foo");
 
@@ -50,9 +47,7 @@ class McpResourceTemplateParameterTest {
     @Test
     void testTwoParameter() {
         JsonRpcParams params = JsonRpcParams.create(JsonValue.EMPTY_JSON_OBJECT);
-        var resource = builder
-                .uri("https://{foo}/{bar}")
-                .build();
+        var resource = builder.uri("https://{foo}/{bar}").build();
         McpResourceTemplate template = new McpResourceTemplate(resource);
         McpParameters parameters = template.parameters(params, "https://foo/bar");
 
@@ -63,9 +58,7 @@ class McpResourceTemplateParameterTest {
     @Test
     void testSpaceParameter() {
         JsonRpcParams params = JsonRpcParams.create(JsonValue.EMPTY_JSON_OBJECT);
-        var resource = builder
-                .uri("https://{foo}/{bar}")
-                .build();
+        var resource = builder.uri("https://{foo}/{bar}").build();
         McpResourceTemplate template = new McpResourceTemplate(resource);
         McpParameters parameters = template.parameters(params, "https://foo foo/bar bar");
 
@@ -76,9 +69,7 @@ class McpResourceTemplateParameterTest {
     @Test
     void testMiddleParameter() {
         JsonRpcParams params = JsonRpcParams.create(JsonValue.EMPTY_JSON_OBJECT);
-        var resource = builder
-                .uri("https://{foo}/path")
-                .build();
+        var resource = builder.uri("https://{foo}/path").build();
         McpResourceTemplate template = new McpResourceTemplate(resource);
         McpParameters parameters = template.parameters(params, "https://foo/path");
 
@@ -88,9 +79,7 @@ class McpResourceTemplateParameterTest {
     @Test
     void testProtocolParameter() {
         JsonRpcParams params = JsonRpcParams.create(JsonValue.EMPTY_JSON_OBJECT);
-        var resource = builder
-                .uri("{protocol}://{foo}")
-                .build();
+        var resource = builder.uri("{protocol}://{foo}").build();
         McpResourceTemplate template = new McpResourceTemplate(resource);
         McpParameters parameters = template.parameters(params, "https://foo");
 

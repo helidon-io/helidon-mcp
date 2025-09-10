@@ -28,16 +28,15 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 
 class McpResourceTemplatePathMatchingTest {
+    private final McpResource.Builder builder = McpResource.builder()
+            .name("name")
+            .description("description")
+            .mediaType(MediaTypes.TEXT_PLAIN)
+            .resource(this::resource);
 
     @Test
     void testSingleVariablePath() {
-        var resource = McpResource.builder()
-                .uri("https://{path}")
-                .name("name")
-                .description("description")
-                .mediaType(MediaTypes.TEXT_PLAIN)
-                .resource(this::resource)
-                .build();
+        var resource = builder.uri("https://{path}").build();
         McpResourceTemplate template = new McpResourceTemplate(resource);
 
         assertThat(template.matches("https://foo"), is(true));
@@ -55,13 +54,7 @@ class McpResourceTemplatePathMatchingTest {
 
     @Test
     void testMultipleVariablePath() {
-        var resource = McpResource.builder()
-                .uri("https://{path}/{path1}")
-                .name("name")
-                .description("description")
-                .mediaType(MediaTypes.TEXT_PLAIN)
-                .resource(this::resource)
-                .build();
+        var resource = builder.uri("https://{path}/{path1}").build();
         McpResourceTemplate template = new McpResourceTemplate(resource);
 
         assertThat(template.matches("https://foo/bar"), is(true));
@@ -78,13 +71,7 @@ class McpResourceTemplatePathMatchingTest {
 
     @Test
     void testWrongVariablePath() {
-        var resource = McpResource.builder()
-                .uri("https://{path/path1}")
-                .name("name")
-                .description("description")
-                .mediaType(MediaTypes.TEXT_PLAIN)
-                .resource(this::resource)
-                .build();
+        var resource = builder.uri("https://{path/path1}").build();
         try {
             McpResourceTemplate template = new McpResourceTemplate(resource);
         } catch (PatternSyntaxException e) {
@@ -94,13 +81,7 @@ class McpResourceTemplatePathMatchingTest {
 
     @Test
     void testWrongPath() {
-        var resource = McpResource.builder()
-                .uri("https://{path/path1")
-                .name("name")
-                .description("description")
-                .mediaType(MediaTypes.TEXT_PLAIN)
-                .resource(this::resource)
-                .build();
+        var resource = builder.uri("https://{path/path1").build();
         try {
             McpResourceTemplate template = new McpResourceTemplate(resource);
         } catch (PatternSyntaxException e) {
