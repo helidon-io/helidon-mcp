@@ -23,7 +23,6 @@ import io.helidon.webserver.testing.junit5.ServerTest;
 
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
 import io.modelcontextprotocol.spec.McpSchema;
 
 @ServerTest
@@ -33,9 +32,7 @@ class McpSdkStreamableLoggingTest extends AbstractMcpSdkLoggingTest {
     private final CountDownLatch latch;
 
     McpSdkStreamableLoggingTest(WebServer server) {
-        this.client = McpClient.sync(HttpClientStreamableHttpTransport.builder("http://localhost:" + server.port())
-                                             .endpoint("/")
-                                             .build())
+        this.client = McpClient.sync(streamable(server.port()))
                 .loggingConsumer(new LoggingConsumer(McpSchema.LoggingLevel.INFO))
                 .build();
         this.latch = new CountDownLatch(1);

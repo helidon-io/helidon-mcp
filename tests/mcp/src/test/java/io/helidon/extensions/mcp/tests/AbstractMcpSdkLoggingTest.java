@@ -17,42 +17,28 @@
 package io.helidon.extensions.mcp.tests;
 
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
 
-import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.isOneOf;
 
-abstract class AbstractMcpSdkLoggingTest {
-
-    abstract McpSyncClient client();
-
-    abstract CountDownLatch latch();
+abstract class AbstractMcpSdkLoggingTest extends AbstractMcpSdkTest {
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {
         LoggingNotifications.setUpRoute(builder);
     }
 
-    @AfterEach
-    void afterEach() throws InterruptedException {
-        assertThat(latch().await(20, TimeUnit.SECONDS), is(true));
-    }
-
     @Test
     void testMcpSdkProgress() {
-        client().callTool(new McpSchema.CallToolRequest("logging", Map.of("question", "")));
+        client().callTool(new McpSchema.CallToolRequest("logging", Map.of()));
     }
 
     protected class LoggingConsumer implements Consumer<McpSchema.LoggingMessageNotification> {

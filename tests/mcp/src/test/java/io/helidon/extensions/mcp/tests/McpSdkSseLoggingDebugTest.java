@@ -26,14 +26,14 @@ import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema;
 
 @ServerTest
-class McpSdkStreamableLoggingDebugTest extends AbstractMcpSdkLoggingTest {
+class McpSdkSseLoggingDebugTest extends AbstractMcpSdkLoggingTest {
 
     private final McpSyncClient client;
     private final CountDownLatch latch;
 
-    McpSdkStreamableLoggingDebugTest(WebServer server) {
-        this.client = McpClient.sync(streamable(server.port()))
-                .loggingConsumer(new LoggingConsumer(McpSchema.LoggingLevel.INFO,  McpSchema.LoggingLevel.DEBUG))
+    McpSdkSseLoggingDebugTest(WebServer server) {
+        this.client = McpClient.sync(sse(server.port()))
+                .loggingConsumer(new LoggingConsumer(McpSchema.LoggingLevel.INFO, McpSchema.LoggingLevel.DEBUG))
                 .build();
         this.client.setLoggingLevel(McpSchema.LoggingLevel.DEBUG);
         this.latch = new CountDownLatch(2);     // expect 2 logging messages

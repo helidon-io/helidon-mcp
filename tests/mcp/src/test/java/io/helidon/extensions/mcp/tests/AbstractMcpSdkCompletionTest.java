@@ -16,41 +16,20 @@
 
 package io.helidon.extensions.mcp.tests;
 
-import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
-import io.helidon.webserver.testing.junit5.ServerTest;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
 
-import io.modelcontextprotocol.client.McpClient;
-import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-@ServerTest
-class McpSdkCompletionTest {
-    private static McpSyncClient client;
-
-    McpSdkCompletionTest(WebServer server) {
-        client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
-                                        .sseEndpoint("/")
-                                        .build())
-                .build();
-        client.initialize();
-    }
+abstract class AbstractMcpSdkCompletionTest extends AbstractMcpSdkTest {
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {
         CompletionNotifications.setUpRoute(builder);
-    }
-
-    @AfterAll
-    static void closeClient() {
-        client.close();
     }
 
     @Test
@@ -58,7 +37,7 @@ class McpSdkCompletionTest {
         McpSchema.CompleteRequest request = new McpSchema.CompleteRequest(
                 new McpSchema.PromptReference("prompt"),
                 new McpSchema.CompleteRequest.CompleteArgument("argument", "Hel"));
-        McpSchema.CompleteResult.CompleteCompletion result = client.completeCompletion(request).completion();
+        McpSchema.CompleteResult.CompleteCompletion result = client().completeCompletion(request).completion();
         assertThat(result.total(), is(1));
         assertThat(result.hasMore(), is(false));
 
@@ -72,7 +51,7 @@ class McpSdkCompletionTest {
         McpSchema.CompleteRequest request = new McpSchema.CompleteRequest(
                 new McpSchema.PromptReference("Unknown"),
                 new McpSchema.CompleteRequest.CompleteArgument("foo", "bar"));
-        McpSchema.CompleteResult.CompleteCompletion result = client.completeCompletion(request).completion();
+        McpSchema.CompleteResult.CompleteCompletion result = client().completeCompletion(request).completion();
         assertThat(result.total(), is(1));
         assertThat(result.hasMore(), is(false));
 

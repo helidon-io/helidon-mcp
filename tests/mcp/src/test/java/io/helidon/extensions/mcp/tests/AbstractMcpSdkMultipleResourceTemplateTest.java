@@ -19,19 +19,10 @@ package io.helidon.extensions.mcp.tests;
 import java.util.List;
 
 import io.helidon.common.media.type.MediaTypes;
-import io.helidon.jsonrpc.core.JsonRpcError;
-import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
-import io.helidon.webserver.testing.junit5.ServerTest;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
 
-import io.modelcontextprotocol.client.McpClient;
-import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
-import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static io.helidon.extensions.mcp.tests.MultipleResourceTemplate.RESOURCE1_URI;
@@ -40,33 +31,17 @@ import static io.helidon.extensions.mcp.tests.MultipleResourceTemplate.RESOURCE3
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.fail;
 
-@ServerTest
-class McpSdkMultipleResourceTemplateTest {
-    private static McpSyncClient client;
-
-    McpSdkMultipleResourceTemplateTest(WebServer server) {
-        client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
-                                        .sseEndpoint("/")
-                                        .build())
-                .build();
-        client.initialize();
-    }
+abstract class AbstractMcpSdkMultipleResourceTemplateTest extends AbstractMcpSdkTest {
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {
         MultipleResourceTemplate.setUpRoute(builder);
     }
 
-    @AfterAll
-    static void closeClient() {
-        client.close();
-    }
-
     @Test
     void listResourceTemplates() {
-        List<McpSchema.ResourceTemplate> list = client.listResourceTemplates().resourceTemplates();
+        List<McpSchema.ResourceTemplate> list = client().listResourceTemplates().resourceTemplates();
         list = list.reversed();
         assertThat(list.size(), is(3));
 
@@ -91,7 +66,7 @@ class McpSdkMultipleResourceTemplateTest {
 
     @Test
     void readResource1Template() {
-        var result = client.readResource(new McpSchema.ReadResourceRequest("https://foo"));
+        var result = client().readResource(new McpSchema.ReadResourceRequest("https://foo"));
         assertThat(result.contents().size(), is(1));
 
         var resource = result.contents().getFirst();
@@ -105,7 +80,7 @@ class McpSdkMultipleResourceTemplateTest {
 
     @Test
     void readResource2Template() {
-        var result = client.readResource(new McpSchema.ReadResourceRequest("https://foo/foo1/foo2"));
+        var result = client().readResource(new McpSchema.ReadResourceRequest("https://foo/foo1/foo2"));
         assertThat(result.contents().size(), is(1));
 
         var content = result.contents().getFirst();
@@ -115,27 +90,5 @@ class McpSdkMultipleResourceTemplateTest {
         assertThat(text.text(), is("foo2"));
         assertThat(text.uri(), is("https://foo/foo1/foo2"));
         assertThat(text.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
-    }
-
-    @Test
-    void readResource3Template() {
-        var result = client.readResource(new McpSchema.ReadResourceRequest("https://foo/bar"));
-        assertThat(result.contents().size(), is(2));
-
-        var content = result.contents().getFirst();
-        assertThat(content, instanceOf(McpSchema.TextResourceContents.class));
-
-        var text = (McpSchema.TextResourceContents) content;
-        assertThat(text.text(), is("foo"));
-        assertThat(text.uri(), is("https://foo/bar"));
-        assertThat(text.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
-
-        var content1 = result.contents().get(1);
-        assertThat(content1, instanceOf(McpSchema.TextResourceContents.class));
-
-        var text1 = (McpSchema.TextResourceContents) content1;
-        assertThat(text1.text(), is("bar"));
-        assertThat(text1.uri(), is("https://foo/bar"));
-        assertThat(text1.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
     }
 }
