@@ -33,7 +33,7 @@ import io.helidon.extensions.mcp.server.McpToolContents;
 import io.helidon.webserver.http.HttpRouting;
 
 class McpWeather {
-    static final String PROTOCOL_VERSION = "2024-11-05";
+    static final String[] PROTOCOL_VERSION = {"2024-11-05", "2025-03-26"};
     static final String SERVER_VERSION = "0.0.1";
     static final String SERVER_NAME = "mcp-server";
     static final String TOOL_NAME = "weather-alerts";

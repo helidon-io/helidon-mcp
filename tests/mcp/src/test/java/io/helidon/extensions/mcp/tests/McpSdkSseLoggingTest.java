@@ -23,7 +23,6 @@ import io.helidon.webserver.testing.junit5.ServerTest;
 
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
 
 @ServerTest
@@ -33,9 +32,7 @@ class McpSdkSseLoggingTest extends AbstractMcpSdkLoggingTest {
     private final CountDownLatch latch;
 
     McpSdkSseLoggingTest(WebServer server) {
-        this.client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
-                                        .sseEndpoint("/")
-                                        .build())
+        this.client = McpClient.sync(sse(server.port()))
                 .loggingConsumer(new LoggingConsumer(McpSchema.LoggingLevel.INFO))
                 .build();
         this.latch = new CountDownLatch(1);

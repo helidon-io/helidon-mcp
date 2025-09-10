@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.helidon.extensions.mcp.tests;
-
-import java.util.concurrent.CountDownLatch;
 
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.testing.junit5.ServerTest;
@@ -25,28 +22,23 @@ import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema;
 
+/**
+ * {@link McpWeather} test using McpSdk client.
+ */
 @ServerTest
-class McpSdkStreamableLoggingDebugTest extends AbstractMcpSdkLoggingTest {
+class McpSdkStreamableClientTest extends AbstractMcpSdkClientTest {
 
     private final McpSyncClient client;
-    private final CountDownLatch latch;
 
-    McpSdkStreamableLoggingDebugTest(WebServer server) {
-        this.client = McpClient.sync(streamable(server.port()))
-                .loggingConsumer(new LoggingConsumer(McpSchema.LoggingLevel.INFO,  McpSchema.LoggingLevel.DEBUG))
+    McpSdkStreamableClientTest(WebServer server) {
+        client = McpClient.sync(streamable(server.port()))
+                .capabilities(McpSchema.ClientCapabilities.builder().roots(true).build())
                 .build();
-        this.client.setLoggingLevel(McpSchema.LoggingLevel.DEBUG);
-        this.latch = new CountDownLatch(2);     // expect 2 logging messages
         client.initialize();
     }
 
     @Override
     McpSyncClient client() {
         return client;
-    }
-
-    @Override
-    CountDownLatch latch() {
-        return latch;
     }
 }

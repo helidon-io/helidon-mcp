@@ -19,52 +19,31 @@ package io.helidon.extensions.mcp.tests;
 import java.util.Map;
 
 import io.helidon.common.media.type.MediaTypes;
-import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
-import io.helidon.webserver.testing.junit5.ServerTest;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
 
-import io.modelcontextprotocol.client.McpClient;
-import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-@ServerTest
-class McpSdkMultiplePromptTest {
-    private static McpSyncClient client;
-
-    McpSdkMultiplePromptTest(WebServer server) {
-        client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
-                                        .sseEndpoint("/")
-                                        .build())
-                .build();
-        client.initialize();
-    }
+abstract class AbstractMcpSdkMultiplePromptTest extends AbstractMcpSdkTest {
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {
         MultiplePrompt.setUpRoute(builder);
     }
 
-    @AfterAll
-    static void closeClient() {
-        client.close();
-    }
-
     @Test
     void testListPrompts() {
-        McpSchema.ListPromptsResult result = client.listPrompts();
+        McpSchema.ListPromptsResult result = client().listPrompts();
         assertThat(result.prompts().size(), is(4));
     }
 
     @Test
     void testPrompt1() {
-        McpSchema.GetPromptResult prompt1 = client.getPrompt(new McpSchema.GetPromptRequest("prompt1", Map.of()));
+        McpSchema.GetPromptResult prompt1 = client().getPrompt(new McpSchema.GetPromptRequest("prompt1", Map.of()));
         assertThat(prompt1.messages().size(), is(1));
 
         McpSchema.PromptMessage message = prompt1.messages().getFirst();
@@ -77,7 +56,7 @@ class McpSdkMultiplePromptTest {
 
     @Test
     void testPrompt2() {
-        McpSchema.GetPromptResult prompt2 = client.getPrompt(new McpSchema.GetPromptRequest("prompt2", Map.of()));
+        McpSchema.GetPromptResult prompt2 = client().getPrompt(new McpSchema.GetPromptRequest("prompt2", Map.of()));
         assertThat(prompt2.messages().size(), is(1));
 
         McpSchema.PromptMessage message = prompt2.messages().getFirst();
@@ -91,7 +70,7 @@ class McpSdkMultiplePromptTest {
 
     @Test
     void testPrompt3() {
-        McpSchema.GetPromptResult prompt3 = client.getPrompt(new McpSchema.GetPromptRequest("prompt3", Map.of()));
+        McpSchema.GetPromptResult prompt3 = client().getPrompt(new McpSchema.GetPromptRequest("prompt3", Map.of()));
         assertThat(prompt3.messages().size(), is(1));
 
         McpSchema.PromptMessage message = prompt3.messages().getFirst();
@@ -108,7 +87,7 @@ class McpSdkMultiplePromptTest {
 
     @Test
     void testPrompt4() {
-        McpSchema.GetPromptResult prompt4 = client.getPrompt(new McpSchema.GetPromptRequest("prompt4",
+        McpSchema.GetPromptResult prompt4 = client().getPrompt(new McpSchema.GetPromptRequest("prompt4",
                                                                                             Map.of("argument1", "text")));
         assertThat(prompt4.messages().size(), is(3));
 

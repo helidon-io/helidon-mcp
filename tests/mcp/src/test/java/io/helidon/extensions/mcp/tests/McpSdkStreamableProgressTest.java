@@ -16,8 +16,6 @@
 
 package io.helidon.extensions.mcp.tests;
 
-import java.util.concurrent.CountDownLatch;
-
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.testing.junit5.ServerTest;
 
@@ -26,27 +24,19 @@ import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema;
 
 @ServerTest
-class McpSdkStreamableLoggingDebugTest extends AbstractMcpSdkLoggingTest {
+class McpSdkStreamableProgressTest extends AbstractMcpSdkProgressTest {
 
     private final McpSyncClient client;
-    private final CountDownLatch latch;
 
-    McpSdkStreamableLoggingDebugTest(WebServer server) {
-        this.client = McpClient.sync(streamable(server.port()))
-                .loggingConsumer(new LoggingConsumer(McpSchema.LoggingLevel.INFO,  McpSchema.LoggingLevel.DEBUG))
+    McpSdkStreamableProgressTest(WebServer server) {
+        client = McpClient.sync(streamable(server.port()))
+                .capabilities(McpSchema.ClientCapabilities.builder().build())
                 .build();
-        this.client.setLoggingLevel(McpSchema.LoggingLevel.DEBUG);
-        this.latch = new CountDownLatch(2);     // expect 2 logging messages
         client.initialize();
     }
 
     @Override
     McpSyncClient client() {
         return client;
-    }
-
-    @Override
-    CountDownLatch latch() {
-        return latch;
     }
 }
