@@ -65,4 +65,17 @@ public final class McpToolContents {
         Objects.requireNonNull(content, "Tool resource content must not be null");
         return new McpToolResourceContent(uri, content);
     }
+
+    /**
+     * Create an audio tool content instance.
+     *
+     * @param data data
+     * @param type media type
+     * @return instance
+     */
+    public static McpToolContent audioContent(String data, MediaType type) {
+        Objects.requireNonNull(data, "Tool audio content data must not be null");
+        Objects.requireNonNull(type, "Tool audio content MIME type must not be null");
+        return new McpToolAudioContent(data.getBytes(StandardCharsets.UTF_8), type);
+    }
 }

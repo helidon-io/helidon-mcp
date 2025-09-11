@@ -16,17 +16,23 @@
 
 package io.helidon.extensions.mcp.server;
 
+import io.helidon.common.media.type.MediaType;
+
 /**
- * Tool contents that can returned as part of the tool execution.
+ * Audio content.
  */
-public sealed interface McpToolContent permits McpToolTextContent,
-                                               McpToolImageContent,
-                                               McpToolResourceContent,
-                                               McpToolAudioContent {
+sealed interface McpAudioContent extends McpContent permits McpAudioContentImpl {
     /**
-     * Get the content of this {@code ToolContent}.
+     * Audio content data.
      *
      * @return content
      */
-    McpContent content();
+    byte[] data();
+
+    /**
+     * Audio content MIME type.
+     *
+     * @return MIME type
+     */
+    MediaType mediaType();
 }

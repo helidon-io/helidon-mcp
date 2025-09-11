@@ -50,8 +50,8 @@ abstract class AbstractMcpSdkMultipleToolTest extends AbstractMcpSdkTest {
         assertThat(content.type(), is("image"));
 
         McpSchema.ImageContent image = (McpSchema.ImageContent) content;
-        assertThat(image.data(), is("binary"));
-        assertThat(image.mimeType(), is(MediaTypes.APPLICATION_OCTET_STREAM_VALUE));
+        assertThat(image.data(), is(McpMedia.base64Media("helidon.png")));
+        assertThat(image.mimeType(), is(McpMedia.IMAGE_PNG_VALUE));
     }
 
     @Test
@@ -72,18 +72,20 @@ abstract class AbstractMcpSdkMultipleToolTest extends AbstractMcpSdkTest {
     @Test
     void testTool3() {
         McpSchema.CallToolResult tool3 = client().callTool(new McpSchema.CallToolRequest("tool3", Map.of()));
-        assertThat(tool3.content().size(), is(3));
+        assertThat(tool3.content().size(), is(4));
 
         McpSchema.Content first = tool3.content().getFirst();
         McpSchema.Content second = tool3.content().get(1);
         McpSchema.Content third = tool3.content().get(2);
+        McpSchema.Content fourth = tool3.content().get(3);
         assertThat(first.type(), is("image"));
         assertThat(second.type(), is("resource"));
         assertThat(third.type(), is("text"));
+        assertThat(fourth.type(), is("audio"));
 
         McpSchema.ImageContent image = (McpSchema.ImageContent) first;
-        assertThat(image.mimeType(), is(MediaTypes.APPLICATION_OCTET_STREAM_VALUE));
-        assertThat(image.data(), is("binary"));
+        assertThat(image.data(), is(McpMedia.base64Media("helidon.png")));
+        assertThat(image.mimeType(), is(McpMedia.IMAGE_PNG_VALUE));
 
         McpSchema.EmbeddedResource resource = (McpSchema.EmbeddedResource) second;
         assertThat(resource.resource().uri(), is("http://resource"));
@@ -91,6 +93,10 @@ abstract class AbstractMcpSdkMultipleToolTest extends AbstractMcpSdkTest {
 
         McpSchema.TextContent text = (McpSchema.TextContent) third;
         assertThat(text.text(), is("text"));
+
+        McpSchema.AudioContent audio = (McpSchema.AudioContent) fourth;
+        assertThat(audio.data(), is(McpMedia.base64Media("helidon.wav")));
+        assertThat(audio.mimeType(), is(McpMedia.AUDIO_WAV_VALUE));
     }
 
     @Test

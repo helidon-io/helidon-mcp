@@ -20,7 +20,6 @@ import java.net.URI;
 import java.util.List;
 import java.util.function.Function;
 
-import io.helidon.common.media.type.MediaTypes;
 import io.helidon.extensions.mcp.server.McpParameters;
 import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpResourceContents;
@@ -29,6 +28,7 @@ import io.helidon.extensions.mcp.server.McpTool;
 import io.helidon.extensions.mcp.server.McpToolContent;
 import io.helidon.webserver.http.HttpRouting;
 
+import static io.helidon.extensions.mcp.server.McpToolContents.audioContent;
 import static io.helidon.extensions.mcp.server.McpToolContents.imageContent;
 import static io.helidon.extensions.mcp.server.McpToolContents.resourceContent;
 import static io.helidon.extensions.mcp.server.McpToolContents.textContent;
@@ -54,8 +54,8 @@ class MultipleTool {
                                            .description("Tool 1")
                                            .schema(SIMPLE_SCHEMA)
                                            .tool(request ->
-                                                         List.of(imageContent("binary",
-                                                                              MediaTypes.APPLICATION_OCTET_STREAM))))
+                                                         List.of(imageContent(McpMedia.base64Media("helidon.png"),
+                                                                              McpMedia.IMAGE_PNG))))
                                    .addTool(tool -> tool.name("tool2")
                                            .description("Tool 2")
                                            .schema(SIMPLE_SCHEMA)
@@ -68,10 +68,13 @@ class MultipleTool {
                                            .description("Tool 3")
                                            .schema(SIMPLE_SCHEMA)
                                            .tool(request -> List.of(
-                                                   imageContent("binary", MediaTypes.APPLICATION_OCTET_STREAM),
+                                                   imageContent(McpMedia.base64Media("helidon.png"),
+                                                                McpMedia.IMAGE_PNG),
                                                    resourceContent(URI.create("http://resource"),
                                                                    McpResourceContents.textContent("resource")),
-                                                   textContent("text"))))
+                                                   textContent("text"),
+                                                   audioContent(McpMedia.base64Media("helidon.wav"),
+                                                                McpMedia.AUDIO_WAV))))
                                    .addTool(new TownTool()));
     }
 

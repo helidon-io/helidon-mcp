@@ -38,7 +38,7 @@ abstract class AbstractMcpSdkMultiplePromptTest extends AbstractMcpSdkTest {
     @Test
     void testListPrompts() {
         McpSchema.ListPromptsResult result = client().listPrompts();
-        assertThat(result.prompts().size(), is(4));
+        assertThat(result.prompts().size(), is(5));
     }
 
     @Test
@@ -64,8 +64,8 @@ abstract class AbstractMcpSdkMultiplePromptTest extends AbstractMcpSdkTest {
         assertThat(message.role(), is(McpSchema.Role.ASSISTANT));
 
         var image = (McpSchema.ImageContent) message.content();
-        assertThat(image.data(), is("binary"));
-        assertThat(image.mimeType(), is(MediaTypes.APPLICATION_OCTET_STREAM_VALUE));
+        assertThat(image.data(), is(McpMedia.base64Media("helidon.png")));
+        assertThat(image.mimeType(), is(McpMedia.IMAGE_PNG_VALUE));
     }
 
     @Test
@@ -102,8 +102,8 @@ abstract class AbstractMcpSdkMultiplePromptTest extends AbstractMcpSdkTest {
         McpSchema.TextContent text = (McpSchema.TextContent) second;
         McpSchema.EmbeddedResource resource = (McpSchema.EmbeddedResource) third;
         assertThat(text.text(), is("text"));
-        assertThat(image.data(), is("binary"));
-        assertThat(image.mimeType(), is(MediaTypes.APPLICATION_OCTET_STREAM_VALUE));
+        assertThat(image.data(), is(McpMedia.base64Media("helidon.png")));
+        assertThat(image.mimeType(), is(McpMedia.IMAGE_PNG_VALUE));;
         assertThat(resource.resource().uri(), is("http://resource"));
         assertThat(resource.resource().mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
     }
