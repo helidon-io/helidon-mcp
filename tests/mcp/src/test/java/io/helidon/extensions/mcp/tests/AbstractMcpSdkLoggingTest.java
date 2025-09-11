@@ -37,7 +37,7 @@ abstract class AbstractMcpSdkLoggingTest extends AbstractMcpSdkTest {
     }
 
     @Test
-    void testMcpSdkProgress() {
+    void testMcpSdkLogging() {
         client().callTool(new McpSchema.CallToolRequest("logging", Map.of()));
     }
 

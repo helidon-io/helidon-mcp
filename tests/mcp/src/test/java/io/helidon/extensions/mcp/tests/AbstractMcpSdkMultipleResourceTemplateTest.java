@@ -91,4 +91,26 @@ abstract class AbstractMcpSdkMultipleResourceTemplateTest extends AbstractMcpSdk
         assertThat(text.uri(), is("https://foo/foo1/foo2"));
         assertThat(text.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
     }
+
+    @Test
+    void readResource3Template() {
+        var result = client().readResource(new McpSchema.ReadResourceRequest("https://foo/bar"));
+        assertThat(result.contents().size(), is(2));
+
+        var content = result.contents().getFirst();
+        assertThat(content, instanceOf(McpSchema.TextResourceContents.class));
+
+        var text = (McpSchema.TextResourceContents) content;
+        assertThat(text.text(), is("foo"));
+        assertThat(text.uri(), is("https://foo/bar"));
+        assertThat(text.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
+
+        var content1 = result.contents().get(1);
+        assertThat(content1, instanceOf(McpSchema.TextResourceContents.class));
+
+        var text1 = (McpSchema.TextResourceContents) content1;
+        assertThat(text1.text(), is("bar"));
+        assertThat(text1.uri(), is("https://foo/bar"));
+        assertThat(text1.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
+    }
 }
