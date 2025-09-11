@@ -131,41 +131,41 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         this.resources = new McpPagination<>(resources, config.resourcesPageSize());
         this.resourceTemplates = new McpPagination<>(templates, config.resourceTemplatesPageSize());
 
-        builder.putMethod(METHOD_PING, this::pingRpc);
-        builder.putMethod(METHOD_INITIALIZE, this::initializeRpc);
+        builder.method(METHOD_PING, this::pingRpc);
+        builder.method(METHOD_INITIALIZE, this::initializeRpc);
 
         if (!config.tools().isEmpty()) {
             capabilities.add(McpCapability.TOOL_LIST_CHANGED);
-            builder.putMethod(METHOD_TOOLS_LIST, this::toolsListRpc);
-            builder.putMethod(METHOD_TOOLS_CALL, this::toolsCallRpc);
+            builder.method(METHOD_TOOLS_LIST, this::toolsListRpc);
+            builder.method(METHOD_TOOLS_CALL, this::toolsCallRpc);
         }
 
         if (!config.resources().isEmpty()) {
             capabilities.add(McpCapability.RESOURCE_LIST_CHANGED);
             capabilities.add(McpCapability.RESOURCE_SUBSCRIBE);
-            builder.putMethod(METHOD_RESOURCES_LIST, this::resourcesListRpc);
-            builder.putMethod(METHOD_RESOURCES_READ, this::resourcesReadRpc);
-            builder.putMethod(METHOD_RESOURCES_SUBSCRIBE, this::resourceSubscribeRpc);
-            builder.putMethod(METHOD_RESOURCES_UNSUBSCRIBE, this::resourceUnsubscribeRpc);
-            builder.putMethod(METHOD_RESOURCES_TEMPLATES_LIST, this::resourceTemplateListRpc);
+            builder.method(METHOD_RESOURCES_LIST, this::resourcesListRpc);
+            builder.method(METHOD_RESOURCES_READ, this::resourcesReadRpc);
+            builder.method(METHOD_RESOURCES_SUBSCRIBE, this::resourceSubscribeRpc);
+            builder.method(METHOD_RESOURCES_UNSUBSCRIBE, this::resourceUnsubscribeRpc);
+            builder.method(METHOD_RESOURCES_TEMPLATES_LIST, this::resourceTemplateListRpc);
         }
 
         if (!config.prompts().isEmpty()) {
             capabilities.add(McpCapability.PROMPT_LIST_CHANGED);
-            builder.putMethod(METHOD_PROMPT_LIST, this::promptsListRpc);
-            builder.putMethod(METHOD_PROMPT_GET, this::promptsGetRpc);
+            builder.method(METHOD_PROMPT_LIST, this::promptsListRpc);
+            builder.method(METHOD_PROMPT_GET, this::promptsGetRpc);
         }
 
         capabilities.add(McpCapability.LOGGING);
-        builder.putMethod(METHOD_LOGGING_SET_LEVEL, this::loggingLogLevelRpc);
+        builder.method(METHOD_LOGGING_SET_LEVEL, this::loggingLogLevelRpc);
 
         capabilities.add(McpCapability.COMPLETION);
         completions.put(NoopCompletion.REFERENCE, new NoopCompletion());
-        builder.putMethod(METHOD_COMPLETION_COMPLETE, this::completionRpc);
+        builder.method(METHOD_COMPLETION_COMPLETE, this::completionRpc);
 
-        builder.putMethod(METHOD_SESSION_DISCONNECT, this::disconnect);
-        builder.putMethod(METHOD_NOTIFICATION_CANCELED, this::notificationCancelRpc);
-        builder.putMethod(METHOD_NOTIFICATION_INITIALIZED, this::notificationInitRpc);
+        builder.method(METHOD_SESSION_DISCONNECT, this::disconnect);
+        builder.method(METHOD_NOTIFICATION_CANCELED, this::notificationCancelRpc);
+        builder.method(METHOD_NOTIFICATION_INITIALIZED, this::notificationInitRpc);
 
         builder.errorHandler(this::handleErrorRequest);
 
