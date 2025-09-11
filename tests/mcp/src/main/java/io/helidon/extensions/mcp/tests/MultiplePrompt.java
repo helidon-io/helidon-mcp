@@ -48,7 +48,7 @@ class MultiplePrompt {
                                            .description("Prompt 2")
                                            .prompt(request ->
                                                            List.of(McpPromptContents.imageContent(
-                                                                   McpMedia.base64Media("helidon.png"),
+                                                                   McpMedia.media("helidon.png"),
                                                                    McpMedia.IMAGE_PNG,
                                                                    McpRole.ASSISTANT))))
 
@@ -66,7 +66,7 @@ class MultiplePrompt {
                                            .description("Prompt 5")
                                            .prompt(request ->
                                                            List.of(McpPromptContents.audioContent(
-                                                                   McpMedia.base64Media("helidon.wav"),
+                                                                   McpMedia.media("helidon.wav"),
                                                                    McpMedia.AUDIO_WAV,
                                                                    McpRole.ASSISTANT)))));
     }
@@ -100,7 +100,7 @@ class MultiplePrompt {
         public List<McpPromptContent> prompts(McpRequest request) {
             McpParameters parameters = request.parameters();
             return List.of(
-                    McpPromptContents.imageContent(McpMedia.base64Media("helidon.png"),
+                    McpPromptContents.imageContent(McpMedia.media("helidon.png"),
                                                    McpMedia.IMAGE_PNG,
                                                    McpRole.USER),
                     McpPromptContents.textContent(parameters.get("argument1").asString().orElse("missing"), McpRole.USER),

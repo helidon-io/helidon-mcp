@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 import io.helidon.common.media.type.MediaType;
 import io.helidon.common.media.type.MediaTypes;
@@ -31,7 +32,8 @@ class McpMedia {
     public static final String IMAGE_PNG_VALUE = IMAGE_PNG.text();
     public static final String AUDIO_WAV_VALUE = AUDIO_WAV.text();
 
-    private static final Map<String, String> MEDIA = new HashMap<>();
+    private static final ReentrantLock LOCK = new ReentrantLock();
+    private static final Map<String, byte[]> MEDIA = new HashMap<>();
 
     private McpMedia() {
     }
@@ -41,24 +43,40 @@ class McpMedia {
      * this class' classloader.
      *
      * @param name name of resource
-     * @return base64 encoded representation of media or {@code null} if not found
+     * @return byte array representation or {@code null} if not found
+     */
+    static byte[] media(String name) {
+        LOCK.lock();
+        try {
+            if (MEDIA.containsKey(name)) {
+                return MEDIA.get(name);
+            }
+            try (InputStream is = McpMedia.class.getClassLoader().getResourceAsStream(name)) {
+                if (is != null) {
+                    ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+                    is.transferTo(byteStream);
+                    byte[] data = byteStream.toByteArray();
+                    MEDIA.put(name, data);
+                    byteStream.close();
+                    return data;
+                }
+            } catch (IOException e) {
+                // falls through
+            }
+            return null;
+        } finally {
+            LOCK.unlock();
+        }
+    }
+
+    /**
+     * Get a media resource in base64 encoding.
+     *
+     * @param name name of resource
+     * @return string representation in base64 or {@code null} if not found
      */
     static String base64Media(String name) {
-        if (MEDIA.containsKey(name)) {
-            return MEDIA.get(name);
-        }
-        try (InputStream is = McpMedia.class.getClassLoader().getResourceAsStream(name)) {
-            if (is != null) {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                is.transferTo(baos);
-                String base64 = Base64.getEncoder().encodeToString(baos.toByteArray());
-                MEDIA.put(name, base64);
-                baos.close();
-                return base64;
-            }
-        } catch (IOException e) {
-            // falls through
-        }
-        return null;
+        byte[] data = media(name);
+        return data != null ? Base64.getEncoder().encodeToString(data) : null;
     }
 }

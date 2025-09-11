@@ -17,7 +17,6 @@
 package io.helidon.extensions.mcp.server;
 
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 import io.helidon.common.media.type.MediaType;
@@ -50,11 +49,11 @@ public final class McpPromptContents {
      * @param role role
      * @return image prompt content instance
      */
-    public static McpPromptContent imageContent(String data, MediaType type, McpRole role) {
+    public static McpPromptContent imageContent(byte[] data, MediaType type, McpRole role) {
         Objects.requireNonNull(data, "Prompt image data must not be null");
         Objects.requireNonNull(type, "Prompt image MIME type must not be null");
         Objects.requireNonNull(role, "Prompt role must not be null");
-        return new McpPromptImageContent(data.getBytes(StandardCharsets.UTF_8), type, role);
+        return new McpPromptImageContent(data, type, role);
     }
 
     /**
@@ -80,10 +79,10 @@ public final class McpPromptContents {
      * @param role role
      * @return image prompt content instance
      */
-    public static McpPromptContent audioContent(String data, MediaType type, McpRole role) {
+    public static McpPromptContent audioContent(byte[] data, MediaType type, McpRole role) {
         Objects.requireNonNull(data, "Prompt audio data must not be null");
         Objects.requireNonNull(type, "Prompt audio MIME type must not be null");
         Objects.requireNonNull(role, "Prompt role must not be null");
-        return new McpPromptAudioContent(data.getBytes(StandardCharsets.UTF_8), type, role);
+        return new McpPromptAudioContent(data, type, role);
     }
 }

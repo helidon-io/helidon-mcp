@@ -16,23 +16,8 @@
 
 package io.helidon.extensions.mcp.server;
 
-import io.helidon.common.media.type.MediaType;
-
 /**
  * Audio content.
  */
-sealed interface McpAudioContent extends McpContent permits McpAudioContentImpl {
-    /**
-     * Audio content data.
-     *
-     * @return content
-     */
-    byte[] data();
-
-    /**
-     * Audio content MIME type.
-     *
-     * @return MIME type
-     */
-    MediaType mediaType();
+sealed interface McpAudioContent extends McpMediaContent permits McpAudioContentImpl {
 }

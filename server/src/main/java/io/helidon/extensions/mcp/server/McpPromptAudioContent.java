@@ -23,11 +23,11 @@ import io.helidon.common.media.type.MediaType;
  */
 final class McpPromptAudioContent implements McpPromptContent {
     private final McpRole role;
-    private final McpAudioContent image;
+    private final McpAudioContent audio;
 
     McpPromptAudioContent(byte[] data, MediaType type, McpRole role) {
         this.role = role;
-        this.image = new McpAudioContentImpl(data, type);
+        this.audio = new McpAudioContentImpl(data, type);
     }
 
     @Override
@@ -37,6 +37,6 @@ final class McpPromptAudioContent implements McpPromptContent {
 
     @Override
     public McpContent content() {
-        return image;
+        return audio;
     }
 }

@@ -43,4 +43,8 @@ final class McpResourceTextContent implements McpResourceContent {
     public ContentType type() {
         return ContentType.RESOURCE;
     }
+
+    public String text() {
+        return text;
+    }
 }

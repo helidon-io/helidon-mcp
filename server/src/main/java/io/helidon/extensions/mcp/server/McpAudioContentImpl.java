@@ -16,11 +16,15 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.util.Base64;
+
 import io.helidon.common.media.type.MediaType;
 
 final class McpAudioContentImpl implements McpAudioContent {
     private final byte[] data;
     private final MediaType type;
+
+    private String base64Data;
 
     McpAudioContentImpl(byte[] data, MediaType type) {
         this.data = data;
@@ -30,6 +34,14 @@ final class McpAudioContentImpl implements McpAudioContent {
     @Override
     public byte[] data() {
         return data;
+    }
+
+    @Override
+    public String base64Data() {
+        if (base64Data == null) {
+            base64Data = Base64.getEncoder().encodeToString(data);
+        }
+        return base64Data;
     }
 
     @Override

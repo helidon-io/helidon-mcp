@@ -17,7 +17,6 @@
 package io.helidon.extensions.mcp.server;
 
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 import io.helidon.common.media.type.MediaType;
@@ -47,10 +46,10 @@ public final class McpToolContents {
      * @param type media type
      * @return instance
      */
-    public static McpToolContent imageContent(String data, MediaType type) {
+    public static McpToolContent imageContent(byte[] data, MediaType type) {
         Objects.requireNonNull(data, "Tool image content data must not be null");
         Objects.requireNonNull(type, "Tool image content MIME type must not be null");
-        return new McpToolImageContent(data.getBytes(StandardCharsets.UTF_8), type);
+        return new McpToolImageContent(data, type);
     }
 
     /**
@@ -73,9 +72,9 @@ public final class McpToolContents {
      * @param type media type
      * @return instance
      */
-    public static McpToolContent audioContent(String data, MediaType type) {
+    public static McpToolContent audioContent(byte[] data, MediaType type) {
         Objects.requireNonNull(data, "Tool audio content data must not be null");
         Objects.requireNonNull(type, "Tool audio content MIME type must not be null");
-        return new McpToolAudioContent(data.getBytes(StandardCharsets.UTF_8), type);
+        return new McpToolAudioContent(data, type);
     }
 }

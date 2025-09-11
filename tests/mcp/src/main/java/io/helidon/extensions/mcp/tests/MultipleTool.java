@@ -54,7 +54,7 @@ class MultipleTool {
                                            .description("Tool 1")
                                            .schema(SIMPLE_SCHEMA)
                                            .tool(request ->
-                                                         List.of(imageContent(McpMedia.base64Media("helidon.png"),
+                                                         List.of(imageContent(McpMedia.media("helidon.png"),
                                                                               McpMedia.IMAGE_PNG))))
                                    .addTool(tool -> tool.name("tool2")
                                            .description("Tool 2")
@@ -68,12 +68,12 @@ class MultipleTool {
                                            .description("Tool 3")
                                            .schema(SIMPLE_SCHEMA)
                                            .tool(request -> List.of(
-                                                   imageContent(McpMedia.base64Media("helidon.png"),
+                                                   imageContent(McpMedia.media("helidon.png"),
                                                                 McpMedia.IMAGE_PNG),
                                                    resourceContent(URI.create("http://resource"),
                                                                    McpResourceContents.textContent("resource")),
                                                    textContent("text"),
-                                                   audioContent(McpMedia.base64Media("helidon.wav"),
+                                                   audioContent(McpMedia.media("helidon.wav"),
                                                                 McpMedia.AUDIO_WAV))))
                                    .addTool(new TownTool()));
     }
