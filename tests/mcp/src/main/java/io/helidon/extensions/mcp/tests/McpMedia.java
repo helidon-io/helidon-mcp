@@ -15,7 +15,6 @@
  */
 package io.helidon.extensions.mcp.tests;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;
@@ -53,11 +52,8 @@ class McpMedia {
             }
             try (InputStream is = McpMedia.class.getClassLoader().getResourceAsStream(name)) {
                 if (is != null) {
-                    ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-                    is.transferTo(byteStream);
-                    byte[] data = byteStream.toByteArray();
+                    byte[] data = is.readAllBytes();
                     MEDIA.put(name, data);
-                    byteStream.close();
                     return data;
                 }
             } catch (IOException e) {

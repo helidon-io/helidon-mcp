@@ -24,8 +24,6 @@ final class McpResourceBinaryContent implements McpResourceContent {
     private final MediaType type;
     private final byte[] data;
 
-    private String base64Data;
-
     McpResourceBinaryContent(MediaType type, byte[] data) {
         this.type = type;
         this.data = data;
@@ -47,9 +45,6 @@ final class McpResourceBinaryContent implements McpResourceContent {
     }
 
     public String base64Data() {
-        if (base64Data == null) {
-            base64Data = Base64.getEncoder().encodeToString(data);
-        }
-        return base64Data;
+        return Base64.getEncoder().encodeToString(data);
     }
 }

@@ -24,8 +24,6 @@ final class McpAudioContentImpl implements McpAudioContent {
     private final byte[] data;
     private final MediaType type;
 
-    private String base64Data;
-
     McpAudioContentImpl(byte[] data, MediaType type) {
         this.data = data;
         this.type = type;
@@ -38,10 +36,7 @@ final class McpAudioContentImpl implements McpAudioContent {
 
     @Override
     public String base64Data() {
-        if (base64Data == null) {
-            base64Data = Base64.getEncoder().encodeToString(data);
-        }
-        return base64Data;
+        return Base64.getEncoder().encodeToString(data);
     }
 
     @Override
