@@ -81,20 +81,6 @@ public final class McpFeatures {
     }
 
     /**
-     * Get access to the negotiated protocol version.
-     *
-     * @return the protocol version
-     * @throws java.lang.IllegalStateException if called before negotiation completed
-     */
-    public String protocolVersion() {
-        String protocolVersion = session.protocolVersion();
-        if (protocolVersion == null) {
-            throw new IllegalStateException("MCP protocol version not negotiated yet");
-        }
-        return protocolVersion;
-    }
-
-    /**
      * Get access to underlying SSE sink, if available. This method is package private.
      *
      * @return optional SSE sink

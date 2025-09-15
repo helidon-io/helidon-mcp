@@ -434,6 +434,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 .apply(McpRequest.builder()
                                .parameters(parameters.get("arguments"))
                                .features(features)
+                               .protocolVersion(session.protocolVersion())
                                .build());
         features.progress().stopSending();
         res.result(toolCall(contents));
@@ -497,6 +498,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 .apply(McpRequest.builder()
                                .parameters(parameters)
                                .features(features)
+                               .protocolVersion(session.protocolVersion())
                                .build());
         features.progress().stopSending();
         res.result(readResource(resourceUri, contents));
@@ -576,6 +578,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 .apply(McpRequest.builder()
                                .parameters(parameters.get("arguments"))
                                .features(features)
+                               .protocolVersion(session.protocolVersion())
                                .build());
         features.progress().stopSending();
         res.result(toJson(contents, prompt.get().description()));
@@ -632,6 +635,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 .apply(McpRequest.builder()
                                .parameters(parameters.get("argument"))
                                .features(features)
+                               .protocolVersion(session.protocolVersion())
                                .build());
         res.result(toJson(result));
         sendResponse(req, res, session, features);

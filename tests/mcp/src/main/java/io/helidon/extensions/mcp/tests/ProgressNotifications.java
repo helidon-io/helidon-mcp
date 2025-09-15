@@ -64,7 +64,7 @@ class ProgressNotifications {
             McpFeatures features = request.features();
 
             // add a message to notifications
-            boolean addMessage = features.protocolVersion().startsWith("2025");
+            boolean addMessage = !request.protocolVersion().startsWith("2024");
 
             // send progress reports
             var progress = features.progress();

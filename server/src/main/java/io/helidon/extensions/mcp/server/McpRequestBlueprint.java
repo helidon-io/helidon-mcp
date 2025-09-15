@@ -36,4 +36,11 @@ interface McpRequestBlueprint {
      * @return the features
      */
     McpFeatures features();
+
+    /**
+     * Access to the negotiated protocol version.
+     *
+     * @return the protocol version
+     */
+    String protocolVersion();
 }
