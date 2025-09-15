@@ -404,7 +404,7 @@ final class McpJsonRpc {
                 .add("text", content.text());
     }
 
-    static JsonObject toJson(McpProgress progress, int newProgress) {
+    static JsonObject toJson(McpProgress progress, int newProgress, String message) {
         JsonObjectBuilder response = JSON_BUILDER_FACTORY.createObjectBuilder();
         JsonObjectBuilder params = JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("progress", newProgress)
@@ -413,6 +413,9 @@ final class McpJsonRpc {
             params.add("progressToken", progress.tokenInt());
         } else {
             params.add("progressToken", progress.token());
+        }
+        if (message != null) {
+            params.add("message", message);
         }
         response.add("jsonrpc", "2.0");
         response.add("method", McpJsonRpc.METHOD_NOTIFICATION_PROGRESS);

@@ -40,6 +40,7 @@ class McpSession {
     private final BlockingQueue<JsonObject> queue = new LinkedBlockingQueue<>();
     private final Context context = Context.create();
 
+    private volatile String protocolVersion;
     private volatile State state = UNINITIALIZED;
 
     McpSession() {
@@ -101,6 +102,14 @@ class McpSession {
 
     void state(State state) {
         this.state = state;
+    }
+
+    String protocolVersion() {
+        return protocolVersion;
+    }
+
+    void protocolVersion(String protocolVersion) {
+        this.protocolVersion = protocolVersion;
     }
 
     enum State {

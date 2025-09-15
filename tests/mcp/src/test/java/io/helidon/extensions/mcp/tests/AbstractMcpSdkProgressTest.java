@@ -16,6 +16,8 @@
 
 package io.helidon.extensions.mcp.tests;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import io.helidon.webserver.http.HttpRouting;
@@ -26,6 +28,8 @@ import org.junit.jupiter.api.Test;
 
 abstract class AbstractMcpSdkProgressTest extends AbstractMcpSdkTest {
 
+    private final List<McpSchema.ProgressNotification> messages = new ArrayList<>();
+
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {
         ProgressNotifications.setUpRoute(builder);
@@ -33,6 +37,15 @@ abstract class AbstractMcpSdkProgressTest extends AbstractMcpSdkTest {
 
     @Test
     void testMcpSdkProgress() {
-        client().callTool(new McpSchema.CallToolRequest("progress", Map.of()));
+        McpSchema.CallToolRequest request = McpSchema.CallToolRequest.builder()
+                .name("progress")
+                .arguments(Map.of())
+                .progressToken("atoken")
+                .build();
+        client().callTool(request);
+    }
+
+    protected List<McpSchema.ProgressNotification> messages() {
+        return messages;
     }
 }

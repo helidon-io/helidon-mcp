@@ -339,20 +339,22 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             if (session.state() == UNINITIALIZED) {
                 session.state(INITIALIZING);
             }
-            String version = parseClientVersion(params);
+            String protocolVersion = parseClientVersion(params);
+            session.protocolVersion(protocolVersion);
             res.header(SESSION_ID_HEADER, sessionId);
-            res.result(toJson(version, capabilities, config));
+            res.result(toJson(protocolVersion, capabilities, config));
             LOGGER.log(Level.FINEST, () -> String.format("Streamable HTTP: %s", res.asJsonObject()));
             res.send();
         } else {
             McpSession session = foundSession.get();
             McpParameters params = new McpParameters(req.params(), req.params().asJsonObject());
-            String version = parseClientVersion(params);
+            String protocolVersion = parseClientVersion(params);
+            session.protocolVersion(protocolVersion);
             parseClientCapabilities(session, params);
             if (session.state() == UNINITIALIZED) {
                 session.state(INITIALIZING);
             }
-            res.result(toJson(version, capabilities, config));
+            res.result(toJson(protocolVersion, capabilities, config));
             LOGGER.log(Level.FINEST, () -> String.format("SSE: %s", res.asJsonObject()));
             session.send(res);
         }

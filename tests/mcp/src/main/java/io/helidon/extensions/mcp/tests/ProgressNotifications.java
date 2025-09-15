@@ -19,6 +19,7 @@ package io.helidon.extensions.mcp.tests;
 import java.util.List;
 import java.util.function.Function;
 
+import io.helidon.extensions.mcp.server.McpFeatures;
 import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
@@ -60,12 +61,22 @@ class ProgressNotifications {
         }
 
         List<McpToolContent> process(McpRequest request) {
-            var progress = request.features().progress();
+            McpFeatures features = request.features();
+
+            // add a message to notifications
+            boolean addMessage = features.protocolVersion().startsWith("2025");
+
+            // send progress reports
+            var progress = features.progress();
             progress.total(100);
             try {
                 for (int i = 1; i <= 10; i++) {
                     Thread.sleep(50);
-                    progress.send(i * 10);
+                    if (addMessage) {
+                        progress.send(i * 10, "Elapsed time is " + (50 * i));
+                    } else {
+                        progress.send(i * 10);
+                    }
                 }
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);

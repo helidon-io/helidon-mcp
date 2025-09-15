@@ -22,6 +22,11 @@ import io.helidon.webserver.testing.junit5.ServerTest;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema;
+import org.junit.jupiter.api.AfterEach;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
 
 @ServerTest
 class McpSdkStreamableProgressTest extends AbstractMcpSdkProgressTest {
@@ -31,6 +36,7 @@ class McpSdkStreamableProgressTest extends AbstractMcpSdkProgressTest {
     McpSdkStreamableProgressTest(WebServer server) {
         client = McpClient.sync(streamable(server.port()))
                 .capabilities(McpSchema.ClientCapabilities.builder().build())
+                .progressConsumer(n -> messages().add(n))        // collect all notifications
                 .build();
         client.initialize();
     }
@@ -38,5 +44,14 @@ class McpSdkStreamableProgressTest extends AbstractMcpSdkProgressTest {
     @Override
     McpSyncClient client() {
         return client;
+    }
+
+    @AfterEach
+    void tearDown() {
+        assertThat(messages().size(), is(10));
+        messages().forEach(n -> {
+            assertThat(n.progressToken(), is("atoken"));
+            assertThat(n.message(), startsWith("Elapsed time is"));
+        });
     }
 }
