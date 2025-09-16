@@ -29,6 +29,7 @@ import io.helidon.common.media.type.MediaType;
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.common.types.TypeName;
 import io.helidon.extensions.mcp.server.Mcp;
+import io.helidon.extensions.mcp.server.McpCancellation;
 import io.helidon.extensions.mcp.server.McpCompletion;
 import io.helidon.extensions.mcp.server.McpCompletionContents;
 import io.helidon.extensions.mcp.server.McpCompletionType;
@@ -113,6 +114,7 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "MCP_TOOL_INTERFACE", McpTool.class);
         checkField(toCheck, checked, fields, "MCP_PARAMETERS", McpParameters.class);
         checkField(toCheck, checked, fields, "MCP_PROMPT_INTERFACE", McpPrompt.class);
+        checkField(toCheck, checked, fields, "MCP_CANCELLATION", McpCancellation.class);
         checkField(toCheck, checked, fields, "MCP_SERVER_CONFIG", McpServerConfig.class);
         checkField(toCheck, checked, fields, "MCP_TOOL_CONTENTS", McpToolContents.class);
         checkField(toCheck, checked, fields, "MCP_RESOURCE_INTERFACE", McpResource.class);

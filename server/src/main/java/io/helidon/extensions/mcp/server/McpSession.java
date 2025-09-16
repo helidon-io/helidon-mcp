@@ -17,28 +17,31 @@
 package io.helidon.extensions.mcp.server;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
+import io.helidon.common.LruCache;
 import io.helidon.common.UncheckedException;
 import io.helidon.common.context.Context;
 import io.helidon.http.Status;
 import io.helidon.webserver.jsonrpc.JsonRpcResponse;
 
 import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
 
 import static io.helidon.extensions.mcp.server.McpSession.State.UNINITIALIZED;
 
 class McpSession {
 
-    private final McpFeatures features;
     private final Set<McpCapability> capabilities;
+    private final Context context = Context.create();
     private final AtomicBoolean active = new AtomicBoolean(true);
     private final BlockingQueue<JsonObject> queue = new LinkedBlockingQueue<>();
-    private final Context context = Context.create();
+    private final LruCache<JsonValue, McpFeatures> features = LruCache.create();
 
     private volatile String protocolVersion;
     private volatile State state = UNINITIALIZED;
@@ -49,7 +52,6 @@ class McpSession {
 
     McpSession(Set<McpCapability> capabilities) {
         this.capabilities = capabilities;
-        this.features = new McpFeatures(this);
     }
 
     void poll(Consumer<JsonObject> consumer) {
@@ -84,12 +86,28 @@ class McpSession {
         }
     }
 
-    void capabilities(McpCapability capability) {
-        capabilities.add(capability);
+    McpFeatures createFeatures(JsonValue requestId) {
+        McpFeatures feat = new McpFeatures(this);
+        features.put(requestId, feat);
+        return feat;
     }
 
-    McpFeatures features() {
-        return features;
+    McpFeatures createFeatures(JsonRpcResponse res, JsonValue requestId) {
+        McpFeatures feat = new McpFeatures(this, res);
+        features.put(requestId, feat);
+        return feat;
+    }
+
+    Optional<McpFeatures> features(JsonValue requestId) {
+        return features.get(requestId);
+    }
+
+    void clearRequest(JsonValue requestId) {
+        features.remove(requestId);
+    }
+
+    void capabilities(McpCapability capability) {
+        capabilities.add(capability);
     }
 
     State state() {

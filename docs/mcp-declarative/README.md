@@ -418,6 +418,35 @@ class Server {
 }
 ```
 
+### Cancellation
+
+The MCP Cancellation feature enables verification of whether a client has issued a cancellation request. Such requests are
+typically made when a process is taking an extended amount of time, and the client opts not to wait for the completion of
+the operation. Cancellation status can be accessed from the `McpFeatures` class or directly as method parameter.
+
+#### Example
+
+Example of a Tool checking for cancellation request.
+
+```java
+@Mcp.Tool("Cancellation Tool")
+List<McpToolContent> cancellationTool(McpCancellation cancellation) {
+    long now = System.currentTimeMillis();
+    long timeout = now + TimeUnit.SECONDS.toMillis(5);
+    McpCancellation cancellation = request.features().cancellation();
+
+    while (now < timeout) {
+        if (cancellation.verify().isRequested()) {
+            String reason = cancellation.verify().reason();
+            break;
+        }
+        longRunningOperation();
+        now = System.currentTimeMillis();
+    }
+    return List.of(McpToolContents.textContent("text"));
+}
+```
+
 ## References
 
 - [MCP Specification](https://modelcontextprotocol.io/introduction)

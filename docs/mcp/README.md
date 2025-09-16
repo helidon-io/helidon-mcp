@@ -542,6 +542,56 @@ McpServerFeature.builder()
                .resourceTemplatesPageSize(1)
 ```
 
+### Cancellation
+
+The MCP Cancellation feature enables verification of whether a client has issued a cancellation request. Such requests are 
+typically made when a process is taking an extended amount of time, and the client opts not to wait for the completion of 
+the operation. Cancellation status can be accessed from the `McpFeatures` class.
+
+#### Example
+
+Example of a Tool checking for cancellation request.
+
+```java
+private class CancellationTool implements McpTool {
+    @Override
+    public String name() {
+        return "cancellation-tool";
+    }
+
+    @Override
+    public String description() {
+        return "Tool running a long process";
+    }
+
+    @Override
+    public String schema() {
+        return "schema";
+    }
+
+    @Override
+    public Function<McpRequest, List<McpToolContent>> tool() {
+        return this::process;
+    }
+
+    private List<McpToolContent> process(McpRequest request) {
+        long now = System.currentTimeMillis();
+        long timeout = now + TimeUnit.SECONDS.toMillis(5);
+        McpCancellation cancellation = request.features().cancellation();
+
+        while (now < timeout) {
+            if (cancellation.verify().isRequested()) {
+                String reason = cancellation.verify().reason();
+                break;
+            }
+            longRunningOperation();
+            now = System.currentTimeMillis();
+        }
+        return List.of(McpToolContents.textContent("text"));
+    }
+}
+```
+
 ## Configuration
 
 MCP server configuration can be defined using Helidon configuration files. Example in YAML:

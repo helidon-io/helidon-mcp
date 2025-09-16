@@ -19,13 +19,30 @@ package io.helidon.extensions.mcp.server;
 import java.util.Objects;
 import java.util.Optional;
 
+import io.helidon.common.LazyValue;
 import io.helidon.webserver.jsonrpc.JsonRpcResponse;
 import io.helidon.webserver.sse.SseSink;
 
 /**
- * Support for optional client features like {@link McpProgress} and {@link McpLogger}.
+ * Support for optional client features:
+ * <p>
+ * <ul>
+ *     <li>
+ *         {@link io.helidon.extensions.mcp.server.McpProgress} - MCP Progress feature.
+ *         Sends progress notifications to the client.
+ *     </li>
+ *     <li>
+ *         {@link io.helidon.extensions.mcp.server.McpLogger} - MCP Logging feature.
+ *         Sends logging notifications to the client.
+ *     </li>
+ *     <li>
+ *         {@link io.helidon.extensions.mcp.server.McpCancellation} - MCP Cancellation feature.
+ *         Check whether a cancellation request was made by the client.
+ *     </li>
+ * </ul>
  */
 public final class McpFeatures {
+    private final LazyValue<McpCancellation> cancellation = LazyValue.create(new McpCancellation());
     private final JsonRpcResponse response;
     private final McpSession session;
 
@@ -49,7 +66,7 @@ public final class McpFeatures {
     /**
      * Get a {@link McpProgress} feature.
      *
-     * @return progress the MCP progress
+     * @return the MCP progress
      */
     public McpProgress progress() {
         if (progress == null) {
@@ -66,7 +83,7 @@ public final class McpFeatures {
     /**
      * Get a {@link McpLogger} feature.
      *
-     * @return logging the MCP logger
+     * @return the MCP logger
      */
     public McpLogger logger() {
         if (logger == null) {
@@ -78,6 +95,15 @@ public final class McpFeatures {
             }
         }
         return logger;
+    }
+
+    /**
+     * Get a {@link McpCancellation} feature.
+     *
+     * @return the MCP cancellation
+     */
+    public McpCancellation cancellation() {
+        return cancellation.get();
     }
 
     /**
