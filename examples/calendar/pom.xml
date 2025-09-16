@@ -29,7 +29,7 @@
 
     <groupId>io.helidon.examples.extensions.mcp</groupId>
     <artifactId>helidon4-extensions-mcp-examples-calendar</artifactId>
-    <version>1.0.0-M1-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <name>Helidon 4 Extensions MCP Calendar Example</name>
 
     <properties>

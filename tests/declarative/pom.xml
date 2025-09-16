@@ -23,7 +23,7 @@
     <parent>
         <groupId>io.helidon.extensions.mcp</groupId>
         <artifactId>helidon4-extensions-mcp-tests-project</artifactId>
-        <version>1.0.0-M1-SNAPSHOT</version>
+        <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 

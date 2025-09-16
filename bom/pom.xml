@@ -23,14 +23,14 @@
     <parent>
         <groupId>io.helidon.extensions.mcp</groupId>
         <artifactId>helidon4-extensions-mcp-project</artifactId>
-        <version>1.0.0-M1-SNAPSHOT</version>
+        <version>1.0.0-SNAPSHOT</version>
     </parent>
     <artifactId>helidon4-extensions-mcp-bom</artifactId>
     <packaging>pom</packaging>
     <name>Helidon 4 Extensions MCP BOM</name>
 
     <properties>
-        <helidon.mcp.version>1.0.0-M1-SNAPSHOT</helidon.mcp.version>
+        <helidon.mcp.version>1.0.0-SNAPSHOT</helidon.mcp.version>
     </properties>
 
     <dependencyManagement>
