@@ -54,6 +54,7 @@ import static io.helidon.extensions.mcp.codegen.McpTypes.HELIDON_MEDIA_TYPE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.HELIDON_MEDIA_TYPES;
 import static io.helidon.extensions.mcp.codegen.McpTypes.HTTP_FEATURE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.HTTP_ROUTING_BUILDER;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_CANCELLATION;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_COMPLETION;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_COMPLETION_CONTENTS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_COMPLETION_INTERFACE;
@@ -408,6 +409,10 @@ final class McpCodegen implements CodegenExtension {
                 parameters.add("request.features().progress()");
                 continue;
             }
+            if (MCP_CANCELLATION.equals(parameter.typeName())) {
+                parameters.add("request.features().cancellation()");
+                continue;
+            }
             if (isResourceTemplate(uri)) {
                 if (MCP_PARAMETERS.equals(parameter.typeName())) {
                     parameters.add("request.parameters()");
@@ -533,6 +538,16 @@ final class McpCodegen implements CodegenExtension {
                 parameters.add("progress");
                 classModel.addImport(MCP_PROGRESS);
                 builder.addContentLine("var progress = features.progress();");
+                continue;
+            }
+            if (MCP_CANCELLATION.equals(param.typeName())) {
+                if (!featuresLocalVar) {
+                    addFeaturesLocalVar(builder, classModel);
+                    featuresLocalVar = true;
+                }
+                parameters.add("cancellation");
+                classModel.addImport(MCP_CANCELLATION);
+                builder.addContentLine("var cancellation = features.cancellation();");
                 continue;
             }
             if (!parametersLocalVar) {
@@ -725,6 +740,16 @@ final class McpCodegen implements CodegenExtension {
                 builder.addContentLine("var progress = features.progress();");
                 continue;
             }
+            if (MCP_CANCELLATION.equals(param.typeName())) {
+                if (!featuresLocalVar) {
+                    addFeaturesLocalVar(builder, classModel);
+                    featuresLocalVar = true;
+                }
+                parameters.add("cancellation");
+                classModel.addImport(MCP_CANCELLATION);
+                builder.addContentLine("var cancellation = features.cancellation();");
+                continue;
+            }
             if (TypeNames.STRING.equals(param.typeName())) {
                 if (!parametersLocalVar) {
                     addParametersLocalVar(builder, classModel);
@@ -870,8 +895,9 @@ final class McpCodegen implements CodegenExtension {
     private boolean isIgnoredSchemaElement(TypeName typeName) {
         return MCP_REQUEST.equals(typeName)
                 || MCP_FEATURES.equals(typeName)
+                || MCP_LOGGER.equals(typeName)
                 || MCP_PROGRESS.equals(typeName)
-                || MCP_LOGGER.equals(typeName);
+                || MCP_CANCELLATION.equals(typeName);
     }
 
     private boolean isResourceTemplate(String uri) {

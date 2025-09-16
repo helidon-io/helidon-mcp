@@ -49,6 +49,7 @@ final class McpTypes {
     static final TypeName MCP_TOOL_INTERFACE = TypeName.create("io.helidon.extensions.mcp.server.McpTool");
     static final TypeName MCP_PARAMETERS = TypeName.create("io.helidon.extensions.mcp.server.McpParameters");
     static final TypeName MCP_PROMPT_INTERFACE = TypeName.create("io.helidon.extensions.mcp.server.McpPrompt");
+    static final TypeName MCP_CANCELLATION = TypeName.create("io.helidon.extensions.mcp.server.McpCancellation");
     static final TypeName MCP_SERVER_CONFIG = TypeName.create("io.helidon.extensions.mcp.server.McpServerConfig");
     static final TypeName MCP_TOOL_CONTENTS = TypeName.create("io.helidon.extensions.mcp.server.McpToolContents");
     static final TypeName MCP_RESOURCE_INTERFACE = TypeName.create("io.helidon.extensions.mcp.server.McpResource");
