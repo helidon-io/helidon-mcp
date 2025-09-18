@@ -543,7 +543,7 @@ the operation. Cancellation status can be accessed from the `McpFeatures` class.
 Example of a Tool checking for cancellation request.
 
 ```java
-private static class CancellationTool implements McpTool {
+private class CancellationTool implements McpTool {
     @Override
     public String name() {
         return "cancellation-tool";
