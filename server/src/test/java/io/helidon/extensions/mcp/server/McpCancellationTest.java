@@ -16,6 +16,9 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
+import jakarta.json.JsonValue;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -35,9 +38,25 @@ class McpCancellationTest {
     void testCancellationRequested() {
         String reason = "Process is taking too long";
         McpCancellation cancellation = new McpCancellation();
-        cancellation.cancel(reason);
+        cancellation.cancel(reason, JsonValue.NULL);
 
         assertThat(cancellation.verify().isRequested(), is(true));
         assertThat(cancellation.verify().reason(), is(reason));
+    }
+
+    @Test
+    void testCancellationHook() {
+        AtomicInteger counter = new AtomicInteger();
+        String reason = "Process is taking too long";
+        McpCancellation cancellation = new McpCancellation();
+
+        cancellation.registerCancellationHook(counter::getAndIncrement);
+        cancellation.cancel(reason, JsonValue.NULL);
+        cancellation.cancel(reason, JsonValue.NULL);
+
+        McpCancellationResult result = cancellation.verify();
+        assertThat(result.isRequested(), is(true));
+        assertThat(result.reason(), is(reason));
+        assertThat(counter.get(), is(1));
     }
 }

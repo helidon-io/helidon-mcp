@@ -326,9 +326,17 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             return;
         }
         McpSession session = foundSession.get();
-        String reason = req.params().getString("reason");
-        JsonValue requestId = req.params().get("requestId");
-        session.features(requestId).ifPresent(feature -> feature.cancellation().cancel(reason));
+        Optional<JsonValue> reason = req.params().find("reason");
+        Optional<JsonValue> requestId = req.params().find("requestId");
+        // Ignore malformed request
+        if (requestId.isEmpty()
+                || reason.isEmpty()
+                || !JsonValue.ValueType.STRING.equals(reason.get().getValueType())) {
+            LOGGER.log(Level.FINEST, () -> "Malformed cancellation request: %s".formatted(req.asJsonObject()));
+            return;
+        }
+        String cancelReason = ((JsonString) reason.get()).getString();
+        session.features(requestId.get()).ifPresent(feature -> feature.cancellation().cancel(cancelReason, requestId.get()));
     }
 
     private void initializeRpc(JsonRpcRequest req, JsonRpcResponse res) {

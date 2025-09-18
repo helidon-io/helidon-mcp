@@ -16,6 +16,10 @@
 
 package io.helidon.extensions.mcp.server;
 
+import io.helidon.common.LazyValue;
+
+import jakarta.json.JsonValue;
+
 /**
  * The MCP Cancellation feature enables verification of whether a client
  * has issued a cancellation request. Such requests are typically made when
@@ -23,7 +27,10 @@ package io.helidon.extensions.mcp.server;
  * to wait for the completion of the operation.
  */
 public final class McpCancellation {
+    private static final System.Logger LOGGER = System.getLogger(McpServerFeature.class.getName());
+    private final Runnable noop = () -> {};
     private volatile McpCancellationResult result;
+    private LazyValue<Runnable> hook = LazyValue.create(() -> noop);
 
     McpCancellation() {
         result = new McpCancellationResult(false, "No cancellation requested");
@@ -38,7 +45,27 @@ public final class McpCancellation {
         return result;
     }
 
-    void cancel(String reason) {
-        result = new McpCancellationResult(true, reason);
+    /**
+     * Actions to be performed when cancellation get triggered.
+     *
+     * @param hook cancellation hook
+     */
+    public void registerCancellationHook(Runnable hook) {
+        this.hook = LazyValue.create(() -> hook);
+    }
+
+    /**
+     * Cancel the current operation. This method can be triggered only once and
+     * additional call are ignored.
+     *
+     * @param reason cancellation reason
+     * @param requestId request ID to be cancelled
+     */
+    void cancel(String reason, JsonValue requestId) {
+        if (!hook.isLoaded()) {
+            LOGGER.log(System.Logger.Level.DEBUG, "Cancelling task with request id: %s", requestId);
+            result = new McpCancellationResult(true, reason);
+            hook.get().run();
+        }
     }
 }

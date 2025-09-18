@@ -32,11 +32,12 @@ import static org.hamcrest.Matchers.is;
 
 abstract class AbstractLangchain4jCancellationToolsTest {
     protected McpClient client;
-    protected static CountDownLatch latch = new CountDownLatch(1);
+    protected static final CountDownLatch CANCELLATION_LATCH = new CountDownLatch(2);
+    protected static final CountDownLatch CANCELLATION_HOOK_LATCH = new CountDownLatch(2);
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {
-        CancellationTools.setUpRoute(builder, latch);
+        CancellationTools.setUpRoute(builder, CANCELLATION_LATCH, CANCELLATION_HOOK_LATCH);
     }
 
     @Test
@@ -47,7 +48,17 @@ abstract class AbstractLangchain4jCancellationToolsTest {
                                    .build());
 
         assertThat(result, containsString("There was a timeout executing the tool"));
-        assertThat(latch.await(20, TimeUnit.SECONDS), is(true));
+        assertThat(CANCELLATION_LATCH.await(20, TimeUnit.SECONDS), is(true));
     }
 
+    @Test
+    void testCancellationHook() throws InterruptedException {
+        String result = client.executeTool(ToolExecutionRequest.builder()
+                                   .name("cancellation-hook-tool")
+                                   .arguments("")
+                                   .build());
+
+        assertThat(result, containsString("There was a timeout executing the tool"));
+        assertThat(CANCELLATION_HOOK_LATCH.await(20, TimeUnit.SECONDS), is(true));
+    }
 }

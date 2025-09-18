@@ -19,9 +19,11 @@ package io.helidon.extensions.mcp.tests;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import io.helidon.extensions.mcp.server.McpCancellation;
+import io.helidon.extensions.mcp.server.McpCancellationResult;
 import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
@@ -33,10 +35,13 @@ class CancellationTools {
     private CancellationTools() {
     }
 
-    static void setUpRoute(HttpRouting.Builder builder, CountDownLatch latch) {
+    static void setUpRoute(HttpRouting.Builder builder,
+                           CountDownLatch cancellationLatch,
+                           CountDownLatch cancellationHookLatch) {
         builder.addFeature(McpServerFeature.builder()
                                    .path("/")
-                                   .addTool(new CancellationTool(latch)));
+                                   .addTool(new CancellationHookTool(cancellationHookLatch))
+                                   .addTool(new CancellationTool(cancellationLatch)));
     }
 
     private static class CancellationTool implements McpTool {
@@ -69,14 +74,15 @@ class CancellationTools {
         private List<McpToolContent> process(McpRequest request) {
             long now = System.currentTimeMillis();
             long timeout = now + TimeUnit.SECONDS.toMillis(5);
-            McpToolContent result = McpToolContents.textContent("Failed");
+            McpToolContent content = McpToolContents.textContent("Failed");
             McpCancellation cancellation = request.features().cancellation();
+            cancellation.registerCancellationHook(this::cancellationHook);
 
             while (now < timeout) {
                 try {
-                    if (cancellation.verify().isRequested()) {
-                        String reason = cancellation.verify().reason();
-                        result = McpToolContents.textContent(reason);
+                    McpCancellationResult result = cancellation.verify();
+                    if (result.isRequested()) {
+                        content = McpToolContents.textContent(result.reason());
                         latch.countDown();
                         break;
                     }
@@ -86,7 +92,55 @@ class CancellationTools {
                     throw new RuntimeException(e);
                 }
             }
-            return List.of(result);
+            return List.of(content);
+        }
+
+        private void cancellationHook() {
+            latch.countDown();
+        }
+    }
+
+    private static class CancellationHookTool implements McpTool {
+        private final CountDownLatch latch;
+
+        CancellationHookTool(CountDownLatch latch) {
+            this.latch = latch;
+        }
+
+        @Override
+        public String name() {
+            return "cancellation-hook-tool";
+        }
+
+        @Override
+        public String description() {
+            return "Tool running a long process";
+        }
+
+        @Override
+        public String schema() {
+            return "";
+        }
+
+        @Override
+        public Function<McpRequest, List<McpToolContent>> tool() {
+            return this::process;
+        }
+
+        private List<McpToolContent> process(McpRequest request) {
+            AtomicReference<McpToolContent> content = new AtomicReference<>(McpToolContents.textContent("Failed"));
+            McpCancellation cancellation = request.features().cancellation();
+            cancellation.registerCancellationHook(() -> cancellationHook(content));
+            try {
+                TimeUnit.MILLISECONDS.sleep(3000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return List.of(content.get());
+        }
+
+        private void cancellationHook(AtomicReference<McpToolContent> content) {
+            latch.countDown();
         }
     }
 }
