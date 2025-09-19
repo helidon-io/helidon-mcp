@@ -76,17 +76,13 @@ class MyTool implements McpTool {
 
     @Override
     public String schema() {
-        return """
-                    {
-                        "type": "object",
-                        "properties": {
-                            "productId": {
-                                "description": "The unique identifier for a product",
-                                "type": "integer"
-                            }
-                        }
-                    }
-                    """;
+        return Schema.builder()
+                .rootObject(root -> root
+                        .addStringProperty("name", name -> name.description("Event name")
+                                .required(true))
+                        .addIntegerProperty("productId", productId -> productId.description("The unique identifier for a product")))
+                .build()
+                .generate();
     }
 
     @Override

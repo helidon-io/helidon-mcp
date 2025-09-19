@@ -51,6 +51,7 @@ import io.helidon.extensions.mcp.server.McpServerConfig;
 import io.helidon.extensions.mcp.server.McpTool;
 import io.helidon.extensions.mcp.server.McpToolAnnotations;
 import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.service.registry.Services;
 import io.helidon.webserver.http.HttpFeature;
 import io.helidon.webserver.http.HttpRouting;
 
@@ -107,7 +108,6 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "MCP_RESOURCES_PAGE_SIZE", Mcp.ResourcesPageSize.class);
         checkField(toCheck, checked, fields, "MCP_RESOURCE_TEMPLATES_PAGE_SIZE", Mcp.ResourceTemplatesPageSize.class);
         checkField(toCheck, checked, fields, "MCP_COMPLETION", Mcp.Completion.class);
-        checkField(toCheck, checked, fields, "MCP_JSON_SCHEMA", Mcp.JsonSchema.class);
         checkField(toCheck, checked, fields, "MCP_DESCRIPTION", Mcp.Description.class);
         checkField(toCheck, checked, fields, "MCP_LOGGER", McpLogger.class);
         checkField(toCheck, checked, fields, "MCP_ROLE_ENUM", McpRole.class);
@@ -137,6 +137,7 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "MCP_RESOURCE_SUBSCRIBER_INTERFACE", McpResourceSubscriber.class);
         checkField(toCheck, checked, fields, "MCP_RESOURCE_UNSUBSCRIBER_INTERFACE", McpResourceUnsubscriber.class);
 
+        checkField(toCheck, checked, fields, "SERVICES", Services.class);
         checkField(toCheck, checked, fields, "LIST_MCP_PROMPT_ARGUMENT", List.class);
         checkField(toCheck, checked, fields, "CONSUMER_REQUEST", Consumer.class);
         checkField(toCheck, checked, fields, "FUNCTION_REQUEST_COMPLETION_CONTENT", Function.class);

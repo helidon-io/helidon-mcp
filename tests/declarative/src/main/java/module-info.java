@@ -16,6 +16,7 @@
 
 module io.helidon.extensions.mcp.tests.declarative {
     requires io.helidon.webserver;
+    requires io.helidon.json.schema;
     requires io.helidon.logging.common;
     requires io.helidon.service.registry;
     requires io.helidon.common.media.type;

@@ -18,6 +18,7 @@ module helidon.extensions.mcp.tests {
     requires io.helidon.extensions.mcp.server;
     requires io.helidon.webserver;
     requires io.helidon.service.registry;
+    requires io.helidon.json.schema;
 
     exports io.helidon.extensions.mcp.tests;
 }

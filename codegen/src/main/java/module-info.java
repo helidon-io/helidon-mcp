@@ -15,7 +15,6 @@
  */
 
 import io.helidon.extensions.mcp.codegen.McpCodegenProvider;
-import io.helidon.extensions.mcp.codegen.McpJsonSchemaCodegenProvider;
 
 /**
  * Code generation for Helidon MCP server.
@@ -27,5 +26,5 @@ module io.helidon.extensions.mcp.codegen {
     exports io.helidon.extensions.mcp.codegen;
 
     provides io.helidon.codegen.spi.CodegenExtensionProvider
-            with McpCodegenProvider, McpJsonSchemaCodegenProvider;
+            with McpCodegenProvider;
 }

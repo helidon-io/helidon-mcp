@@ -33,7 +33,6 @@ final class McpTypes {
     static final TypeName MCP_VERSION = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Version");
     static final TypeName MCP_RESOURCE = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Resource");
     static final TypeName MCP_COMPLETION = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Completion");
-    static final TypeName MCP_JSON_SCHEMA = TypeName.create("io.helidon.extensions.mcp.server.Mcp.JsonSchema");
     static final TypeName MCP_DESCRIPTION = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Description");
     static final TypeName MCP_TOOLS_PAGE_SIZE = TypeName.create("io.helidon.extensions.mcp.server.Mcp.ToolsPageSize");
     static final TypeName MCP_PROMPTS_PAGE_SIZE = TypeName.create("io.helidon.extensions.mcp.server.Mcp.PromptsPageSize");
@@ -68,6 +67,7 @@ final class McpTypes {
     static final TypeName MCP_RESOURCE_UNSUBSCRIBER_INTERFACE =
             TypeName.create("io.helidon.extensions.mcp.server.McpResourceUnsubscriber");
     //others
+    static final TypeName SERVICES = TypeName.create("io.helidon.service.registry.Services");
     static final TypeName HTTP_FEATURE = TypeName.create("io.helidon.webserver.http.HttpFeature");
     static final TypeName HELIDON_MEDIA_TYPE = TypeName.create("io.helidon.common.media.type.MediaType");
     static final TypeName HELIDON_MEDIA_TYPES = TypeName.create("io.helidon.common.media.type.MediaTypes");

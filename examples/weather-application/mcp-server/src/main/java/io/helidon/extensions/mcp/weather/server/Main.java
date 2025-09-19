@@ -25,6 +25,7 @@ import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpServerConfig;
 import io.helidon.extensions.mcp.server.McpToolContent;
 import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.json.schema.Schema;
 import io.helidon.webclient.api.HttpClientResponse;
 import io.helidon.webclient.api.WebClient;
 import io.helidon.webserver.WebServer;
@@ -35,16 +36,6 @@ import jakarta.json.bind.spi.JsonbProvider;
 
 public class Main {
     private static final Jsonb JSON = JsonbProvider.provider().create().build();
-    private static final String WEATHER_SCHEMA = """
-            {
-                "type": "object",
-                "properties": {
-                    "state": {
-                        "type": "string"
-                    }
-                },
-                "required": [ "state" ]
-            }""";
 
     private static final WebClient WEBCLIENT = WebClient.builder()
                                                         .baseUri("https://api.weather.gov")
@@ -69,10 +60,18 @@ public class Main {
                                 .name("helidon-mcp-weather-server-imperative")
                                 .addTool(tool -> tool.name("get-weather-alert-from-state")
                                         .description("Get weather alert per US state")
-                                        .schema(WEATHER_SCHEMA)
+                                        .schema(createWeatherSchema())
                                         .tool(Main::getWeatherAlertFromState))))
                 .build()
                 .start();
+    }
+
+    private static String createWeatherSchema() {
+        return Schema.builder()
+                .rootObject(root -> root
+                        .addStringProperty("state", state -> state.required(true)))
+                .build()
+                .generate();
     }
 
     private static List<McpToolContent> getWeatherAlertFromState(McpRequest request) {

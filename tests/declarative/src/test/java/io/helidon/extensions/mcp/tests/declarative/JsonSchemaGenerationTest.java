@@ -17,6 +17,8 @@ package io.helidon.extensions.mcp.tests.declarative;
 
 import java.io.StringReader;
 
+import io.helidon.service.registry.Services;
+
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonValue;
@@ -31,7 +33,7 @@ class JsonSchemaGenerationTest {
 
     @Test
     void testFooSchema() {
-        String s = McpToolsServer_Foo__JsonSchema.schema();
+        String s = Services.get(Foo__JsonSchema.class).jsonSchema();
         JsonObject json = Json.createReader(new StringReader(s)).readObject();
         assertThat(json.getString("type"), is("object"));
         JsonValue properties = json.get("properties");
@@ -45,7 +47,7 @@ class JsonSchemaGenerationTest {
 
     @Test
     void testAlertSchema() {
-        String s = McpMixedComponentServer_Alert__JsonSchema.schema();
+        String s = Services.get(Alert__JsonSchema.class).jsonSchema();
         JsonObject json = Json.createReader(new StringReader(s)).readObject();
         assertThat(json.getString("type"), is("object"));
         JsonValue properties = json.get("properties");
@@ -60,7 +62,7 @@ class JsonSchemaGenerationTest {
 
     @Test
     void testLocationSchema() {
-        String s = McpMixedComponentServer_Location__JsonSchema.schema();
+        String s = Services.get(Location__JsonSchema.class).jsonSchema();
         JsonObject json = Json.createReader(new StringReader(s)).readObject();
         assertThat(json.getString("type"), is("object"));
         JsonValue properties = json.get("properties");
@@ -68,7 +70,7 @@ class JsonSchemaGenerationTest {
         assertThat(properties, instanceOf(JsonObject.class));
         JsonObject propertiesJson = (JsonObject) properties;
         assertThat(propertiesJson.size(), is(2));
-        assertThat(propertiesJson.getJsonObject("latitude").getString("type"), is("number"));
-        assertThat(propertiesJson.getJsonObject("longitude").getString("type"), is("number"));
+        assertThat(propertiesJson.getJsonObject("latitude").getString("type"), is("integer"));
+        assertThat(propertiesJson.getJsonObject("longitude").getString("type"), is("integer"));
     }
 }

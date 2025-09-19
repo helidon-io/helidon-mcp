@@ -34,6 +34,8 @@ import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
 import io.helidon.extensions.mcp.server.McpToolContent;
 import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.json.schema.Schema;
+import io.helidon.json.schema.SchemaString;
 import io.helidon.webserver.http.HttpRouting;
 
 class PaginationServer {
@@ -73,16 +75,10 @@ class PaginationServer {
 
         @Override
         public String schema() {
-            return """
-                    {
-                        "type": "object",
-                        "properties": {
-                            "foo": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                    """;
+            return Schema.builder()
+                    .rootObject(root -> root.addStringProperty("foo", SchemaString.Builder::build))
+                    .build()
+                    .generate();
         }
 
         @Override

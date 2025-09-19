@@ -92,7 +92,7 @@ class Server {
 #### Configuration
 
 - **`@Mcp.Name`**: Overrides tool method name.
-- **`@Mcp.JsonSchema`**: Explicitly defines POJO input structures.
+- **`@JsonSchema.JsonSchema`**: Explicitly defines POJO input structures.
 
 ```java
 @Mcp.Server
@@ -107,20 +107,7 @@ class Server {
         return List.of(McpToolContents.textContent(result));
     }
 
-    @Mcp.JsonSchema("""
-            {
-                "type": "object",
-                "description": "Latitude and longitude coordinates",
-                "properties": {
-                    "latitude": {
-                        "type": "integer"
-                    },
-                    "longitude": {
-                        "type": "integer"
-                    }
-                }
-            }
-            """)
+    @JsonSchema.JsonSchema
     static class Coordinate {
         int latitude;
         int longitude;

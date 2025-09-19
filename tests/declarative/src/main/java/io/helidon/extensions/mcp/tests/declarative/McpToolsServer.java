@@ -23,6 +23,7 @@ import io.helidon.extensions.mcp.server.McpFeatures;
 import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpToolContent;
 import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.json.schema.JsonSchema;
 
 @Mcp.Server
 @Mcp.Path("/tools")
@@ -98,19 +99,7 @@ class McpToolsServer {
         return List.of(McpToolContents.textContent(TOOL_CONTENT));
     }
 
-    @Mcp.JsonSchema("""
-            {
-                "type": "object",
-                "properties": {
-                    "foo": {
-                        "type": "string"
-                    },
-                    "bar": {
-                        "type": "integer"
-                    }
-                }
-            }
-            """)
+    @JsonSchema.Schema
     public static class Foo {
         public String foo;
         public int bar;

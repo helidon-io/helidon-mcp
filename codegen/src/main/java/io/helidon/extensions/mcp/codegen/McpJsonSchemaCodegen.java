@@ -19,97 +19,27 @@ package io.helidon.extensions.mcp.codegen;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-import io.helidon.codegen.CodegenContext;
-import io.helidon.codegen.CodegenException;
-import io.helidon.codegen.CodegenLogger;
-import io.helidon.codegen.CodegenUtil;
-import io.helidon.codegen.RoundContext;
-import io.helidon.codegen.classmodel.ClassModel;
 import io.helidon.codegen.classmodel.Method;
-import io.helidon.codegen.spi.CodegenExtension;
-import io.helidon.common.types.AccessModifier;
 import io.helidon.common.types.Annotated;
 import io.helidon.common.types.Annotation;
-import io.helidon.common.types.ElementKind;
-import io.helidon.common.types.TypeInfo;
 import io.helidon.common.types.TypeName;
 import io.helidon.common.types.TypeNames;
 import io.helidon.common.types.TypedElementInfo;
 
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_DESCRIPTION;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_JSON_SCHEMA;
-import static io.helidon.service.codegen.ServiceCodegenTypes.SERVICE_ANNOTATION_SINGLETON;
+import static io.helidon.extensions.mcp.codegen.McpTypes.SERVICES;
 
 /**
  * For each class annotated with {@code io.helidon.extensions.mcp.server.Mcp.JsonSchema},
  * generate a class with single public static method that returns a JSON
  * schema representation of that class as a string.
  */
-class McpJsonSchemaCodegen implements CodegenExtension {
+class McpJsonSchemaCodegen {
     private static final TypeName GENERATOR = TypeName.create(McpCodegen.class);
     private static final TypeName COLLECTION = TypeName.create(Collection.class);
-    private final CodegenLogger logger;
 
-    McpJsonSchemaCodegen(CodegenContext context) {
-        logger = context.logger();
-    }
-
-    @Override
-    public void process(RoundContext roundContext) {
-        //noinspection DuplicatedCode
-        logger.log(System.Logger.Level.TRACE, "Processing mcp codegen extension with context "
-                + roundContext.types().stream().map(Object::toString).collect(Collectors.joining()));
-        Collection<TypeInfo> types = roundContext.annotatedTypes(MCP_JSON_SCHEMA);
-        for (TypeInfo type : types) {
-            process(roundContext, type);
-        }
-    }
-
-    private void process(RoundContext roundContext, TypeInfo type) {
-        if (type.kind() != ElementKind.CLASS) {
-            throw new CodegenException("Type annotated with " + MCP_JSON_SCHEMA.fqName() + " must be a class.",
-                                       type.originatingElementValue());
-        }
-
-        TypeName mcpFactoryType = type.typeName();
-        TypeName generatedType = TypeName.builder()
-                .packageName(mcpFactoryType.packageName())
-                .className(mcpFactoryType.classNameWithEnclosingNames()
-                                   .replace('.', '_') + "__JsonSchema")
-                .build();
-
-        var classModel = ClassModel.builder()
-                .type(generatedType)
-                .copyright(CodegenUtil.copyright(GENERATOR,
-                                                 mcpFactoryType,
-                                                 generatedType))
-                .addAnnotation(CodegenUtil.generatedAnnotation(GENERATOR,
-                                                               mcpFactoryType,
-                                                               generatedType,
-                                                               "1",
-                                                               ""))
-                .accessModifier(AccessModifier.PACKAGE_PRIVATE)
-                .addAnnotation(Annotation.create(SERVICE_ANNOTATION_SINGLETON));
-
-        String schema = type.annotation(MCP_JSON_SCHEMA)
-                .stringValue()
-                .orElseThrow(() -> new CodegenException(String.format(
-                        "No %s annotation found for %s.",
-                        MCP_JSON_SCHEMA.fqName(),
-                        type.typeName().fqName())));
-
-        Method.Builder method = Method.builder()
-                .name("schema")
-                .isStatic(true)
-                .returnType(TypeNames.STRING)
-                .accessModifier(AccessModifier.PACKAGE_PRIVATE)
-                .addContentLine("return \"\"\"")
-                .addContent(schema)
-                .addContentLine("\"\"\";");
-        classModel.addMethod(method.build());
-        roundContext.addGeneratedType(generatedType, classModel, mcpFactoryType, type.originatingElementValue());
+    private McpJsonSchemaCodegen() {
     }
 
     static void addSchemaMethodBody(Method.Builder method, List<TypedElementInfo> fields) {
@@ -169,12 +99,13 @@ class McpJsonSchemaCodegen implements CodegenExtension {
             return;
         }
 
-
         method.addContent("builder.append(\"\\\"")
                 .addContent(element.elementName())
                 .addContent("\\\": \" + ")
+                .addContent(SERVICES)
+                .addContent(".get(")
                 .addContent(mapElementName(element))
-                .addContentLine(".schema());");
+                .addContentLine(".class).jsonSchema());");
     }
 
     private static void addDescription(Method.Builder method, String description) {
@@ -196,9 +127,7 @@ class McpJsonSchemaCodegen implements CodegenExtension {
     }
 
     static String mapElementName(TypedElementInfo element) {
-        return element.typeName().classNameWithEnclosingNames()
-                .replace('.', '_')
-                + "__JsonSchema";
+        return element.typeName().className().replace('.', '_') + "__JsonSchema";
     }
 
     static String mapTypeName(TypeName typeName) {

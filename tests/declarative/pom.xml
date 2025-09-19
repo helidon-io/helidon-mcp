@@ -37,6 +37,10 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>io.helidon.json.schema</groupId>
+            <artifactId>helidon-json-schema</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.helidon.service</groupId>
             <artifactId>helidon-service-registry</artifactId>
         </dependency>
@@ -108,6 +112,11 @@
                             <groupId>io.helidon.extensions.mcp</groupId>
                             <artifactId>helidon4-extensions-mcp-codegen</artifactId>
                             <version>${project.version}</version>
+                        </path>
+                        <path>
+                            <groupId>io.helidon.json.schema</groupId>
+                            <artifactId>helidon-json-schema-codegen</artifactId>
+                            <version>${helidon.version}</version>
                         </path>
                         <path>
                             <groupId>io.helidon.service</groupId>

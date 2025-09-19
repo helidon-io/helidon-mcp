@@ -51,6 +51,10 @@
             <artifactId>helidon-http-media-jsonb</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.helidon.json.schema</groupId>
+            <artifactId>helidon-json-schema</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.helidon.config</groupId>
             <artifactId>helidon-config-yaml</artifactId>
         </dependency>
