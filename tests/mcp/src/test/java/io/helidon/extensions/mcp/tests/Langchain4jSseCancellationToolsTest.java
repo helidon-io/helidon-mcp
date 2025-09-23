@@ -26,7 +26,7 @@ import dev.langchain4j.mcp.client.transport.McpTransport;
 import dev.langchain4j.mcp.client.transport.http.HttpMcpTransport;
 import org.junit.jupiter.api.Disabled;
 
-@Disabled
+@Disabled("https://github.com/helidon-io/helidon-mcp/issues/55")
 @ServerTest
 class Langchain4jSseCancellationToolsTest extends AbstractLangchain4jCancellationToolsTest {
 
