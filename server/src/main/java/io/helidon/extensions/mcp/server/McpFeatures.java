@@ -42,7 +42,7 @@ import io.helidon.webserver.sse.SseSink;
  * </ul>
  */
 public final class McpFeatures {
-    private final LazyValue<McpCancellation> cancellation = LazyValue.create(new McpCancellation());
+    private final LazyValue<McpCancellation> cancellation = LazyValue.create(McpCancellation::new);
     private final JsonRpcResponse response;
     private final McpSession session;
 

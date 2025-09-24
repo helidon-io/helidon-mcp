@@ -438,7 +438,7 @@ List<McpToolContent> cancellationTool(McpCancellation cancellation) {
     while (now < timeout) {
         if (cancellation.verify().isRequested()) {
             String reason = cancellation.verify().reason();
-            break;
+            return List.of(McpToolContents.textContent(reason));
         }
         longRunningOperation();
         now = System.currentTimeMillis();

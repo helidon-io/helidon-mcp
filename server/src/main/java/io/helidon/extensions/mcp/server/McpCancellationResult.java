@@ -18,7 +18,7 @@ package io.helidon.extensions.mcp.server;
 
 /**
  * The cancellation result includes an indication of whether
- * a cancellation request was made, along with the reason for the request.
+ * a cancellation request was made, along with the reason for request cancellation.
  */
 public final class McpCancellationResult {
     private final String reason;

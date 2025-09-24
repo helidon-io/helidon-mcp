@@ -327,6 +327,8 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     private void notificationCancelRpc(JsonRpcRequest req, JsonRpcResponse res) {
         Optional<McpSession> foundSession = findSession(req);
         if (foundSession.isEmpty()) {
+            res.status(Status.NOT_FOUND_404).send();
+            LOGGER.log(Level.FINEST, () -> "No session found for cancellation request: %s".formatted(req.asJsonObject()));
             return;
         }
         McpSession session = foundSession.get();

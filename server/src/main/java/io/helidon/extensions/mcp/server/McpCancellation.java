@@ -41,7 +41,7 @@ public final class McpCancellation {
      *
      * @return cancellation result
      */
-    public McpCancellationResult verify() {
+    public McpCancellationResult result() {
         return result;
     }
 

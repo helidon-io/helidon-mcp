@@ -31,8 +31,8 @@ import io.helidon.extensions.mcp.server.McpToolContent;
 import io.helidon.extensions.mcp.server.McpToolContents;
 import io.helidon.webserver.http.HttpRouting;
 
-class CancellationTools {
-    private CancellationTools() {
+class CancelableTools {
+    private CancelableTools() {
     }
 
     static void setUpRoute(HttpRouting.Builder builder,
@@ -80,7 +80,7 @@ class CancellationTools {
 
             while (now < timeout) {
                 try {
-                    McpCancellationResult result = cancellation.verify();
+                    McpCancellationResult result = cancellation.result();
                     if (result.isRequested()) {
                         content = McpToolContents.textContent(result.reason());
                         latch.countDown();

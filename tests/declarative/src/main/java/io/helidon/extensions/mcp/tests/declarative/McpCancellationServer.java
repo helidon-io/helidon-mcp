@@ -37,31 +37,31 @@ class McpCancellationServer {
 
     @Mcp.Tool("Cancellation Tool")
     List<McpToolContent> cancellationTool(McpCancellation cancellation) {
-        String reason = cancellation.verify().reason();
+        String reason = cancellation.result().reason();
         return List.of(McpToolContents.textContent(reason));
     }
 
     @Mcp.Tool("Cancellation Tool")
     String cancellationTool1(McpRequest request, McpCancellation cancellation, McpLogger logger) {
-        return request.features().cancellation().verify().reason();
+        return request.features().cancellation().result().reason();
     }
 
     @Mcp.Prompt("Cancellation Prompt")
     List<McpPromptContent> cancellationPrompt(McpCancellation cancellation) {
-        String reason = cancellation.verify().reason();
+        String reason = cancellation.result().reason();
         return List.of(McpPromptContents.textContent(reason, McpRole.USER));
     }
 
     @Mcp.Prompt("Cancellation Prompt")
     String cancellationPrompt1(McpRequest request, McpCancellation cancellation, McpLogger logger) {
-        return request.features().cancellation().verify().reason();
+        return request.features().cancellation().result().reason();
     }
 
     @Mcp.Resource(uri = "file://cancellation",
                   mediaType = MediaTypes.TEXT_PLAIN_VALUE,
                   description = "Cancellation Resource")
     List<McpResourceContent> cancellationResource(McpCancellation cancellation) {
-        String reason = cancellation.verify().reason();
+        String reason = cancellation.result().reason();
         return List.of(McpResourceContents.textContent(reason));
     }
 
@@ -69,6 +69,6 @@ class McpCancellationServer {
                   mediaType = MediaTypes.TEXT_PLAIN_VALUE,
                   description = "Cancellation Resource")
     String cancellationResource1(McpRequest request, McpCancellation cancellation, McpLogger logger) {
-        return request.features().cancellation().verify().reason();
+        return request.features().cancellation().result().reason();
     }
 }

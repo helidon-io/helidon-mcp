@@ -28,9 +28,9 @@ import org.junit.jupiter.api.Disabled;
 
 @Disabled("https://github.com/helidon-io/helidon-mcp/issues/55")
 @ServerTest
-class Langchain4jSseCancellationToolsTest extends AbstractLangchain4jCancellationToolsTest {
+class Langchain4JSseCancelableToolsTest extends AbstractLangchain4JCancelableToolsTest {
 
-    Langchain4jSseCancellationToolsTest(WebServer server) {
+    Langchain4JSseCancelableToolsTest(WebServer server) {
         McpTransport transport = new HttpMcpTransport.Builder()
                 .sseUrl("http://localhost:" + server.port())
                 .logRequests(true)

@@ -30,14 +30,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
-abstract class AbstractLangchain4jCancellationToolsTest {
+abstract class AbstractLangchain4JCancelableToolsTest {
     protected McpClient client;
     protected static final CountDownLatch CANCELLATION_LATCH = new CountDownLatch(2);
     protected static final CountDownLatch CANCELLATION_HOOK_LATCH = new CountDownLatch(2);
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {
-        CancellationTools.setUpRoute(builder, CANCELLATION_LATCH, CANCELLATION_HOOK_LATCH);
+        CancelableTools.setUpRoute(builder, CANCELLATION_LATCH, CANCELLATION_HOOK_LATCH);
     }
 
     @Test
