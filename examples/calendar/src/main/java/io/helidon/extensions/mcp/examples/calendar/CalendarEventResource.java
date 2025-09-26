@@ -69,7 +69,7 @@ final class CalendarEventResource implements McpResource {
     }
 
     static AtomicBoolean subscribed(McpRequest request) {
-        return request.context().get(CalendarEventResource.class, AtomicBoolean.class)
+        return request.sessionContext().get(CalendarEventResource.class, AtomicBoolean.class)
                 .orElse(new AtomicBoolean(false));
     }
 }

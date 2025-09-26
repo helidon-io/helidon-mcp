@@ -50,5 +50,12 @@ interface McpRequestBlueprint {
      *
      * @return the session context
      */
-    Context context();
+    Context sessionContext();
+
+    /**
+     * Access context to store any request-scoped data.
+     *
+     * @return the request context
+     */
+    Context requestContext();
 }

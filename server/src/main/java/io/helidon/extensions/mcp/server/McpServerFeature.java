@@ -32,6 +32,8 @@ import java.util.logging.Logger;
 
 import io.helidon.builder.api.RuntimeType;
 import io.helidon.common.mapper.OptionalValue;
+import io.helidon.config.Config;
+import io.helidon.cors.CrossOriginConfig;
 import io.helidon.http.HeaderName;
 import io.helidon.http.HeaderNames;
 import io.helidon.http.ServerRequestHeaders;
@@ -39,6 +41,8 @@ import io.helidon.http.Status;
 import io.helidon.http.sse.SseEvent;
 import io.helidon.jsonrpc.core.JsonRpcError;
 import io.helidon.jsonrpc.core.JsonRpcParams;
+import io.helidon.service.registry.Services;
+import io.helidon.webserver.cors.CorsSupport;
 import io.helidon.webserver.http.HttpFeature;
 import io.helidon.webserver.http.HttpRequest;
 import io.helidon.webserver.http.HttpRouting;
@@ -89,6 +93,7 @@ import static io.helidon.jsonrpc.core.JsonRpcError.INVALID_REQUEST;
 @RuntimeType.PrototypedBy(McpServerConfig.class)
 public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpServerConfig> {
     private static final int SESSION_CACHE_SIZE = 1000;
+    private static final String DEFAULT_OIDC_METADATA_URI = "/.well-known/openid-configuration";
     private static final List<String> PROTOCOL_VERSION = List.of("2024-11-05", "2025-03-26");
     private static final HeaderName SESSION_ID_HEADER = HeaderNames.create("Mcp-Session-Id");
     private static final Logger LOGGER = Logger.getLogger(McpServerFeature.class.getName());
@@ -106,7 +111,6 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     private final Map<String, McpCompletion> resourceCompletions = new ConcurrentHashMap<>();
 
     private McpServerFeature(McpServerConfig config) {
-        String path = config.path();
         List<McpTool> tools = new CopyOnWriteArrayList<>(config.tools());
         List<McpPrompt> prompts = new CopyOnWriteArrayList<>(config.prompts());
         List<McpResource> resources = new CopyOnWriteArrayList<>();
@@ -114,7 +118,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         JsonRpcHandlers.Builder builder = JsonRpcHandlers.builder();
 
         this.config = config;
-        this.endpoint = path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
+        this.endpoint = removeTrailingSlash(config.path());
         for (McpResource resource : config.resources()) {
             if (isTemplate(resource)) {
                 templates.add(new McpResourceTemplate(resource));
@@ -196,6 +200,9 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
 
     @Override
     public void setup(HttpRouting.Builder routing) {
+        var cors = CorsSupport.builder()
+                .addCrossOrigin(CrossOriginConfig.create())
+                .build();
         // add all the JSON-RPC routes first
         JsonRpcRouting jsonRpcRouting = JsonRpcRouting.builder()
                 .register(endpoint + "/message", jsonRpcHandlers)
@@ -204,13 +211,43 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         jsonRpcRouting.routing(routing);
 
         // additional HTTP routes for SSE and session disconnect
-        routing.get(endpoint, this::sse)
+        routing.get(DEFAULT_OIDC_METADATA_URI, cors, this::mcpMetadata)
+                .get(endpoint, this::sse)
                 .delete(endpoint, this::disconnect);
+    }
+
+    private void mcpMetadata(ServerRequest request, ServerResponse response) {
+        var config = Services.get(Config.class);
+        var providers = config.get("security.providers").asList(Config.class);
+
+        if (providers.isEmpty()) {
+            response.status(Status.NOT_FOUND_404);
+            response.send();
+            LOGGER.log(Level.FINE, () -> "Security is not enabled, add OIDC security provider to the configuration");
+            return;
+        }
+        for (Config provider : providers.get()) {
+            var identity = provider.get("oidc.identity-uri");
+            if (identity.exists()) {
+                String identityUri = identity.asString().map(this::removeTrailingSlash).orElse(null);
+                response.header(HeaderNames.LOCATION, identityUri + DEFAULT_OIDC_METADATA_URI);
+                response.status(Status.SEE_OTHER_303);
+                response.send();
+                return;
+            }
+        }
+        LOGGER.log(Level.FINE, () -> "Cannot find \"oidc.identity-uri\" property");
+        response.status(Status.NOT_FOUND_404);
+        response.send();
     }
 
     @Override
     public McpServerConfig prototype() {
         return config;
+    }
+
+    private String removeTrailingSlash(String path) {
+        return path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
     }
 
     /**
@@ -454,7 +491,8 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                                .parameters(parameters.get("arguments"))
                                .features(features)
                                .protocolVersion(session.protocolVersion())
-                               .context(session.context())
+                               .sessionContext(session.context())
+                               .requestContext(req.context())
                                .build());
         features.progress().stopSending();
         res.result(toolCall(contents));
@@ -519,7 +557,8 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                                .parameters(parameters)
                                .features(features)
                                .protocolVersion(session.protocolVersion())
-                               .context(session.context())
+                               .sessionContext(session.context())
+                               .requestContext(req.context())
                                .build());
         features.progress().stopSending();
         res.result(readResource(resourceUri, contents));
@@ -570,7 +609,8 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                                     .parameters(parameters)
                                     .features(features)
                                     .protocolVersion(session.protocolVersion())
-                                    .context(session.context())
+                                    .sessionContext(session.context())
+                                    .requestContext(req.context())
                                     .build());
 
             // send final response using active SSE sink
@@ -621,7 +661,8 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                                     .parameters(parameters)
                                     .features(features)
                                     .protocolVersion(session.protocolVersion())
-                                    .context(session.context())
+                                    .sessionContext(session.context())
+                                    .requestContext(req.context())
                                     .build());
 
             // response to unsubscription request
@@ -709,7 +750,8 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                                .parameters(parameters.get("arguments"))
                                .features(features)
                                .protocolVersion(session.protocolVersion())
-                               .context(session.context())
+                               .sessionContext(session.context())
+                               .requestContext(req.context())
                                .build());
         features.progress().stopSending();
         res.result(toJson(contents, prompt.get().description()));
@@ -774,7 +816,8 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                                            .parameters(parameters.get("argument"))
                                            .features(features)
                                            .protocolVersion(session.protocolVersion())
-                                           .context(session.context())
+                                           .sessionContext(session.context())
+                                           .requestContext(req.context())
                                            .build());
                     res.result(toJson(result));
                     sendResponse(req, res, session, features, requestId);

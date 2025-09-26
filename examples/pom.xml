@@ -40,6 +40,7 @@
 
     <modules>
         <module>weather-application</module>
+        <module>secured-server</module>
         <module>calendar</module>
     </modules>
 </project>
