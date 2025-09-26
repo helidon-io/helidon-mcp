@@ -19,6 +19,8 @@ package io.helidon.extensions.mcp.tests;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import io.helidon.faulttolerance.Async;
+
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
@@ -59,5 +61,12 @@ abstract class AbstractMcpSdkTest {
     @AfterEach
     void afterEach() throws InterruptedException {
         assertThat(latch().await(20, TimeUnit.SECONDS), is(true));
+    }
+
+    void async(Runnable runnable) {
+        Async.create().invoke(() -> {
+            runnable.run();
+            return null;
+        });
     }
 }

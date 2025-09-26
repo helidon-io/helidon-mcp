@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.helidon.extensions.mcp.tests;
 
 import io.helidon.webserver.WebServer;
@@ -23,11 +22,11 @@ import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 
 @ServerTest
-class McpSdkStreamableMultipleResourceTest extends AbstractMcpSdkMultipleResourceTest {
+class McpSdkStreamableUnsubscriptionTest extends AbstractMcpSdkUnsubscriptionTest {
 
     private final McpSyncClient client;
 
-    McpSdkStreamableMultipleResourceTest(WebServer server) {
+    McpSdkStreamableUnsubscriptionTest(WebServer server) {
         client = McpClient.sync(streamable(server.port())).build();
         client.initialize();
     }

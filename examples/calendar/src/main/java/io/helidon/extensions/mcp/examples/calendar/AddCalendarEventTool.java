@@ -21,6 +21,7 @@ import java.util.function.Function;
 
 import io.helidon.common.mapper.OptionalValue;
 import io.helidon.extensions.mcp.server.McpException;
+import io.helidon.extensions.mcp.server.McpFeatures;
 import io.helidon.extensions.mcp.server.McpLogger;
 import io.helidon.extensions.mcp.server.McpParameters;
 import io.helidon.extensions.mcp.server.McpProgress;
@@ -85,9 +86,10 @@ final class AddCalendarEventTool implements McpTool {
     }
 
     private List<McpToolContent> addCalendarEvent(McpRequest request) {
-        McpLogger logger = request.features().logger();
+        McpFeatures features = request.features();
+        McpLogger logger = features.logger();
         McpParameters mcpParameters = request.parameters();
-        McpProgress progress = request.features().progress();
+        McpProgress progress = features.progress();
         progress.total(100);
 
         logger.info("Request to add new event");
@@ -109,6 +111,7 @@ final class AddCalendarEventTool implements McpTool {
 
         progress.send(50);
         calendar.createNewEvent(name, date, attendees);
+        features.subscriptions().sendUpdate(calendar.uri());
         progress.send(100);
 
         return List.of(McpToolContents.textContent("New event added to the calendar."));

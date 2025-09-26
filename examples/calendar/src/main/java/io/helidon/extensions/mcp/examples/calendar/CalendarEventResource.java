@@ -17,6 +17,7 @@
 package io.helidon.extensions.mcp.examples.calendar;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import io.helidon.common.media.type.MediaType;
@@ -65,5 +66,10 @@ final class CalendarEventResource implements McpResource {
         request.features().logger().debug("Reading calendar events from registry...");
         String content = calendar.readContent();
         return List.of(McpResourceContents.textContent(content));
+    }
+
+    static AtomicBoolean subscribed(McpRequest request) {
+        return request.context().get(CalendarEventResource.class, AtomicBoolean.class)
+                .orElse(new AtomicBoolean(false));
     }
 }

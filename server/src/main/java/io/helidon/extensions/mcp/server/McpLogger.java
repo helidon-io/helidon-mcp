@@ -129,7 +129,7 @@ public final class McpLogger extends McpFeature {
      * @return the level
      */
     McpLogger.Level level() {
-        return context().get(Level.class).orElse(Level.INFO);
+        return context().get(ContextClassifier.class, Level.class).orElse(Level.INFO);
     }
 
     /**
@@ -139,7 +139,7 @@ public final class McpLogger extends McpFeature {
      * @param level the level
      */
     void setLevel(McpLogger.Level level) {
-        context().register(level);
+        context().register(ContextClassifier.class, level);
     }
 
     /**
@@ -178,5 +178,11 @@ public final class McpLogger extends McpFeature {
         String text() {
             return this.name().toLowerCase();
         }
+    }
+
+    /**
+     * Must be private.
+     */
+    private static class ContextClassifier {
     }
 }

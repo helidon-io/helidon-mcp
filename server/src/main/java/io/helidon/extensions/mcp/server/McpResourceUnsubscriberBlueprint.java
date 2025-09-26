@@ -13,42 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.helidon.extensions.mcp.server;
 
+import java.util.function.Consumer;
+
 import io.helidon.builder.api.Prototype;
-import io.helidon.common.context.Context;
 
 /**
- * A representation of an MCP request.
+ * Configuration of an MCP Resource Unsubscriber.
  */
 @Prototype.Blueprint
-interface McpRequestBlueprint {
+interface McpResourceUnsubscriberBlueprint {
 
     /**
-     * MCP client parameters.
+     * Resource URI.
      *
-     * @return the parameters
+     * @return uri
      */
-    McpParameters parameters();
+    String uri();
 
     /**
-     * MCP client features.
-     *
-     * @return the features
+     * Resource unsubscriber.
      */
-    McpFeatures features();
-
-    /**
-     * Access to the negotiated protocol version.
-     *
-     * @return the protocol version
-     */
-    String protocolVersion();
-
-    /**
-     * Access context to store any session-scoped data.
-     *
-     * @return the session context
-     */
-    Context context();
+    Consumer<McpRequest> unsubscribe();
 }

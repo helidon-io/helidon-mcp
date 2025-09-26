@@ -46,9 +46,10 @@ public final class McpFeatures {
     private final JsonRpcResponse response;
     private final McpSession session;
 
+    private SseSink sseSink;
     private McpProgress progress;
     private McpLogger logger;
-    private SseSink sseSink;
+    private McpSubscriptions subscriptions;
 
     McpFeatures(McpSession session) {
         Objects.requireNonNull(session, "session is null");
@@ -95,6 +96,18 @@ public final class McpFeatures {
             }
         }
         return logger;
+    }
+
+    /**
+     * Get a {@link McpSubscriptions} feature.
+     *
+     * @return the MCP subscriptions
+     */
+    public McpSubscriptions subscriptions() {
+        if (subscriptions == null) {
+            subscriptions = new McpSubscriptions(session);
+        }
+        return subscriptions;
     }
 
     /**

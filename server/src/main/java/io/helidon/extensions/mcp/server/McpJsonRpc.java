@@ -28,13 +28,13 @@ import jakarta.json.JsonBuilderFactory;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.JsonReaderFactory;
+import jakarta.json.JsonValue;
 
 final class McpJsonRpc {
     static final JsonBuilderFactory JSON_BUILDER_FACTORY = Json.createBuilderFactory(Map.of());
     static final JsonReaderFactory JSON_READER_FACTORY = Json.createReaderFactory(Map.of());
 
     private static final Map<String, JsonObject> CACHE = new ConcurrentHashMap<>();
-    private static final JsonObject EMPTY_OBJECT = Json.createObjectBuilder().build();
     private static final JsonObject EMPTY_OBJECT_SCHEMA = JSON_BUILDER_FACTORY.createObjectBuilder()
             .add("type", "object")
             .add("properties", JsonObject.EMPTY_JSON_OBJECT)
@@ -113,6 +113,10 @@ final class McpJsonRpc {
      */
     static final String METHOD_NOTIFICATION_CANCELED = "notifications/cancelled";
     /**
+     * JSON-RPC {@code notifications/resources/updated} method.
+     */
+    static final String METHOD_NOTIFICATION_UPDATE = "notifications/resources/updated";
+    /**
      * JSON-RPC {@code completion/complete} method.
      */
     static final String METHOD_COMPLETION_COMPLETE = "completion/complete";
@@ -148,7 +152,7 @@ final class McpJsonRpc {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("protocolVersion", protocolVersion)
                 .add("capabilities", JSON_BUILDER_FACTORY.createObjectBuilder()
-                        .add("logging", EMPTY_OBJECT)
+                        .add("logging", JsonValue.EMPTY_JSON_OBJECT)
                         .add("prompts", JSON_BUILDER_FACTORY.createObjectBuilder()
                                 .add("listChanged", capabilities.contains(McpCapability.PROMPT_LIST_CHANGED)))
                         .add("tools", JSON_BUILDER_FACTORY.createObjectBuilder()
@@ -156,7 +160,7 @@ final class McpJsonRpc {
                         .add("resources", JSON_BUILDER_FACTORY.createObjectBuilder()
                                 .add("listChanged", capabilities.contains(McpCapability.RESOURCE_LIST_CHANGED))
                                 .add("subscribe", capabilities.contains(McpCapability.RESOURCE_SUBSCRIBE)))
-                        .add("completions", EMPTY_OBJECT))
+                        .add("completions", JsonValue.EMPTY_JSON_OBJECT))
                 .add("serverInfo", JSON_BUILDER_FACTORY.createObjectBuilder()
                         .add("name", config.name())
                         .add("version", config.version()))
@@ -453,6 +457,15 @@ final class McpJsonRpc {
                 .build();
     }
 
+    static JsonObject createUpdateNotification(String uri) {
+        return JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("jsonrpc", "2.0")
+                .add("method", METHOD_NOTIFICATION_UPDATE)
+                .add("params", JSON_BUILDER_FACTORY.createObjectBuilder()
+                        .add("uri", uri))
+                .build();
+    }
+
     static JsonObject toJson(McpCompletionContent content) {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("completion", JSON_BUILDER_FACTORY.createObjectBuilder()
@@ -464,9 +477,5 @@ final class McpJsonRpc {
 
     static JsonObject disconnectSession() {
         return JSON_BUILDER_FACTORY.createObjectBuilder().add("disconnect", true).build();
-    }
-
-    public static JsonObject empty() {
-        return JSON_BUILDER_FACTORY.createObjectBuilder().build();
     }
 }
