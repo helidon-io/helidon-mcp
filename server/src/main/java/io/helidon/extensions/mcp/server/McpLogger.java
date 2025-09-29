@@ -173,7 +173,11 @@ public final class McpLogger extends McpFeature {
         /**
          * Alert.
          */
-        ALERT;
+        ALERT,
+        /**
+         * Emergency.
+         */
+        EMERGENCY;
 
         String text() {
             return this.name().toLowerCase();
