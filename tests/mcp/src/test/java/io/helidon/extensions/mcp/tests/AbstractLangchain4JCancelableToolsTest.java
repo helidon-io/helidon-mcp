@@ -34,7 +34,7 @@ import static org.hamcrest.Matchers.is;
 abstract class AbstractLangchain4JCancelableToolsTest {
     protected McpClient client;
     protected static final CountDownLatch CANCELLATION_LATCH = new CountDownLatch(2);
-    protected static final CountDownLatch CANCELLATION_HOOK_LATCH = new CountDownLatch(2);
+    protected static final CountDownLatch CANCELLATION_HOOK_LATCH = new CountDownLatch(1);
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {

@@ -132,7 +132,7 @@ class CancelableTools {
             McpCancellation cancellation = request.features().cancellation();
             cancellation.registerCancellationHook(() -> cancellationHook(content));
             try {
-                TimeUnit.MILLISECONDS.sleep(3000);
+                TimeUnit.SECONDS.sleep(3);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }

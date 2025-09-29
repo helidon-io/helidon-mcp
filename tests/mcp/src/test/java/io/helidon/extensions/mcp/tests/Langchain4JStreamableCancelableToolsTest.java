@@ -24,9 +24,7 @@ import io.helidon.webserver.testing.junit5.ServerTest;
 import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.transport.McpTransport;
 import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
-import org.junit.jupiter.api.Disabled;
 
-@Disabled("https://github.com/helidon-io/helidon-mcp/issues/55")
 @ServerTest
 class Langchain4JStreamableCancelableToolsTest extends AbstractLangchain4JCancelableToolsTest {
 
