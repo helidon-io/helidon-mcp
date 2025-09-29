@@ -36,6 +36,7 @@ import dev.langchain4j.mcp.client.McpTextResourceContents;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import dev.langchain4j.model.chat.request.json.JsonSchemaElement;
 import dev.langchain4j.model.chat.request.json.JsonStringSchema;
+import dev.langchain4j.service.tool.ToolExecutionResult;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
@@ -121,9 +122,9 @@ abstract class AbstractLangchain4jMixedComponentsTest {
                 .name("weatherAlert")
                 .arguments(argument)
                 .build();
-        String result = client.executeTool(request);
+        ToolExecutionResult result = client.executeTool(request);
         String expected = String.format("state: %s, alert name: %s", state, alertName);
-        assertThat(result, is(expected));
+        assertThat(result.resultText(), is(expected));
     }
 
     @Test

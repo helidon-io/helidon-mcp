@@ -74,10 +74,10 @@ abstract class AbstractLangchain4jMultipleToolTest {
 
     @Test
     void testTool4() {
-        String result = client.executeTool(ToolExecutionRequest.builder()
+        var result = client.executeTool(ToolExecutionRequest.builder()
                                                    .name("tool4")
                                                    .arguments("{\"name\":\"Praha\", \"population\":10}")
                                                    .build());
-        assertThat(result, is("Praha has a population of 10 inhabitants"));
+        assertThat(result.resultText(), is("Praha has a population of 10 inhabitants"));
     }
 }

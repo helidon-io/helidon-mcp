@@ -118,7 +118,7 @@ abstract class AbstractLangchain4jClientTest {
                                                 .name(TOOL_NAME)
                                                 .arguments("{\"town\":\"Praha\"}")
                                                 .build());
-        assertThat(result, is("There is a hurricane in Praha"));
+        assertThat(result.resultText(), is("There is a hurricane in Praha"));
     }
 
     @Test

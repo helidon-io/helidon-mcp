@@ -24,6 +24,7 @@ import io.helidon.webserver.testing.junit5.SetUpRoute;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.mcp.client.McpClient;
+import dev.langchain4j.service.tool.ToolExecutionResult;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -42,23 +43,23 @@ abstract class AbstractLangchain4JCancelableToolsTest {
 
     @Test
     void testCancellation() throws InterruptedException {
-        String result = client.executeTool(ToolExecutionRequest.builder()
+        ToolExecutionResult result = client.executeTool(ToolExecutionRequest.builder()
                                    .name("cancellation-tool")
                                    .arguments("")
                                    .build());
 
-        assertThat(result, containsString("There was a timeout executing the tool"));
+        assertThat(result.resultText(), containsString("There was a timeout executing the tool"));
         assertThat(CANCELLATION_LATCH.await(20, TimeUnit.SECONDS), is(true));
     }
 
     @Test
     void testCancellationHook() throws InterruptedException {
-        String result = client.executeTool(ToolExecutionRequest.builder()
+        ToolExecutionResult result = client.executeTool(ToolExecutionRequest.builder()
                                    .name("cancellation-hook-tool")
                                    .arguments("")
                                    .build());
 
-        assertThat(result, containsString("There was a timeout executing the tool"));
+        assertThat(result.resultText(), containsString("There was a timeout executing the tool"));
         assertThat(CANCELLATION_HOOK_LATCH.await(20, TimeUnit.SECONDS), is(true));
     }
 }

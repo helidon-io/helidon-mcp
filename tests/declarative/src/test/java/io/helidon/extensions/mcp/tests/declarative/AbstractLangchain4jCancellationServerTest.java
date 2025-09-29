@@ -24,6 +24,7 @@ import dev.langchain4j.mcp.client.McpGetPromptResult;
 import dev.langchain4j.mcp.client.McpReadResourceResult;
 import dev.langchain4j.mcp.client.McpTextContent;
 import dev.langchain4j.mcp.client.McpTextResourceContents;
+import dev.langchain4j.service.tool.ToolExecutionResult;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
@@ -42,18 +43,18 @@ abstract class AbstractLangchain4jCancellationServerTest {
 
     @Test
     void testCancellationTool() {
-        String result = client.executeTool(ToolExecutionRequest.builder()
+        ToolExecutionResult result = client.executeTool(ToolExecutionRequest.builder()
                                                    .name("cancellationTool")
                                                    .build());
-        assertThat(result, is("No cancellation requested"));
+        assertThat(result.resultText(), is("No cancellation requested"));
     }
 
     @Test
     void testCancellationTool1() {
-        String result = client.executeTool(ToolExecutionRequest.builder()
+        ToolExecutionResult result = client.executeTool(ToolExecutionRequest.builder()
                                                    .name("cancellationTool1")
                                                    .build());
-        assertThat(result, is("No cancellation requested"));
+        assertThat(result.resultText(), is("No cancellation requested"));
     }
 
     @Test

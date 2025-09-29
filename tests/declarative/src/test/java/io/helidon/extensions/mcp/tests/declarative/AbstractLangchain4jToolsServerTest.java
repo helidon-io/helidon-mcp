@@ -56,9 +56,10 @@ abstract class AbstractLangchain4jToolsServerTest {
                                                 .name(name)
                                                 .arguments(arguments)
                                                 .build());
-        assertThat(result, containsString("value=value1"));
-        assertThat(result, containsString("foo=foo1"));
-        assertThat(result, containsString("bar=1"));
+        String text = result.resultText();
+        assertThat(text, containsString("value=value1"));
+        assertThat(text, containsString("foo=foo1"));
+        assertThat(text, containsString("bar=1"));
     }
 
     @ParameterizedTest
@@ -69,7 +70,7 @@ abstract class AbstractLangchain4jToolsServerTest {
         var result = client.executeTool(ToolExecutionRequest.builder()
                                                 .name(name)
                                                 .build());
-        assertThat(result, is(TOOL_CONTENT));
+        assertThat(result.resultText(), is(TOOL_CONTENT));
     }
 
     @Test
@@ -78,7 +79,7 @@ abstract class AbstractLangchain4jToolsServerTest {
                                                 .name("tool4")
                                                 .arguments("{ \"aByte\": 0}")
                                                 .build());
-        assertThat(result, is("0"));
+        assertThat(result.resultText(), is("0"));
     }
 
     @Test
@@ -87,7 +88,7 @@ abstract class AbstractLangchain4jToolsServerTest {
                                                 .name("tool5")
                                                 .arguments("{ \"aShort\": 0}")
                                                 .build());
-        assertThat(result, is("0"));
+        assertThat(result.resultText(), is("0"));
     }
 
     @Test
@@ -96,7 +97,7 @@ abstract class AbstractLangchain4jToolsServerTest {
                                                 .name("tool6")
                                                 .arguments("{ \"aInteger\": 0}")
                                                 .build());
-        assertThat(result, is("0"));
+        assertThat(result.resultText(), is("0"));
     }
 
     @Test
@@ -105,7 +106,7 @@ abstract class AbstractLangchain4jToolsServerTest {
                                                 .name("tool7")
                                                 .arguments("{ \"aLong\": 0}")
                                                 .build());
-        assertThat(result, is("0"));
+        assertThat(result.resultText(), is("0"));
     }
 
     @Test
@@ -114,7 +115,7 @@ abstract class AbstractLangchain4jToolsServerTest {
                                                 .name("tool8")
                                                 .arguments("{ \"aDouble\": 0.0}")
                                                 .build());
-        assertThat(result, is("0.0"));
+        assertThat(result.resultText(), is("0.0"));
     }
 
     @Test
@@ -123,6 +124,6 @@ abstract class AbstractLangchain4jToolsServerTest {
                                                 .name("tool9")
                                                 .arguments("{ \"aFloat\": 0.0}")
                                                 .build());
-        assertThat(result, is("0.0"));
+        assertThat(result.resultText(), is("0.0"));
     }
 }
