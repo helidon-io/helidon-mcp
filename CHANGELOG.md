@@ -27,7 +27,7 @@ Helicon MCP is an incubating feature and its API is subject to change.
 Requirements:
 
 * Java 21
-* Helidon 4.3.0-M3 or newer
+* Helidon 4.3.0 or newer
 
 ## CHANGES
 
