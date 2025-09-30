@@ -27,6 +27,10 @@ import io.helidon.webserver.http.HttpRouting;
  * Main class for running a secured MCP server.
  */
 public class Main {
+
+    private Main() {
+    }
+
     /**
      * Start the application.
      *
