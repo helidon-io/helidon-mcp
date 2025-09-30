@@ -300,18 +300,6 @@ public final class Mcp {
     }
 
     /**
-     * Annotation to define JSON Schema of a type used as a tool parameter.
-     */
-    public @interface JsonSchema {
-        /**
-         * Json Schema as a {@code String}.
-         *
-         * @return Json schema
-         */
-        String value();
-    }
-
-    /**
      * Annotation to define a {@code Prompt}, {@code Resource} or {@code Tool} name.
      */
     @Target(METHOD)
