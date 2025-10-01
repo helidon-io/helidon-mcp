@@ -124,6 +124,15 @@ public final class McpLogger extends McpFeature {
     }
 
     /**
+     * Send an emergency notification to the client.
+     *
+     * @param message notification
+     */
+    public void emergency(String message) {
+        log(Level.EMERGENCY, message);
+    }
+
+    /**
      * Get level for this logger.
      *
      * @return the level

@@ -92,7 +92,7 @@ class Server {
 #### Configuration
 
 - **`@Mcp.Name`**: Overrides tool method name.
-- **`@JsonSchema.JsonSchema`**: Explicitly defines POJO input structures.
+- **`@JsonSchema.Schema`**: Explicitly defines POJO input structures.
 
 ```java
 @Mcp.Server
@@ -107,7 +107,7 @@ class Server {
         return List.of(McpToolContents.textContent(result));
     }
 
-    @JsonSchema.JsonSchema
+    @JsonSchema.Schema
     static class Coordinate {
         int latitude;
         int longitude;
@@ -117,7 +117,7 @@ class Server {
 
 #### JSON Schema
 
-Use JSON Schema to validate and describe input parameters and their structure. You can define schemas via the `@Mcp.JsonSchema`
+Use JSON Schema to validate and describe input parameters and their structure. You can define schemas via the `@JsonSchema.Schema`
 annotation.
 
 #### Tool Content Types
