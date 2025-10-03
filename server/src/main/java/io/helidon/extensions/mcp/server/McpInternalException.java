@@ -13,13 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module helidon.extensions.mcp.tests {
-    requires jakarta.json;
-    requires io.helidon.extensions.mcp.server;
-    requires io.helidon.webserver;
-    requires io.helidon.service.registry;
-    requires io.helidon.json.schema;
-    requires io.helidon.jsonrpc.core;
 
-    exports io.helidon.extensions.mcp.tests;
+package io.helidon.extensions.mcp.server;
+
+/**
+ * MCP exception used by MCP implementation.
+ */
+class McpInternalException extends RuntimeException {
+
+    McpInternalException(String message) {
+        super(message);
+    }
+
+    McpInternalException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

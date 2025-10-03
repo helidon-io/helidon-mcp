@@ -16,27 +16,59 @@
 
 package io.helidon.extensions.mcp.server;
 
+import io.helidon.jsonrpc.core.JsonRpcError;
+
 /**
  * MCP protocol exception.
  */
 public class McpException extends RuntimeException {
+    private final int code;
 
     /**
-     * Create a {@link McpException} instance.
+     * Create an exception with a message and default {@code Internal Error} error code.
      *
      * @param message exception message
      */
     public McpException(String message) {
         super(message);
+        this.code = JsonRpcError.INTERNAL_ERROR;
     }
 
     /**
-     * Create a {@link McpException} instance.
+     * Create an exception with a message, cause and default {@code Internal Error} error code.
      *
      * @param message exception message
      * @param cause exception cause
      */
     public McpException(String message, Throwable cause) {
         super(message, cause);
+        this.code = JsonRpcError.INTERNAL_ERROR;
+    }
+
+    /**
+     * Create an exception with a message and custom error code.
+     *
+     * @param code exception error code
+     * @param message exception message
+     */
+    public McpException(int code, String message) {
+        super(message);
+        this.code = code;
+    }
+
+    /**
+     * Create an exception with a message, cause and custom error code.
+     *
+     * @param code exception error code
+     * @param message exception message
+     * @param cause exception cause
+     */
+    public McpException(int code, String message, Throwable cause) {
+        super(message, cause);
+        this.code = code;
+    }
+
+    int code() {
+        return code;
     }
 }

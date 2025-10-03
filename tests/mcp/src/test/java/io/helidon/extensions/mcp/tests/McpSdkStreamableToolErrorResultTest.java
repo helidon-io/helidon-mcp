@@ -13,13 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module helidon.extensions.mcp.tests {
-    requires jakarta.json;
-    requires io.helidon.extensions.mcp.server;
-    requires io.helidon.webserver;
-    requires io.helidon.service.registry;
-    requires io.helidon.json.schema;
-    requires io.helidon.jsonrpc.core;
 
-    exports io.helidon.extensions.mcp.tests;
+package io.helidon.extensions.mcp.tests;
+
+import io.helidon.webserver.WebServer;
+import io.helidon.webserver.testing.junit5.ServerTest;
+
+import io.modelcontextprotocol.client.McpClient;
+import io.modelcontextprotocol.client.McpSyncClient;
+
+@ServerTest
+class McpSdkStreamableToolErrorResultTest extends AbstractMcpSdkToolErrorResultTest {
+    private final McpSyncClient client;
+
+    McpSdkStreamableToolErrorResultTest(WebServer server) {
+        client = McpClient.sync(streamable(server.port())).build();
+        client.initialize();
+    }
+
+    @Override
+    McpSyncClient client() {
+        return client;
+    }
 }

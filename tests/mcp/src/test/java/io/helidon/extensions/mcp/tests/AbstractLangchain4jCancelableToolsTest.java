@@ -31,7 +31,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
-abstract class AbstractLangchain4JCancelableToolsTest {
+abstract class AbstractLangchain4jCancelableToolsTest {
     protected McpClient client;
     protected static final CountDownLatch CANCELLATION_LATCH = new CountDownLatch(2);
     protected static final CountDownLatch CANCELLATION_HOOK_LATCH = new CountDownLatch(1);

@@ -90,7 +90,7 @@ class McpSession {
                 }
                 consumer.accept(message);
             } catch (Exception e) {
-                throw new McpException("Session interrupted.", e);
+                throw new McpInternalException("Session interrupted.", e);
             }
         }
     }
