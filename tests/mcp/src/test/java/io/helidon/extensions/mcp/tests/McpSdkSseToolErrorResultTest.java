@@ -16,28 +16,23 @@
 
 package io.helidon.extensions.mcp.tests;
 
-import java.time.Duration;
-
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.testing.junit5.ServerTest;
 
-import dev.langchain4j.mcp.client.DefaultMcpClient;
-import dev.langchain4j.mcp.client.transport.McpTransport;
-import dev.langchain4j.mcp.client.transport.http.HttpMcpTransport;
+import io.modelcontextprotocol.client.McpClient;
+import io.modelcontextprotocol.client.McpSyncClient;
 
 @ServerTest
-class Langchain4JSseCancelableToolsTest extends AbstractLangchain4JCancelableToolsTest {
+class McpSdkSseToolErrorResultTest extends AbstractMcpSdkToolErrorResultTest {
+    private final McpSyncClient client;
 
-    Langchain4JSseCancelableToolsTest(WebServer server) {
-        McpTransport transport = new HttpMcpTransport.Builder()
-                .sseUrl("http://localhost:" + server.port())
-                .logRequests(true)
-                .logResponses(true)
-                .build();
+    McpSdkSseToolErrorResultTest(WebServer server) {
+        client = McpClient.sync(sse(server.port())).build();
+        client.initialize();
+    }
 
-        client = new DefaultMcpClient.Builder()
-                .transport(transport)
-                .toolExecutionTimeout(Duration.ofSeconds(2))
-                .build();
+    @Override
+    McpSyncClient client() {
+        return client;
     }
 }

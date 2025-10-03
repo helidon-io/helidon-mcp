@@ -45,7 +45,7 @@ public final class McpCompletionContents {
         private McpCompletionContentImpl(List<String> values) {
             Objects.requireNonNull(values, "values must not be null");
             if (values.size() > 100) {
-                throw new McpException("Cannot contain more than 100 values");
+                throw new McpInternalException("Cannot contain more than 100 values");
             }
             this.values = values;
         }

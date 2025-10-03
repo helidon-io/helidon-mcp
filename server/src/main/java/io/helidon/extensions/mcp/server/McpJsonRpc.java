@@ -200,7 +200,7 @@ final class McpJsonRpc {
         return builder;
     }
 
-    static JsonObject toolCall(List<McpToolContent> contents) {
+    static JsonObject toolCall(boolean error, List<McpToolContent> contents) {
         JsonArrayBuilder array = JSON_BUILDER_FACTORY.createArrayBuilder();
         for (McpToolContent content : contents) {
             if (content instanceof McpToolResourceContent trc) {
@@ -209,7 +209,10 @@ final class McpJsonRpc {
             }
             array.add(toJson(content.content()));
         }
-        return JSON_BUILDER_FACTORY.createObjectBuilder().add("content", array).build();
+        return JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("content", array)
+                .add("isError", error)
+                .build();
     }
 
     static JsonObject listResources(McpPage<McpResource> page) {

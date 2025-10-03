@@ -71,7 +71,7 @@ abstract class BaseTest {
         Map<String, Object> arguments = Map.of("name", "Frank-birthday", "date", "2021-04-20", "attendees", List.of("Frank"));
         McpSchema.CallToolRequest request = new McpSchema.CallToolRequest("add-calendar-event", arguments);
         McpSchema.CallToolResult result = client().callTool(request);
-        assertThat(result.isError(), nullValue());
+        assertThat(result.isError(), is(false));
 
         List<McpSchema.Content> contents = result.content();
         assertThat(contents.size(), is(1));

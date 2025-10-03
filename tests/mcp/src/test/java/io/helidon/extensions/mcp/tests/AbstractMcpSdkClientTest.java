@@ -137,7 +137,7 @@ abstract class AbstractMcpSdkClientTest extends AbstractMcpSdkTest {
         McpSchema.CallToolResult result = client().callTool(
                 new McpSchema.CallToolRequest(TOOL_NAME, Map.of("town", "Praha")));
 
-        assertThat(result.isError(), is(nullValue()));
+        assertThat(result.isError(), is(false));
 
         var contents = result.content();
         assertThat(contents.size(), is(1));
