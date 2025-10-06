@@ -1025,12 +1025,10 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                                              JsonRpcResponse response,
                                              Throwable throwable,
                                              int errorCode) {
+        // Look up session to send an error to the client
         var session = findSession(request);
         if (session.isEmpty()) {
-            if (!response.isSent()) {
-                response.status(Status.NOT_FOUND_404).send();
-            }
-            return Optional.empty();
+            return Optional.of(JsonRpcError.create(INTERNAL_ERROR, "Session not found"));
         }
         SseSink sseSink = null;
         response.error(errorCode, throwable.getMessage());
@@ -1040,6 +1038,8 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         if (features.isPresent()) {
             sseSink = features.get().sseSink().orElse(null);
         }
+        // If streamable HTTP transport and did not switch to SSE
+        // the handler manages the response
         if (isStreamableHttp(request.headers()) && sseSink == null) {
             LOGGER.log(Level.FINEST,
                        () -> String.format("HTTP: %s", response.asJsonObject()));
