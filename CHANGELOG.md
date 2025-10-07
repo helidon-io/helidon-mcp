@@ -2,10 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1]
+
+This release of Helidon MCP contains bugfixes and dependency upgrades and is recommended for all users.
+
+### CHANGES
+
+- Clean up duplicate and hard coded version [73](https://github.com/helidon-io/helidon-mcp/pull/73)
+- Improve error handling [67](https://github.com/helidon-io/helidon-mcp/pull/67)
+- Update Helidon version to 4.3.1 [69](https://github.com/helidon-io/helidon-mcp/pull/69)
+
 ## [1.0.0]
 
 This is the main release of Helidon MCP. It supports [Model Context Protocol 2024-11-05](https://modelcontextprotocol.io/specification/2024-11-05)
-and bring additional support for [Model Context Protocol 2025-03-26](https://modelcontextprotocol.io/specification/2025-03-26).
+and brings additional support for [Model Context Protocol 2025-03-26](https://modelcontextprotocol.io/specification/2025-03-26).
 Helidon MCP is an incubating feature and its API is subject to change.
 
 ### NOTABLE CHANGES
@@ -26,7 +36,7 @@ Due to issue with argument ordering using a `Set`, it now uses a `List` and stay
 
 - JSON Schema annotation `@Mcp.JsonSchema` is replaced by `@JsonSchema.Schema`.
 
-Helidon MCP now leverage Helidon JSON Schema introduced in 4.3.0 release. POJOs used as tool inputs do not need
+Helidon MCP now leverages Helidon JSON Schema introduced in `4.3.0` release. POJOs used as tool inputs do not need
 to provide their JSON Schema as string. Helidon will generate it for you!
 
 ### CHANGES
@@ -75,6 +85,7 @@ Requirements:
 
 Initial release.
 
+[1.0.1]: https://github.com/oracle/helidon/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/oracle/helidon/compare/1.0.0-M2...1.0.0
 [1.0.0-M2]: https://github.com/oracle/helidon/compare/1.0.0-M1...1.0.0-M2
 [1.0.0-M1]: https://github.com/oracle/helidon/compare/main...1.0.0-M1
