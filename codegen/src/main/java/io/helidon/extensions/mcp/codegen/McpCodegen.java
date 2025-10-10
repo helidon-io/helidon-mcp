@@ -32,6 +32,7 @@ import io.helidon.codegen.CodegenUtil;
 import io.helidon.codegen.RoundContext;
 import io.helidon.codegen.classmodel.ClassModel;
 import io.helidon.codegen.classmodel.Method;
+import io.helidon.codegen.classmodel.Parameter;
 import io.helidon.codegen.spi.CodegenExtension;
 import io.helidon.common.types.AccessModifier;
 import io.helidon.common.types.Annotation;
@@ -44,6 +45,7 @@ import io.helidon.common.types.TypeName;
 import io.helidon.common.types.TypeNames;
 import io.helidon.common.types.TypedElementInfo;
 
+import static io.helidon.common.types.TypeNames.LIST;
 import static io.helidon.extensions.mcp.codegen.McpJsonSchemaCodegen.addSchemaMethodBody;
 import static io.helidon.extensions.mcp.codegen.McpJsonSchemaCodegen.getDescription;
 import static io.helidon.extensions.mcp.codegen.McpTypes.CONSUMER_REQUEST;
@@ -96,7 +98,7 @@ import static io.helidon.service.codegen.ServiceCodegenTypes.SERVICE_ANNOTATION_
 
 final class McpCodegen implements CodegenExtension {
     private static final TypeName GENERATOR = TypeName.create(McpCodegen.class);
-    private static final ResolvedType STRING_LIST = ResolvedType.create(TypeName.builder(TypeNames.LIST)
+    private static final ResolvedType STRING_LIST = ResolvedType.create(TypeName.builder(LIST)
                                                                                 .addTypeArgument(TypeNames.STRING)
                                                                                 .build());
 
@@ -148,12 +150,25 @@ final class McpCodegen implements CodegenExtension {
 
         serverClassModel.addField(delegate -> delegate
                 .accessModifier(AccessModifier.PRIVATE)
-                .isFinal(true)
-                .name("delegate")
                 .type(type.typeName())
-                .addContent("new ")
-                .addContent(type.typeName())
-                .addContent("()"));
+                .name("delegate"));
+
+        serverClassModel.addImport("io.helidon.service.registry.GlobalServiceRegistry");
+
+        serverClassModel.addConstructor(constructor -> {
+            constructor.accessModifier(AccessModifier.PUBLIC);
+            constructor.addContentLine("try {")
+                    .addContent("delegate = GlobalServiceRegistry.registry().get(")
+                    .addContent(type.typeName())
+                    .addContentLine(".class);")
+                    .decreaseContentPadding()
+                    .addContentLine("} catch (Exception e) {")
+                    .addContent("delegate = ")
+                    .addContent("new ")
+                    .addContent(type.typeName())
+                    .addContentLine("();")
+                    .addContentLine("}");
+        });
 
         generateTools(generatedType, serverClassModel, type);
         generatePrompts(generatedType, serverClassModel, type);
@@ -440,10 +455,15 @@ final class McpCodegen implements CodegenExtension {
                 if (TypeNames.STRING.equals(parameter.typeName())) {
                     parameters.add(parameter.elementName());
                     builder.addContent("String ")
-                            .addContent(parameter.elementName())
+                            .addContent("encoded_" + parameter.elementName())
                             .addContent(" = request.parameters().get(\"")
                             .addContent(parameter.elementName())
                             .addContentLine("\").asString().orElse(\"\");");
+                    builder.addContent("String ")
+                            .addContent(parameter.elementName())
+                            .addContent(" = io.helidon.common.uri.UriPath.create(")
+                            .addContent("encoded_" + parameter.elementName())
+                            .addContentLine(").path();");
                 }
             }
         }
@@ -620,7 +640,7 @@ final class McpCodegen implements CodegenExtension {
                 .returnType(LIST_MCP_PROMPT_ARGUMENT);
 
         for (TypedElementInfo param : element.parameterArguments()) {
-            if (MCP_FEATURES.equals(param.typeName())) {
+            if (isIgnoredSchemaElement(param.typeName())) {
                 continue;
             }
             String builderName = "builder" + index++;
@@ -812,6 +832,22 @@ final class McpCodegen implements CodegenExtension {
                         .addContentLine("().orElse(null);");
                 continue;
             }
+            if (isList(param.typeName())) {
+                TypeName typeArg = param.typeName().typeArguments().getFirst();
+                addToListMethod(classModel, typeArg);
+
+                if (!parametersLocalVar) {
+                    addParametersLocalVar(builder, classModel);
+                    parametersLocalVar = true;
+                }
+                parameters.add(param.elementName());
+                builder.addContent("var ")
+                        .addContent(param.elementName())
+                        .addContent(" = toList(parameters.get(\"")
+                        .addContent(param.elementName())
+                        .addContentLine("\").asList().orElse(null));");
+                continue;
+            }
             if (!parametersLocalVar) {
                 addParametersLocalVar(builder, classModel);
                 parametersLocalVar = true;
@@ -975,6 +1011,23 @@ final class McpCodegen implements CodegenExtension {
                 .addContentLine("};");
     }
 
+    private void addToListMethod(ClassModel.Builder classModel, TypeName type) {
+        Method.Builder method = Method.builder();
+        TypeName typeList = TypeName.create("java.util.List<" + type + ">");
+        TypeName parameterList = TypeName.create("java.util.List<" + MCP_PARAMETERS + ">");
+        method.name("toList")
+                .isStatic(true)
+                .accessModifier(AccessModifier.PRIVATE)
+                .returnType(typeList);
+        method.addParameter(Parameter.builder().name("list").type(parameterList).build());
+        method.addContentLine("return list == null ? List.of()");
+        method.increaseContentPadding();
+        method.addContentLine(": list.stream().map(p -> p.as(" + type + ".class))");
+        method.increaseContentPadding();
+        method.addContentLine(".map(p -> p.get()).toList();");
+        classModel.addMethod(method.build());
+    }
+
     private boolean isBoolean(TypeName type) {
         return TypeNames.PRIMITIVE_BOOLEAN.equals(type) || TypeNames.BOXED_BOOLEAN.equals(type);
     }
@@ -992,6 +1045,10 @@ final class McpCodegen implements CodegenExtension {
                 || TypeNames.PRIMITIVE_FLOAT.equals(type)
                 || TypeNames.PRIMITIVE_SHORT.equals(type)
                 || TypeNames.PRIMITIVE_DOUBLE.equals(type);
+    }
+
+    private boolean isList(TypeName type) {
+        return type.equals(TypeNames.LIST) && type.typeArguments().size() == 1;
     }
 
     private TypeName createClassName(TypeName generatedType, TypedElementInfo element, String suffix) {

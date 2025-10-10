@@ -20,28 +20,20 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
-        <groupId>io.helidon.extensions.mcp</groupId>
-        <artifactId>helidon4-extensions-mcp-project</artifactId>
+        <groupId>io.helidon.extensions.mcp.examples</groupId>
+        <artifactId>helidon4-extensions-mcp-examples-project</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <groupId>io.helidon.extensions.mcp.examples</groupId>
-    <artifactId>helidon4-extensions-mcp-examples-project</artifactId>
+    <name>Helidon 4 Extensions MCP Calendar Application Project</name>
+    <artifactId>helidon4-extensions-mcp-examples-calendar-application-project</artifactId>
     <packaging>pom</packaging>
-    <name>Helidon 4 Extensions MCP Examples Project</name>
-
-    <properties>
-        <maven.deploy.skip>true</maven.deploy.skip>
-        <maven.sources.skip>true</maven.sources.skip>
-        <maven.javadoc.skip>true</maven.javadoc.skip>
-    </properties>
 
     <modules>
-        <module>weather-application</module>
-        <module>secured-server</module>
-        <module>calendar-application</module>
+        <module>calendar</module>
+        <module>calendar-declarative</module>
     </modules>
 </project>
-

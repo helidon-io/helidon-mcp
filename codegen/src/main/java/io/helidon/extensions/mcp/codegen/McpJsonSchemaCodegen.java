@@ -87,7 +87,7 @@ class McpJsonSchemaCodegen {
             TypeName argument = typeName.boxed().typeArguments().getFirst();
             method.addContent("builder.append(\"\\\"")
                     .addContent(element.elementName())
-                    .addContentLine("\\\"\": {\");");
+                    .addContentLine("\\\": {\");");
 
             description.ifPresent(desc -> addDescription(method, desc));
 

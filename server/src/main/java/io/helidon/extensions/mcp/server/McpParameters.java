@@ -286,9 +286,13 @@ public final class McpParameters {
      * @param <T> class type
      * @return optional value
      */
+    @SuppressWarnings("unchecked")
     public <T> OptionalValue<T> as(Class<T> clazz) {
         if (value == JsonValue.NULL) {
             return empty();
+        }
+        if (clazz == String.class) {
+            return (OptionalValue<T>) asString();
         }
         var value = OptionalValue.create(MAPPERS, key, clazz);
         return value.isEmpty()
