@@ -22,10 +22,9 @@ import io.helidon.http.sse.SseEvent;
 import io.helidon.webserver.sse.SseSink;
 
 /**
- * Mcp logger to send notification to the client.
+ * MCP logger sends notification to the client.
  */
 public final class McpLogger extends McpFeature {
-
     private final String name;
 
     McpLogger(McpSession session) {

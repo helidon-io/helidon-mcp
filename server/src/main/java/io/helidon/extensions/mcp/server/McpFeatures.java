@@ -37,7 +37,11 @@ import io.helidon.webserver.sse.SseSink;
  *     </li>
  *     <li>
  *         {@link io.helidon.extensions.mcp.server.McpCancellation} - MCP Cancellation feature.
- *         Check whether a cancellation request was made by the client.
+ *         Check whether the client made a cancellation request.
+ *     </li>
+ *     <li>
+ *         {@link io.helidon.extensions.mcp.server.McpSubscriptions} - MCP subscription feature.
+ *         Sends notifications to the subscribed clients.
  *     </li>
  * </ul>
  */
@@ -74,7 +78,7 @@ public final class McpFeatures {
     }
 
     /**
-     * Get a {@link McpProgress} feature.
+     * Get a {@link io.helidon.extensions.mcp.server.McpProgress} feature.
      *
      * @return the MCP progress
      */
@@ -91,7 +95,7 @@ public final class McpFeatures {
     }
 
     /**
-     * Get a {@link McpLogger} feature.
+     * Get a {@link io.helidon.extensions.mcp.server.McpLogger} feature.
      *
      * @return the MCP logger
      */
@@ -108,7 +112,7 @@ public final class McpFeatures {
     }
 
     /**
-     * Get a {@link McpSubscriptions} feature.
+     * Get a {@link io.helidon.extensions.mcp.server.McpSubscriptions} feature.
      *
      * @return the MCP subscriptions
      */
@@ -120,7 +124,7 @@ public final class McpFeatures {
     }
 
     /**
-     * Get a {@link McpCancellation} feature.
+     * Get a {@link io.helidon.extensions.mcp.server.McpCancellation} feature.
      *
      * @return the MCP cancellation
      */

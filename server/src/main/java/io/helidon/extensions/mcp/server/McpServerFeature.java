@@ -27,8 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.function.Supplier;
 
 import io.helidon.builder.api.RuntimeType;
 import io.helidon.common.mapper.OptionalValue;
@@ -96,10 +95,10 @@ import static io.helidon.jsonrpc.core.JsonRpcError.INVALID_REQUEST;
 public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpServerConfig> {
     private static final int SESSION_CACHE_SIZE = 1000;
     private static final int RESOURCE_NOT_FOUND_CODE = -32002;
-    private static final String DEFAULT_OIDC_METADATA_URI = "/.well-known/openid-configuration";
-    private static final List<String> PROTOCOL_VERSION = List.of("2024-11-05", "2025-03-26");
     private static final HeaderName SESSION_ID_HEADER = HeaderNames.create("Mcp-Session-Id");
-    private static final Logger LOGGER = Logger.getLogger(McpServerFeature.class.getName());
+    private static final List<String> PROTOCOL_VERSION = List.of("2024-11-05", "2025-03-26");
+    private static final String DEFAULT_OIDC_METADATA_URI = "/.well-known/openid-configuration";
+    private static final System.Logger LOGGER = System.getLogger(McpServerFeature.class.getName());
 
     private final String endpoint;
     private final McpServerConfig config;
@@ -131,9 +130,9 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         }
         for (McpCompletion completion : config.completions()) {
             switch (completion.referenceType()) {
-            case PROMPT -> promptCompletions.put(completion.reference(), completion);
-            case RESOURCE -> resourceCompletions.put(completion.reference(), completion);
-            default -> throw new IllegalStateException("Unknown reference type: " + completion.referenceType());
+                case PROMPT -> promptCompletions.put(completion.reference(), completion);
+                case RESOURCE -> resourceCompletions.put(completion.reference(), completion);
+                default -> throw new IllegalStateException("Unknown reference type: " + completion.referenceType());
             }
         }
 
@@ -178,6 +177,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         builder.method(METHOD_NOTIFICATION_INITIALIZED, this::notificationInitRpc);
 
         builder.errorHandler(this::handleErrorRequest);
+        builder.exception(McpInternalException.class, this::mcpInternalExceptionHandler);
         builder.exception(McpException.class, this::mcpExceptionHandler);
         builder.exception(Throwable.class, this::throwableExceptionHandler);
 
@@ -228,7 +228,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         if (providers.isEmpty()) {
             response.status(Status.NOT_FOUND_404);
             response.send();
-            LOGGER.log(Level.FINE, () -> "Security is not enabled, add OIDC security provider to the configuration");
+            log(System.Logger.Level.DEBUG, () -> "Security is not enabled, add OIDC security provider to the configuration");
             return;
         }
         for (Config provider : providers.get()) {
@@ -241,7 +241,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 return;
             }
         }
-        LOGGER.log(Level.FINE, () -> "Cannot find \"oidc.identity-uri\" property");
+        log(System.Logger.Level.DEBUG, () -> "Cannot find \"oidc.identity-uri\" property");
         response.status(Status.NOT_FOUND_404);
         response.send();
     }
@@ -367,7 +367,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         Optional<McpSession> foundSession = findSession(req);
         if (foundSession.isEmpty()) {
             res.status(Status.NOT_FOUND_404).send();
-            LOGGER.log(Level.FINEST, () -> "No session found for cancellation request: %s".formatted(req.asJsonObject()));
+            log(System.Logger.Level.TRACE, () -> "No session found for cancellation request: %s".formatted(req.asJsonObject()));
             return;
         }
         McpSession session = foundSession.get();
@@ -377,7 +377,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         if (requestId.isEmpty()
                 || reason.isEmpty()
                 || !JsonValue.ValueType.STRING.equals(reason.get().getValueType())) {
-            LOGGER.log(Level.FINEST, () -> "Malformed cancellation request: %s".formatted(req.asJsonObject()));
+            log(System.Logger.Level.TRACE, () -> "Malformed cancellation request: %s".formatted(req.asJsonObject()));
             return;
         }
         String cancelReason = ((JsonString) reason.get()).getString();
@@ -387,10 +387,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     private void initializeRpc(JsonRpcRequest req, JsonRpcResponse res) {
         Optional<McpSession> foundSession = findSession(req);
 
-        // log initial request
-        if (LOGGER.isLoggable(Level.FINEST)) {
-            LOGGER.log(Level.FINEST, "Request:\n" + prettyPrint(req.asJsonObject()));
-        }
+        log(System.Logger.Level.TRACE, () -> "Request:\n" + prettyPrint(req.asJsonObject()));
 
         // is this streamable HTTP?
         if (foundSession.isEmpty()) {
@@ -409,7 +406,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             session.protocolVersion(protocolVersion);
             res.header(SESSION_ID_HEADER, sessionId);
             res.result(toJson(protocolVersion, capabilities, config));
-            LOGGER.log(Level.FINEST, "Streamable HTTP transport");
+            log(System.Logger.Level.TRACE, () -> "Streamable HTTP transport");
             res.send();
         } else {
             McpSession session = foundSession.get();
@@ -421,14 +418,10 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 session.state(INITIALIZING);
             }
             res.result(toJson(protocolVersion, capabilities, config));
-            LOGGER.log(Level.FINEST, "SSE transport");
+            log(System.Logger.Level.TRACE, () -> "SSE transport");
             session.send(res);
         }
-
-        // log initial response
-        if (LOGGER.isLoggable(Level.FINEST)) {
-            LOGGER.log(Level.FINEST, "Response:\n" + prettyPrint(res.asJsonObject()));
-        }
+        log(System.Logger.Level.TRACE, () -> "Response:\n" + prettyPrint(res.asJsonObject()));
     }
 
     private String parseClientVersion(McpParameters parameters) {
@@ -649,7 +642,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             try {
                 session.blockSubscribe(resourceUri);
             } catch (InterruptedException e) {
-                LOGGER.log(Level.FINEST, "Subscriber thread interrupted");
+                log(System.Logger.Level.TRACE, () -> "Subscriber thread interrupted");
             }
 
             // send final response after unblocking
@@ -825,34 +818,28 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         JsonValue requestId = req.rpcId().orElseThrow(() -> new McpInternalException("request id is required"));
         McpFeatures features = mcpFeatures(req, res, session, requestId);
         if (referenceType != null) {
-            try {
-                McpCompletionType type = McpCompletionType.fromString(referenceType);
-                McpCompletion completion = switch (type) {
-                    case PROMPT -> {
-                        String name = ref.get("name").asString().orElse(null);
-                        yield name != null ? promptCompletions.get(name) : null;
-                    }
-                    case RESOURCE -> {
-                        String uri = ref.get("uri").asString().orElse(null);
-                        yield uri != null ? resourceCompletions.get(uri) : null;
-                    }
-                };
-                if (completion != null) {
-                    McpCompletionContent result = completion.completion()
-                            .apply(McpRequest.builder()
-                                           .parameters(parameters.get("argument"))
-                                           .features(features)
-                                           .protocolVersion(session.protocolVersion())
-                                           .sessionContext(session.context())
-                                           .requestContext(req.context())
-                                           .build());
-                    res.result(toJson(result));
-                    sendResponse(req, res, session, features, requestId);
-                    return;
-                }
-            } catch (IllegalArgumentException e) {      // invalid reference type
-                // falls through
-            }
+            McpCompletionType type = McpCompletionType.fromString(referenceType);
+            McpCompletion completion = switch (type) {
+                case PROMPT -> ref.get("name")
+                        .asString()
+                        .map(promptCompletions::get)
+                        .orElseThrow(() -> new McpInternalException(INVALID_PARAMS, "No prompt completion found"));
+                case RESOURCE -> ref.get("uri")
+                        .asString()
+                        .map(resourceCompletions::get)
+                        .orElseThrow(() -> new McpInternalException(INVALID_PARAMS, "No resource completion found"));
+            };
+            McpCompletionContent result = completion.completion()
+                    .apply(McpRequest.builder()
+                                   .parameters(parameters.get("argument"))
+                                   .features(features)
+                                   .protocolVersion(session.protocolVersion())
+                                   .sessionContext(session.context())
+                                   .requestContext(req.context())
+                                   .build());
+            res.result(toJson(result));
+            sendResponse(req, res, session, features, requestId);
+            return;
         }
 
         // unable to process completion request
@@ -916,10 +903,8 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
      * @param session the active session
      */
     private void sendResponse(JsonRpcRequest req, JsonRpcResponse res, McpSession session) {
-        if (LOGGER.isLoggable(Level.FINEST)) {
-            LOGGER.log(Level.FINEST, "Request:\n" + prettyPrint(req.asJsonObject()));
-            LOGGER.log(Level.FINEST, "Response:\n" + prettyPrint(res.asJsonObject()));
-        }
+        log(System.Logger.Level.TRACE, () -> "Request:\n" + prettyPrint(req.asJsonObject()));
+        log(System.Logger.Level.TRACE, () -> "Response:\n" + prettyPrint(res.asJsonObject()));
 
         if (isStreamableHttp(req.headers())) {
             res.send();
@@ -957,10 +942,8 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                               McpSession session,
                               JsonValue requestId,
                               SseSink sseSink) {
-        if (LOGGER.isLoggable(Level.FINEST)) {
-            LOGGER.log(Level.FINEST, "Request:\n" + prettyPrint(req.asJsonObject()));
-            LOGGER.log(Level.FINEST, "Response:\n" + prettyPrint(res.asJsonObject()));
-        }
+        log(System.Logger.Level.TRACE, () -> "Request:\n" + prettyPrint(req.asJsonObject()));
+        log(System.Logger.Level.TRACE, () -> "Response:\n" + prettyPrint(res.asJsonObject()));
 
         // send response as HTTP or SSE with streamable HTTP
         if (isStreamableHttp(req.headers())) {
@@ -1011,7 +994,8 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                                     JsonValue requestId,
                                     SseSink sseSink) {
         if (isStreamableHttp(req.headers())) {
-            return sseSink != null ? session.createFeatures(res, requestId, sseSink)
+            return sseSink != null
+                    ? session.createFeatures(res, requestId, sseSink)
                     : session.createFeatures(res, requestId);
         }
         return session.createFeatures(requestId);
@@ -1027,6 +1011,15 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                                                        JsonRpcResponse response,
                                                        Throwable throwable) {
         if (throwable instanceof McpException exception) {
+            return sendError(request, response, exception, exception.code());
+        }
+        return throwableExceptionHandler(request, response, throwable);
+    }
+
+    private Optional<JsonRpcError> mcpInternalExceptionHandler(JsonRpcRequest request,
+                                                               JsonRpcResponse response,
+                                                               Throwable throwable) {
+        if (throwable instanceof McpInternalException exception) {
             return sendError(request, response, exception, exception.code());
         }
         return throwableExceptionHandler(request, response, throwable);
@@ -1050,10 +1043,8 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             sseSink = features.get().sseSink().orElse(null);
         }
 
-        if (LOGGER.isLoggable(Level.FINEST)) {
-            LOGGER.log(Level.FINEST, "Request:\n" + prettyPrint(request.asJsonObject()));
-            LOGGER.log(Level.FINEST, "Response:\n" + prettyPrint(response.asJsonObject()));
-        }
+        log(System.Logger.Level.TRACE, () -> "Request:\n" + prettyPrint(request.asJsonObject()));
+        log(System.Logger.Level.TRACE, () -> "Response:\n" + prettyPrint(response.asJsonObject()));
 
         // If streamable HTTP transport and did not switch to SSE
         // the handler manages the response
@@ -1063,5 +1054,11 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         }
         sendResponse(request, response, session.get(), requestId, sseSink);
         return Optional.empty();
+    }
+
+    private void log(System.Logger.Level level, Supplier<String> message) {
+        if (LOGGER.isLoggable(level)) {
+            LOGGER.log(level, message);
+        }
     }
 }

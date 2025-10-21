@@ -16,16 +16,35 @@
 
 package io.helidon.extensions.mcp.server;
 
+import io.helidon.jsonrpc.core.JsonRpcError;
+
 /**
  * MCP exception used by MCP implementation.
  */
 class McpInternalException extends RuntimeException {
+    private final int code;
 
     McpInternalException(String message) {
         super(message);
+        this.code = JsonRpcError.INTERNAL_ERROR;
     }
 
     McpInternalException(String message, Throwable cause) {
         super(message, cause);
+        this.code = JsonRpcError.INTERNAL_ERROR;
+    }
+
+    McpInternalException(int code, String message) {
+        super(message);
+        this.code = code;
+    }
+
+    McpInternalException(int code, String message, Throwable cause) {
+        super(message, cause);
+        this.code = code;
+    }
+
+    int code() {
+        return code;
     }
 }

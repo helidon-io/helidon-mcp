@@ -57,6 +57,6 @@ abstract class AbstractMcpSdkCompletionTest extends AbstractMcpSdkTest {
         McpError error = assertThrows(McpError.class,
                                       () -> client().completeCompletion(request).completion());
         assertThat(error.getJsonRpcError().code(), is(INVALID_PARAMS));
-        assertThat(error.getJsonRpcError().message(), is("Invalid completion request"));
+        assertThat(error.getJsonRpcError().message(), is("No prompt completion found"));
     }
 }
