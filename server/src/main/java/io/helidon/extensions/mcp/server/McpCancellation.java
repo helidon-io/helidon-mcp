@@ -16,6 +16,8 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.lang.System.Logger.Level;
+
 import io.helidon.common.LazyValue;
 
 import jakarta.json.JsonValue;
@@ -63,7 +65,7 @@ public final class McpCancellation {
      */
     void cancel(String reason, JsonValue requestId) {
         if (!hook.isLoaded()) {
-            LOGGER.log(System.Logger.Level.DEBUG, "Cancelling task with request id: %s", requestId);
+            LOGGER.log(Level.DEBUG, "Cancelling task with request id: %s", requestId);
             result = new McpCancellationResult(true, reason);
             hook.get().run();
         }

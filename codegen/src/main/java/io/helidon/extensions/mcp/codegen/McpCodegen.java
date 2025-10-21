@@ -16,6 +16,7 @@
 
 package io.helidon.extensions.mcp.codegen;
 
+import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
@@ -117,7 +118,7 @@ final class McpCodegen implements CodegenExtension {
     @Override
     public void process(RoundContext roundContext) {
         //noinspection DuplicatedCode
-        logger.log(System.Logger.Level.TRACE, "Processing MCP codegen extension with context "
+        logger.log(Level.TRACE, "Processing MCP codegen extension with context "
                 + roundContext.types().stream().map(Object::toString).collect(Collectors.joining()));
         Collection<TypeInfo> types = roundContext.annotatedTypes(MCP_SERVER);
         for (TypeInfo type : types) {
@@ -501,7 +502,7 @@ final class McpCodegen implements CodegenExtension {
             String description = element.annotation(MCP_PROMPT).value().orElse("");
             List<TypeName> prompts = components.get(McpKind.PROMPT);
             if (prompts.contains(innerTypeName)) {
-                logger.log(System.Logger.Level.WARNING,
+                logger.log(Level.WARNING,
                            "Prompt '%s' already exists. Use @Mcp.Name or change the method name."
                                    .formatted(element.elementName()));
             }

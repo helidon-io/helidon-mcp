@@ -16,6 +16,7 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.lang.System.Logger.Level;
 import java.util.Objects;
 
 import io.helidon.http.sse.SseEvent;
@@ -73,8 +74,8 @@ public final class McpProgress extends McpFeature {
         Objects.requireNonNull(message, "message is null");
         String protocolVersion = session().protocolVersion();
         if (protocolVersion.startsWith("2024")) {
-            if (LOGGER.isLoggable(System.Logger.Level.DEBUG)) {
-                LOGGER.log(System.Logger.Level.DEBUG, () -> "Ignoring message with protocol version " + protocolVersion);
+            if (LOGGER.isLoggable(Level.DEBUG)) {
+                LOGGER.log(Level.DEBUG, () -> "Ignoring message with protocol version " + protocolVersion);
             }
             sendProgress(progress, null);
         } else {

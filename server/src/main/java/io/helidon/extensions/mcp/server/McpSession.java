@@ -16,6 +16,7 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.lang.System.Logger.Level;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -85,12 +86,12 @@ class McpSession {
             try {
                 JsonObject message = queue.take();
                 if (message.getBoolean("disconnect", false)) {
-                    log(System.Logger.Level.TRACE, () -> "Session disconnected.");
+                    log(Level.TRACE, () -> "Session disconnected.");
                     break;
                 }
                 consumer.accept(message);
             } catch (Exception e) {
-                log(System.Logger.Level.TRACE, () -> "Session interrupted.");
+                log(Level.TRACE, () -> "Session interrupted.");
             }
         }
     }
@@ -194,19 +195,19 @@ class McpSession {
                 SseSink existing = streamableSubscriptions.get(uri);
                 if (existing != null) {
                     existing.close();       // close old one
-                    log(System.Logger.Level.DEBUG, () -> "Removed existing subscription for " + uri);
+                    log(Level.DEBUG, () -> "Removed existing subscription for " + uri);
                 }
                 sseSink = res.sink(SseSink.TYPE);
                 streamableSubscriptions.put(uri, sseSink);
             } else {
                 McpSession existing = sseSubscriptions.get(uri);
                 if (existing != null) {
-                    log(System.Logger.Level.DEBUG, () -> "Found existing subscription for " + uri);
+                    log(Level.DEBUG, () -> "Found existing subscription for " + uri);
                     return Optional.empty();
                 }
                 sseSubscriptions.put(uri, this);
             }
-            log(System.Logger.Level.DEBUG, () -> "New subscription for " + uri);
+            log(Level.DEBUG, () -> "New subscription for " + uri);
             return Optional.ofNullable(sseSink);
         } finally {
             lock.writeLock().unlock();
@@ -224,15 +225,15 @@ class McpSession {
             if (isStreamableHttp(req.headers())) {
                 sseSink = streamableSubscriptions.remove(uri);
                 if (sseSink == null) {
-                    log(System.Logger.Level.DEBUG, () -> "No subscription found for " + uri);
+                    log(Level.DEBUG, () -> "No subscription found for " + uri);
                 }
             } else {
                 McpSession session = sseSubscriptions.remove(uri);
                 if (session == null) {
-                    log(System.Logger.Level.DEBUG, () -> "No subscription found for " + uri);
+                    log(Level.DEBUG, () -> "No subscription found for " + uri);
                 }
             }
-            log(System.Logger.Level.DEBUG, () -> "Removed subscription for " + uri);
+            log(Level.DEBUG, () -> "Removed subscription for " + uri);
             return Optional.ofNullable(sseSink);
         }  finally {
             lock.writeLock().unlock();
@@ -246,10 +247,10 @@ class McpSession {
             try {
                 boolean completed = latch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
                 if (!completed) {
-                    log(System.Logger.Level.TRACE, () -> "Timed out waiting subscription for " + uri);
+                    log(Level.TRACE, () -> "Timed out waiting subscription for " + uri);
                 }
             } catch (InterruptedException e) {
-                log(System.Logger.Level.TRACE, () -> "Interrupted while waiting for subscription");
+                log(Level.TRACE, () -> "Interrupted while waiting for subscription");
             }
         }
     }
@@ -263,7 +264,7 @@ class McpSession {
         }
     }
 
-    private void log(System.Logger.Level level, Supplier<String> message) {
+    private void log(Level level, Supplier<String> message) {
         if (LOGGER.isLoggable(level)) {
             LOGGER.log(level, message);
         }
