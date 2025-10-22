@@ -29,7 +29,7 @@
 
     <groupId>io.helidon.examples.extensions.mcp</groupId>
     <artifactId>helidon4-extensions-mcp-examples-weather-declarative</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.2</version>
     <name>Helidon 4 Extensions MCP Weather Declarative Example</name>
 
     <properties>
