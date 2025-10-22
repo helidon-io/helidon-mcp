@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.2]
+
+This release of Helidon MCP contains bugfixes and dependency upgrades and is recommended for all users. The calendar declarative
+is a mirror of the calendar example using Helidon MCP declarative.
+
+### CHANGES
+
+- Replace Java util logger by `System.Logger` in all modules [83](https://github.com/helidon-io/helidon-mcp/pull/83)
+- Fix subscriptions URI. We no longer expose the internal file URI to the clients. [82](https://github.com/helidon-io/helidon-mcp/pull/82)
+- Make calendar examples more consistent. Add tests to declarative version. [81](https://github.com/helidon-io/helidon-mcp/pull/81)
+- New calendar declarative example [78](https://github.com/helidon-io/helidon-mcp/pull/78)
+- Improve logging in server and some updates for demo [76](https://github.com/helidon-io/helidon-mcp/pull/76)
+
 ## [1.0.1]
 
 This release of Helidon MCP contains bugfixes and dependency upgrades and is recommended for all users.
@@ -85,8 +98,8 @@ Requirements:
 
 Initial release.
 
-[1.0.1]: https://github.com/oracle/helidon/compare/1.0.0...1.0.1
-[1.0.0]: https://github.com/oracle/helidon/compare/1.0.0-M2...1.0.0
-[1.0.0-M2]: https://github.com/oracle/helidon/compare/1.0.0-M1...1.0.0-M2
-[1.0.0-M1]: https://github.com/oracle/helidon/compare/main...1.0.0-M1
-
+[1.0.2]: https://github.com/helidon-io/helidon-mcp/compare/1.0.1...1.0.2
+[1.0.1]: https://github.com/helidon-io/helidon-mcp/compare/1.0.0...1.0.1
+[1.0.0]: https://github.com/helidon-io/helidon-mcp/compare/1.0.0-M2...1.0.0
+[1.0.0-M2]: https://github.com/helidon-io/helidon-mcp/compare/1.0.0-M1...1.0.0-M2
+[1.0.0-M1]: https://github.com/helidon-io/helidon-mcp/compare/main...1.0.0-M1
