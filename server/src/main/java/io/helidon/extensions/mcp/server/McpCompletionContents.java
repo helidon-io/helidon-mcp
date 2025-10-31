@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.helidon.extensions.mcp.server;
 
 import java.util.List;
@@ -27,13 +26,25 @@ public final class McpCompletionContents {
     }
 
     /**
-     * Create a completion content from the provided list of string.
+     * Create a completion content from the provided list of string. The maximum
+     * number of suggestion cannot exceed 100.
      *
      * @param values completion values
      * @return completion content
      */
     public static McpCompletionContent completion(String... values) {
         return new McpCompletionContentImpl(List.of(values));
+    }
+
+    /**
+     * Create a completion content from provided list of string. The maximum
+     * number of suggestion cannot exceed 100.
+     *
+     * @param values completion values
+     * @return completion content
+     */
+    public static McpCompletionContent completion(List<String> values) {
+        return new McpCompletionContentImpl(values);
     }
 
     /**

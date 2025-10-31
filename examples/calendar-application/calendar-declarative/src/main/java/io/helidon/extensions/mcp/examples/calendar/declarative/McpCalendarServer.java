@@ -147,7 +147,7 @@ class McpCalendarServer {
                 .stream()
                 .filter(name -> name.contains(nameValue))
                 .toList();
-        return McpCompletionContents.completion(values.toArray(new String[0]));
+        return McpCompletionContents.completion(values);
     }
 
     // -- Prompts -------------------------------------------------------------

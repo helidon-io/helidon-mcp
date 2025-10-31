@@ -337,7 +337,8 @@ final class McpCodegen implements CodegenExtension {
                     .addContent(element.elementName())
                     .addContent("(")
                     .addContent(params)
-                    .addContentLine(").toArray(new String[0]));")
+                    .addContentLine("));")
+                    .decreaseContentPadding()
                     .addContentLine("};");
             return;
         }
