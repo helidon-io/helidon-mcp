@@ -88,6 +88,7 @@ import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_UNSUBSCRIB
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_UNSUBSCRIBER_INTERFACE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ROLE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ROLE_ENUM;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SAMPLING;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SERVER;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SERVER_CONFIG;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL;
@@ -448,6 +449,10 @@ final class McpCodegen implements CodegenExtension {
                 parameters.add("request.features().cancellation()");
                 continue;
             }
+            if (MCP_SAMPLING.equals(parameter.typeName())) {
+                parameters.add("request.features().sampling()");
+                continue;
+            }
             if (isResourceTemplate(uri)) {
                 if (MCP_PARAMETERS.equals(parameter.typeName())) {
                     parameters.add("request.parameters()");
@@ -588,6 +593,16 @@ final class McpCodegen implements CodegenExtension {
                 parameters.add("cancellation");
                 classModel.addImport(MCP_CANCELLATION);
                 builder.addContentLine("var cancellation = features.cancellation();");
+                continue;
+            }
+            if (MCP_SAMPLING.equals(param.typeName())) {
+                if (!featuresLocalVar) {
+                    addFeaturesLocalVar(builder, classModel);
+                    featuresLocalVar = true;
+                }
+                parameters.add("sampling");
+                classModel.addImport(MCP_SAMPLING);
+                builder.addContentLine("var sampling = features.sampling();");
                 continue;
             }
             if (!parametersLocalVar) {
@@ -750,83 +765,62 @@ final class McpCodegen implements CodegenExtension {
                 .addAnnotation(Annotations.OVERRIDE);
         builder.addContentLine("return request -> {");
 
-        boolean featuresLocalVar = false;
-        boolean parametersLocalVar = false;
         for (TypedElementInfo param : element.parameterArguments()) {
             if (MCP_REQUEST.equals(param.typeName())) {
                 parameters.add("request");
                 continue;
             }
-            if (MCP_FEATURES.equals(param.typeName()) && !featuresLocalVar) {
+            if (MCP_FEATURES.equals(param.typeName())) {
                 addFeaturesLocalVar(builder, classModel);
-                parameters.add("features");
-                featuresLocalVar = true;
+                parameters.add("request.features()");
                 continue;
             }
             if (MCP_LOGGER.equals(param.typeName())) {
-                if (!featuresLocalVar) {
-                    addFeaturesLocalVar(builder, classModel);
-                    featuresLocalVar = true;
-                }
                 parameters.add("logger");
-                builder.addContentLine("var logger = features.logger();");
+                builder.addContentLine("var logger = request.features().logger();");
                 continue;
             }
             if (MCP_PROGRESS.equals(param.typeName())) {
-                if (!featuresLocalVar) {
-                    addFeaturesLocalVar(builder, classModel);
-                    featuresLocalVar = true;
-                }
                 parameters.add("progress");
                 classModel.addImport(MCP_PROGRESS);
-                builder.addContentLine("var progress = features.progress();");
+                builder.addContentLine("var progress = request.features().progress();");
                 continue;
             }
             if (MCP_CANCELLATION.equals(param.typeName())) {
-                if (!featuresLocalVar) {
-                    addFeaturesLocalVar(builder, classModel);
-                    featuresLocalVar = true;
-                }
                 parameters.add("cancellation");
                 classModel.addImport(MCP_CANCELLATION);
-                builder.addContentLine("var cancellation = features.cancellation();");
+                builder.addContentLine("var cancellation = request.features().cancellation();");
+                continue;
+            }
+            if (MCP_SAMPLING.equals(param.typeName())) {
+                parameters.add("sampling");
+                classModel.addImport(MCP_SAMPLING);
+                builder.addContentLine("var sampling = request.features().sampling();");
                 continue;
             }
             if (TypeNames.STRING.equals(param.typeName())) {
-                if (!parametersLocalVar) {
-                    addParametersLocalVar(builder, classModel);
-                    parametersLocalVar = true;
-                }
                 parameters.add(param.elementName());
                 builder.addContent("var ")
                         .addContent(param.elementName())
-                        .addContent(" = parameters.get(\"")
+                        .addContent(" = request.parameters().get(\"")
                         .addContent(param.elementName())
                         .addContentLine("\").asString().orElse(\"\");");
                 continue;
             }
             if (isBoolean(param.typeName())) {
-                if (!parametersLocalVar) {
-                    addParametersLocalVar(builder, classModel);
-                    parametersLocalVar = true;
-                }
                 parameters.add(param.elementName());
                 builder.addContent("boolean ")
                         .addContent(param.elementName())
-                        .addContent(" = parameters.get(\"")
+                        .addContent(" = request.parameters().get(\"")
                         .addContent(param.elementName())
                         .addContentLine("\").asBoolean().orElse(false);");
                 continue;
             }
             if (isNumber(param.typeName())) {
-                if (!parametersLocalVar) {
-                    addParametersLocalVar(builder, classModel);
-                    parametersLocalVar = true;
-                }
                 parameters.add(param.elementName());
                 builder.addContent("var ")
                         .addContent(param.elementName())
-                        .addContent(" = parameters.get(\"")
+                        .addContent(" = request.parameters().get(\"")
                         .addContent(param.elementName())
                         .addContent("\").as")
                         .addContent(param.typeName().className())
@@ -836,28 +830,19 @@ final class McpCodegen implements CodegenExtension {
             if (isList(param.typeName())) {
                 TypeName typeArg = param.typeName().typeArguments().getFirst();
                 addToListMethod(classModel, typeArg);
-
-                if (!parametersLocalVar) {
-                    addParametersLocalVar(builder, classModel);
-                    parametersLocalVar = true;
-                }
                 parameters.add(param.elementName());
                 builder.addContent("var ")
                         .addContent(param.elementName())
-                        .addContent(" = toList(parameters.get(\"")
+                        .addContent(" = toList(request.parameters().get(\"")
                         .addContent(param.elementName())
                         .addContentLine("\").asList().orElse(null));");
                 continue;
-            }
-            if (!parametersLocalVar) {
-                addParametersLocalVar(builder, classModel);
-                parametersLocalVar = true;
             }
             parameters.add(param.elementName());
             builder.addContent(param.typeName().classNameWithEnclosingNames())
                     .addContent(" ")
                     .addContent(param.elementName())
-                    .addContent(" = parameters.get(\"")
+                    .addContent(" = request.parameters().get(\"")
                     .addContent(param.elementName())
                     .addContent("\").as(")
                     .addContent(param.typeName())
@@ -905,7 +890,9 @@ final class McpCodegen implements CodegenExtension {
         builder.name("description")
                 .addAnnotation(Annotations.OVERRIDE)
                 .returnType(TypeNames.STRING)
-                .addContentLine("return \"" + description + "\";");
+                .addContent("return \"")
+                .addContent(description)
+                .addContentLine("\";");
     }
 
     private void addToolAnnotationsMethod(Method.Builder builder, Annotation toolAnnotation) {
@@ -1077,9 +1064,10 @@ final class McpCodegen implements CodegenExtension {
 
     private boolean isIgnoredSchemaElement(TypeName typeName) {
         return MCP_REQUEST.equals(typeName)
-                || MCP_FEATURES.equals(typeName)
                 || MCP_LOGGER.equals(typeName)
+                || MCP_FEATURES.equals(typeName)
                 || MCP_PROGRESS.equals(typeName)
+                || MCP_SAMPLING.equals(typeName)
                 || MCP_CANCELLATION.equals(typeName);
     }
 

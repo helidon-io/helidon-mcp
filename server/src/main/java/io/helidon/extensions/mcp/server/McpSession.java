@@ -29,6 +29,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
@@ -45,6 +46,7 @@ import io.helidon.webserver.sse.SseSink;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonValue;
 
+import static io.helidon.extensions.mcp.server.McpJsonRpc.timeoutResponse;
 import static io.helidon.extensions.mcp.server.McpServerFeature.isStreamableHttp;
 import static io.helidon.extensions.mcp.server.McpSession.State.UNINITIALIZED;
 
@@ -55,8 +57,10 @@ class McpSession {
     private final McpServerConfig config;
     private final Set<McpCapability> capabilities;
     private final Context context = Context.create();
+    private final AtomicLong jsonRpcId = new AtomicLong(0);
     private final AtomicBoolean active = new AtomicBoolean(true);
     private final BlockingQueue<JsonObject> queue = new LinkedBlockingQueue<>();
+    private final BlockingQueue<JsonObject> responses = new LinkedBlockingQueue<>();
     private final LruCache<JsonValue, McpFeatures> features = LruCache.create();
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -96,6 +100,27 @@ class McpSession {
         }
     }
 
+    JsonObject pollResponse(long requestId, Duration timeout) {
+        while (active.get()) {
+            try {
+                JsonObject response = responses.poll(timeout.toMillis(), TimeUnit.MILLISECONDS);
+                if (response != null) {
+                    long id = response.getJsonNumber("id").longValue();
+                    if (id == requestId) {
+                        return response;
+                    }
+                } else {
+                    return timeoutResponse(requestId);
+                }
+            } catch (ClassCastException ignored) {
+                // The response id is not a number
+            } catch (InterruptedException e) {
+                throw new McpInternalException("Session interrupted.", e);
+            }
+        }
+        throw new McpInternalException("Session disconnected");
+    }
+
     void send(JsonObject message) {
         try {
             queue.put(message);
@@ -106,6 +131,14 @@ class McpSession {
 
     void send(JsonRpcResponse response) {
         send(response.status(Status.ACCEPTED_202).asJsonObject());
+    }
+
+    void sendResponse(JsonObject response) {
+        try {
+            responses.put(response);
+        } catch (InterruptedException e) {
+            throw new UncheckedException(e);
+        }
     }
 
     void disconnect() {
@@ -136,12 +169,26 @@ class McpSession {
         return features.get(requestId);
     }
 
+    /**
+     * Generates a unique JSON-RPC {@code id} for an outbound request to the client.
+     * The returned identifier is guaranteed to be unused by any prior request in this session.
+     *
+     * @return a new request id
+     */
+    long jsonRpcId() {
+        return jsonRpcId.getAndIncrement();
+    }
+
     void clearRequest(JsonValue requestId) {
         features.remove(requestId);
     }
 
     void capabilities(McpCapability capability) {
         capabilities.add(capability);
+    }
+
+    Set<McpCapability> capabilities() {
+        return capabilities;
     }
 
     State state() {
@@ -178,7 +225,7 @@ class McpSession {
                 return Optional.empty();
             }
             throw new IllegalArgumentException("Subscription not found: " + uri);
-        }  finally {
+        } finally {
             lock.readLock().unlock();
         }
     }
@@ -235,7 +282,7 @@ class McpSession {
             }
             log(Level.DEBUG, () -> "Removed subscription for " + uri);
             return Optional.ofNullable(sseSink);
-        }  finally {
+        } finally {
             lock.writeLock().unlock();
         }
     }

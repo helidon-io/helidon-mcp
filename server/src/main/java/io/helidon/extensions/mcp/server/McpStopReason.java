@@ -16,19 +16,34 @@
 
 package io.helidon.extensions.mcp.server;
 
-enum McpCapability {
-    TOOL_LIST_CHANGED,
-    RESOURCE_LIST_CHANGED,
-    RESOURCE_SUBSCRIBE,
-    PROMPT_LIST_CHANGED,
-    LOGGING,
-    COMPLETION,
-    PAGINATION,
-    SAMPLING,
-    ROOTS,
-    PROGRESS;
+/**
+ * Sampling request stop reasons.
+ */
+public enum McpStopReason {
+    /**
+     * End turn.
+     */
+    END_TURN,
+    /**
+     * Stop sequence.
+     */
+    STOP_SEQUENCE,
+    /**
+     * Max tokens.
+     */
+    MAX_TOKENS;
 
     String text() {
-        return this.name().toLowerCase();
+        return this.name().toLowerCase().replace("_", "");
+    }
+
+    static McpStopReason map(String reason) {
+        reason = reason.toLowerCase();
+        for (McpStopReason stopReason : McpStopReason.values()) {
+            if (stopReason.text().equals(reason)) {
+                return stopReason;
+            }
+        }
+        throw new IllegalArgumentException("Unknown stop reason: " + reason);
     }
 }

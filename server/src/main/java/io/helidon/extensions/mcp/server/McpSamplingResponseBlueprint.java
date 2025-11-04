@@ -16,19 +16,33 @@
 
 package io.helidon.extensions.mcp.server;
 
-enum McpCapability {
-    TOOL_LIST_CHANGED,
-    RESOURCE_LIST_CHANGED,
-    RESOURCE_SUBSCRIBE,
-    PROMPT_LIST_CHANGED,
-    LOGGING,
-    COMPLETION,
-    PAGINATION,
-    SAMPLING,
-    ROOTS,
-    PROGRESS;
+import java.util.Optional;
 
-    String text() {
-        return this.name().toLowerCase();
-    }
+import io.helidon.builder.api.Prototype;
+
+/**
+ * Configuration of an MCP sampling response.
+ */
+@Prototype.Blueprint
+interface McpSamplingResponseBlueprint {
+    /**
+     * Sampling response message.
+     *
+     * @return response
+     */
+    McpSamplingMessage message();
+
+    /**
+     * Sampling model used.
+     *
+     * @return model
+     */
+    String model();
+
+    /**
+     * Sampling stop reason.
+     *
+     * @return stop reason
+     */
+    Optional<McpStopReason> stopReason();
 }

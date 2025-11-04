@@ -18,10 +18,11 @@ package io.helidon.extensions.mcp.server;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Tool error exception are sending a tool response to the client with
- * the provided contents and an error flag.
+ * the provided content and an error flag.
  */
 public final class McpToolErrorException extends RuntimeException {
     private final List<McpToolContent> contents;
@@ -42,6 +43,18 @@ public final class McpToolErrorException extends RuntimeException {
      */
     public McpToolErrorException(McpToolContent... contents) {
         this.contents = Arrays.asList(contents);
+    }
+
+    /**
+     * Creates a tool error exception with provided message.
+     *
+     * @param messages error messages
+     */
+    public McpToolErrorException(String... messages) {
+        this.contents = Arrays.stream(messages)
+                .filter(Objects::nonNull)
+                .map(McpToolContents::textContent)
+                .toList();
     }
 
     List<McpToolContent> contents() {

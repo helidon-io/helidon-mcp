@@ -23,6 +23,7 @@ import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.exception.ToolExecutionException;
 import dev.langchain4j.mcp.client.McpClient;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -51,6 +52,19 @@ abstract class AbstractLangchain4jToolErrorResultTest {
                                                     .build());
         } catch (ToolExecutionException e) {
             assertThat(e.getMessage(), is("Tool error message"));
+        }
+    }
+
+    @Test
+    void testMultipleErrorMessages() {
+        try {
+            var result = client.executeTool(ToolExecutionRequest.builder()
+                                                    .name("failing-tool-2")
+                                                    .build());
+        } catch (ToolExecutionException e) {
+            assertThat(e.getMessage(), is("Tool error message"
+                                                  + System.lineSeparator()
+                                                  + "Second error message"));
         }
     }
 }

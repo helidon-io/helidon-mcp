@@ -19,10 +19,11 @@ package io.helidon.extensions.mcp.server;
 /**
  * General content type for all MCP component contents.
  */
-public sealed interface McpContent permits McpEmbeddedResource,
+public sealed interface McpContent permits McpTextContent,
+                                           McpMediaContent,
                                            McpResourceContent,
-                                           McpTextContent,
-                                           McpMediaContent {
+                                           McpSamplingMessage,
+                                           McpEmbeddedResource {
     /**
      * Content type.
      *

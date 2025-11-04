@@ -18,15 +18,12 @@ package io.helidon.extensions.mcp.tests;
 
 import java.util.Map;
 
-import io.helidon.jsonrpc.core.JsonRpcError;
 import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.exception.LangChain4jException;
 import dev.langchain4j.mcp.client.McpClient;
-import dev.langchain4j.mcp.client.protocol.McpGetPromptRequest;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 

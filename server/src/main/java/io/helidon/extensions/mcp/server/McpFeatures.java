@@ -43,6 +43,10 @@ import io.helidon.webserver.sse.SseSink;
  *         {@link io.helidon.extensions.mcp.server.McpSubscriptions} - MCP subscription feature.
  *         Sends notifications to the subscribed clients.
  *     </li>
+ *     <li>
+ *         {@link io.helidon.extensions.mcp.server.McpSampling} - MCP Sampling feature.
+ *         Send sampling messages to client.
+ *     </li>
  * </ul>
  */
 public final class McpFeatures {
@@ -51,8 +55,9 @@ public final class McpFeatures {
     private final McpSession session;
 
     private SseSink sseSink;
-    private McpProgress progress;
     private McpLogger logger;
+    private McpSampling sampling;
+    private McpProgress progress;
     private McpSubscriptions subscriptions;
 
     McpFeatures(McpSession session) {
@@ -109,6 +114,23 @@ public final class McpFeatures {
             }
         }
         return logger;
+    }
+
+    /**
+     * Get a {@link io.helidon.extensions.mcp.server.McpSampling} feature.
+     *
+     * @return the MCP sampling
+     */
+    public McpSampling sampling() {
+        if (sampling == null) {
+            if (response != null) {
+                sseSink = getOrCreateSseSink();
+                sampling = new McpSampling(session, sseSink);
+            } else {
+                sampling = new McpSampling(session);
+            }
+        }
+        return sampling;
     }
 
     /**

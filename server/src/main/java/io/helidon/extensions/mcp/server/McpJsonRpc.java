@@ -21,8 +21,13 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import io.helidon.common.media.type.MediaType;
+import io.helidon.common.media.type.MediaTypes;
+import io.helidon.jsonrpc.core.JsonRpcError;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArrayBuilder;
@@ -30,11 +35,14 @@ import jakarta.json.JsonBuilderFactory;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.JsonReaderFactory;
+import jakarta.json.JsonString;
 import jakarta.json.JsonStructure;
 import jakarta.json.JsonValue;
 import jakarta.json.JsonWriter;
 import jakarta.json.JsonWriterFactory;
 import jakarta.json.stream.JsonGenerator;
+
+import static io.helidon.jsonrpc.core.JsonRpcError.INTERNAL_ERROR;
 
 final class McpJsonRpc {
     static final JsonBuilderFactory JSON_BUILDER_FACTORY = Json.createBuilderFactory(Map.of());
@@ -239,7 +247,7 @@ final class McpJsonRpc {
     static JsonObject listTools(McpPage<McpTool> page, String protocolVersion) {
         JsonArrayBuilder builder = JSON_BUILDER_FACTORY.createArrayBuilder();
         page.components().stream()
-                .map(t -> McpJsonRpc.toJson(t, protocolVersion))
+                .map(t -> toJson(t, protocolVersion))
                 .forEach(builder::add);
         JsonObjectBuilder resources = JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("tools", builder);
@@ -278,7 +286,7 @@ final class McpJsonRpc {
     static JsonObjectBuilder toJson(McpToolResourceContent content) {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("type", content.type().text())
-                .add("resource", McpJsonRpc.toJson(content.content())
+                .add("resource", toJson(content.content())
                         .add("uri", content.uri().toASCIIString()));
     }
 
@@ -319,7 +327,7 @@ final class McpJsonRpc {
     static JsonObject readResource(String uri, List<McpResourceContent> contents) {
         JsonArrayBuilder array = JSON_BUILDER_FACTORY.createArrayBuilder();
         for (McpResourceContent content : contents) {
-            JsonObjectBuilder builder = McpJsonRpc.toJson(content);
+            JsonObjectBuilder builder = toJson(content);
             builder.add("uri", uri);
             array.add(builder);
         }
@@ -329,7 +337,7 @@ final class McpJsonRpc {
     static JsonObject toJson(List<McpPromptContent> contents, String description) {
         JsonArrayBuilder array = JSON_BUILDER_FACTORY.createArrayBuilder();
         for (McpPromptContent prompt : contents) {
-            array.add(McpJsonRpc.toJson(prompt));
+            array.add(toJson(prompt));
         }
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("description", description)
@@ -339,18 +347,18 @@ final class McpJsonRpc {
 
     static JsonObjectBuilder toJson(McpPromptContent content) {
         if (content instanceof McpPromptImageContent image) {
-            return McpJsonRpc.toJson(image);
+            return toJson(image);
         }
         if (content instanceof McpPromptTextContent text) {
-            return McpJsonRpc.toJson(text);
+            return toJson(text);
         }
         if (content instanceof McpPromptResourceContent resource) {
-            return McpJsonRpc.toJson(resource);
+            return toJson(resource);
         }
         if (content instanceof McpPromptAudioContent resource) {
-            return McpJsonRpc.toJson(resource);
+            return toJson(resource);
         }
-        return null;
+        throw new IllegalArgumentException("Unsupported content type: " + content.getClass().getName());
     }
 
     static JsonObjectBuilder toJson(McpContent content) {
@@ -366,7 +374,20 @@ final class McpJsonRpc {
         if (content instanceof McpAudioContent audio) {
             return toJson(audio);
         }
-        return null;
+        throw new IllegalArgumentException("Unsupported content type: " + content.getClass().getName());
+    }
+
+    static JsonObjectBuilder toJson(McpSamplingMessage message) {
+        if (message instanceof McpSamplingTextContent text) {
+            return toJson(text);
+        }
+        if (message instanceof McpSamplingImageContent image) {
+            return toJson(image);
+        }
+        if (message instanceof McpSamplingAudioContent resource) {
+            return toJson(resource);
+        }
+        throw new IllegalArgumentException("Unsupported content type: " + message.getClass().getName());
     }
 
     static JsonObjectBuilder toJson(McpResourceContent content) {
@@ -376,7 +397,7 @@ final class McpJsonRpc {
         if (content instanceof McpResourceBinaryContent binary) {
             return toJson(binary);
         }
-        return null;
+        throw new IllegalArgumentException("Unsupported content type: " + content.getClass().getName());
     }
 
     static JsonObjectBuilder toJson(McpPromptResourceContent resource) {
@@ -384,14 +405,14 @@ final class McpJsonRpc {
                 .add("role", resource.role().text())
                 .add("content", JSON_BUILDER_FACTORY.createObjectBuilder()
                         .add("type", resource.type().text())
-                        .add("resource", McpJsonRpc.toJson(resource.content())
+                        .add("resource", toJson(resource.content())
                                 .add("uri", resource.uri().toASCIIString())));
     }
 
     static JsonObjectBuilder toJson(McpPromptImageContent image) {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("role", image.role().text())
-                .add("content", McpJsonRpc.toJson(image.content()));
+                .add("content", toJson(image.content()));
     }
 
     static JsonObjectBuilder toJson(McpPromptTextContent content) {
@@ -403,7 +424,25 @@ final class McpJsonRpc {
     static JsonObjectBuilder toJson(McpPromptAudioContent audio) {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("role", audio.role().text())
-                .add("content", McpJsonRpc.toJson(audio.content()));
+                .add("content", toJson(audio.content()));
+    }
+
+    static JsonObjectBuilder toJson(McpSamplingImageContent image) {
+        return JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("role", image.role().text())
+                .add("content", toJson((McpImageContent) image));
+    }
+
+    static JsonObjectBuilder toJson(McpSamplingTextContent text) {
+        return JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("role", text.role().text())
+                .add("content", toJson((McpTextContent) text));
+    }
+
+    static JsonObjectBuilder toJson(McpSamplingAudioContent audio) {
+        return JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("role", audio.role().text())
+                .add("content", toJson((McpAudioContent) audio));
     }
 
     static JsonObjectBuilder toJson(McpTextContent content) {
@@ -439,7 +478,6 @@ final class McpJsonRpc {
     }
 
     static JsonObject toJson(McpProgress progress, int newProgress, String message) {
-        JsonObjectBuilder response = JSON_BUILDER_FACTORY.createObjectBuilder();
         JsonObjectBuilder params = JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("progress", newProgress)
                 .add("total", progress.total());
@@ -451,30 +489,20 @@ final class McpJsonRpc {
         if (message != null) {
             params.add("message", message);
         }
-        response.add("jsonrpc", "2.0");
-        response.add("method", McpJsonRpc.METHOD_NOTIFICATION_PROGRESS);
-        response.add("params", params);
-        return response.build();
+        return createJsonRpcNotification(METHOD_NOTIFICATION_PROGRESS, params);
     }
 
     static JsonObject createLoggingNotification(McpLogger.Level level, String name, String message) {
-        return JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("jsonrpc", "2.0")
-                .add("method", METHOD_NOTIFICATION_MESSAGE)
-                .add("params", JSON_BUILDER_FACTORY.createObjectBuilder()
-                        .add("level", level.text())
-                        .add("logger", name)
-                        .add("data", message))
-                .build();
+        var params = JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("level", level.text())
+                .add("logger", name)
+                .add("data", message);
+        return createJsonRpcNotification(METHOD_NOTIFICATION_MESSAGE, params);
     }
 
     static JsonObject createUpdateNotification(String uri) {
-        return JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("jsonrpc", "2.0")
-                .add("method", METHOD_NOTIFICATION_UPDATE)
-                .add("params", JSON_BUILDER_FACTORY.createObjectBuilder()
-                        .add("uri", uri))
-                .build();
+        var params = JSON_BUILDER_FACTORY.createObjectBuilder().add("uri", uri);
+        return createJsonRpcNotification(METHOD_NOTIFICATION_UPDATE, params);
     }
 
     static JsonObject toJson(McpCompletionContent content) {
@@ -486,8 +514,83 @@ final class McpJsonRpc {
                 .build();
     }
 
+    static JsonObjectBuilder toJson(McpSamplingRequest request) {
+        var hints = JSON_BUILDER_FACTORY.createArrayBuilder();
+        var params = JSON_BUILDER_FACTORY.createObjectBuilder();
+        var messages = JSON_BUILDER_FACTORY.createArrayBuilder();
+        var sequences = JSON_BUILDER_FACTORY.createArrayBuilder();
+        var modelPreference = JSON_BUILDER_FACTORY.createObjectBuilder();
+
+        request.hints()
+                .stream()
+                .flatMap(List::stream)
+                .map(hint -> JSON_BUILDER_FACTORY.createObjectBuilder().add("name", hint))
+                .forEach(hints::add);
+        request.hints().map(it -> modelPreference.add("hints", hints));
+        request.speedPriority().map(speed -> modelPreference.add("speedPriority", speed));
+        request.costPriority().map(priority -> modelPreference.add("costPriority", priority));
+        request.intelligencePriority().map(intelligence -> modelPreference.add("intelligencePriority", intelligence));
+        params.add("modelPreference", modelPreference);
+
+        request.messages().stream()
+                .map(McpJsonRpc::toJson)
+                .forEach(messages::add);
+        params.add("messages", messages);
+        params.add("maxTokens", request.maxTokens());
+        request.systemPrompt().map(prompt -> params.add("systemPrompt", prompt));
+        request.temperature().map(temperature -> params.add("temperature", temperature));
+        request.includeContext().map(context -> params.add("includeContext", context.text()));
+        request.stopSequences()
+                .stream()
+                .flatMap(List::stream)
+                .forEach(sequences::add);
+        request.stopSequences().map(it -> params.add("stopSequences", sequences));
+        request.metadata().map(metadata -> params.add("metadata", metadata));
+        return params;
+    }
+
+    static JsonObject createSamplingRequest(long id, McpSamplingRequest request) {
+        var params = toJson(request);
+        return createJsonRpcRequest(id, METHOD_SAMPLING_CREATE_MESSAGE, params);
+    }
+
     static JsonObject disconnectSession() {
-        return JSON_BUILDER_FACTORY.createObjectBuilder().add("disconnect", true).build();
+        return JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("disconnect", true)
+                .build();
+    }
+
+    static McpSamplingResponse createSamplingResponse(JsonObject object) throws McpSamplingException {
+        find(object, "error")
+                .filter(McpJsonRpc::isJsonObject)
+                .map(JsonValue::asJsonObject)
+                .map(JsonRpcError::create)
+                .ifPresent(error -> {
+                    throw new McpSamplingException(error.message());
+                });
+        try {
+            var builder = McpSamplingResponse.builder();
+
+            var result = find(object, "result")
+                    .filter(McpJsonRpc::isJsonObject)
+                    .map(JsonValue::asJsonObject)
+                    .orElseThrow(() -> new McpSamplingException(String.format("Sampling result not found: %s", object)));
+
+            String model = result.getString("model");
+            McpRole role = McpRole.valueOf(result.getString("role").toUpperCase());
+            McpSamplingMessage message = parseMessage(role, result.getJsonObject("content"));
+            Optional<McpStopReason> stopReason = find(result, "stopReason")
+                    .filter(McpJsonRpc::isJsonString)
+                    .map(JsonString.class::cast)
+                    .map(JsonString::getString)
+                    .map(McpStopReason::map);
+            builder.model(model);
+            builder.message(message);
+            builder.stopReason(stopReason);
+            return builder.build();
+        } catch (Exception e) {
+            throw new McpSamplingException("Wrong sampling response format", e);
+        }
     }
 
     static String prettyPrint(JsonStructure json) {
@@ -496,5 +599,79 @@ final class McpJsonRpc {
             writer.write(json);
         }
         return baos.toString(StandardCharsets.UTF_8);
+    }
+
+    static JsonObject createJsonRpcNotification(String method, JsonObjectBuilder params) {
+        return JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("jsonrpc", "2.0")
+                .add("method", method)
+                .add("params", params)
+                .build();
+    }
+
+    static JsonObject createJsonRpcRequest(long id, String method, JsonObjectBuilder params) {
+        return JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("jsonrpc", "2.0")
+                .add("id", id)
+                .add("method", method)
+                .add("params", params)
+                .build();
+    }
+
+    static JsonObject createJsonRpcErrorResponse(long id, JsonObjectBuilder params) {
+        return JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("jsonrpc", "2.0")
+                .add("id", id)
+                .add("error", params)
+                .build();
+    }
+
+    static JsonObject createJsonRpcResultResponse(long id, JsonValue params) {
+        return JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("jsonrpc", "2.0")
+                .add("id", id)
+                .add("result", params)
+                .build();
+    }
+
+    static JsonObject timeoutResponse(long requestId) {
+        var error = JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("code", INTERNAL_ERROR)
+                .add("message", "response timeout");
+        return createJsonRpcErrorResponse(requestId, error);
+    }
+
+    private static McpSamplingMessage parseMessage(McpRole role, JsonObject object) {
+        String type = object.getString("type").toUpperCase();
+        McpContent.ContentType contentType = McpContent.ContentType.valueOf(type);
+        return switch (contentType) {
+            case TEXT -> new McpSamplingTextContent(object.getString("text"), role);
+            case IMAGE -> {
+                byte[] data = object.getString("data").getBytes(StandardCharsets.UTF_8);
+                MediaType mediaType = MediaTypes.create(object.getString("mimeType"));
+                yield new McpSamplingImageContent(data, mediaType, role);
+            }
+            case AUDIO -> {
+                byte[] data = object.getString("data").getBytes(StandardCharsets.UTF_8);
+                MediaType mediaType = MediaTypes.create(object.getString("mimeType"));
+                yield new McpSamplingAudioContent(data, mediaType, role);
+            }
+            default -> throw new IllegalArgumentException("Unknown content type: " + type);
+        };
+    }
+
+    private static Optional<JsonValue> find(JsonObject object, String key) {
+        if (object.containsKey(key)) {
+            return Optional.of(object.get(key));
+        }
+        return Optional.empty();
+    }
+
+    private static boolean isJsonObject(JsonValue value) {
+        return JsonValue.ValueType.OBJECT.equals(value.getValueType());
+    }
+
+    private static boolean isJsonString(JsonValue value) {
+        return JsonValue.ValueType.STRING.equals(value.getValueType());
     }
 }

@@ -47,6 +47,7 @@ import io.helidon.extensions.mcp.server.McpResourceContents;
 import io.helidon.extensions.mcp.server.McpResourceSubscriber;
 import io.helidon.extensions.mcp.server.McpResourceUnsubscriber;
 import io.helidon.extensions.mcp.server.McpRole;
+import io.helidon.extensions.mcp.server.McpSampling;
 import io.helidon.extensions.mcp.server.McpServerConfig;
 import io.helidon.extensions.mcp.server.McpTool;
 import io.helidon.extensions.mcp.server.McpToolAnnotations;
@@ -114,6 +115,7 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "MCP_REQUEST", McpRequest.class);
         checkField(toCheck, checked, fields, "MCP_FEATURES", McpFeatures.class);
         checkField(toCheck, checked, fields, "MCP_PROGRESS", McpProgress.class);
+        checkField(toCheck, checked, fields, "MCP_SAMPLING", McpSampling.class);
         checkField(toCheck, checked, fields, "MCP_TOOL_INTERFACE", McpTool.class);
         checkField(toCheck, checked, fields, "MCP_PARAMETERS", McpParameters.class);
         checkField(toCheck, checked, fields, "MCP_PROMPT_INTERFACE", McpPrompt.class);

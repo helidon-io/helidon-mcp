@@ -75,7 +75,7 @@ interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
      */
     @Option.Configured
     @Option.DefaultInt(DEFAULT_PAGE_SIZE)
-    @Option.Decorator(McpPagination.PageSizeDecorator.class)
+    @Option.Decorator(McpDecorators.PageSizeDecorator.class)
     int toolsPageSize();
 
     /**
@@ -85,7 +85,7 @@ interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
      */
     @Option.Configured
     @Option.DefaultInt(DEFAULT_PAGE_SIZE)
-    @Option.Decorator(McpPagination.PageSizeDecorator.class)
+    @Option.Decorator(McpDecorators.PageSizeDecorator.class)
     int promptsPageSize();
 
     /**
@@ -95,7 +95,7 @@ interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
      */
     @Option.Configured
     @Option.DefaultInt(DEFAULT_PAGE_SIZE)
-    @Option.Decorator(McpPagination.PageSizeDecorator.class)
+    @Option.Decorator(McpDecorators.PageSizeDecorator.class)
     int resourcesPageSize();
 
     /**
@@ -105,7 +105,7 @@ interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
      */
     @Option.Configured
     @Option.DefaultInt(DEFAULT_PAGE_SIZE)
-    @Option.Decorator(McpPagination.PageSizeDecorator.class)
+    @Option.Decorator(McpDecorators.PageSizeDecorator.class)
     int resourceTemplatesPageSize();
 
     /**

@@ -20,6 +20,7 @@ import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
 
 import io.modelcontextprotocol.spec.McpSchema;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -47,5 +48,26 @@ abstract class AbstractMcpSdkToolErrorResultTest extends AbstractMcpSdkTest {
 
         McpSchema.TextContent text = (McpSchema.TextContent) content;
         assertThat(text.text(), is("Tool error message"));
+    }
+
+    @Test
+    void testMultipleMessageError() {
+        var result = client().callTool(McpSchema.CallToolRequest.builder()
+                                               .name("failing-tool-2")
+                                               .build());
+        assertThat(result.isError(), is(true));
+        assertThat(result.content().size(), is(2));
+
+        var content = result.content().getFirst();
+        assertThat(content, instanceOf(McpSchema.TextContent.class));
+
+        McpSchema.TextContent text = (McpSchema.TextContent) content;
+        assertThat(text.text(), is("Tool error message"));
+
+        content = result.content().get(1);
+        assertThat(content, instanceOf(McpSchema.TextContent.class));
+
+        text = (McpSchema.TextContent) content;
+        assertThat(text.text(), is("Second error message"));
     }
 }

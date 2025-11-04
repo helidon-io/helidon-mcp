@@ -28,10 +28,26 @@ class McpPage<T> {
     private final String cursor;
     private final boolean isLast;
 
+    /**
+     * Create a page with provided parameters.
+     *
+     * @param components the page components
+     * @param cursor the cursor pointing to the next page
+     * @param isLast {@code true} if this is the last page, {@code false} otherwise
+     */
     McpPage(List<T> components, String cursor, boolean isLast) {
         this.cursor = cursor;
         this.isLast = isLast;
         this.components = components;
+    }
+
+    /**
+     * Create a single page with provided content.
+     *
+     * @param components the page components
+     */
+    McpPage(List<T> components) {
+        this(components, "", true);
     }
 
     String cursor() {

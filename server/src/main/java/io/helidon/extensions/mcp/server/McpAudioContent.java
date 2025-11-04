@@ -19,5 +19,6 @@ package io.helidon.extensions.mcp.server;
 /**
  * Audio content.
  */
-sealed interface McpAudioContent extends McpMediaContent permits McpAudioContentImpl {
+sealed interface McpAudioContent extends McpMediaContent permits McpAudioContentImpl,
+                                                                 McpSamplingAudioContent {
 }

@@ -48,6 +48,7 @@ final class McpTypes {
     static final TypeName MCP_REQUEST = TypeName.create("io.helidon.extensions.mcp.server.McpRequest");
     static final TypeName MCP_FEATURES = TypeName.create("io.helidon.extensions.mcp.server.McpFeatures");
     static final TypeName MCP_PROGRESS = TypeName.create("io.helidon.extensions.mcp.server.McpProgress");
+    static final TypeName MCP_SAMPLING = TypeName.create("io.helidon.extensions.mcp.server.McpSampling");
     static final TypeName MCP_TOOL_INTERFACE = TypeName.create("io.helidon.extensions.mcp.server.McpTool");
     static final TypeName MCP_PARAMETERS = TypeName.create("io.helidon.extensions.mcp.server.McpParameters");
     static final TypeName MCP_PROMPT_INTERFACE = TypeName.create("io.helidon.extensions.mcp.server.McpPrompt");

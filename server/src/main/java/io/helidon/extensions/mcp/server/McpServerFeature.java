@@ -17,6 +17,7 @@
 package io.helidon.extensions.mcp.server;
 
 import java.lang.System.Logger.Level;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import io.helidon.builder.api.RuntimeType;
 import io.helidon.common.mapper.OptionalValue;
@@ -348,10 +350,12 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         if (isResponse(object)) {
             Optional<McpSession> session = findSession(req);
             if (session.isPresent()) {
-                session.get().send(object);
+                log(Level.TRACE, () -> "Client response:\n" + prettyPrint(object));
+                session.get().sendResponse(object);
                 return Optional.empty();
             }
         }
+        log(Level.TRACE, () -> "Wrong format message received:\n" + prettyPrint(object));
         return Optional.of(JsonRpcError.create(INVALID_REQUEST, "Invalid request"));
     }
 
@@ -441,12 +445,12 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         if (capabilities.get(McpCapability.SAMPLING.text()).isPresent()) {
             session.capabilities(McpCapability.SAMPLING);
         }
-        capabilities.get("roots")
+        capabilities.get(McpCapability.ROOTS.text())
                 .get("listChanged")
                 .asBoolean()
                 .ifPresent(listChanged -> {
                     if (listChanged) {
-                        session.capabilities(McpCapability.ROOT);
+                        session.capabilities(McpCapability.ROOTS);
                     }
                 });
     }
@@ -1030,6 +1034,12 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                                              JsonRpcResponse response,
                                              Throwable throwable,
                                              int errorCode) {
+        log(Level.DEBUG, () -> throwable.toString()
+                + System.lineSeparator()
+                + Arrays.stream(throwable.getStackTrace())
+                .map(StackTraceElement::toString)
+                .collect(Collectors.joining(System.lineSeparator())));
+
         // Look up session to send an error to the client
         var session = findSession(request);
         if (session.isEmpty()) {
@@ -1044,12 +1054,10 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             sseSink = features.get().sseSink().orElse(null);
         }
 
-        log(Level.TRACE, () -> "Request:\n" + prettyPrint(request.asJsonObject()));
-        log(Level.TRACE, () -> "Response:\n" + prettyPrint(response.asJsonObject()));
-
         // If streamable HTTP transport and did not switch to SSE
         // the handler manages the response
         if (isStreamableHttp(request.headers()) && sseSink == null) {
+            log(Level.TRACE, () -> "Response:\n" + prettyPrint(response.asJsonObject()));
             session.get().clearRequest(requestId);
             return response.error();
         }

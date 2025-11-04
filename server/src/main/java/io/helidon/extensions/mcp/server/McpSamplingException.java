@@ -13,22 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.helidon.extensions.mcp.server;
 
-enum McpCapability {
-    TOOL_LIST_CHANGED,
-    RESOURCE_LIST_CHANGED,
-    RESOURCE_SUBSCRIBE,
-    PROMPT_LIST_CHANGED,
-    LOGGING,
-    COMPLETION,
-    PAGINATION,
-    SAMPLING,
-    ROOTS,
-    PROGRESS;
+/**
+ * MCP sampling exception thrown during a sampling request to the client.
+ */
+public class McpSamplingException extends RuntimeException {
+    /**
+     * Creates a new MCP sampling exception with specified details message.
+     *
+     * @param message exception message
+     */
+    McpSamplingException(String message) {
+        super(message);
+    }
 
-    String text() {
-        return this.name().toLowerCase();
+    /**
+     * Creates a new MCP sampling exception with specified details message and its cause.
+     *
+     * @param message exception message
+     * @param cause exception cause
+     */
+    McpSamplingException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

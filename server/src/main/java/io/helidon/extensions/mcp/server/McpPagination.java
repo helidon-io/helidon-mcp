@@ -23,8 +23,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
-import io.helidon.builder.api.Prototype;
-
 /**
  * Support for MCP pagination feature.
  * <p>
@@ -67,7 +65,7 @@ class McpPagination<T> {
 
         // Pagination is disabled
         if (pageSize == DEFAULT_PAGE_SIZE) {
-            pages.put(prevCursor, new McpPage<>(components, "", true));
+            pages.put(prevCursor, new McpPage<>(components));
             return;
         }
 
@@ -83,7 +81,7 @@ class McpPagination<T> {
         if (total % pageSize != 0) {
             int lastPageStart = total - (total % pageSize);
             List<T> lastPage = components.subList(lastPageStart, total);
-            pages.put(prevCursor, new McpPage<>(lastPage, "", true));
+            pages.put(prevCursor, new McpPage<>(lastPage));
         }
     }
 
@@ -100,14 +98,5 @@ class McpPagination<T> {
                 .map(McpPage::components)
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
-    }
-
-    static class PageSizeDecorator implements Prototype.OptionDecorator<McpServerConfig.BuilderBase<?, ?>, Integer> {
-        @Override
-        public void decorate(McpServerConfig.BuilderBase<?, ?> builder, Integer pageSize) {
-            if (pageSize < DEFAULT_PAGE_SIZE) {
-                throw new IllegalArgumentException("Page size must be greater than zero");
-            }
-        }
     }
 }

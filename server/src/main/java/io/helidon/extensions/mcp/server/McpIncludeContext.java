@@ -16,19 +16,32 @@
 
 package io.helidon.extensions.mcp.server;
 
-enum McpCapability {
-    TOOL_LIST_CHANGED,
-    RESOURCE_LIST_CHANGED,
-    RESOURCE_SUBSCRIBE,
-    PROMPT_LIST_CHANGED,
-    LOGGING,
-    COMPLETION,
-    PAGINATION,
-    SAMPLING,
-    ROOTS,
-    PROGRESS;
+/**
+ * Include context values to be used as part of Sampling request.
+ */
+public enum McpIncludeContext {
+    /**
+     * None.
+     */
+    NONE("none"),
+
+    /**
+     * This server.
+     */
+    THIS_SERVER("thisServer"),
+
+    /**
+     * All server.
+     */
+    ALL_SERVERS("allServers"),;
+
+    private final String literal;
+
+    McpIncludeContext(String literal) {
+        this.literal = literal;
+    }
 
     String text() {
-        return this.name().toLowerCase();
+        return literal;
     }
 }

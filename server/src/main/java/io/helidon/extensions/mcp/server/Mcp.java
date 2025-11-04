@@ -34,8 +34,8 @@ public final class Mcp {
     /**
      * Annotation to define an MCP server. An MCP Server aggregates several MCP
      * components like tools, prompts, resources and completions.
-     *
-     * <p>The primary components include:</p>
+     * <p>
+     * The primary components include:
      * <ul>
      *   <li>
      *       {@link io.helidon.extensions.mcp.server.Mcp.Tool} -
@@ -61,7 +61,8 @@ public final class Mcp {
      *      This way, the server can suggest where are resources located and which arguments can be used.
      *   </li>
      * </ul>
-     * <p>The MCP server can be configured using the following annotations:</p>
+     * <p>
+     * The MCP server can be configured using the following annotations:
      * <ul>
      *     <li>
      *         {@link io.helidon.extensions.mcp.server.Mcp.Version} -
@@ -208,8 +209,8 @@ public final class Mcp {
      * Annotation to define an MCP resource.
      * A resource is a none static method and must be located in a class annotated with
      * {@link io.helidon.extensions.mcp.server.Mcp.Server}. This way, the resource is automatically registered to the server.
-     *
-     * <p>This annotation supports two kinds of Resource:</p>
+     * <p>
+     * This annotation supports two kinds of Resource:
      * <ul>
      *     <li>
      *         {@code Regular Resource} where the resource {@link java.net.URI} points to an MCP resource such as
