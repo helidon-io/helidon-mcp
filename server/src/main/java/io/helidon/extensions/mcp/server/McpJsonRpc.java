@@ -378,13 +378,13 @@ final class McpJsonRpc {
     }
 
     static JsonObjectBuilder toJson(McpSamplingMessage message) {
-        if (message instanceof McpSamplingTextContent text) {
+        if (message instanceof McpSamplingTextContentImpl text) {
             return toJson(text);
         }
-        if (message instanceof McpSamplingImageContent image) {
+        if (message instanceof McpSamplingImageContentImpl image) {
             return toJson(image);
         }
-        if (message instanceof McpSamplingAudioContent resource) {
+        if (message instanceof McpSamplingAudioContentImpl resource) {
             return toJson(resource);
         }
         throw new IllegalArgumentException("Unsupported content type: " + message.getClass().getName());
@@ -430,19 +430,27 @@ final class McpJsonRpc {
     static JsonObjectBuilder toJson(McpSamplingImageContent image) {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("role", image.role().text())
-                .add("content", toJson((McpImageContent) image));
+                .add("content", JSON_BUILDER_FACTORY.createObjectBuilder()
+                        .add("type", image.type().text())
+                        .add("data", image.encodeBase64Data())
+                        .add("mimeType", image.mediaType().text()));
     }
 
     static JsonObjectBuilder toJson(McpSamplingTextContent text) {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("role", text.role().text())
-                .add("content", toJson((McpTextContent) text));
+                .add("content", JSON_BUILDER_FACTORY.createObjectBuilder()
+                        .add("type", text.type().text())
+                        .add("text", text.text()));
     }
 
     static JsonObjectBuilder toJson(McpSamplingAudioContent audio) {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("role", audio.role().text())
-                .add("content", toJson((McpAudioContent) audio));
+                .add("content", JSON_BUILDER_FACTORY.createObjectBuilder()
+                        .add("type", audio.type().text())
+                        .add("data", audio.encodeBase64Data())
+                        .add("mimeType", audio.mediaType().text()));
     }
 
     static JsonObjectBuilder toJson(McpTextContent content) {
@@ -645,16 +653,16 @@ final class McpJsonRpc {
         String type = object.getString("type").toUpperCase();
         McpContent.ContentType contentType = McpContent.ContentType.valueOf(type);
         return switch (contentType) {
-            case TEXT -> new McpSamplingTextContent(object.getString("text"), role);
+            case TEXT -> new McpSamplingTextContentImpl(object.getString("text"), role);
             case IMAGE -> {
                 byte[] data = object.getString("data").getBytes(StandardCharsets.UTF_8);
                 MediaType mediaType = MediaTypes.create(object.getString("mimeType"));
-                yield new McpSamplingImageContent(data, mediaType, role);
+                yield new McpSamplingImageContentImpl(data, mediaType, role);
             }
             case AUDIO -> {
                 byte[] data = object.getString("data").getBytes(StandardCharsets.UTF_8);
                 MediaType mediaType = MediaTypes.create(object.getString("mimeType"));
-                yield new McpSamplingAudioContent(data, mediaType, role);
+                yield new McpSamplingAudioContentImpl(data, mediaType, role);
             }
             default -> throw new IllegalArgumentException("Unknown content type: " + type);
         };

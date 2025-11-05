@@ -26,10 +26,13 @@ import io.helidon.extensions.mcp.server.McpContent;
 import io.helidon.extensions.mcp.server.McpException;
 import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpSampling;
+import io.helidon.extensions.mcp.server.McpSamplingAudioContent;
 import io.helidon.extensions.mcp.server.McpSamplingException;
+import io.helidon.extensions.mcp.server.McpSamplingImageContent;
 import io.helidon.extensions.mcp.server.McpSamplingMessage;
 import io.helidon.extensions.mcp.server.McpSamplingMessages;
 import io.helidon.extensions.mcp.server.McpSamplingResponse;
+import io.helidon.extensions.mcp.server.McpSamplingTextContent;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
 import io.helidon.extensions.mcp.server.McpToolContent;
@@ -89,9 +92,9 @@ class SamplingServer {
             McpSamplingResponse response = sampling.request(req -> req.addMessage(message));
             var type = response.message().type();
             return switch (type) {
-                case TEXT -> List.of(textContent(response.message().asText().text()));
-                case IMAGE -> List.of(textContent(new String(response.message().asImage().data())));
-                case AUDIO -> List.of(textContent(new String(response.message().asAudio().data())));
+                case TEXT -> List.of(textContent(((McpSamplingTextContent) response.message()).text()));
+                case IMAGE -> List.of(textContent(new String(((McpSamplingImageContent) response.message()).data())));
+                case AUDIO -> List.of(textContent(new String(((McpSamplingAudioContent) response.message()).data())));
                 default -> throw new IllegalStateException("Unsupported sampling message type: " + type);
             };
         }
@@ -123,7 +126,7 @@ class SamplingServer {
 
         private List<McpToolContent> enabledSampling(McpRequest request) {
             McpSampling sampling = request.features().sampling();
-            if (sampling.isEnabled()) {
+            if (sampling.enabled()) {
                 return sampling(request);
             }
             throw new McpToolErrorException(textContent("sampling is disabled"));

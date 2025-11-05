@@ -19,5 +19,5 @@ package io.helidon.extensions.mcp.server;
 /**
  * Image content.
  */
-sealed interface McpImageContent extends McpMediaContent permits McpImageContentImpl, McpSamplingImageContent {
+sealed interface McpImageContent extends McpMediaContent permits McpImageContentImpl {
 }

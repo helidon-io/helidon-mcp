@@ -50,7 +50,7 @@ final class McpDecorators {
     static class IntelligencePriorityDecorator implements Prototype.OptionDecorator<McpSamplingRequest.BuilderBase<?, ?>, Optional<Double>> {
         @Override
         public void decorate(McpSamplingRequest.BuilderBase<?, ?> builder, Optional<Double> value) {
-            value.filter(McpDecorators::isPositiveAndInferiorToOne)
+            value.filter(McpDecorators::isPositiveAndLessThanOne)
                     .orElseThrow(() -> new IllegalArgumentException("Intelligence priority must be in range [0, 1]"));
         }
     }
@@ -63,7 +63,7 @@ final class McpDecorators {
     static class SpeedPriorityDecorator implements Prototype.OptionDecorator<McpSamplingRequest.BuilderBase<?, ?>, Optional<Double>> {
         @Override
         public void decorate(McpSamplingRequest.BuilderBase<?, ?> builder, Optional<Double> value) {
-            value.filter(McpDecorators::isPositiveAndInferiorToOne)
+            value.filter(McpDecorators::isPositiveAndLessThanOne)
                     .orElseThrow(() -> new IllegalArgumentException("Speed priority must be in range [0, 1]"));
         }
     }
@@ -76,12 +76,12 @@ final class McpDecorators {
     static class CostPriorityDecorator implements Prototype.OptionDecorator<McpSamplingRequest.BuilderBase<?, ?>, Optional<Double>> {
         @Override
         public void decorate(McpSamplingRequest.BuilderBase<?, ?> builder, Optional<Double> value) {
-            value.filter(McpDecorators::isPositiveAndInferiorToOne)
+            value.filter(McpDecorators::isPositiveAndLessThanOne)
                     .orElseThrow(() -> new IllegalArgumentException("Cost priority must be in range [0, 1]"));
         }
     }
 
-    static boolean isPositiveAndInferiorToOne(Double value) {
+    static boolean isPositiveAndLessThanOne(Double value) {
         return 0 <= value && value <= 1.0;
     }
 }

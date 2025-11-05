@@ -26,7 +26,7 @@ import io.helidon.common.types.TypeName;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SERVER;
 
 /**
- * Mcp code generator provider.
+ * MCP code generator provider.
  */
 public class McpCodegenProvider implements CodegenExtensionProvider {
     /**

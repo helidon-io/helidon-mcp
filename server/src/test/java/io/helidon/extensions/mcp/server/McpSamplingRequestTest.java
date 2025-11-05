@@ -75,8 +75,8 @@ class McpSamplingRequestTest {
 
         var message = request.messages().getFirst();
         assertThat(message, instanceOf(McpSamplingTextContent.class));
-        assertThat(message.asText().text(), is("text"));
         assertThat(message.role(), is(McpRole.USER));
+        assertThat(((McpSamplingTextContent) message).text(), is("text"));
 
         assertThat(request.metadata().isEmpty(), is(false));
         assertThat(request.metadata().get(), is(JsonValue.TRUE));

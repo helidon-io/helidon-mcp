@@ -19,8 +19,7 @@ package io.helidon.extensions.mcp.server;
 /**
  * Text content.
  */
-sealed interface McpTextContent extends McpContent permits McpSamplingTextContent, McpTextContent.McpTextContentImpl {
-
+sealed interface McpTextContent extends McpContent permits McpTextContent.McpTextContentImpl {
     /**
      * Text content as string.
      *

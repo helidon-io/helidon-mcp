@@ -62,9 +62,7 @@ abstract class AbstractLangchain4jToolErrorResultTest {
                                                     .name("failing-tool-2")
                                                     .build());
         } catch (ToolExecutionException e) {
-            assertThat(e.getMessage(), is("Tool error message"
-                                                  + System.lineSeparator()
-                                                  + "Second error message"));
+            assertThat(e.getMessage(), is("Tool error message\nSecond error message"));
         }
     }
 }

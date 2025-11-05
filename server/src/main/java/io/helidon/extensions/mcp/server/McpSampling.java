@@ -47,7 +47,7 @@ public final class McpSampling extends McpFeature {
      * @return {@code true} if the connected client supports sampling feature,
      * {@code false} otherwise.
      */
-    public boolean isEnabled() {
+    public boolean enabled() {
         return session()
                 .capabilities()
                 .contains(McpCapability.SAMPLING);
@@ -77,20 +77,19 @@ public final class McpSampling extends McpFeature {
         long id = session().jsonRpcId();
         JsonObject payload = createSamplingRequest(id, request);
 
-        log("Sampling request:\n" + prettyPrint(payload));
+        if (LOGGER.isLoggable(Level.DEBUG)) {
+            LOGGER.log(Level.DEBUG, "Sampling request:\n" + prettyPrint(payload));
+        }
         sseSink().ifPresentOrElse(sink -> sink.emit(SseEvent.builder()
                                             .name("message")
                                             .data(payload)
                                             .build()),
                                   () -> session().send(payload));
         JsonObject response = session().pollResponse(id, request.timeout());
-        log("Sampling response:\n" + prettyPrint(response));
+        if (LOGGER.isLoggable(Level.DEBUG)) {
+            LOGGER.log(Level.DEBUG, "Sampling response:\n" + prettyPrint(response));
+        }
         return createSamplingResponse(response);
     }
 
-    private void log(String message) {
-        if (LOGGER.isLoggable(Level.DEBUG)) {
-            LOGGER.log(Level.DEBUG, () -> message);
-        }
-    }
 }

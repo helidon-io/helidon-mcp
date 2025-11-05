@@ -114,7 +114,7 @@ interface McpSamplingRequestBlueprint {
     Optional<JsonValue> metadata();
 
     /**
-     * Sampling request timeout. Default is three seconds.
+     * Sampling request timeout. Default is five seconds.
      *
      * @return timeout
      */

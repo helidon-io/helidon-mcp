@@ -35,7 +35,7 @@ import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
 
 /**
- * Mcp client parameters provided to {@link McpTool} and {@link McpPrompt}.
+ * MCP client parameters provided to {@link McpTool} and {@link McpPrompt}.
  */
 public final class McpParameters {
     private static final Mappers MAPPERS = Mappers.create();
@@ -63,7 +63,7 @@ public final class McpParameters {
     }
 
     /**
-     * Get Mcp parameter node.
+     * Get MCP parameter node.
      *
      * @param key node key
      * @return parameter

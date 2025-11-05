@@ -112,8 +112,10 @@ class McpSession {
                 } else {
                     return timeoutResponse(requestId);
                 }
-            } catch (ClassCastException ignored) {
-                // The response id is not a number
+            } catch (ClassCastException e) {
+                if (LOGGER.isLoggable(Level.TRACE)) {
+                    LOGGER.log(Level.TRACE, "Received a response with wrong request id type", e);
+                }
             } catch (InterruptedException e) {
                 throw new McpInternalException("Session interrupted.", e);
             }

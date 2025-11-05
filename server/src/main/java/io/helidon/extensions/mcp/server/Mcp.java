@@ -39,7 +39,7 @@ public final class Mcp {
      * <ul>
      *   <li>
      *       {@link io.helidon.extensions.mcp.server.Mcp.Tool} -
-     *       Tool is a function that computes a set of inputs and return a result. Mcp server uses tools to
+     *       Tool is a function that computes a set of inputs and return a result. MCP server uses tools to
      *       interact with the outside world to reach real time data through API calls, access to databases
      *       or performing any kind of computation.
      *   </li>

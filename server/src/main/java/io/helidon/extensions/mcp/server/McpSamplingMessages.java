@@ -38,7 +38,7 @@ public final class McpSamplingMessages {
     public static McpSamplingMessage textContent(String text, McpRole role) {
         Objects.requireNonNull(role, "role must not be null");
         Objects.requireNonNull(text, "text must not be null");
-        return new McpSamplingTextContent(text, role);
+        return new McpSamplingTextContentImpl(text, role);
     }
 
     /**
@@ -52,7 +52,7 @@ public final class McpSamplingMessages {
     public static McpSamplingMessage imageContent(byte[] data, MediaType mediaType, McpRole role) {
         Objects.requireNonNull(role, "role must not be null");
         Objects.requireNonNull(data, "data must not be null");
-        return new McpSamplingImageContent(data, mediaType, role);
+        return new McpSamplingImageContentImpl(data, mediaType, role);
     }
 
     /**
@@ -67,6 +67,6 @@ public final class McpSamplingMessages {
         Objects.requireNonNull(data, "data must not be null");
         Objects.requireNonNull(role, "role must not be null");
         Objects.requireNonNull(mediaType, "media type must not be null");
-        return new McpSamplingAudioContent(data, mediaType, role);
+        return new McpSamplingAudioContentImpl(data, mediaType, role);
     }
 }

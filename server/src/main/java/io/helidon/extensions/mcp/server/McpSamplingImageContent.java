@@ -13,54 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.helidon.extensions.mcp.server;
-
-import java.util.Base64;
-
-import io.helidon.common.media.type.MediaType;
 
 /**
  * MCP sampling image content.
  */
-public final class McpSamplingImageContent implements McpSamplingMessage, McpImageContent {
-    private final byte[] data;
-    private final McpRole role;
-    private final MediaType type;
+public sealed interface McpSamplingImageContent extends McpSamplingMessage,
+                                                        McpSamplingMediaContent permits McpSamplingImageContentImpl {
 
-    McpSamplingImageContent(byte[] data, MediaType mediaType, McpRole role) {
-        this.data = data;
-        this.role = role;
-        this.type = mediaType;
-    }
-
-    @Override
-    public ContentType type() {
-        return ContentType.IMAGE;
-    }
-
-    @Override
-    public McpSamplingImageContent asImage() {
-        return this;
-    }
-
-    @Override
-    public McpRole role() {
-        return role;
-    }
-
-    @Override
-    public String base64Data() {
-        return Base64.getEncoder().encodeToString(data);
-    }
-
-    @Override
-    public MediaType mediaType() {
-        return type;
-    }
-
-    @Override
-    public byte[] data() {
-        return data;
-    }
 }

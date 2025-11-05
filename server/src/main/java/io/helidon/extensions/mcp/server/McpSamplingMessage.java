@@ -17,7 +17,7 @@
 package io.helidon.extensions.mcp.server;
 
 /**
- * Mcp sampling message interface.
+ * MCP sampling message.
  */
 public sealed interface McpSamplingMessage extends McpContent permits McpSamplingTextContent,
                                                                       McpSamplingImageContent,
@@ -28,31 +28,4 @@ public sealed interface McpSamplingMessage extends McpContent permits McpSamplin
      * @return role
      */
     McpRole role();
-
-    /**
-     * Sampling message as text content.
-     *
-     * @return text content
-     */
-    default McpSamplingTextContent asText() {
-        throw new IllegalArgumentException("Not a text");
-    }
-
-    /**
-     * Sampling message as image content.
-     *
-     * @return image content
-     */
-    default McpSamplingImageContent asImage() {
-        throw new IllegalArgumentException("Not an image");
-    }
-
-    /**
-     * Sampling message as audio content.
-     *
-     * @return audio content
-     */
-    default McpSamplingAudioContent asAudio() {
-        throw new IllegalArgumentException("Not an audio");
-    }
 }
