@@ -494,6 +494,90 @@ List<McpToolContent> cancellationTool(McpCancellation cancellation) {
 }
 ```
 
+### Sampling
+
+The MCP Sampling feature provides a standardized mechanism that allows servers to request LLM sampling operations from language
+models through connected clients. It enables servers to seamlessly integrate AI capabilities into their workflows without
+requiring API keys. Like other MCP features, sampling can be accessed via the MCP request features.
+Sampling support is optional for clients, and servers can verify its availability using the `enabled` method:
+
+```java
+var sampling = request.features().sampling();
+if (!sampling.enabled()) {
+}
+```
+
+If the client supports sampling, you can send a sampling request using the request method. A builder is provided to configure
+and customize the sampling request as needed:
+
+```java
+McpSamplingRequest request = McpSamplingRequest.builder()
+                .maxTokens(1)
+                .temperature(0.1)
+                .costPriority(0.1)
+                .speedPriority(0.1)
+                .hints(List.of("hint1"))
+                .metadata(JsonValue.TRUE)
+                .intelligencePriority(0.1)
+                .systemPrompt("system prompt")
+                .timeout(Duration.ofSeconds(10))
+                .stopSequences(List.of("stop1"))
+                .includeContext(McpIncludeContext.NONE)
+                .addMessage(McpSamplingMessages.textContent("text", McpRole.USER))
+                .build();
+```
+
+Once your request is built, send it using the sampling feature. The request method may throw an `McpSamplingException` if an
+error occurs during processing. On success, it returns an McpSamplingResponse containing the response message, the model used,
+and optionally a stop reason.
+
+```java
+try {
+    McpSamplingResponse response = sampling.request(req -> req.addMessage(message));
+} catch(McpSamplingException exception) {
+    // Manage error
+}
+```
+
+The messages you send are prompts to the language model, and they follow the same structure as MCP prompts. You can use the
+`McpSamplingMessages` utility class to create different types of messages for the client model:
+
+```java
+var text = McpSamplingMessages.textContent("Explain Helidon MCP in one paragraph.", McpRole.USER);
+var image = McpSamplingMessages.imageContent(pngBytes, MediaTypes.create("image/png"), McpRole.USER);
+var audio = McpSamplingMessages.audioContent(wavBytes, MediaTypes.create("audio/wav"), McpRole.USER);
+```
+
+#### Example
+
+Below is an example of a tool that uses the Sampling feature. If the connected client does not support sampling, the tool
+throws a `McpToolErrorException`.
+
+```java
+@Mcp.Tool("Uses MCP Sampling to ask the connected client model.")
+List<McpToolContent> samplingTool(McpSampling sampling) {
+    if (!sampling.enabled()) {
+        throw new McpToolErrorException("This tool requires sampling feature");
+    }
+
+    try {
+        McpSamplingResponse response = sampling.request(req -> req
+                .timeout(Duration.ofSeconds(10))
+                .systemPrompt("You are a concise, helpful assistant.")
+                .addMessage(McpSamplingMessages.textContent("Write a 3-line summary of Helidon MCP Sampling.", McpRole.USER)));
+
+        McpSamplingMessage message = response.message();
+        if (message instanceof McpSamplingTextContent text) {
+            return List.of(McpToolContents.textContent(text.text()));
+        }
+        throw new McpToolErrorException("Received non-text sampling content.");
+    } catch (McpSamplingException e) {
+        throw new McpToolErrorException(e.getMessage());
+    }
+}
+```
+
+
 ## References
 
 - [MCP Specification](https://modelcontextprotocol.io/introduction)
