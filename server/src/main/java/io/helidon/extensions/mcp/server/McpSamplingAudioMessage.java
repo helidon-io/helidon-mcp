@@ -13,24 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.helidon.extensions.mcp.server;
 
 /**
- * MCP sampling message.
+ * MCP sampling audio content.
  */
-public sealed interface McpSamplingMessage permits McpSamplingTextMessage, McpSamplingImageMessage, McpSamplingAudioMessage {
-    /**
-     * Sampling message role.
-     *
-     * @return role
-     */
-    McpRole role();
-
-    /**
-     * Sampling message type.
-     *
-     * @return type
-     */
-    McpSamplingMessageType type();
+public sealed interface McpSamplingAudioMessage extends McpSamplingMessage,
+                                                        McpSamplingMediaMessage permits McpSamplingAudioMessageImpl {
 }

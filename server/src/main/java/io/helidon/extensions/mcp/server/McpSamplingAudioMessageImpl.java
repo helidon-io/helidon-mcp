@@ -22,20 +22,20 @@ import io.helidon.common.media.type.MediaType;
 /**
  * MCP sampling audio content.
  */
-final class McpSamplingAudioContentImpl implements McpSamplingAudioContent {
+final class McpSamplingAudioMessageImpl implements McpSamplingAudioMessage {
     private final byte[] data;
     private final McpRole role;
     private final MediaType type;
 
-    McpSamplingAudioContentImpl(byte[] data, MediaType type, McpRole role) {
+    McpSamplingAudioMessageImpl(byte[] data, MediaType type, McpRole role) {
         this.data = data;
         this.role = role;
         this.type = type;
     }
 
     @Override
-    public ContentType type() {
-        return ContentType.AUDIO;
+    public McpSamplingMessageType type() {
+        return McpSamplingMessageType.AUDIO;
     }
 
     @Override
@@ -55,11 +55,11 @@ final class McpSamplingAudioContentImpl implements McpSamplingAudioContent {
 
     @Override
     public byte[] decodeBase64Data() {
-        return Base64.getMimeDecoder().decode(data);
+        return Base64.getDecoder().decode(data);
     }
 
     @Override
     public String encodeBase64Data() {
-        return Base64.getMimeEncoder().encodeToString(data);
+        return Base64.getEncoder().encodeToString(data);
     }
 }

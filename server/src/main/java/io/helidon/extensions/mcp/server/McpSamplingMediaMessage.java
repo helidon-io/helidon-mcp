@@ -15,14 +15,37 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import io.helidon.common.media.type.MediaType;
+
 /**
- * MCP sampling text content.
+ * MCP sampling media content.
  */
-public sealed interface McpSamplingTextContent extends McpSamplingMessage permits McpSamplingTextContentImpl {
+public sealed interface McpSamplingMediaMessage permits McpSamplingAudioMessage, McpSamplingImageMessage {
     /**
-     * Text content as string.
+     * Image content raw data.
      *
-     * @return text
+     * @return content
      */
-    String text();
+    byte[] data();
+
+    /**
+     * Returns the decoded image data using base64 decoder.
+     *
+     * @return decoded content.
+     */
+    byte[] decodeBase64Data();
+
+    /**
+     * Returns the encoded image data using base64 encoder.
+     *
+     * @return content in base64.
+     */
+    String encodeBase64Data();
+
+    /**
+     * Image content MIME type.
+     *
+     * @return MIME type
+     */
+    MediaType mediaType();
 }

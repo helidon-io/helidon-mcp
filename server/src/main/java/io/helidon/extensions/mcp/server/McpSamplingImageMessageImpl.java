@@ -22,20 +22,20 @@ import io.helidon.common.media.type.MediaType;
 /**
  * MCP sampling image content.
  */
-final class McpSamplingImageContentImpl implements McpSamplingImageContent {
+final class McpSamplingImageMessageImpl implements McpSamplingImageMessage {
     private final byte[] data;
     private final McpRole role;
     private final MediaType type;
 
-    McpSamplingImageContentImpl(byte[] data, MediaType mediaType, McpRole role) {
+    McpSamplingImageMessageImpl(byte[] data, MediaType mediaType, McpRole role) {
         this.data = data;
         this.role = role;
         this.type = mediaType;
     }
 
     @Override
-    public ContentType type() {
-        return ContentType.IMAGE;
+    public McpSamplingMessageType type() {
+        return McpSamplingMessageType.IMAGE;
     }
 
     @Override
@@ -55,11 +55,11 @@ final class McpSamplingImageContentImpl implements McpSamplingImageContent {
 
     @Override
     public byte[] decodeBase64Data() {
-        return Base64.getMimeDecoder().decode(data);
+        return Base64.getDecoder().decode(data);
     }
 
     @Override
     public String encodeBase64Data() {
-        return Base64.getMimeEncoder().encodeToString(data);
+        return Base64.getEncoder().encodeToString(data);
     }
 }

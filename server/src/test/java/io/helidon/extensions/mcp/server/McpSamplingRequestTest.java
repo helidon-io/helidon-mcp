@@ -61,7 +61,7 @@ class McpSamplingRequestTest {
                 .timeout(Duration.ofSeconds(10))
                 .stopSequences(List.of("stop1"))
                 .includeContext(McpIncludeContext.NONE)
-                .addMessage(McpSamplingMessages.textContent("text", McpRole.USER))
+                .addMessage(McpSamplingMessages.textMessage("text", McpRole.USER))
                 .build();
 
         assertThat(request.maxTokens(), is(1));
@@ -74,9 +74,9 @@ class McpSamplingRequestTest {
         assertThat(request.messages().size(), is(1));
 
         var message = request.messages().getFirst();
-        assertThat(message, instanceOf(McpSamplingTextContent.class));
+        assertThat(message, instanceOf(McpSamplingTextMessage.class));
         assertThat(message.role(), is(McpRole.USER));
-        assertThat(((McpSamplingTextContent) message).text(), is("text"));
+        assertThat(((McpSamplingTextMessage) message).text(), is("text"));
 
         assertThat(request.metadata().isEmpty(), is(false));
         assertThat(request.metadata().get(), is(JsonValue.TRUE));

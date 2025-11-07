@@ -24,7 +24,6 @@ import io.helidon.common.media.type.MediaType;
  * {@link io.helidon.extensions.mcp.server.McpSamplingMessage} factory class.
  */
 public final class McpSamplingMessages {
-
     private McpSamplingMessages() {
     }
 
@@ -35,38 +34,39 @@ public final class McpSamplingMessages {
      * @param role role
      * @return a sampling text message
      */
-    public static McpSamplingMessage textContent(String text, McpRole role) {
+    public static McpSamplingMessage textMessage(String text, McpRole role) {
         Objects.requireNonNull(role, "role must not be null");
         Objects.requireNonNull(text, "text must not be null");
-        return new McpSamplingTextContentImpl(text, role);
+        return new McpSamplingTextMessageImpl(text, role);
     }
 
     /**
-     * Create a sampling image content message.
+     * Create a sampling image message.
      *
      * @param data data
      * @param mediaType media type
      * @param role role
      * @return a sampling image message
      */
-    public static McpSamplingMessage imageContent(byte[] data, MediaType mediaType, McpRole role) {
+    public static McpSamplingMessage imageMessage(byte[] data, MediaType mediaType, McpRole role) {
         Objects.requireNonNull(role, "role must not be null");
         Objects.requireNonNull(data, "data must not be null");
-        return new McpSamplingImageContentImpl(data, mediaType, role);
+        Objects.requireNonNull(mediaType, "media type must not be null");
+        return new McpSamplingImageMessageImpl(data, mediaType, role);
     }
 
     /**
-     * Create a sampling audio content message.
+     * Create a sampling audio message.
      *
      * @param data data
      * @param mediaType media type
      * @param role role
      * @return a sampling audio message
      */
-    public static McpSamplingMessage audioContent(byte[] data, MediaType mediaType, McpRole role) {
+    public static McpSamplingMessage audioMessage(byte[] data, MediaType mediaType, McpRole role) {
         Objects.requireNonNull(data, "data must not be null");
         Objects.requireNonNull(role, "role must not be null");
         Objects.requireNonNull(mediaType, "media type must not be null");
-        return new McpSamplingAudioContentImpl(data, mediaType, role);
+        return new McpSamplingAudioMessageImpl(data, mediaType, role);
     }
 }

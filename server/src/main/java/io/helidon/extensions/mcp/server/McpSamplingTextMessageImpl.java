@@ -13,12 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.helidon.extensions.mcp.server;
 
 /**
- * MCP sampling image content.
+ * MCP sampling text content.
  */
-public sealed interface McpSamplingImageContent extends McpSamplingMessage,
-                                                        McpSamplingMediaContent permits McpSamplingImageContentImpl {
+final class McpSamplingTextMessageImpl implements McpSamplingTextMessage {
+    private final String text;
+    private final McpRole role;
 
+    McpSamplingTextMessageImpl(String text, McpRole role) {
+        this.text = text;
+        this.role = role;
+    }
+
+    @Override
+    public McpSamplingMessageType type() {
+        return McpSamplingMessageType.TEXT;
+    }
+
+    @Override
+    public McpRole role() {
+        return role;
+    }
+
+    @Override
+    public String text() {
+        return text;
+    }
 }

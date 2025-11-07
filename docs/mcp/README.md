@@ -719,8 +719,6 @@ Below is an example of a tool that uses the Sampling feature. If the connected c
 throws a `McpToolErrorException`.
 
 ```java
-import java.time.Duration;
-
 class SamplingTool implements McpTool {
     @Override
     public String name() {
@@ -750,12 +748,7 @@ class SamplingTool implements McpTool {
                     .timeout(Duration.ofSeconds(10))
                     .systemPrompt("You are a concise, helpful assistant.")
                     .addMessage(McpSamplingMessages.textContent("Write a 3-line summary of Helidon MCP Sampling.", McpRole.USER)));
-
-            McpSamplingMessage message = response.message();
-            if (message instanceof McpSamplingTextContent text) {
-                return List.of(McpToolContents.textContent(text.text()));
-            }
-            throw new McpToolErrorException("Received non-text sampling content.");
+            return List.of(McpToolContents.textContent(response.asTextMessage()));
         } catch (McpSamplingException e) {
             throw new McpToolErrorException(e.getMessage());
         }

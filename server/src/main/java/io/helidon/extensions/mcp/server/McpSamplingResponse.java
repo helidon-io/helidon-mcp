@@ -18,19 +18,40 @@ package io.helidon.extensions.mcp.server;
 
 import java.util.Optional;
 
-import io.helidon.builder.api.Prototype;
-
 /**
  * Configuration of an MCP sampling response.
  */
-@Prototype.Blueprint
-interface McpSamplingResponseBlueprint {
+public sealed interface McpSamplingResponse permits McpSamplingResponseImpl {
     /**
      * Sampling response message.
      *
      * @return response
      */
     McpSamplingMessage message();
+
+    /**
+     * Returns sampling response message as text message.
+     *
+     * @return message as text
+     * @throws McpSamplingException if the message is not a text
+     */
+    McpSamplingTextMessage asTextMessage() throws McpSamplingException;
+
+    /**
+     * Returns sampling response message as image message.
+     *
+     * @return message as image
+     * @throws McpSamplingException if the message is not an image
+     */
+    McpSamplingImageMessage asImageMessage() throws McpSamplingException;
+
+    /**
+     * Returns sampling response message as audio message.
+     *
+     * @return message as audio
+     * @throws McpSamplingException if the message is not an audio
+     */
+    McpSamplingAudioMessage asAudioMessage() throws McpSamplingException;
 
     /**
      * Sampling model used.

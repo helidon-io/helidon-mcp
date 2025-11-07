@@ -22,7 +22,6 @@ package io.helidon.extensions.mcp.server;
 public sealed interface McpContent permits McpTextContent,
                                            McpMediaContent,
                                            McpResourceContent,
-                                           McpSamplingMessage,
                                            McpEmbeddedResource {
     /**
      * Content type.

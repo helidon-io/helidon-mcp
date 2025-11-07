@@ -16,8 +16,9 @@
 package io.helidon.extensions.mcp.server;
 
 /**
- * MCP sampling audio content.
+ * MCP sampling image content.
  */
-public sealed interface McpSamplingAudioContent extends McpSamplingMessage,
-                                                        McpSamplingMediaContent permits McpSamplingAudioContentImpl {
+public sealed interface McpSamplingImageMessage extends McpSamplingMessage,
+                                                        McpSamplingMediaMessage permits McpSamplingImageMessageImpl {
+
 }

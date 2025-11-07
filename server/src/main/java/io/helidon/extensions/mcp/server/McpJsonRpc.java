@@ -378,13 +378,13 @@ final class McpJsonRpc {
     }
 
     static JsonObjectBuilder toJson(McpSamplingMessage message) {
-        if (message instanceof McpSamplingTextContentImpl text) {
+        if (message instanceof McpSamplingTextMessageImpl text) {
             return toJson(text);
         }
-        if (message instanceof McpSamplingImageContentImpl image) {
+        if (message instanceof McpSamplingImageMessageImpl image) {
             return toJson(image);
         }
-        if (message instanceof McpSamplingAudioContentImpl resource) {
+        if (message instanceof McpSamplingAudioMessageImpl resource) {
             return toJson(resource);
         }
         throw new IllegalArgumentException("Unsupported content type: " + message.getClass().getName());
@@ -427,7 +427,7 @@ final class McpJsonRpc {
                 .add("content", toJson(audio.content()));
     }
 
-    static JsonObjectBuilder toJson(McpSamplingImageContent image) {
+    static JsonObjectBuilder toJson(McpSamplingImageMessage image) {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("role", image.role().text())
                 .add("content", JSON_BUILDER_FACTORY.createObjectBuilder()
@@ -436,7 +436,7 @@ final class McpJsonRpc {
                         .add("mimeType", image.mediaType().text()));
     }
 
-    static JsonObjectBuilder toJson(McpSamplingTextContent text) {
+    static JsonObjectBuilder toJson(McpSamplingTextMessage text) {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("role", text.role().text())
                 .add("content", JSON_BUILDER_FACTORY.createObjectBuilder()
@@ -444,7 +444,7 @@ final class McpJsonRpc {
                         .add("text", text.text()));
     }
 
-    static JsonObjectBuilder toJson(McpSamplingAudioContent audio) {
+    static JsonObjectBuilder toJson(McpSamplingAudioMessage audio) {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("role", audio.role().text())
                 .add("content", JSON_BUILDER_FACTORY.createObjectBuilder()
@@ -577,8 +577,6 @@ final class McpJsonRpc {
                     throw new McpSamplingException(error.message());
                 });
         try {
-            var builder = McpSamplingResponse.builder();
-
             var result = find(object, "result")
                     .filter(McpJsonRpc::isJsonObject)
                     .map(JsonValue::asJsonObject)
@@ -587,15 +585,13 @@ final class McpJsonRpc {
             String model = result.getString("model");
             McpRole role = McpRole.valueOf(result.getString("role").toUpperCase());
             McpSamplingMessage message = parseMessage(role, result.getJsonObject("content"));
-            Optional<McpStopReason> stopReason = find(result, "stopReason")
+            McpStopReason stopReason = find(result, "stopReason")
                     .filter(McpJsonRpc::isJsonString)
                     .map(JsonString.class::cast)
                     .map(JsonString::getString)
-                    .map(McpStopReason::map);
-            builder.model(model);
-            builder.message(message);
-            builder.stopReason(stopReason);
-            return builder.build();
+                    .map(McpStopReason::map)
+                    .orElse(null);
+            return new McpSamplingResponseImpl(message, model, stopReason);
         } catch (Exception e) {
             throw new McpSamplingException("Wrong sampling response format", e);
         }
@@ -651,20 +647,19 @@ final class McpJsonRpc {
 
     private static McpSamplingMessage parseMessage(McpRole role, JsonObject object) {
         String type = object.getString("type").toUpperCase();
-        McpContent.ContentType contentType = McpContent.ContentType.valueOf(type);
-        return switch (contentType) {
-            case TEXT -> new McpSamplingTextContentImpl(object.getString("text"), role);
+        McpSamplingMessageType messageType = McpSamplingMessageType.valueOf(type);
+        return switch (messageType) {
+            case TEXT -> new McpSamplingTextMessageImpl(object.getString("text"), role);
             case IMAGE -> {
                 byte[] data = object.getString("data").getBytes(StandardCharsets.UTF_8);
                 MediaType mediaType = MediaTypes.create(object.getString("mimeType"));
-                yield new McpSamplingImageContentImpl(data, mediaType, role);
+                yield new McpSamplingImageMessageImpl(data, mediaType, role);
             }
             case AUDIO -> {
                 byte[] data = object.getString("data").getBytes(StandardCharsets.UTF_8);
                 MediaType mediaType = MediaTypes.create(object.getString("mimeType"));
-                yield new McpSamplingAudioContentImpl(data, mediaType, role);
+                yield new McpSamplingAudioMessageImpl(data, mediaType, role);
             }
-            default -> throw new IllegalArgumentException("Unknown content type: " + type);
         };
     }
 
