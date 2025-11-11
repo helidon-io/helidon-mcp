@@ -169,7 +169,7 @@ interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
     /**
      * Roots list request timeout. Default is five seconds.
      *
-     * @return root list timeout
+     * @return roots list timeout
      */
     @Option.Configured
     @Option.Default("PT5S")

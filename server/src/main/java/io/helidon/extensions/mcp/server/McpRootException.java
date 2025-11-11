@@ -16,11 +16,11 @@
 package io.helidon.extensions.mcp.server;
 
 /**
- * MCP root exception thrown during a root list request to the client.
+ * MCP root exception thrown when processing root feature.
  */
 public class McpRootException extends RuntimeException {
     /**
-     * Creates a new MCP sampling exception with specified details message.
+     * Creates a new MCP root exception with specified details message.
      *
      * @param message message exception
      */
@@ -29,7 +29,7 @@ public class McpRootException extends RuntimeException {
     }
 
     /**
-     * Creates a new MCP sampling exception with specified details message and its cause.
+     * Creates a new MCP root exception with specified details message and its cause.
      *
      * @param message message exception
      * @param cause cause exception
