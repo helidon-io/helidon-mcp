@@ -47,39 +47,48 @@ import io.helidon.webserver.sse.SseSink;
  *         {@link io.helidon.extensions.mcp.server.McpSampling} - MCP Sampling feature.
  *         Send sampling messages to client.
  *     </li>
+ *     <li>
+ *         {@link io.helidon.extensions.mcp.server.McpRoots} - MCP Roots feature.
+ *         List the available filesystem root from client.
+ *     </li>
  * </ul>
  */
 public final class McpFeatures {
     private final LazyValue<McpCancellation> cancellation = LazyValue.create(McpCancellation::new);
     private final JsonRpcResponse response;
+    private final McpServerConfig config;
     private final McpSession session;
 
+    private McpRoots roots;
     private SseSink sseSink;
     private McpLogger logger;
     private McpSampling sampling;
     private McpProgress progress;
     private McpSubscriptions subscriptions;
 
-    McpFeatures(McpSession session) {
+    McpFeatures(McpServerConfig config, McpSession session) {
         Objects.requireNonNull(session, "session is null");
         this.session = session;
         this.response = null;
+        this.config = config;
     }
 
-    McpFeatures(McpSession session, JsonRpcResponse response) {
+    McpFeatures(McpServerConfig config, McpSession session, JsonRpcResponse response) {
         Objects.requireNonNull(response, "response is null");
         Objects.requireNonNull(session, "session is null");
         this.response = response;
         this.session = session;
+        this.config = config;
     }
 
-    McpFeatures(McpSession session, JsonRpcResponse response, SseSink sseSink) {
+    McpFeatures(McpServerConfig config, McpSession session, JsonRpcResponse response, SseSink sseSink) {
         Objects.requireNonNull(response, "response is null");
         Objects.requireNonNull(session, "session is null");
         Objects.requireNonNull(sseSink, "sseSink is null");
         this.response = response;
         this.session = session;
         this.sseSink = sseSink;
+        this.config = config;
     }
 
     /**
@@ -114,6 +123,23 @@ public final class McpFeatures {
             }
         }
         return logger;
+    }
+
+    /**
+     * Get a {@link io.helidon.extensions.mcp.server.McpRoots} feature.
+     *
+     * @return the MCP roots
+     */
+    public McpRoots roots() {
+        if (roots == null) {
+            if (response != null) {
+                sseSink = getOrCreateSseSink();
+                roots = new McpRoots(config, session, sseSink);
+            } else {
+                roots = new McpRoots(config, session);
+            }
+        }
+        return roots;
     }
 
     /**

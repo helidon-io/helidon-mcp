@@ -18,18 +18,21 @@ package io.helidon.extensions.mcp.server;
 
 import java.io.ByteArrayOutputStream;
 import java.io.StringReader;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.IntStream;
 
 import io.helidon.common.media.type.MediaType;
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.jsonrpc.core.JsonRpcError;
 
 import jakarta.json.Json;
+import jakarta.json.JsonArray;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonBuilderFactory;
 import jakarta.json.JsonObject;
@@ -622,6 +625,14 @@ final class McpJsonRpc {
                 .build();
     }
 
+    static JsonObject createJsonRpcRequest(long id, String method) {
+        return JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("jsonrpc", "2.0")
+                .add("id", id)
+                .add("method", method)
+                .build();
+    }
+
     static JsonObject createJsonRpcErrorResponse(long id, JsonObjectBuilder params) {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("jsonrpc", "2.0")
@@ -645,6 +656,29 @@ final class McpJsonRpc {
         return createJsonRpcErrorResponse(requestId, error);
     }
 
+    static List<McpRoot> parseRoots(JsonObject response) {
+        find(response, "error")
+                .filter(McpJsonRpc::isJsonObject)
+                .map(JsonValue::asJsonObject)
+                .map(JsonRpcError::create)
+                .ifPresent(error -> {
+                    throw new McpRootException(error.message());
+                });
+        JsonArray roots = find(response, "result")
+                .map(JsonValue::asJsonObject)
+                .flatMap(result -> find(result, "roots"))
+                .map(JsonValue::asJsonArray)
+                .orElseThrow(() -> new McpRootException("Wrong response format: %s".formatted(response)));
+
+        return IntStream.range(0, roots.size())
+                .mapToObj(roots::getJsonObject)
+                .map(root -> McpRoot.builder()
+                        .uri(URI.create(root.getString("uri")))
+                        .name(findString(root, "name"))
+                        .build())
+                .toList();
+    }
+
     private static McpSamplingMessage parseMessage(McpRole role, JsonObject object) {
         String type = object.getString("type").toUpperCase();
         McpSamplingMessageType messageType = McpSamplingMessageType.valueOf(type);
@@ -666,6 +700,13 @@ final class McpJsonRpc {
     private static Optional<JsonValue> find(JsonObject object, String key) {
         if (object.containsKey(key)) {
             return Optional.of(object.get(key));
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<String> findString(JsonObject object, String key) {
+        if (object.containsKey(key)) {
+            return Optional.of(object.getString(key));
         }
         return Optional.empty();
     }

@@ -150,19 +150,19 @@ class McpSession {
     }
 
     McpFeatures createFeatures(JsonValue requestId) {
-        McpFeatures feat = new McpFeatures(this);
+        McpFeatures feat = new McpFeatures(config, this);
         features.put(requestId, feat);
         return feat;
     }
 
     McpFeatures createFeatures(JsonRpcResponse res, JsonValue requestId) {
-        McpFeatures feat = new McpFeatures(this, res);
+        McpFeatures feat = new McpFeatures(config, this, res);
         features.put(requestId, feat);
         return feat;
     }
 
     McpFeatures createFeatures(JsonRpcResponse res, JsonValue requestId, SseSink sseSink) {
-        McpFeatures feat = new McpFeatures(this, res, sseSink);
+        McpFeatures feat = new McpFeatures(config, this, res, sseSink);
         features.put(requestId, feat);
         return feat;
     }

@@ -32,13 +32,16 @@ import static io.helidon.extensions.mcp.server.McpJsonRpc.prettyPrint;
  */
 public final class McpSampling extends McpFeature {
     private static final System.Logger LOGGER = System.getLogger(McpSampling.class.getName());
+    private final boolean enabled;
 
     McpSampling(McpSession session) {
         super(session);
+        this.enabled = session().capabilities().contains(McpCapability.SAMPLING);
     }
 
     McpSampling(McpSession session, SseSink sseSink) {
         super(session, sseSink);
+        this.enabled = session().capabilities().contains(McpCapability.SAMPLING);
     }
 
     /**
@@ -48,9 +51,7 @@ public final class McpSampling extends McpFeature {
      * {@code false} otherwise.
      */
     public boolean enabled() {
-        return session()
-                .capabilities()
-                .contains(McpCapability.SAMPLING);
+        return enabled;
     }
 
     /**
@@ -74,6 +75,9 @@ public final class McpSampling extends McpFeature {
      * @throws io.helidon.extensions.mcp.server.McpSamplingException when an error occurs
      */
     public McpSamplingResponse request(McpSamplingRequest request) throws McpSamplingException {
+        if (!enabled) {
+            throw new McpSamplingException("Sampling feature is not supported by client");
+        }
         long id = session().jsonRpcId();
         JsonObject payload = createSamplingRequest(id, request);
 
@@ -91,5 +95,4 @@ public final class McpSampling extends McpFeature {
         }
         return createSamplingResponse(response);
     }
-
 }

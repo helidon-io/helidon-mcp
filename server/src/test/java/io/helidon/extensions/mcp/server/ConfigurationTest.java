@@ -16,6 +16,7 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.time.Duration;
 import java.util.Map;
 
 import io.helidon.config.Config;
@@ -44,6 +45,8 @@ class ConfigurationTest {
         assertThat(config.promptsPageSize(), is(10));
         assertThat(config.resourcesPageSize(), is(10));
         assertThat(config.resourceTemplatesPageSize(), is(10));
+        assertThat(config.rootListTimeout(), is(Duration.ofSeconds(1)));
+        assertThat(config.subscriptionTimeout(), is(Duration.ofSeconds(1)));
     }
 
     @Test
@@ -58,6 +61,8 @@ class ConfigurationTest {
         assertThat(config.promptsPageSize(), is(DEFAULT_PAGE_SIZE));
         assertThat(config.resourcesPageSize(), is(DEFAULT_PAGE_SIZE));
         assertThat(config.resourceTemplatesPageSize(), is(DEFAULT_PAGE_SIZE));
+        assertThat(config.rootListTimeout(), is(Duration.ofSeconds(5)));
+        assertThat(config.subscriptionTimeout(), is(Duration.ofMinutes(2)));
     }
 
     @ParameterizedTest

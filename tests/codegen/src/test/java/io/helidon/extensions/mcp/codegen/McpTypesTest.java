@@ -47,6 +47,7 @@ import io.helidon.extensions.mcp.server.McpResourceContents;
 import io.helidon.extensions.mcp.server.McpResourceSubscriber;
 import io.helidon.extensions.mcp.server.McpResourceUnsubscriber;
 import io.helidon.extensions.mcp.server.McpRole;
+import io.helidon.extensions.mcp.server.McpRoots;
 import io.helidon.extensions.mcp.server.McpSampling;
 import io.helidon.extensions.mcp.server.McpServerConfig;
 import io.helidon.extensions.mcp.server.McpTool;
@@ -110,6 +111,7 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "MCP_RESOURCE_TEMPLATES_PAGE_SIZE", Mcp.ResourceTemplatesPageSize.class);
         checkField(toCheck, checked, fields, "MCP_COMPLETION", Mcp.Completion.class);
         checkField(toCheck, checked, fields, "MCP_DESCRIPTION", Mcp.Description.class);
+        checkField(toCheck, checked, fields, "MCP_ROOTS", McpRoots.class);
         checkField(toCheck, checked, fields, "MCP_LOGGER", McpLogger.class);
         checkField(toCheck, checked, fields, "MCP_ROLE_ENUM", McpRole.class);
         checkField(toCheck, checked, fields, "MCP_REQUEST", McpRequest.class);

@@ -88,6 +88,7 @@ import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_UNSUBSCRIB
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_UNSUBSCRIBER_INTERFACE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ROLE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ROLE_ENUM;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ROOTS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SAMPLING;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SERVER;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SERVER_CONFIG;
@@ -454,6 +455,10 @@ final class McpCodegen implements CodegenExtension {
                 parameters.add("request.features().sampling()");
                 continue;
             }
+            if (MCP_ROOTS.equals(parameter.typeName())) {
+                parameters.add("request.features().roots()");
+                continue;
+            }
             if (isResourceTemplate(uri)) {
                 if (MCP_PARAMETERS.equals(parameter.typeName())) {
                     parameters.add("request.parameters()");
@@ -604,6 +609,16 @@ final class McpCodegen implements CodegenExtension {
                 parameters.add("sampling");
                 classModel.addImport(MCP_SAMPLING);
                 builder.addContentLine("var sampling = features.sampling();");
+                continue;
+            }
+            if (MCP_ROOTS.equals(param.typeName())) {
+                if (!featuresLocalVar) {
+                    addFeaturesLocalVar(builder, classModel);
+                    featuresLocalVar = true;
+                }
+                parameters.add("roots");
+                classModel.addImport(MCP_ROOTS);
+                builder.addContentLine("var roots = features.roots();");
                 continue;
             }
             if (!parametersLocalVar) {
@@ -797,6 +812,12 @@ final class McpCodegen implements CodegenExtension {
                 parameters.add("sampling");
                 classModel.addImport(MCP_SAMPLING);
                 builder.addContentLine("var sampling = request.features().sampling();");
+                continue;
+            }
+            if (MCP_ROOTS.equals(param.typeName())) {
+                parameters.add("roots");
+                classModel.addImport(MCP_ROOTS);
+                builder.addContentLine("var roots = request.features().roots();");
                 continue;
             }
             if (TypeNames.STRING.equals(param.typeName())) {
@@ -1065,6 +1086,7 @@ final class McpCodegen implements CodegenExtension {
 
     private boolean isIgnoredSchemaElement(TypeName typeName) {
         return MCP_REQUEST.equals(typeName)
+                || MCP_ROOTS.equals(typeName)
                 || MCP_LOGGER.equals(typeName)
                 || MCP_FEATURES.equals(typeName)
                 || MCP_PROGRESS.equals(typeName)

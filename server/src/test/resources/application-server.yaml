@@ -23,3 +23,5 @@ mcp:
     prompts-page-size: 10
     resources-page-size: 10
     resource-templates-page-size: 10
+    subscription-timeout: "PT1S"
+    root-list-timeout: "PT1S"

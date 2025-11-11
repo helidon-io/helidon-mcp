@@ -165,4 +165,13 @@ interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
      */
     @Option.Singular
     List<McpResourceUnsubscriber> resourceUnsubscribers();
+
+    /**
+     * Roots list request timeout. Default is five seconds.
+     *
+     * @return root list timeout
+     */
+    @Option.Configured
+    @Option.Default("PT5S")
+    Duration rootListTimeout();
 }

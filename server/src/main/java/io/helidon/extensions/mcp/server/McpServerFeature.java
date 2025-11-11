@@ -62,6 +62,7 @@ import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_INITIALIZE;
 import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_LOGGING_SET_LEVEL;
 import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_NOTIFICATION_CANCELED;
 import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_NOTIFICATION_INITIALIZED;
+import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_NOTIFICATION_ROOTS_LIST_CHANGED;
 import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_PING;
 import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_PROMPT_GET;
 import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_PROMPT_LIST;
@@ -175,6 +176,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         builder.method(METHOD_SESSION_DISCONNECT, this::disconnect);
         builder.method(METHOD_NOTIFICATION_CANCELED, this::notificationCancelRpc);
         builder.method(METHOD_NOTIFICATION_INITIALIZED, this::notificationInitRpc);
+        builder.method(METHOD_NOTIFICATION_ROOTS_LIST_CHANGED, this::notificationRootsListRpc);
 
         builder.errorHandler(this::handleErrorRequest);
         builder.exception(McpInternalException.class, this::mcpInternalExceptionHandler);
@@ -296,11 +298,13 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 response.status(Status.NOT_FOUND_404).send();
                 return;
             }
+            session.get().context().register(McpRoots.McpRootClassifier.class, true);
             // streamable HTTP and active session
             response.status(Status.METHOD_NOT_ALLOWED_405).send();
         } else {
             String sessionId = UUID.randomUUID().toString();
             McpSession session = new McpSession(sessions, capabilities, config);
+            session.context().register(McpRoots.McpRootClassifier.class, true);
             sessions.put(sessionId, session);
 
             try (SseSink sink = response.sink(SseSink.TYPE)) {
@@ -396,6 +400,19 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         }
         String cancelReason = ((JsonString) reason.get()).getString();
         session.features(requestId.get()).ifPresent(feature -> feature.cancellation().cancel(cancelReason, requestId.get()));
+    }
+
+    private void notificationRootsListRpc(JsonRpcRequest req, JsonRpcResponse res) {
+        Optional<McpSession> session = findSession(req);
+        if (session.isEmpty()) {
+            if (LOGGER.isLoggable(Level.TRACE)) {
+                LOGGER.log(Level.TRACE, "No session found for roots update: %s".formatted(req.asJsonObject()));
+            }
+            return;
+        }
+        session.get()
+                .context()
+                .register(McpRoots.McpRootClassifier.class, true);
     }
 
     private void initializeRpc(JsonRpcRequest req, JsonRpcResponse res) {

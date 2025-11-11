@@ -15,6 +15,7 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.net.URI;
 import java.util.Optional;
 
 import io.helidon.builder.api.Prototype;
@@ -78,6 +79,18 @@ final class McpDecorators {
         public void decorate(McpSamplingRequest.BuilderBase<?, ?> builder, Optional<Double> value) {
             value.filter(McpDecorators::isPositiveAndLessThanOne)
                     .orElseThrow(() -> new IllegalArgumentException("Cost priority must be in range [0, 1]"));
+        }
+    }
+
+    /**
+     * The URI scheme must be {@code file} when creating an MCP root.
+     */
+    static class RootUriDecorator implements Prototype.OptionDecorator<McpRoot.BuilderBase<?, ?>, URI> {
+        @Override
+        public void decorate(McpRoot.BuilderBase<?, ?> builder, URI uri) {
+            if (!uri.getScheme().equals("file")) {
+                throw new McpRootException("Root URI scheme must be file");
+            }
         }
     }
 
