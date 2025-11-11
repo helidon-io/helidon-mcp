@@ -789,11 +789,11 @@ class RootNameTool implements McpTool {
     @Override
     public Function<McpRequest, List<McpToolContent>> tool() {
         return request -> {
-            McpRoots roots = request.features().roots();
-            if (!roots.enabled()) {
+            McpRoots mcpRoots = request.features().roots();
+            if (!mcpRoots.enabled()) {
                 throw new McpToolErrorException(McpToolContents.textContent("Roots are not supported by the client"));
             }
-            roots = request.features().roots().listRoots();
+            roots = mcpRoots.listRoots();
             McpRoot root = roots.getFirst();
             URI uri = root.uri();
             String name = root.name().orElse("Unknown");
