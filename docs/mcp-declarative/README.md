@@ -505,6 +505,42 @@ Below is an example of a tool that uses the Sampling feature. `McpSampling` obje
 ```java
 @Mcp.Tool("Uses MCP Sampling to ask the connected client model.")
 List<McpToolContent> samplingTool(McpSampling sampling) {
+    if (!sampling.enabled()) {
+        throw new McpToolErrorException("This tool requires sampling feature");
+    }
+
+    try {
+        var message = McpSamplingMessages.textContent("Write a 3-line summary of Helidon MCP Sampling.", McpRole.USER);
+        McpSamplingResponse response = sampling.request(req -> req
+                .timeout(Duration.ofSeconds(10))
+                .systemPrompt("You are a concise, helpful assistant.")
+                .addMessage(message));
+        return List.of(McpToolContents.textContent(response.asTextMessage()));
+    } catch (McpSamplingException e) {
+        throw new McpToolErrorException(e.getMessage());
+    }
+}
+```
+
+### Roots
+
+See the full [roots documentation details](../mcp/README.md#roots)
+
+#### Example
+
+Below is an example of a tool that uses the Roots feature. `McpRoots` object can be used as method parameter.
+
+```java
+@Mcp.Tool("Request MCP Roots to the connected client.")
+List<McpToolContent> rootsTool(McpRoots roots) {
+    if (!roots.enabled()) {
+        throw new McpToolErrorException(McpToolContents.textContent("Roots are not supported by the client"));
+    }
+    roots = request.features().roots().listRoots();
+    McpRoot root = roots.getFirst();
+    URI uri = root.uri();
+    String name = root.name().orElse("Unknown");
+    return List.of(McpToolContents.textContent("Server updated roots"));
 }
 ```
 

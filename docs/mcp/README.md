@@ -736,22 +736,69 @@ class SamplingTool implements McpTool {
     }
 
     @Override
-    public List<McpToolContent> process(McpRequest request) {
-        var sampling = request.features().sampling();
+    public Function<McpRequest, List<McpToolContent>> tool() {
+        return request -> {
+            var sampling = request.features().sampling();
 
-        if (!sampling.enabled()) {
-            throw new McpToolErrorException("This tool requires sampling feature");
-        }
+            if (!sampling.enabled()) {
+                throw new McpToolErrorException("This tool requires sampling feature");
+            }
 
-        try {
-            McpSamplingResponse response = sampling.request(req -> req
-                    .timeout(Duration.ofSeconds(10))
-                    .systemPrompt("You are a concise, helpful assistant.")
-                    .addMessage(McpSamplingMessages.textContent("Write a 3-line summary of Helidon MCP Sampling.", McpRole.USER)));
-            return List.of(McpToolContents.textContent(response.asTextMessage()));
-        } catch (McpSamplingException e) {
-            throw new McpToolErrorException(e.getMessage());
-        }
+            try {
+                var message = McpSamplingMessages.textContent("Write a 3-line summary of Helidon MCP Sampling.", McpRole.USER);
+                McpSamplingResponse response = sampling.request(req -> req
+                        .timeout(Duration.ofSeconds(10))
+                        .systemPrompt("You are a concise, helpful assistant.")
+                        .addMessage(message));
+                return List.of(McpToolContents.textContent(response.asTextMessage()));
+            } catch (McpSamplingException e) {
+                throw new McpToolErrorException(e.getMessage());
+            }
+        };
+    }
+}
+```
+
+### Roots
+
+Roots establish the boundaries within the filesystem that define where servers are permitted to operate. They determine which 
+directories and files a server can access. Servers can request the current list of roots from compatible clients and receive 
+notifications whenever that list is updated.
+
+#### Example
+
+```java
+class RootNameTool implements McpTool {
+    private List<McpRoot> roots;
+
+    @Override
+    public String name() {
+        return "roots-name-tool";
+    }
+
+    @Override
+    public String description() {
+        return "Get the list of roots available";
+    }
+
+    @Override
+    public String schema() {
+        return "";
+    }
+
+    @Override
+    public Function<McpRequest, List<McpToolContent>> tool() {
+        return request -> {
+            McpRoots roots = request.features().roots();
+            if (!roots.enabled()) {
+                throw new McpToolErrorException(McpToolContents.textContent("Roots are not supported by the client"));
+            }
+            roots = request.features().roots().listRoots();
+            McpRoot root = roots.getFirst();
+            URI uri = root.uri();
+            String name = root.name().orElse("Unknown");
+            return List.of(McpToolContents.textContent("Server updated roots"));
+        };
     }
 }
 ```
