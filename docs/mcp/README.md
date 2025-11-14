@@ -769,8 +769,6 @@ notifications whenever that list is updated.
 
 ```java
 class RootNameTool implements McpTool {
-    private List<McpRoot> roots;
-
     @Override
     public String name() {
         return "roots-name-tool";
@@ -791,9 +789,9 @@ class RootNameTool implements McpTool {
         return request -> {
             McpRoots mcpRoots = request.features().roots();
             if (!mcpRoots.enabled()) {
-                throw new McpToolErrorException(McpToolContents.textContent("Roots are not supported by the client"));
+                throw new McpToolErrorException("Roots are not supported by the client");
             }
-            roots = mcpRoots.listRoots();
+            List<McpRoot> roots = mcpRoots.listRoots();
             McpRoot root = roots.getFirst();
             URI uri = root.uri();
             String name = root.name().orElse("Unknown");

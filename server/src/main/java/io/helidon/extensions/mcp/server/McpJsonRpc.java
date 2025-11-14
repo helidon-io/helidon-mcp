@@ -674,7 +674,7 @@ final class McpJsonRpc {
                 .mapToObj(roots::getJsonObject)
                 .map(root -> McpRoot.builder()
                         .uri(URI.create(root.getString("uri")))
-                        .name(findString(root, "name"))
+                        .name(Optional.ofNullable(root.getString("name", null)))
                         .build())
                 .toList();
     }
@@ -700,13 +700,6 @@ final class McpJsonRpc {
     private static Optional<JsonValue> find(JsonObject object, String key) {
         if (object.containsKey(key)) {
             return Optional.of(object.get(key));
-        }
-        return Optional.empty();
-    }
-
-    private static Optional<String> findString(JsonObject object, String key) {
-        if (object.containsKey(key)) {
-            return Optional.of(object.getString(key));
         }
         return Optional.empty();
     }

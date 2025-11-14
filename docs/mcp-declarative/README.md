@@ -532,11 +532,11 @@ Below is an example of a tool that uses the Roots feature. `McpRoots` object can
 
 ```java
 @Mcp.Tool("Request MCP Roots to the connected client.")
-List<McpToolContent> rootsTool(McpRoots roots) {
-    if (!roots.enabled()) {
-        throw new McpToolErrorException(McpToolContents.textContent("Roots are not supported by the client"));
+List<McpToolContent> rootsTool(McpRoots mcpRoots) {
+    if (!mcpRoots.enabled()) {
+        throw new McpToolErrorException("Roots are not supported by the client");
     }
-    roots = request.features().roots().listRoots();
+    List<McpRoot> roots = mcpRoots.listRoots();
     McpRoot root = roots.getFirst();
     URI uri = root.uri();
     String name = root.name().orElse("Unknown");

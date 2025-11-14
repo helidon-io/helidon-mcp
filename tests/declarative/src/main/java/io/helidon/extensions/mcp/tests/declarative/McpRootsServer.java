@@ -32,71 +32,71 @@ import io.helidon.extensions.mcp.server.McpToolContents;
 @Mcp.Server
 @Mcp.Path("/roots")
 class McpRootsServer {
-    @Mcp.Tool("Sampling tool")
-    List<McpToolContent> tool(McpRoots sampling) {
+    @Mcp.Tool("Roots tool")
+    List<McpToolContent> tool(McpRoots roots) {
         return List.of(McpToolContents.textContent(""));
     }
 
-    @Mcp.Tool("Sampling tool")
-    List<McpToolContent> tool1(McpRoots sampling, String value) {
+    @Mcp.Tool("Roots tool")
+    List<McpToolContent> tool1(McpRoots roots, String value) {
         return List.of(McpToolContents.textContent(""));
     }
 
-    @Mcp.Tool("Sampling tool")
-    String tool2(McpRoots sampling) {
+    @Mcp.Tool("Roots tool")
+    String tool2(McpRoots roots) {
         return "";
     }
 
-    @Mcp.Tool("Sampling tool")
-    String tool3(McpRoots sampling, String value) {
+    @Mcp.Tool("Roots tool")
+    String tool3(McpRoots roots, String value) {
         return "";
     }
 
-    @Mcp.Prompt("Sampling prompt")
-    List<McpPromptContent> prompt(McpRoots sampling) {
+    @Mcp.Prompt("Roots prompt")
+    List<McpPromptContent> prompt(McpRoots roots) {
         return List.of(McpPromptContents.textContent("", McpRole.USER));
     }
 
-    @Mcp.Prompt("Sampling prompt")
-    List<McpPromptContent> prompt1(McpRoots sampling, String value) {
+    @Mcp.Prompt("Roots prompt")
+    List<McpPromptContent> prompt1(McpRoots roots, String value) {
         return List.of(McpPromptContents.textContent("", McpRole.USER));
     }
 
-    @Mcp.Prompt("Sampling prompt")
-    String prompt2(McpRoots sampling) {
+    @Mcp.Prompt("Roots prompt")
+    String prompt2(McpRoots roots) {
         return "";
     }
 
-    @Mcp.Prompt("Sampling prompt")
-    String prompt3(McpRoots sampling, String value) {
+    @Mcp.Prompt("Roots prompt")
+    String prompt3(McpRoots roots, String value) {
         return "";
     }
 
     @Mcp.Resource(uri = "https://resource",
-                  description = "Sampling resource",
+                  description = "Roots resource",
                   mediaType = MediaTypes.TEXT_PLAIN_VALUE)
-    List<McpResourceContent> resource(McpRoots sampling) {
+    List<McpResourceContent> resource(McpRoots roots) {
         return List.of(McpResourceContents.textContent(""));
     }
 
     @Mcp.Resource(uri = "https://resource1",
-                  description = "Sampling resource",
+                  description = "Roots resource",
                   mediaType = MediaTypes.TEXT_PLAIN_VALUE)
-    List<McpResourceContent> resource1(McpRoots sampling, McpRequest request) {
+    List<McpResourceContent> resource1(McpRoots roots, McpRequest request) {
         return List.of(McpResourceContents.textContent(""));
     }
 
     @Mcp.Resource(uri = "https://resource2",
-                  description = "Sampling resource",
+                  description = "Roots resource",
                   mediaType = MediaTypes.TEXT_PLAIN_VALUE)
-    String resource2(McpRoots sampling) {
+    String resource2(McpRoots roots) {
         return "";
     }
 
     @Mcp.Resource(uri = "https://resource3",
-                  description = "Sampling resource",
+                  description = "Roots resource",
                   mediaType = MediaTypes.TEXT_PLAIN_VALUE)
-    String resource3(McpRoots sampling, McpRequest request) {
+    String resource3(McpRoots roots, McpRequest request) {
         return "";
     }
 }
