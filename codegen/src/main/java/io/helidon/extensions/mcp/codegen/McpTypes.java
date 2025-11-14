@@ -16,10 +16,17 @@
 
 package io.helidon.extensions.mcp.codegen;
 
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+import io.helidon.common.types.ResolvedType;
 import io.helidon.common.types.TypeName;
+import io.helidon.common.types.TypeNames;
+
+import static io.helidon.common.types.TypeNames.LIST;
 
 final class McpTypes {
-
     private McpTypes() {
     }
 
@@ -53,45 +60,72 @@ final class McpTypes {
     static final TypeName MCP_TOOL_INTERFACE = TypeName.create("io.helidon.extensions.mcp.server.McpTool");
     static final TypeName MCP_PARAMETERS = TypeName.create("io.helidon.extensions.mcp.server.McpParameters");
     static final TypeName MCP_PROMPT_INTERFACE = TypeName.create("io.helidon.extensions.mcp.server.McpPrompt");
+    static final TypeName MCP_TOOL_CONTENT = TypeName.create("io.helidon.extensions.mcp.server.McpToolContent");
     static final TypeName MCP_CANCELLATION = TypeName.create("io.helidon.extensions.mcp.server.McpCancellation");
     static final TypeName MCP_SERVER_CONFIG = TypeName.create("io.helidon.extensions.mcp.server.McpServerConfig");
     static final TypeName MCP_TOOL_CONTENTS = TypeName.create("io.helidon.extensions.mcp.server.McpToolContents");
     static final TypeName MCP_RESOURCE_INTERFACE = TypeName.create("io.helidon.extensions.mcp.server.McpResource");
+    static final TypeName MCP_PROMPT_CONTENT = TypeName.create("io.helidon.extensions.mcp.server.McpPromptContent");
     static final TypeName MCP_PROMPT_CONTENTS = TypeName.create("io.helidon.extensions.mcp.server.McpPromptContents");
     static final TypeName MCP_PROMPT_ARGUMENT = TypeName.create("io.helidon.extensions.mcp.server.McpPromptArgument");
     static final TypeName MCP_COMPLETION_TYPE = TypeName.create("io.helidon.extensions.mcp.server.McpCompletionType");
     static final TypeName MCP_COMPLETION_INTERFACE = TypeName.create("io.helidon.extensions.mcp.server.McpCompletion");
     static final TypeName MCP_TOOL_ANNOTATIONS = TypeName.create("io.helidon.extensions.mcp.server.McpToolAnnotations");
+    static final TypeName MCP_RESOURCE_CONTENT = TypeName.create("io.helidon.extensions.mcp.server.McpResourceContent");
     static final TypeName MCP_RESOURCE_CONTENTS = TypeName.create("io.helidon.extensions.mcp.server.McpResourceContents");
+    static final TypeName MCP_COMPLETION_CONTENT = TypeName.create("io.helidon.extensions.mcp.server.McpCompletionContent");
     static final TypeName MCP_COMPLETION_CONTENTS = TypeName.create("io.helidon.extensions.mcp.server.McpCompletionContents");
     static final TypeName MCP_RESOURCE_SUBSCRIBER_INTERFACE =
             TypeName.create("io.helidon.extensions.mcp.server.McpResourceSubscriber");
     static final TypeName MCP_RESOURCE_UNSUBSCRIBER_INTERFACE =
             TypeName.create("io.helidon.extensions.mcp.server.McpResourceUnsubscriber");
     //others
+    static final TypeName CONSUMER = TypeName.create(Consumer.class);
+    static final TypeName FUNCTION = TypeName.create(Function.class);
+    static final TypeName URI_PATH = TypeName.create("io.helidon.common.uri.UriPath");
     static final TypeName SERVICES = TypeName.create("io.helidon.service.registry.Services");
     static final TypeName HTTP_FEATURE = TypeName.create("io.helidon.webserver.http.HttpFeature");
     static final TypeName HELIDON_MEDIA_TYPE = TypeName.create("io.helidon.common.media.type.MediaType");
     static final TypeName HELIDON_MEDIA_TYPES = TypeName.create("io.helidon.common.media.type.MediaTypes");
     static final TypeName HTTP_ROUTING_BUILDER = TypeName.create("io.helidon.webserver.http.HttpRouting.Builder");
-    static final TypeName LIST_MCP_PROMPT_ARGUMENT = TypeName.create(
-            "java.util.List<io.helidon.extensions.mcp.server.McpPromptArgument>");
-    static final TypeName FUNCTION_REQUEST_COMPLETION_CONTENT = TypeName.create(
-            "java.util.function.Function<"
-                    + "io.helidon.extensions.mcp.server.McpRequest, "
-                    + "io.helidon.extensions.mcp.server.McpCompletionContent>");
-    static final TypeName FUNCTION_REQUEST_LIST_RESOURCE_CONTENT = TypeName.create(
-            "java.util.function.Function<"
-                    + "io.helidon.extensions.mcp.server.McpRequest, "
-                    + "java.util.List<io.helidon.extensions.mcp.server.McpResourceContent>>");
-    static final TypeName FUNCTION_REQUEST_LIST_TOOL_CONTENT = TypeName.create(
-            "java.util.function.Function<"
-                    + "io.helidon.extensions.mcp.server.McpRequest, "
-                    + "java.util.List<io.helidon.extensions.mcp.server.McpToolContent>>");
-    static final TypeName FUNCTION_REQUEST_LIST_PROMPT_CONTENT = TypeName.create(
-            "java.util.function.Function<"
-                    + "io.helidon.extensions.mcp.server.McpRequest, "
-                    + "java.util.List<io.helidon.extensions.mcp.server.McpPromptContent>>");
-    static final TypeName CONSUMER_REQUEST = TypeName.create(
-            "java.util.function.Consumer<io.helidon.extensions.mcp.server.McpRequest>");
+    static final TypeName GLOBAL_SERVICE_REGISTRY = TypeName.create("io.helidon.service.registry.GlobalServiceRegistry");
+    static final TypeName LIST_MCP_PROMPT_ARGUMENT = ResolvedType.create(TypeName.builder(LIST)
+                                                                                 .addTypeArgument(MCP_PROMPT_ARGUMENT)
+                                                                                 .build()).type();
+    static final TypeName FUNCTION_REQUEST_COMPLETION_CONTENT =
+            ResolvedType.create(TypeName.builder(FUNCTION)
+                                        .addTypeArguments(List.of(MCP_REQUEST,
+                                                                  MCP_COMPLETION_CONTENT))
+                                        .build()).type();
+    static final TypeName LIST_MCP_RESOURCE_CONTENT = ResolvedType.create(TypeName.builder(LIST)
+                                                                                  .addTypeArgument(MCP_RESOURCE_CONTENT)
+                                                                                  .build()).type();
+    static final TypeName FUNCTION_REQUEST_LIST_RESOURCE_CONTENT =
+            ResolvedType.create(TypeName.builder(FUNCTION)
+                                        .addTypeArguments(List.of(
+                                                MCP_REQUEST,
+                                                LIST_MCP_RESOURCE_CONTENT))
+                                        .build()).type();
+    static final TypeName LIST_MCP_TOOL_CONTENT = ResolvedType.create(TypeName.builder(LIST)
+                                                                              .addTypeArgument(MCP_TOOL_CONTENT)
+                                                                              .build()).type();
+    static final TypeName FUNCTION_REQUEST_LIST_TOOL_CONTENT =
+            ResolvedType.create(TypeName.builder(FUNCTION)
+                                        .addTypeArguments(List.of(MCP_REQUEST,
+                                                                  LIST_MCP_TOOL_CONTENT))
+                                        .build()).type();
+    static final TypeName LIST_MCP_PROMPT_CONTENT = ResolvedType.create(TypeName.builder(LIST)
+                                                                                .addTypeArgument(MCP_PROMPT_CONTENT)
+                                                                                .build()).type();
+    static final TypeName FUNCTION_REQUEST_LIST_PROMPT_CONTENT =
+            ResolvedType.create(TypeName.builder(FUNCTION)
+                                        .addTypeArguments(List.of(MCP_REQUEST,
+                                                                  LIST_MCP_PROMPT_CONTENT))
+                                        .build()).type();
+    static final TypeName CONSUMER_REQUEST = ResolvedType.create(TypeName.builder(CONSUMER)
+                                                                         .addTypeArgument(MCP_REQUEST)
+                                                                         .build()).type();
+    static final TypeName LIST_STRING = ResolvedType.create(TypeName.builder(LIST)
+                                                                    .addTypeArgument(TypeNames.STRING)
+                                                                    .build()).type();
 }
