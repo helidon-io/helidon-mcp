@@ -21,13 +21,11 @@ import java.util.List;
 import java.util.Optional;
 
 import io.helidon.codegen.classmodel.Method;
-import io.helidon.common.types.Annotated;
-import io.helidon.common.types.Annotation;
 import io.helidon.common.types.TypeName;
 import io.helidon.common.types.TypeNames;
 import io.helidon.common.types.TypedElementInfo;
 
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_DESCRIPTION;
+import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.getDescription;
 import static io.helidon.extensions.mcp.codegen.McpTypes.SERVICES;
 
 /**
@@ -57,14 +55,6 @@ class McpJsonSchemaCodegen {
         }
         method.addContentLine("builder.append(\"}}\");");
         method.addContentLine("return builder.toString();");
-    }
-
-    static Optional<String> getDescription(Annotated element) {
-        if (element.hasAnnotation(MCP_DESCRIPTION)) {
-            Annotation description = element.annotation(MCP_DESCRIPTION);
-            return description.stringValue();
-        }
-        return Optional.empty();
     }
 
     private static void addPropertySchema(Method.Builder method, TypedElementInfo element) {

@@ -13,17 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.helidon.extensions.mcp.codegen;
 
 import java.lang.System.Logger.Level;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import io.helidon.codegen.CodegenContext;
@@ -33,93 +26,49 @@ import io.helidon.codegen.CodegenUtil;
 import io.helidon.codegen.RoundContext;
 import io.helidon.codegen.classmodel.ClassModel;
 import io.helidon.codegen.classmodel.Method;
-import io.helidon.codegen.classmodel.Parameter;
 import io.helidon.codegen.spi.CodegenExtension;
 import io.helidon.common.types.AccessModifier;
 import io.helidon.common.types.Annotation;
 import io.helidon.common.types.Annotations;
 import io.helidon.common.types.ElementKind;
-import io.helidon.common.types.EnumValue;
-import io.helidon.common.types.ResolvedType;
 import io.helidon.common.types.TypeInfo;
 import io.helidon.common.types.TypeName;
-import io.helidon.common.types.TypeNames;
-import io.helidon.common.types.TypedElementInfo;
 
-import static io.helidon.common.types.TypeNames.LIST;
-import static io.helidon.extensions.mcp.codegen.McpJsonSchemaCodegen.addSchemaMethodBody;
-import static io.helidon.extensions.mcp.codegen.McpJsonSchemaCodegen.getDescription;
-import static io.helidon.extensions.mcp.codegen.McpTypes.CONSUMER_REQUEST;
-import static io.helidon.extensions.mcp.codegen.McpTypes.FUNCTION_REQUEST_COMPLETION_CONTENT;
-import static io.helidon.extensions.mcp.codegen.McpTypes.FUNCTION_REQUEST_LIST_PROMPT_CONTENT;
-import static io.helidon.extensions.mcp.codegen.McpTypes.FUNCTION_REQUEST_LIST_RESOURCE_CONTENT;
-import static io.helidon.extensions.mcp.codegen.McpTypes.FUNCTION_REQUEST_LIST_TOOL_CONTENT;
-import static io.helidon.extensions.mcp.codegen.McpTypes.HELIDON_MEDIA_TYPE;
-import static io.helidon.extensions.mcp.codegen.McpTypes.HELIDON_MEDIA_TYPES;
+import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.generatedTypeName;
+import static io.helidon.extensions.mcp.codegen.McpTypes.GLOBAL_SERVICE_REGISTRY;
 import static io.helidon.extensions.mcp.codegen.McpTypes.HTTP_FEATURE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.HTTP_ROUTING_BUILDER;
-import static io.helidon.extensions.mcp.codegen.McpTypes.LIST_MCP_PROMPT_ARGUMENT;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_CANCELLATION;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_COMPLETION;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_COMPLETION_CONTENTS;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_COMPLETION_INTERFACE;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_COMPLETION_TYPE;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_DESCRIPTION;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_FEATURES;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_LOGGER;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_NAME;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PARAMETERS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PATH;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROGRESS;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPTS_PAGE_SIZE;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_ARGUMENT;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_CONTENTS;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_INTERFACE;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_REQUEST;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCES_PAGE_SIZE;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_CONTENTS;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_INTERFACE;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_SUBSCRIBER;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_SUBSCRIBER_INTERFACE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_TEMPLATES_PAGE_SIZE;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_UNSUBSCRIBER;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_UNSUBSCRIBER_INTERFACE;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ROLE;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ROLE_ENUM;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ROOTS;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SAMPLING;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SERVER;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SERVER_CONFIG;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOLS_PAGE_SIZE;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_CONTENTS;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_INTERFACE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_VERSION;
 import static io.helidon.service.codegen.ServiceCodegenTypes.SERVICE_ANNOTATION_SINGLETON;
 
 final class McpCodegen implements CodegenExtension {
     private static final TypeName GENERATOR = TypeName.create(McpCodegen.class);
-    private static final ResolvedType STRING_LIST = ResolvedType.create(TypeName.builder(LIST)
-                                                                                .addTypeArgument(TypeNames.STRING)
-                                                                                .build());
 
-    /*
-     * Map of MCP component kind associated with their generated class name.
-     */
-    private final Map<McpKind, List<TypeName>> components = new EnumMap<>(McpKind.class);
+    private final McpRecorder recorder;
     private final CodegenLogger logger;
+    private final McpToolCodegen toolCodegen;
+    private final McpPromptCodegen promptCodegen;
+    private final McpResourceCodegen resourceCodegen;
+    private final McpCompletionCodegen completionCodegen;
 
     McpCodegen(CodegenContext context) {
         logger = context.logger();
-
-        initializeComponents();
+        recorder = new McpRecorder();
+        toolCodegen = new McpToolCodegen(recorder);
+        promptCodegen = new McpPromptCodegen(recorder);
+        resourceCodegen = new McpResourceCodegen(recorder);
+        completionCodegen = new McpCompletionCodegen(recorder);
     }
 
     @Override
     public void process(RoundContext roundContext) {
-        //noinspection DuplicatedCode
         logger.log(Level.TRACE, "Processing MCP codegen extension with context "
                 + roundContext.types().stream().map(Object::toString).collect(Collectors.joining()));
         Collection<TypeInfo> types = roundContext.annotatedTypes(MCP_SERVER);
@@ -156,31 +105,30 @@ final class McpCodegen implements CodegenExtension {
                 .type(type.typeName())
                 .name("delegate"));
 
-        serverClassModel.addImport("io.helidon.service.registry.GlobalServiceRegistry");
-
         serverClassModel.addConstructor(constructor -> {
             constructor.accessModifier(AccessModifier.PUBLIC);
             constructor.addContentLine("try {")
-                    .addContent("delegate = GlobalServiceRegistry.registry().get(")
+                    .addContent("delegate = ")
+                    .addContent(GLOBAL_SERVICE_REGISTRY)
+                    .addContent(".registry().get(")
                     .addContent(type.typeName())
                     .addContentLine(".class);")
                     .decreaseContentPadding()
                     .addContentLine("} catch (Exception e) {")
-                    .addContent("delegate = ")
-                    .addContent("new ")
+                    .addContent("delegate = new ")
                     .addContent(type.typeName())
                     .addContentLine("();")
                     .addContentLine("}");
         });
 
-        generateTools(generatedType, serverClassModel, type);
-        generatePrompts(generatedType, serverClassModel, type);
-        generateResources(generatedType, serverClassModel, type);
-        generateCompletions(generatedType, serverClassModel, type);
-        generateSubscribers(generatedType, serverClassModel, type);
+        toolCodegen.generate(serverClassModel, type);
+        promptCodegen.generate(serverClassModel, type);
+        resourceCodegen.generate(serverClassModel, type);
+        completionCodegen.generate(serverClassModel, type);
 
         serverClassModel.addMethod(method -> addRoutingMethod(method, type));
         roundCtx.addGeneratedType(generatedType, serverClassModel, mcpServerType, type.originatingElementValue());
+        recorder.clear();
     }
 
     private void addRoutingMethod(Method.Builder method, TypeInfo type) {
@@ -192,8 +140,7 @@ final class McpCodegen implements CodegenExtension {
         method.name("setup")
                 .accessModifier(AccessModifier.PUBLIC)
                 .addAnnotation(Annotations.OVERRIDE)
-                .addParameter(rules -> rules.type(HTTP_ROUTING_BUILDER)
-                        .name("routing"))
+                .addParameter(rules -> rules.type(HTTP_ROUTING_BUILDER).name("routing"))
                 .addContent(MCP_SERVER_CONFIG)
                 .addContent(".Builder builder = ")
                 .addContent(MCP_SERVER_CONFIG)
@@ -219,19 +166,22 @@ final class McpCodegen implements CodegenExtension {
         addPagination(type, method, MCP_RESOURCES_PAGE_SIZE, "resourcesPageSize");
         addPagination(type, method, MCP_RESOURCE_TEMPLATES_PAGE_SIZE, "resourceTemplatesPageSize");
 
-        components.forEach((mcpKind, typeNames) -> {
-            for (TypeName typeName : typeNames) {
-                method.addContent("builder.")
-                        .addContent(mcpKind.methodName)
-                        .addContent("(new ")
-                        .addContent(typeName)
-                        .addContentLine("());");
-            }
-        });
+        recorder.tools().forEach(name -> registerMcpComponent(method, "addTool", name));
+        recorder.prompts().forEach(name -> registerMcpComponent(method, "addPrompt", name));
+        recorder.resources().forEach(name -> registerMcpComponent(method, "addResource", name));
+        recorder.completions().forEach(name -> registerMcpComponent(method, "addCompletion", name));
+        recorder.subscribers().forEach(name -> registerMcpComponent(method, "addResourceSubscriber", name));
+        recorder.unsubscribers().forEach(name -> registerMcpComponent(method, "addResourceUnsubscriber", name));
 
         method.addContentLine("builder.build().setup(routing);");
-        // Clear the components map as code generation if over for this server.
-        initializeComponents();
+    }
+
+    private void registerMcpComponent(Method.Builder builder, String method, TypeName type) {
+        builder.addContent("builder.")
+                .addContent(method)
+                .addContent("(new ")
+                .addContent(type)
+                .addContentLine("());");
     }
 
     private void addPagination(TypeInfo type, Method.Builder method, TypeName annotation, String pageSizeSetter) {
@@ -243,883 +193,6 @@ final class McpCodegen implements CodegenExtension {
                         .addContent("(")
                         .addContent(pageSize)
                         .addContentLine(");"));
-
     }
 
-    private void generateCompletions(TypeName generatedType, ClassModel.Builder classModel, TypeInfo type) {
-        List<TypedElementInfo> elements = getElementsWithAnnotation(type, MCP_COMPLETION);
-        if (elements.isEmpty()) {
-            return;
-        }
-
-        classModel.addImport(MCP_COMPLETION_TYPE);
-
-        for (TypedElementInfo element : elements) {
-            TypeName innerTypeName = createClassName(generatedType, element, "__Completion");
-            Annotation mcpCompletion = element.annotation(MCP_COMPLETION);
-            String reference = mcpCompletion.value().orElse("");
-            EnumValue referenceType = (EnumValue) mcpCompletion.objectValue("type").orElse(null);
-
-            components.get(McpKind.COMPLETION).add(innerTypeName);
-            classModel.addInnerClass(clazz -> clazz
-                    .name(innerTypeName.className())
-                    .addInterface(MCP_COMPLETION_INTERFACE)
-                    .accessModifier(AccessModifier.PRIVATE)
-                    .addMethod(method -> addCompletionReferenceMethod(method, reference))
-                    .addMethod(method -> addCompletionReferenceTypeMethod(method, referenceType))
-                    .addMethod(method -> addCompletionMethod(method, classModel, element)));
-        }
-    }
-
-    private void addCompletionReferenceMethod(Method.Builder builder, String reference) {
-        builder.name("reference")
-                .addAnnotation(Annotations.OVERRIDE)
-                .returnType(TypeNames.STRING)
-                .addContentLine("return \"" + reference + "\";");
-    }
-
-    private void addCompletionReferenceTypeMethod(Method.Builder builder, EnumValue referenceType) {
-        String enumValue = referenceType != null ? referenceType.name() : "PROMPT";
-        builder.name("referenceType")
-                .addAnnotation(Annotations.OVERRIDE)
-                .returnType(McpTypes.MCP_COMPLETION_TYPE)
-                .addContentLine("return McpCompletionType." + enumValue + ";");
-    }
-
-    private void addCompletionMethod(Method.Builder builder, ClassModel.Builder classModel, TypedElementInfo element) {
-        List<String> parameters = new ArrayList<>();
-        TypeName returnType = element.typeName();
-
-        builder.name("completion")
-                .returnType(returned -> returned.type(FUNCTION_REQUEST_COMPLETION_CONTENT))
-                .addAnnotation(Annotations.OVERRIDE);
-        builder.addContentLine("return request -> {");
-
-        boolean featuresLocalVar = false;
-        boolean parametersLocalVar = false;
-        for (TypedElementInfo param : element.parameterArguments()) {
-            if (MCP_REQUEST.equals(param.typeName())) {
-                parameters.add("request");
-                continue;
-            }
-            if (MCP_FEATURES.equals(param.typeName()) && !featuresLocalVar) {
-                addFeaturesLocalVar(builder, classModel);
-                parameters.add("features");
-                featuresLocalVar = true;
-                continue;
-            }
-            if (MCP_PARAMETERS.equals(param.typeName())) {
-                parameters.add("parameters");
-                addParametersLocalVar(builder, classModel);
-                parametersLocalVar = true;
-                continue;
-            }
-            if (param.typeName().equals(TypeNames.STRING)) {
-                if (!parametersLocalVar) {
-                    addParametersLocalVar(builder, classModel);
-                    parametersLocalVar = true;
-                }
-                parameters.add(param.elementName());
-                builder.addContent("var ")
-                        .addContent(param.elementName())
-                        .addContentLine(" = parameters.get(\"value\").asString().orElse(\"\");");
-                continue;
-            }
-            throw new CodegenException(
-                    String.format("Wrong parameter type for method: %s. Supported types are: %s, %s, or String.",
-                                  param.elementName(), MCP_FEATURES, MCP_PARAMETERS));
-        }
-
-        String params = String.join(", ", parameters);
-        if (ResolvedType.create(returnType).equals(STRING_LIST)) {
-            classModel.addImport(MCP_COMPLETION_CONTENTS);
-            builder.addContent("return ")
-                    .addContent(MCP_COMPLETION_CONTENTS)
-                    .addContent(".completion(delegate.")
-                    .addContent(element.elementName())
-                    .addContent("(")
-                    .addContent(params)
-                    .addContentLine("));")
-                    .decreaseContentPadding()
-                    .addContentLine("};");
-            return;
-        }
-        builder.addContent("return delegate.")
-                .addContent(element.elementName())
-                .addContent("(")
-                .addContent(params)
-                .addContentLine(");")
-                .addContentLine("};");
-    }
-
-    private void generateResources(TypeName generatedType, ClassModel.Builder classModel, TypeInfo type) {
-        List<TypedElementInfo> elements = getElementsWithAnnotation(type, MCP_RESOURCE);
-        if (elements.isEmpty()) {
-            return;
-        }
-
-        for (TypedElementInfo element : elements) {
-            TypeName innerTypeName = createClassName(generatedType, element, "__Resource");
-            String uri = element.findAnnotation(MCP_RESOURCE)
-                    .flatMap(annotation -> annotation.stringValue("uri"))
-                    .orElseThrow(() -> new CodegenException("Resource " + element.elementName() + " must have a URI.",
-                                                            element.originatingElementValue()));
-            String description = element.findAnnotation(MCP_RESOURCE)
-                    .flatMap(annotation -> annotation.stringValue("description"))
-                    .orElseThrow(() -> new CodegenException("Resource " + element.elementName() + " must have a description.",
-                                                            element.originatingElementValue()));
-            String mediaTypeContent = element.findAnnotation(MCP_RESOURCE)
-                    .flatMap(annotation -> annotation.stringValue("mediaType"))
-                    .orElseThrow(() -> new CodegenException("Resource " + element.elementName() + " must have a Media Type.",
-                                                            element.originatingElementValue()));
-            components.get(McpKind.RESOURCE).add(innerTypeName);
-
-            classModel.addInnerClass(clazz -> clazz
-                    .name(innerTypeName.className())
-                    .addInterface(MCP_RESOURCE_INTERFACE)
-                    .accessModifier(AccessModifier.PRIVATE)
-                    .addMethod(method -> addResourceUriMethod(method, uri))
-                    .addMethod(method -> addResourceNameMethod(method, element))
-                    .addMethod(method -> addResourceDescriptionMethod(method, description))
-                    .addMethod(method -> addResourceMethod(method, uri, classModel, element))
-                    .addMethod(method -> addResourceMediaTypeMethod(method, mediaTypeContent)));
-        }
-    }
-
-    private void addResourceNameMethod(Method.Builder builder, TypedElementInfo element) {
-        String name = element.findAnnotation(MCP_NAME)
-                .flatMap(Annotation::value)
-                .orElse(element.elementName());
-        builder.name("name")
-                .addAnnotation(Annotations.OVERRIDE)
-                .returnType(TypeNames.STRING)
-                .addContent("return \"")
-                .addContent(name)
-                .addContentLine("\";");
-    }
-
-    private void addResourceDescriptionMethod(Method.Builder builder, String description) {
-        builder.name("description")
-                .addAnnotation(Annotations.OVERRIDE)
-                .returnType(TypeNames.STRING)
-                .addContentLine("return \"" + description + "\";");
-    }
-
-    private void addResourceUriMethod(Method.Builder builder, String uri) {
-        builder.name("uri")
-                .addAnnotation(Annotations.OVERRIDE)
-                .returnType(TypeNames.STRING)
-                .addContentLine("return \"" + uri + "\";");
-    }
-
-    private void addResourceMediaTypeMethod(Method.Builder builder, String mediaTypeContent) {
-        builder.name("mediaType")
-                .addAnnotation(Annotations.OVERRIDE)
-                .returnType(HELIDON_MEDIA_TYPE)
-                .addContent("return ")
-                .addContent(HELIDON_MEDIA_TYPES)
-                .addContentLine(".create(\"" + mediaTypeContent + "\");");
-    }
-
-    private void addResourceMethod(Method.Builder builder, String uri, ClassModel.Builder classModel, TypedElementInfo element) {
-        List<String> parameters = new ArrayList<>();
-        TypeName returnType = element.signature().type();
-
-        builder.name("resource")
-                .addAnnotation(Annotations.OVERRIDE)
-                .returnType(returned -> returned.type(FUNCTION_REQUEST_LIST_RESOURCE_CONTENT));
-        builder.addContentLine("return request -> {");
-
-        for (TypedElementInfo parameter : element.parameterArguments()) {
-            if (MCP_REQUEST.equals(parameter.typeName())) {
-                parameters.add("request");
-                continue;
-            }
-            if (MCP_FEATURES.equals(parameter.typeName())) {
-                parameters.add("request.features()");
-                continue;
-            }
-            if (MCP_LOGGER.equals(parameter.typeName())) {
-                parameters.add("request.features().logger()");
-                continue;
-            }
-            if (MCP_PROGRESS.equals(parameter.typeName())) {
-                parameters.add("request.features().progress()");
-                continue;
-            }
-            if (MCP_CANCELLATION.equals(parameter.typeName())) {
-                parameters.add("request.features().cancellation()");
-                continue;
-            }
-            if (MCP_SAMPLING.equals(parameter.typeName())) {
-                parameters.add("request.features().sampling()");
-                continue;
-            }
-            if (MCP_ROOTS.equals(parameter.typeName())) {
-                parameters.add("request.features().roots()");
-                continue;
-            }
-            if (isResourceTemplate(uri)) {
-                if (MCP_PARAMETERS.equals(parameter.typeName())) {
-                    parameters.add("request.parameters()");
-                    continue;
-                }
-                if (TypeNames.STRING.equals(parameter.typeName())) {
-                    parameters.add(parameter.elementName());
-                    builder.addContent("String ")
-                            .addContent("encoded_" + parameter.elementName())
-                            .addContent(" = request.parameters().get(\"")
-                            .addContent(parameter.elementName())
-                            .addContentLine("\").asString().orElse(\"\");");
-                    builder.addContent("String ")
-                            .addContent(parameter.elementName())
-                            .addContent(" = io.helidon.common.uri.UriPath.create(")
-                            .addContent("encoded_" + parameter.elementName())
-                            .addContentLine(").path();");
-                }
-            }
-        }
-        String params = String.join(", ", parameters);
-        if (returnType.equals(TypeNames.STRING)) {
-            builder.addContent("return ")
-                    .addContent(List.class)
-                    .addContent(".of(")
-                    .addContent(MCP_RESOURCE_CONTENTS)
-                    .addContent(".textContent(delegate.")
-                    .addContent(element.elementName())
-                    .addContent("(")
-                    .addContent(params)
-                    .addContentLine(")));")
-                    .decreaseContentPadding()
-                    .addContentLine("};");
-            return;
-        }
-        builder.addContent("return delegate.")
-                .addContent(element.elementName())
-                .addContent("(")
-                .addContent(params)
-                .addContentLine(");")
-                .addContentLine("};");
-    }
-
-    private void generatePrompts(TypeName generatedType, ClassModel.Builder classModel, TypeInfo type) {
-        List<TypedElementInfo> elements = getElementsWithAnnotation(type, MCP_PROMPT);
-        if (elements.isEmpty()) {
-            return;
-        }
-
-        for (TypedElementInfo element : elements) {
-            TypeName innerTypeName = createClassName(generatedType, element, "__Prompt");
-            String description = element.annotation(MCP_PROMPT).value().orElse("");
-            List<TypeName> prompts = components.get(McpKind.PROMPT);
-            if (prompts.contains(innerTypeName)) {
-                logger.log(Level.WARNING,
-                           "Prompt '%s' already exists. Use @Mcp.Name or change the method name."
-                                   .formatted(element.elementName()));
-            }
-            components.get(McpKind.PROMPT).add(innerTypeName);
-
-            classModel.addInnerClass(clazz -> clazz
-                    .name(innerTypeName.className())
-                    .addInterface(MCP_PROMPT_INTERFACE)
-                    .accessModifier(AccessModifier.PRIVATE)
-                    .addMethod(method -> addPromptNameMethod(method, element))
-                    .addMethod(method -> addPromptDescriptionMethod(method, description))
-                    .addMethod(method -> addPromptArgumentsMethod(method, element))
-                    .addMethod(method -> addPromptMethod(method, classModel, element)));
-        }
-    }
-
-    private void addPromptNameMethod(Method.Builder builder, TypedElementInfo element) {
-        String name = element.findAnnotation(MCP_NAME)
-                .flatMap(Annotation::value)
-                .orElse(element.elementName());
-        builder.name("name")
-                .addAnnotation(Annotations.OVERRIDE)
-                .returnType(TypeNames.STRING)
-                .addContentLine("return \"" + name + "\";");
-    }
-
-    private void addPromptDescriptionMethod(Method.Builder builder, String description) {
-        builder.name("description")
-                .addAnnotation(Annotations.OVERRIDE)
-                .returnType(TypeNames.STRING)
-                .addContentLine("return \"" + description + "\";");
-    }
-
-    private void addPromptMethod(Method.Builder builder, ClassModel.Builder classModel, TypedElementInfo element) {
-        List<String> parameters = new ArrayList<>();
-        TypeName returnType = element.signature().type();
-        Optional<String> role = element.findAnnotation(MCP_ROLE)
-                .flatMap(annotation -> annotation.value());
-
-        builder.name("prompt")
-                .returnType(returned -> returned.type(FUNCTION_REQUEST_LIST_PROMPT_CONTENT))
-                .addAnnotation(Annotations.OVERRIDE);
-        builder.addContentLine("return request -> {");
-
-        boolean featuresLocalVar = false;
-        boolean parametersLocalVar = false;
-        for (TypedElementInfo param : element.parameterArguments()) {
-            if (MCP_REQUEST.equals(param.typeName())) {
-                parameters.add("request");
-                continue;
-            }
-            if (MCP_FEATURES.equals(param.typeName()) && !featuresLocalVar) {
-                addFeaturesLocalVar(builder, classModel);
-                parameters.add("features");
-                featuresLocalVar = true;
-                continue;
-            }
-            if (MCP_LOGGER.equals(param.typeName())) {
-                if (!featuresLocalVar) {
-                    addFeaturesLocalVar(builder, classModel);
-                    featuresLocalVar = true;
-                }
-                parameters.add("logger");
-                classModel.addImport(MCP_LOGGER);
-                builder.addContentLine("var logger = features.logger();");
-                continue;
-            }
-            if (MCP_PROGRESS.equals(param.typeName())) {
-                if (!featuresLocalVar) {
-                    addFeaturesLocalVar(builder, classModel);
-                    featuresLocalVar = true;
-                }
-                parameters.add("progress");
-                classModel.addImport(MCP_PROGRESS);
-                builder.addContentLine("var progress = features.progress();");
-                continue;
-            }
-            if (MCP_CANCELLATION.equals(param.typeName())) {
-                if (!featuresLocalVar) {
-                    addFeaturesLocalVar(builder, classModel);
-                    featuresLocalVar = true;
-                }
-                parameters.add("cancellation");
-                classModel.addImport(MCP_CANCELLATION);
-                builder.addContentLine("var cancellation = features.cancellation();");
-                continue;
-            }
-            if (MCP_SAMPLING.equals(param.typeName())) {
-                if (!featuresLocalVar) {
-                    addFeaturesLocalVar(builder, classModel);
-                    featuresLocalVar = true;
-                }
-                parameters.add("sampling");
-                classModel.addImport(MCP_SAMPLING);
-                builder.addContentLine("var sampling = features.sampling();");
-                continue;
-            }
-            if (MCP_ROOTS.equals(param.typeName())) {
-                if (!featuresLocalVar) {
-                    addFeaturesLocalVar(builder, classModel);
-                    featuresLocalVar = true;
-                }
-                parameters.add("roots");
-                classModel.addImport(MCP_ROOTS);
-                builder.addContentLine("var roots = features.roots();");
-                continue;
-            }
-            if (!parametersLocalVar) {
-                addParametersLocalVar(builder, classModel);
-                parametersLocalVar = true;
-            }
-            parameters.add(param.elementName());
-            builder.addContent(param.typeName().classNameWithEnclosingNames())
-                    .addContent(" ")
-                    .addContent(param.elementName())
-                    .addContent(" = parameters.get(\"")
-                    .addContent(param.elementName())
-                    .addContentLine("\").asString().orElse(\"\");");
-        }
-
-        String params = String.join(", ", parameters);
-        if (returnType.equals(TypeNames.STRING)) {
-            builder.addContent("return ")
-                    .addContent(List.class)
-                    .addContent(".of(")
-                    .addContent(MCP_PROMPT_CONTENTS)
-                    .addContent(".textContent(delegate.")
-                    .addContent(element.elementName())
-                    .addContent("(")
-                    .addContent(params)
-                    .addContent(")")
-                    .addContent(", ")
-                    .addContent(MCP_ROLE_ENUM)
-                    .addContent(".")
-                    .addContent(role.orElse("ASSISTANT"))
-                    .addContentLine("));")
-                    .decreaseContentPadding()
-                    .addContentLine("};");
-            return;
-        }
-        builder.addContent("return delegate.")
-                .addContent(element.elementName())
-                .addContent("(")
-                .addContent(params)
-                .addContentLine(");")
-                .decreaseContentPadding()
-                .addContentLine("};");
-    }
-
-    private void addPromptArgumentsMethod(Method.Builder builder, TypedElementInfo element) {
-        List<String> promptArgs = new ArrayList<>();
-        int index = 0;
-
-        builder.name("arguments")
-                .addAnnotation(Annotations.OVERRIDE)
-                .returnType(LIST_MCP_PROMPT_ARGUMENT);
-
-        for (TypedElementInfo param : element.parameterArguments()) {
-            if (isIgnoredSchemaElement(param.typeName())) {
-                continue;
-            }
-            String builderName = "builder" + index++;
-
-            builder.addContent("var ")
-                    .addContent(builderName)
-                    .addContent(" = ")
-                    .addContent(MCP_PROMPT_ARGUMENT)
-                    .addContentLine(".builder();");
-            builder.addContent(builderName)
-                    .addContent(".name(\"")
-                    .addContent(param.elementName())
-                    .addContentLine("\");");
-            builder.addContent(builderName)
-                    .addContentLine(".required(true);");
-
-            promptArgs.add(builderName + ".build()");
-
-            if (param.hasAnnotation(MCP_DESCRIPTION)) {
-                String description = param.annotation(MCP_DESCRIPTION).value().orElse("");
-                builder.addContent(builderName)
-                        .addContent(".description(\"")
-                        .addContent(description)
-                        .addContentLine("\");");
-                continue;
-            }
-            builder.addContent(builderName)
-                    .addContent(".description(\"")
-                    .addContent(param.elementName())
-                    .addContentLine("\");");
-        }
-        builder.addContent("return ")
-                .addContent(List.class)
-                .addContent(".of(")
-                .addContent(String.join(", ", promptArgs))
-                .addContent(");");
-    }
-
-    private void generateTools(TypeName generatedType, ClassModel.Builder classModel, TypeInfo type) {
-        List<TypedElementInfo> elements = getElementsWithAnnotation(type, MCP_TOOL);
-        if (elements.isEmpty()) {
-            return;
-        }
-
-        for (TypedElementInfo element : elements) {
-            TypeName innerTypeName = createClassName(generatedType, element, "__Tool");
-            Annotation toolAnnotation = element.annotation(MCP_TOOL);
-            String description = toolAnnotation.value().orElse("No description available.");
-            components.get(McpKind.TOOL).add(innerTypeName);
-
-            classModel.addInnerClass(clazz -> clazz
-                    .name(innerTypeName.className())
-                    .addInterface(MCP_TOOL_INTERFACE)
-                    .accessModifier(AccessModifier.PRIVATE)
-                    .addMethod(method -> addToolNameMethod(method, element))
-                    .addMethod(method -> addToolDescriptionMethod(method, description))
-                    .addMethod(method -> addToolSchemaMethod(method, element))
-                    .addMethod(method -> addToolMethod(method, classModel, element))
-                    .addMethod(method -> addToolAnnotationsMethod(method, toolAnnotation)));
-        }
-    }
-
-    private void addToolSchemaMethod(Method.Builder builder, TypedElementInfo element) {
-        Method.Builder method = builder.name("schema")
-                .returnType(TypeNames.STRING)
-                .addAnnotation(Annotations.OVERRIDE);
-
-        List<TypedElementInfo> fields = new ArrayList<>();
-        for (TypedElementInfo param : element.parameterArguments()) {
-            if (isIgnoredSchemaElement(param.typeName())) {
-                continue;
-            }
-            Optional<String> description = getDescription(param);
-            var field = TypedElementInfo.builder()
-                    .elementName(param.elementName())
-                    .typeName(param.typeName())
-                    .kind(ElementKind.FIELD)
-                    .accessModifier(AccessModifier.PUBLIC);
-            description.ifPresent(desc -> field.addAnnotation(Annotation.create(MCP_DESCRIPTION, desc)));
-            fields.add(field.build());
-        }
-
-        if (!fields.isEmpty()) {
-            addSchemaMethodBody(method, fields);
-        } else {
-            method.addContentLine("return \"\";");
-        }
-    }
-
-    private void addFeaturesLocalVar(Method.Builder builder, ClassModel.Builder classModel) {
-        classModel.addImport(MCP_FEATURES);
-        builder.addContentLine("McpFeatures features = request.features();");
-    }
-
-    private void addParametersLocalVar(Method.Builder builder, ClassModel.Builder classModel) {
-        classModel.addImport(MCP_PARAMETERS);
-        builder.addContentLine("McpParameters parameters = request.parameters();");
-    }
-
-    private void addToolMethod(Method.Builder builder, ClassModel.Builder classModel, TypedElementInfo element) {
-        List<String> parameters = new ArrayList<>();
-        TypeName returnType = element.signature().type();
-
-        builder.name("tool")
-                .returnType(returned -> returned.type(FUNCTION_REQUEST_LIST_TOOL_CONTENT))
-                .addAnnotation(Annotations.OVERRIDE);
-        builder.addContentLine("return request -> {");
-
-        for (TypedElementInfo param : element.parameterArguments()) {
-            if (MCP_REQUEST.equals(param.typeName())) {
-                parameters.add("request");
-                continue;
-            }
-            if (MCP_FEATURES.equals(param.typeName())) {
-                addFeaturesLocalVar(builder, classModel);
-                parameters.add("request.features()");
-                continue;
-            }
-            if (MCP_LOGGER.equals(param.typeName())) {
-                parameters.add("logger");
-                builder.addContentLine("var logger = request.features().logger();");
-                continue;
-            }
-            if (MCP_PROGRESS.equals(param.typeName())) {
-                parameters.add("progress");
-                classModel.addImport(MCP_PROGRESS);
-                builder.addContentLine("var progress = request.features().progress();");
-                continue;
-            }
-            if (MCP_CANCELLATION.equals(param.typeName())) {
-                parameters.add("cancellation");
-                classModel.addImport(MCP_CANCELLATION);
-                builder.addContentLine("var cancellation = request.features().cancellation();");
-                continue;
-            }
-            if (MCP_SAMPLING.equals(param.typeName())) {
-                parameters.add("sampling");
-                classModel.addImport(MCP_SAMPLING);
-                builder.addContentLine("var sampling = request.features().sampling();");
-                continue;
-            }
-            if (MCP_ROOTS.equals(param.typeName())) {
-                parameters.add("roots");
-                classModel.addImport(MCP_ROOTS);
-                builder.addContentLine("var roots = request.features().roots();");
-                continue;
-            }
-            if (TypeNames.STRING.equals(param.typeName())) {
-                parameters.add(param.elementName());
-                builder.addContent("var ")
-                        .addContent(param.elementName())
-                        .addContent(" = request.parameters().get(\"")
-                        .addContent(param.elementName())
-                        .addContentLine("\").asString().orElse(\"\");");
-                continue;
-            }
-            if (isBoolean(param.typeName())) {
-                parameters.add(param.elementName());
-                builder.addContent("boolean ")
-                        .addContent(param.elementName())
-                        .addContent(" = request.parameters().get(\"")
-                        .addContent(param.elementName())
-                        .addContentLine("\").asBoolean().orElse(false);");
-                continue;
-            }
-            if (isNumber(param.typeName())) {
-                parameters.add(param.elementName());
-                builder.addContent("var ")
-                        .addContent(param.elementName())
-                        .addContent(" = request.parameters().get(\"")
-                        .addContent(param.elementName())
-                        .addContent("\").as")
-                        .addContent(param.typeName().className())
-                        .addContentLine("().orElse(null);");
-                continue;
-            }
-            if (isList(param.typeName())) {
-                TypeName typeArg = param.typeName().typeArguments().getFirst();
-                addToListMethod(classModel, typeArg);
-                parameters.add(param.elementName());
-                builder.addContent("var ")
-                        .addContent(param.elementName())
-                        .addContent(" = toList(request.parameters().get(\"")
-                        .addContent(param.elementName())
-                        .addContentLine("\").asList().orElse(null));");
-                continue;
-            }
-            parameters.add(param.elementName());
-            builder.addContent(param.typeName().classNameWithEnclosingNames())
-                    .addContent(" ")
-                    .addContent(param.elementName())
-                    .addContent(" = request.parameters().get(\"")
-                    .addContent(param.elementName())
-                    .addContent("\").as(")
-                    .addContent(param.typeName())
-                    .addContentLine(".class).orElse(null);");
-        }
-
-        String params = String.join(", ", parameters);
-        if (returnType.equals(TypeNames.STRING)) {
-            classModel.addImport(MCP_TOOL_CONTENTS);
-            builder.addContent("return ")
-                    .addContent(List.class)
-                    .addContent(".of(")
-                    .addContent(MCP_TOOL_CONTENTS)
-                    .addContent(".textContent(delegate.")
-                    .addContent(element.elementName())
-                    .addContent("(")
-                    .addContent(params)
-                    .addContentLine(")));")
-                    .decreaseContentPadding()
-                    .addContentLine("};");
-            return;
-        }
-        builder.addContent("return delegate.")
-                .addContent(element.elementName())
-                .addContent("(")
-                .addContent(params)
-                .addContentLine(");")
-                .decreaseContentPadding()
-                .addContentLine("};");
-    }
-
-    private void addToolNameMethod(Method.Builder builder, TypedElementInfo element) {
-        String name = element.findAnnotation(MCP_NAME)
-                .flatMap(Annotation::value)
-                .orElse(element.elementName());
-        builder.name("name")
-                .addAnnotation(Annotations.OVERRIDE)
-                .returnType(TypeNames.STRING)
-                .addContent("return \"")
-                .addContent(name)
-                .addContentLine("\";");
-    }
-
-    private void addToolDescriptionMethod(Method.Builder builder, String description) {
-        builder.name("description")
-                .addAnnotation(Annotations.OVERRIDE)
-                .returnType(TypeNames.STRING)
-                .addContent("return \"")
-                .addContent(description)
-                .addContentLine("\";");
-    }
-
-    private void addToolAnnotationsMethod(Method.Builder builder, Annotation toolAnnotation) {
-        builder.name("annotations")
-                .addAnnotation(Annotations.OVERRIDE)
-                .returnType(McpTypes.MCP_TOOL_ANNOTATIONS)
-                .addContentLine("var builder = McpToolAnnotations.builder();")
-                .addContent("builder.title(\"")
-                .addContent(toolAnnotation.stringValue("title").orElse(""))
-                .addContentLine("\")")
-                .increaseContentPadding()
-                .addContent(".readOnlyHint(")
-                .addContent(toolAnnotation.booleanValue("readOnlyHint").orElse(false).toString())
-                .addContentLine(")")
-                .addContent(".destructiveHint(")
-                .addContent(toolAnnotation.booleanValue("destructiveHint").orElse(true).toString())
-                .addContentLine(")")
-                .addContent(".idempotentHint(")
-                .addContent(toolAnnotation.booleanValue("idempotentHint").orElse(false).toString())
-                .addContentLine(")")
-                .addContent(".openWorldHint(")
-                .addContent(toolAnnotation.booleanValue("openWorldHint").orElse(true).toString())
-                .addContentLine(");")
-                .decreaseContentPadding()
-                .addContentLine("return builder.build();");
-    }
-
-    private void generateSubscribers(TypeName generatedType, ClassModel.Builder classModel, TypeInfo type) {
-        List<TypedElementInfo> subscribers = getElementsWithAnnotation(type, MCP_RESOURCE_SUBSCRIBER);
-
-        if (!subscribers.isEmpty()) {
-            classModel.addImport(MCP_RESOURCE_SUBSCRIBER_INTERFACE);
-
-            for (TypedElementInfo element : subscribers) {
-                TypeName innerTypeName = createClassName(generatedType, element, "__ResourceSubscriber");
-                Annotation mcpCompletion = element.annotation(MCP_RESOURCE_SUBSCRIBER);
-                String uri = mcpCompletion.value().orElse("");
-
-                components.get(McpKind.SUBSCRIBER).add(innerTypeName);
-                classModel.addInnerClass(clazz -> clazz
-                        .name(innerTypeName.className())
-                        .addInterface(MCP_RESOURCE_SUBSCRIBER_INTERFACE)
-                        .accessModifier(AccessModifier.PRIVATE)
-                        .addMethod(method -> addSubscriberUriMethod(method, uri))
-                        .addMethod(method -> addSubscriberMethod(method, element, "subscribe")));
-            }
-        }
-
-        List<TypedElementInfo> unsubscribers = getElementsWithAnnotation(type, MCP_RESOURCE_UNSUBSCRIBER);
-        if (!unsubscribers.isEmpty()) {
-            classModel.addImport(MCP_RESOURCE_UNSUBSCRIBER_INTERFACE);
-
-            for (TypedElementInfo element : unsubscribers) {
-                TypeName innerTypeName = createClassName(generatedType, element, "__ResourceUnsubscriber");
-                Annotation mcpCompletion = element.annotation(MCP_RESOURCE_UNSUBSCRIBER);
-                String uri = mcpCompletion.value().orElse("");
-
-                components.get(McpKind.UNSUBSCRIBER).add(innerTypeName);
-                classModel.addInnerClass(clazz -> clazz
-                        .name(innerTypeName.className())
-                        .addInterface(MCP_RESOURCE_UNSUBSCRIBER_INTERFACE)
-                        .accessModifier(AccessModifier.PRIVATE)
-                        .addMethod(method -> addSubscriberUriMethod(method, uri))
-                        .addMethod(method -> addSubscriberMethod(method, element, "unsubscribe")));
-            }
-        }
-    }
-
-    private void addSubscriberUriMethod(Method.Builder builder, String uri) {
-        builder.name("uri")
-                .addAnnotation(Annotations.OVERRIDE)
-                .returnType(TypeNames.STRING)
-                .addContentLine("return \"" + uri + "\";");
-    }
-
-    private void addSubscriberMethod(Method.Builder builder, TypedElementInfo element, String methodName) {
-        List<String> parameters = new ArrayList<>();
-
-        builder.name(methodName)
-                .addAnnotation(Annotations.OVERRIDE)
-                .returnType(returned -> returned.type(CONSUMER_REQUEST));
-        builder.addContentLine("return request -> {");
-
-        for (TypedElementInfo parameter : element.parameterArguments()) {
-            if (MCP_REQUEST.equals(parameter.typeName())) {
-                parameters.add("request");
-                continue;
-            }
-            if (MCP_FEATURES.equals(parameter.typeName())) {
-                parameters.add("request.features()");
-                continue;
-            }
-            if (MCP_LOGGER.equals(parameter.typeName())) {
-                parameters.add("request.features().logger()");
-            }
-        }
-        String params = String.join(", ", parameters);
-        builder.addContent("delegate.")
-                .addContent(element.elementName())
-                .addContent("(")
-                .addContent(params)
-                .addContentLine(");")
-                .decreaseContentPadding()
-                .addContentLine("};");
-    }
-
-    private void addToListMethod(ClassModel.Builder classModel, TypeName type) {
-        Method.Builder method = Method.builder();
-        TypeName typeList = TypeName.create("java.util.List<" + type + ">");
-        TypeName parameterList = TypeName.create("java.util.List<" + MCP_PARAMETERS + ">");
-        method.name("toList")
-                .isStatic(true)
-                .accessModifier(AccessModifier.PRIVATE)
-                .returnType(typeList);
-        method.addParameter(Parameter.builder().name("list").type(parameterList).build());
-        method.addContentLine("return list == null ? List.of()");
-        method.increaseContentPadding();
-        method.addContentLine(": list.stream().map(p -> p.as(" + type + ".class))");
-        method.increaseContentPadding();
-        method.addContentLine(".map(p -> p.get()).toList();");
-        classModel.addMethod(method.build());
-    }
-
-    private boolean isBoolean(TypeName type) {
-        return TypeNames.PRIMITIVE_BOOLEAN.equals(type) || TypeNames.BOXED_BOOLEAN.equals(type);
-    }
-
-    private boolean isNumber(TypeName type) {
-        return TypeNames.BOXED_INT.equals(type)
-                || TypeNames.BOXED_BYTE.equals(type)
-                || TypeNames.BOXED_LONG.equals(type)
-                || TypeNames.BOXED_FLOAT.equals(type)
-                || TypeNames.BOXED_SHORT.equals(type)
-                || TypeNames.BOXED_DOUBLE.equals(type)
-                || TypeNames.PRIMITIVE_INT.equals(type)
-                || TypeNames.PRIMITIVE_BYTE.equals(type)
-                || TypeNames.PRIMITIVE_LONG.equals(type)
-                || TypeNames.PRIMITIVE_FLOAT.equals(type)
-                || TypeNames.PRIMITIVE_SHORT.equals(type)
-                || TypeNames.PRIMITIVE_DOUBLE.equals(type);
-    }
-
-    private boolean isList(TypeName type) {
-        return type.equals(TypeNames.LIST) && type.typeArguments().size() == 1;
-    }
-
-    private TypeName createClassName(TypeName generatedType, TypedElementInfo element, String suffix) {
-        return TypeName.builder()
-                .className(element.findAnnotation(MCP_NAME)
-                                   .flatMap(name -> name.value())
-                                   .orElse(element.elementName()) + suffix)
-                .addEnclosingName(generatedType.className())
-                .packageName(generatedType.packageName())
-                .build();
-    }
-
-    private List<TypedElementInfo> getElementsWithAnnotation(TypeInfo type, TypeName target) {
-        return type.elementInfo().stream()
-                .filter(element -> element.hasAnnotation(target))
-                .collect(Collectors.toList());
-    }
-
-    private TypeName generatedTypeName(TypeName factoryTypeName, String suffix) {
-        return TypeName.builder()
-                .packageName(factoryTypeName.packageName())
-                .className(factoryTypeName.classNameWithEnclosingNames().replace('.', '_') + "__" + suffix)
-                .build();
-    }
-
-    private boolean isIgnoredSchemaElement(TypeName typeName) {
-        return MCP_REQUEST.equals(typeName)
-                || MCP_ROOTS.equals(typeName)
-                || MCP_LOGGER.equals(typeName)
-                || MCP_FEATURES.equals(typeName)
-                || MCP_PROGRESS.equals(typeName)
-                || MCP_SAMPLING.equals(typeName)
-                || MCP_CANCELLATION.equals(typeName);
-    }
-
-    private boolean isResourceTemplate(String uri) {
-        return uri.contains("{") || uri.contains("}");
-    }
-
-    private void initializeComponents() {
-        components.put(McpKind.TOOL, new LinkedList<>());
-        components.put(McpKind.PROMPT, new LinkedList<>());
-        components.put(McpKind.RESOURCE, new LinkedList<>());
-        components.put(McpKind.COMPLETION, new LinkedList<>());
-        components.put(McpKind.SUBSCRIBER, new LinkedList<>());
-        components.put(McpKind.UNSUBSCRIBER, new LinkedList<>());
-
-    }
-
-    private enum McpKind {
-        TOOL("addTool"),
-        RESOURCE("addResource"),
-        PROMPT("addPrompt"),
-        COMPLETION("addCompletion"),
-        SUBSCRIBER("addResourceSubscriber"),
-        UNSUBSCRIBER("addResourceUnsubscriber"),;
-
-        private final String methodName;
-
-        McpKind(String methodName) {
-            this.methodName = methodName;
-        }
-    }
 }
