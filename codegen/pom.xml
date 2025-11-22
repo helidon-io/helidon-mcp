@@ -43,10 +43,6 @@
             <groupId>io.helidon.service</groupId>
             <artifactId>helidon-service-codegen</artifactId>
         </dependency>
-        <dependency>
-            <groupId>io.helidon.json.schema</groupId>
-            <artifactId>helidon-json-schema</artifactId>
-        </dependency>
     </dependencies>
 
     <build>
