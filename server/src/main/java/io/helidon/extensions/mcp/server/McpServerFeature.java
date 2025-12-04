@@ -35,6 +35,7 @@ import io.helidon.config.Config;
 import io.helidon.cors.CrossOriginConfig;
 import io.helidon.http.HeaderName;
 import io.helidon.http.HeaderNames;
+import io.helidon.http.HeaderValues;
 import io.helidon.http.ServerRequestHeaders;
 import io.helidon.http.Status;
 import io.helidon.http.sse.SseEvent;
@@ -303,6 +304,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             response.status(Status.METHOD_NOT_ALLOWED_405).send();
         } else {
             String sessionId = UUID.randomUUID().toString();
+            response.header(HeaderValues.CONTENT_TYPE_EVENT_STREAM);
             McpSession session = new McpSession(sessions, capabilities, config);
             session.context().register(McpRoots.McpRootClassifier.class, true);
             sessions.put(sessionId, session);
@@ -438,6 +440,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             String protocolVersion = parseClientVersion(params);
             session.protocolVersion(protocolVersion);
             res.header(SESSION_ID_HEADER, sessionId);
+            res.header(HeaderValues.CONTENT_TYPE_JSON);
             res.result(toJson(protocolVersion, capabilities, config));
             if (LOGGER.isLoggable(Level.TRACE)) {
                 LOGGER.log(Level.TRACE, "Streamable HTTP transport");
@@ -838,7 +841,6 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 res.result(JsonValue.EMPTY_JSON_OBJECT);
                 sendResponse(req, res, session, features, requestId);
                 return;
-
             } catch (IllegalArgumentException e) {
                 // falls through
             }
@@ -950,6 +952,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         }
 
         if (isStreamableHttp(req.headers())) {
+            res.header(HeaderValues.CONTENT_TYPE_JSON);
             res.send();
         } else {
             session.send(res);
@@ -994,6 +997,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         if (isStreamableHttp(req.headers())) {
             if (sseSink != null) {
                 try (sseSink) {        // closes sink
+                    res.header(HeaderValues.CONTENT_TYPE_EVENT_STREAM);
                     JsonObject jsonObject = res.asJsonObject();
                     sseSink.emit(SseEvent.builder()
                                       .name("message")
@@ -1001,6 +1005,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                                       .build());
                 }
             } else {
+                res.header(HeaderValues.CONTENT_TYPE_JSON);
                 res.send();
             }
         } else {
@@ -1081,6 +1086,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         // Look up session to send an error to the client
         var session = findSession(request);
         if (session.isEmpty()) {
+            response.header(HeaderValues.CONTENT_TYPE_JSON);
             return Optional.of(JsonRpcError.create(INTERNAL_ERROR, "Session not found"));
         }
         SseSink sseSink = null;
@@ -1099,6 +1105,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 LOGGER.log(Level.TRACE, "Response:\n" + prettyPrint(response.asJsonObject()));
             }
             session.get().clearRequest(requestId);
+            response.header(HeaderValues.CONTENT_TYPE_JSON);
             return response.error();
         }
         sendResponse(request, response, session.get(), requestId, sseSink);
