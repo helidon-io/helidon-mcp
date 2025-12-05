@@ -24,7 +24,7 @@
     <parent>
         <groupId>io.helidon.extensions.mcp.examples</groupId>
         <artifactId>helidon4-extensions-mcp-examples-project</artifactId>
-        <version>1.0.3-SNAPSHOT</version>
+        <version>1.0.3</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
