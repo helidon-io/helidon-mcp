@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.3]
+
+This release of Helidon MCP contains bugfixes, dependency upgrades and is recommended for all users.
+
+### NOTABLE CHANGES
+
+- MCP Roots feature support
+- MCP Sampling feature support
+- MCP Name annotation can override MCP component names
+
+### CHANGES
+
+- Include proper Content-Type header to client responses [99](https://github.com/helidon-io/helidon-mcp/pull/99)
+- Support @Mcp.Name to override MCP component name [95](https://github.com/helidon-io/helidon-mcp/pull/95)
+- Add MCP Roots feature [93](https://github.com/helidon-io/helidon-mcp/pull/93)
+- Add Sampling feature [90](https://github.com/helidon-io/helidon-mcp/pull/90)
+- Add a new completion content factory method [89](https://github.com/helidon-io/helidon-mcp/pull/89)
+
 ## [1.0.2]
 
 This release of Helidon MCP contains bugfixes and dependency upgrades and is recommended for all users. The calendar declarative
@@ -98,6 +116,7 @@ Requirements:
 
 Initial release.
 
+[1.0.3]: https://github.com/helidon-io/helidon-mcp/compare/1.0.2...1.0.3
 [1.0.2]: https://github.com/helidon-io/helidon-mcp/compare/1.0.1...1.0.2
 [1.0.1]: https://github.com/helidon-io/helidon-mcp/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/helidon-io/helidon-mcp/compare/1.0.0-M2...1.0.0
