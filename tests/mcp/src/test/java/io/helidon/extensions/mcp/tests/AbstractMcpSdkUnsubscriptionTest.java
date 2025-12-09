@@ -45,7 +45,7 @@ abstract class AbstractMcpSdkUnsubscriptionTest extends AbstractMcpSdkTest {
     }
 
     @Test
-    void testSubscription() throws InterruptedException {
+    void testUnSubscription() throws InterruptedException {
         MultipleResource.State state = context().get(MultipleResource.State.class).orElseThrow();
         CountDownLatch subscribeLatch = new CountDownLatch(1);
         async(() -> {

@@ -15,29 +15,19 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import io.helidon.common.LazyValue;
+
 /**
- * MCP request feature base class.
+ * MCP session feature are instantiated only once when creating a new session.
  */
-abstract class McpFeature {
-    /**
-     * MCP session to access client information.
-     */
-    private final McpSession session;
-    /**
-     * MCP transport to access request transport.
-     */
-    private final McpTransport transport;
+class McpSessionFeatures {
+    private final LazyValue<McpSubscriptions> subscriptions;
 
-    McpFeature(McpSession session, McpTransport transport) {
-        this.session = session;
-        this.transport = transport;
+    McpSessionFeatures(McpSession session) {
+        this.subscriptions = LazyValue.create(() -> new McpSubscriptions(session));
     }
 
-    McpSession session() {
-        return session;
-    }
-
-    McpTransport transport() {
-        return transport;
+    McpSubscriptions subscriptions() {
+        return subscriptions.get();
     }
 }

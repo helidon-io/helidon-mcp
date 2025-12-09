@@ -15,17 +15,9 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.lang.System.Logger.Level;
 import java.util.function.Consumer;
 
-import io.helidon.http.sse.SseEvent;
-import io.helidon.webserver.sse.SseSink;
-
 import jakarta.json.JsonObject;
-
-import static io.helidon.extensions.mcp.server.McpJsonRpc.createSamplingRequest;
-import static io.helidon.extensions.mcp.server.McpJsonRpc.createSamplingResponse;
-import static io.helidon.extensions.mcp.server.McpJsonRpc.prettyPrint;
 
 /**
  * MCP Sampling feature.
@@ -34,14 +26,9 @@ public final class McpSampling extends McpFeature {
     private static final System.Logger LOGGER = System.getLogger(McpSampling.class.getName());
     private final boolean enabled;
 
-    McpSampling(McpSession session) {
-        super(session);
-        this.enabled = session().capabilities().contains(McpCapability.SAMPLING);
-    }
-
-    McpSampling(McpSession session, SseSink sseSink) {
-        super(session, sseSink);
-        this.enabled = session().capabilities().contains(McpCapability.SAMPLING);
+    McpSampling(McpSession session, McpTransport transport) {
+        super(session, transport);
+        this.enabled = session.capability().contains(McpCapability.SAMPLING);
     }
 
     /**
@@ -79,20 +66,9 @@ public final class McpSampling extends McpFeature {
             throw new McpSamplingException("Sampling feature is not supported by client");
         }
         long id = session().jsonRpcId();
-        JsonObject payload = createSamplingRequest(id, request);
-
-        if (LOGGER.isLoggable(Level.DEBUG)) {
-            LOGGER.log(Level.DEBUG, "Sampling request:\n" + prettyPrint(payload));
-        }
-        sseSink().ifPresentOrElse(sink -> sink.emit(SseEvent.builder()
-                                            .name("message")
-                                            .data(payload)
-                                            .build()),
-                                  () -> session().send(payload));
+        JsonObject payload = session().serializer().createSamplingRequest(id, request);
+        transport().send(payload);
         JsonObject response = session().pollResponse(id, request.timeout());
-        if (LOGGER.isLoggable(Level.DEBUG)) {
-            LOGGER.log(Level.DEBUG, "Sampling response:\n" + prettyPrint(response));
-        }
-        return createSamplingResponse(response);
+        return session().serializer().createSamplingResponse(response);
     }
 }

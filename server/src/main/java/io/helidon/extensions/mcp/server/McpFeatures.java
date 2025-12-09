@@ -13,15 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.helidon.extensions.mcp.server;
 
 import java.util.Objects;
-import java.util.Optional;
 
 import io.helidon.common.LazyValue;
-import io.helidon.webserver.jsonrpc.JsonRpcResponse;
-import io.helidon.webserver.sse.SseSink;
 
 /**
  * Support for optional client features:
@@ -54,41 +50,22 @@ import io.helidon.webserver.sse.SseSink;
  * </ul>
  */
 public final class McpFeatures {
-    private final LazyValue<McpCancellation> cancellation = LazyValue.create(McpCancellation::new);
-    private final JsonRpcResponse response;
-    private final McpServerConfig config;
     private final McpSession session;
+    private final LazyValue<McpRoots> roots;
+    private final LazyValue<McpLogger> logger;
+    private final LazyValue<McpSampling> sampling;
+    private final LazyValue<McpProgress> progress;
+    private final LazyValue<McpCancellation> cancellation;
 
-    private McpRoots roots;
-    private SseSink sseSink;
-    private McpLogger logger;
-    private McpSampling sampling;
-    private McpProgress progress;
-    private McpSubscriptions subscriptions;
-
-    McpFeatures(McpServerConfig config, McpSession session) {
+    McpFeatures(McpSession session, McpTransport transport) {
         Objects.requireNonNull(session, "session is null");
+        Objects.requireNonNull(transport, "transport is null");
         this.session = session;
-        this.response = null;
-        this.config = config;
-    }
-
-    McpFeatures(McpServerConfig config, McpSession session, JsonRpcResponse response) {
-        Objects.requireNonNull(response, "response is null");
-        Objects.requireNonNull(session, "session is null");
-        this.response = response;
-        this.session = session;
-        this.config = config;
-    }
-
-    McpFeatures(McpServerConfig config, McpSession session, JsonRpcResponse response, SseSink sseSink) {
-        Objects.requireNonNull(response, "response is null");
-        Objects.requireNonNull(session, "session is null");
-        Objects.requireNonNull(sseSink, "sseSink is null");
-        this.response = response;
-        this.session = session;
-        this.sseSink = sseSink;
-        this.config = config;
+        this.cancellation = LazyValue.create(McpCancellation::new);
+        this.roots = LazyValue.create(() -> new McpRoots(session, transport));
+        this.logger = LazyValue.create(() -> new McpLogger(session, transport));
+        this.sampling = LazyValue.create(() -> new McpSampling(session, transport));
+        this.progress = LazyValue.create(() -> new McpProgress(session, transport));
     }
 
     /**
@@ -97,15 +74,7 @@ public final class McpFeatures {
      * @return the MCP progress
      */
     public McpProgress progress() {
-        if (progress == null) {
-            if (response != null) {
-                sseSink = getOrCreateSseSink();
-                progress = new McpProgress(session, sseSink);
-            } else {
-                progress = new McpProgress(session);
-            }
-        }
-        return progress;
+        return progress.get();
     }
 
     /**
@@ -114,15 +83,7 @@ public final class McpFeatures {
      * @return the MCP logger
      */
     public McpLogger logger() {
-        if (logger == null) {
-            if (response != null) {
-                sseSink = getOrCreateSseSink();
-                logger = new McpLogger(session, sseSink);
-            } else {
-                logger = new McpLogger(session);
-            }
-        }
-        return logger;
+        return logger.get();
     }
 
     /**
@@ -131,15 +92,7 @@ public final class McpFeatures {
      * @return the MCP roots
      */
     public McpRoots roots() {
-        if (roots == null) {
-            if (response != null) {
-                sseSink = getOrCreateSseSink();
-                roots = new McpRoots(config, session, sseSink);
-            } else {
-                roots = new McpRoots(config, session);
-            }
-        }
-        return roots;
+        return roots.get();
     }
 
     /**
@@ -148,27 +101,7 @@ public final class McpFeatures {
      * @return the MCP sampling
      */
     public McpSampling sampling() {
-        if (sampling == null) {
-            if (response != null) {
-                sseSink = getOrCreateSseSink();
-                sampling = new McpSampling(session, sseSink);
-            } else {
-                sampling = new McpSampling(session);
-            }
-        }
-        return sampling;
-    }
-
-    /**
-     * Get a {@link io.helidon.extensions.mcp.server.McpSubscriptions} feature.
-     *
-     * @return the MCP subscriptions
-     */
-    public McpSubscriptions subscriptions() {
-        if (subscriptions == null) {
-            subscriptions = new McpSubscriptions(session);
-        }
-        return subscriptions;
+        return sampling.get();
     }
 
     /**
@@ -181,21 +114,11 @@ public final class McpFeatures {
     }
 
     /**
-     * Get access to underlying SSE sink, if available. This method is package private.
+     * Get a {@link io.helidon.extensions.mcp.server.McpSubscriptions} feature.
      *
-     * @return optional SSE sink
+     * @return the MCP subscriptions
      */
-    Optional<SseSink> sseSink() {
-        return Optional.ofNullable(sseSink);
-    }
-
-    /**
-     * Get or create an SSE sink for this instance.
-     *
-     * @return the SSE sink
-     */
-    private SseSink getOrCreateSseSink() {
-        Objects.requireNonNull(response, "response is null");
-        return sseSink != null ? sseSink : response.sink(SseSink.TYPE);
+    public McpSubscriptions subscriptions() {
+        return session.features().subscriptions();
     }
 }

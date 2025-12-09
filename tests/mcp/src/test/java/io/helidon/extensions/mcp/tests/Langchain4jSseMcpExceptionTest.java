@@ -21,14 +21,14 @@ import io.helidon.webserver.testing.junit5.ServerTest;
 
 import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.transport.McpTransport;
-import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
+import dev.langchain4j.mcp.client.transport.http.HttpMcpTransport;
 
 @ServerTest
 class Langchain4jSseMcpExceptionTest extends AbstractLangchain4jMcpExceptionTest {
 
     Langchain4jSseMcpExceptionTest(WebServer server) {
-        McpTransport transport = new StreamableHttpMcpTransport.Builder()
-                .url("http://localhost:" + server.port())
+        McpTransport transport = new HttpMcpTransport.Builder()
+                .sseUrl("http://localhost:" + server.port())
                 .logRequests(true)
                 .logResponses(true)
                 .build();

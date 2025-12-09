@@ -65,7 +65,9 @@ public final class McpCancellation {
      */
     void cancel(String reason, JsonValue requestId) {
         if (!hook.isLoaded()) {
-            LOGGER.log(Level.DEBUG, "Cancelling task with request id: %s", requestId);
+            if (LOGGER.isLoggable(Level.DEBUG)) {
+                LOGGER.log(Level.DEBUG, "Cancelling task with request id: %s", requestId);
+            }
             result = new McpCancellationResult(true, reason);
             hook.get().run();
         }

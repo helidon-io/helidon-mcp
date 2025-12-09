@@ -15,21 +15,28 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.util.Optional;
+import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-import io.helidon.http.sse.SseEvent;
-import io.helidon.webserver.sse.SseSink;
-
-import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
 
 /**
  * Subscriptions feature used to send resource update notifications
  * to subscribed clients.
  */
 public final class McpSubscriptions extends McpFeature {
+    private static final System.Logger LOGGER = System.getLogger(McpSubscriptions.class.getName());
+    private final Duration timeout;
+    private final Map<String, McpTransport> subscriptions;
 
     McpSubscriptions(McpSession session) {
-        super(session);
+        super(session, null);
+        this.subscriptions = new ConcurrentHashMap<>();
+        this.timeout = session.context()
+                .get(McpServerConfigBlueprint.class, McpServerConfig.class)
+                .orElseThrow(() -> new McpInternalException("MCP server configuration not found"))
+                .subscriptionTimeout();
     }
 
     /**
@@ -40,7 +47,7 @@ public final class McpSubscriptions extends McpFeature {
     public void sendUpdate(String uri) {
         McpSessions sessions = session().sessions();
         for (McpSession session : sessions) {
-            sendNotification(session, uri);
+            session.features().subscriptions().sendSessionUpdate(uri);
         }
     }
 
@@ -51,28 +58,46 @@ public final class McpSubscriptions extends McpFeature {
      * @param uri the resource URI
      */
     public void sendSessionUpdate(String uri) {
-        sendNotification(session(), uri);
+        if (subscriptions.containsKey(uri)) {
+            var notification = session().serializer().createUpdateNotification(uri);
+            subscriptions.get(uri).send(notification);
+        }
     }
 
-    /**
-     * Resource update for a subscriber in the given session.
-     *
-     * @param session the session
-     * @param uri resource URI
-     */
-    private void sendNotification(McpSession session, String uri) {
-        if (session.hasSubscription(uri)) {
-            Optional<SseSink> sseSink = session.findSubscription(uri);
-            JsonObject notification = McpJsonRpc.createUpdateNotification(uri);
-            SseEvent event = SseEvent.builder()
-                    .name("message")
-                    .data(notification)
-                    .build();
-            if (sseSink.isPresent()) {
-                sseSink.get().emit(event);
-            } else {
-                session().send(notification);
+    void subscribe(JsonValue id, String uri) {
+        if (subscriptions.get(uri) != null) {
+            if (LOGGER.isLoggable(System.Logger.Level.DEBUG)) {
+                LOGGER.log(System.Logger.Level.DEBUG, "Found existing subscription for " + uri);
             }
+            return;
         }
+        McpTransport transport = session().transport(id).orElseThrow(() -> new McpInternalException("Transport not found"));
+        subscriptions.putIfAbsent(uri, transport);
+        if (LOGGER.isLoggable(System.Logger.Level.DEBUG)) {
+            LOGGER.log(System.Logger.Level.DEBUG, "New subscription for " + uri);
+        }
+    }
+
+    void unsubscribe(String uri) {
+        McpTransport transport = subscriptions.remove(uri);
+        if (transport == null) {
+            if (LOGGER.isLoggable(System.Logger.Level.DEBUG)) {
+                LOGGER.log(System.Logger.Level.DEBUG, "No subscription found for " + uri);
+            }
+            return;
+        }
+        transport.unblock();
+        if (LOGGER.isLoggable(System.Logger.Level.DEBUG)) {
+            LOGGER.log(System.Logger.Level.DEBUG, "Removed subscription for " + uri);
+        }
+    }
+
+    void blockSubscribe(String uri) {
+        if (subscriptions.containsKey(uri)) {
+            subscriptions.get(uri).block(timeout);
+        }
+    }
+
+    static final class McpSubscriptionsQualifier {
     }
 }

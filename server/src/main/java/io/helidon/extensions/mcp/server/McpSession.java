@@ -13,91 +13,122 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.helidon.extensions.mcp.server;
 
 import java.lang.System.Logger.Level;
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
+import io.helidon.common.LazyValue;
 import io.helidon.common.LruCache;
 import io.helidon.common.UncheckedException;
 import io.helidon.common.context.Context;
-import io.helidon.http.Status;
+import io.helidon.webserver.http.ServerResponse;
 import io.helidon.webserver.jsonrpc.JsonRpcRequest;
 import io.helidon.webserver.jsonrpc.JsonRpcResponse;
-import io.helidon.webserver.sse.SseSink;
 
 import jakarta.json.JsonObject;
 import jakarta.json.JsonValue;
 
-import static io.helidon.extensions.mcp.server.McpJsonRpc.timeoutResponse;
-import static io.helidon.extensions.mcp.server.McpServerFeature.isStreamableHttp;
+import static io.helidon.extensions.mcp.server.McpJsonSerializer.prettyPrint;
 import static io.helidon.extensions.mcp.server.McpSession.State.UNINITIALIZED;
 
 class McpSession {
     private static final System.Logger LOGGER = System.getLogger(McpSession.class.getName());
 
+    private final String id;
     private final McpSessions sessions;
-    private final McpServerConfig config;
-    private final Set<McpCapability> capabilities;
     private final Context context = Context.create();
+    private final Set<McpCapability> clientCapabilities;
+    private final McpTransportLifecycle transportListener;
     private final AtomicLong jsonRpcId = new AtomicLong(0);
+    private final List<McpFeatureLifecycle> featureListeners;
+    private final LazyValue<McpSessionFeatures> sessionFeatures;
     private final AtomicBoolean active = new AtomicBoolean(true);
-    private final BlockingQueue<JsonObject> queue = new LinkedBlockingQueue<>();
-    private final BlockingQueue<JsonObject> responses = new LinkedBlockingQueue<>();
     private final LruCache<JsonValue, McpFeatures> features = LruCache.create();
+    private final LruCache<JsonValue, McpTransport> transports = LruCache.create();
+    private final BlockingQueue<JsonObject> responses = new LinkedBlockingQueue<>();
 
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private final Map<String, McpSession> sseSubscriptions = new HashMap<>();
-    private final Map<String, SseSink> streamableSubscriptions = new HashMap<>();
-    private final Map<String, CountDownLatch> threadSubscriptions = new ConcurrentHashMap<>();
-
-    private volatile String protocolVersion;
+    private McpJsonSerializer serializer;
     private volatile State state = UNINITIALIZED;
+    private volatile McpProtocolVersion protocolVersion;
 
-    McpSession(McpSessions sessions, McpServerConfig config) {
-        this(sessions, new HashSet<>(), config);
-    }
-
-    McpSession(McpSessions sessions, Set<McpCapability> capabilities, McpServerConfig config) {
+    McpSession(McpSessions sessions, McpTransportLifecycle transportListener, McpServerConfig config, String id) {
+        this.id = id;
         this.sessions = sessions;
-        this.capabilities = capabilities;
-        this.config = config;
+        this.transportListener = transportListener;
+        this.clientCapabilities = new HashSet<>();
+        this.featureListeners = new CopyOnWriteArrayList<>();
+        this.featureListeners.add(new McpProgress.McpProgressListener());
+        this.sessionFeatures = LazyValue.create(() -> new McpSessionFeatures(this));
+        context.register(McpServerConfigBlueprint.class, config);
     }
 
-    McpSessions sessions() {
-        return sessions;
+    void send(JsonValue id, JsonRpcResponse response) {
+        transports.get(id)
+                .orElseThrow(() -> new McpInternalException("No transport for id " + id))
+                .send(response);
+        transports.remove(id);
     }
 
-    void poll(Consumer<JsonObject> consumer) {
-        while (active.get()) {
-            try {
-                JsonObject message = queue.take();
-                if (message.getBoolean("disconnect", false)) {
-                    log(Level.TRACE, () -> "Session disconnected.");
-                    break;
-                }
-                consumer.accept(message);
-            } catch (Exception e) {
-                log(Level.TRACE, () -> "Session interrupted.");
-            }
+    void onConnect(ServerResponse response) {
+        context.register(McpRoots.McpRootClassifier.class, true);
+        transportListener.onConnect(response);
+    }
+
+    void onDisconnect(ServerResponse response) {
+        active.compareAndSet(true, false);
+        sessions.remove(id);
+        transportListener.onDisconnect(response);
+    }
+
+    McpSession onRequest(JsonValue id, JsonRpcRequest req, JsonRpcResponse res) {
+        if (transports.get(id).isEmpty()) {
+            McpTransport transport = transportListener.onRequest(req, res);
+            transports.put(id, transport);
         }
+        return this;
+    }
+
+    void beforeFeatureRequest(McpParameters parameters, JsonValue requestId) {
+        features.get(requestId).ifPresent(feature -> {
+            for (McpFeatureLifecycle listener : featureListeners) {
+                listener.beforeRequest(parameters, feature);
+            }
+        });
+    }
+
+    void afterFeatureRequest(McpParameters parameters, JsonValue requestId) {
+        features.get(requestId).ifPresent(feature -> {
+            for (McpFeatureLifecycle listener : featureListeners) {
+                listener.beforeRequest(parameters, feature);
+            }
+        });
+    }
+
+    void acceptResponse(JsonObject response) {
+        try {
+            responses.put(response);
+        } catch (InterruptedException e) {
+            throw new UncheckedException(e);
+        }
+    }
+
+    McpFeatures createFeatures(JsonValue requestId, JsonRpcRequest request, JsonRpcResponse response) {
+        var transport = transports.get(requestId)
+                .orElseThrow(() -> new McpInternalException("No transport for request id " + requestId));
+        McpFeatures feat = new McpFeatures(this, transport);
+        features.put(requestId, feat);
+        return feat;
     }
 
     JsonObject pollResponse(long requestId, Duration timeout) {
@@ -105,12 +136,15 @@ class McpSession {
             try {
                 JsonObject response = responses.poll(timeout.toMillis(), TimeUnit.MILLISECONDS);
                 if (response != null) {
+                    if (LOGGER.isLoggable(System.Logger.Level.DEBUG)) {
+                        LOGGER.log(System.Logger.Level.DEBUG, "Response:\n" + prettyPrint(response));
+                    }
                     long id = response.getJsonNumber("id").longValue();
                     if (id == requestId) {
                         return response;
                     }
                 } else {
-                    return timeoutResponse(requestId);
+                    return serializer.timeoutResponse(requestId);
                 }
             } catch (ClassCastException e) {
                 if (LOGGER.isLoggable(Level.TRACE)) {
@@ -121,54 +155,6 @@ class McpSession {
             }
         }
         throw new McpInternalException("Session disconnected");
-    }
-
-    void send(JsonObject message) {
-        try {
-            queue.put(message);
-        } catch (InterruptedException e) {
-            throw new UncheckedException(e);
-        }
-    }
-
-    void send(JsonRpcResponse response) {
-        send(response.status(Status.ACCEPTED_202).asJsonObject());
-    }
-
-    void sendResponse(JsonObject response) {
-        try {
-            responses.put(response);
-        } catch (InterruptedException e) {
-            throw new UncheckedException(e);
-        }
-    }
-
-    void disconnect() {
-        if (active.compareAndSet(true, false)) {
-            queue.add(McpJsonRpc.disconnectSession());
-        }
-    }
-
-    McpFeatures createFeatures(JsonValue requestId) {
-        McpFeatures feat = new McpFeatures(config, this);
-        features.put(requestId, feat);
-        return feat;
-    }
-
-    McpFeatures createFeatures(JsonRpcResponse res, JsonValue requestId) {
-        McpFeatures feat = new McpFeatures(config, this, res);
-        features.put(requestId, feat);
-        return feat;
-    }
-
-    McpFeatures createFeatures(JsonRpcResponse res, JsonValue requestId, SseSink sseSink) {
-        McpFeatures feat = new McpFeatures(config, this, res, sseSink);
-        features.put(requestId, feat);
-        return feat;
-    }
-
-    Optional<McpFeatures> features(JsonValue requestId) {
-        return features.get(requestId);
     }
 
     /**
@@ -183,140 +169,56 @@ class McpSession {
 
     void clearRequest(JsonValue requestId) {
         features.remove(requestId);
+        transports.remove(requestId);
     }
 
-    void capabilities(McpCapability capability) {
-        capabilities.add(capability);
+    Optional<McpFeatures> findFeatures(JsonValue requestId) {
+        return features.get(requestId);
     }
 
-    Set<McpCapability> capabilities() {
-        return capabilities;
+    McpSessionFeatures features() {
+        return sessionFeatures.get();
     }
 
-    State state() {
-        return state;
+    McpSessions sessions() {
+        return sessions;
+    }
+
+    void capability(McpCapability capability) {
+        clientCapabilities.add(capability);
+    }
+
+    Set<McpCapability> capability() {
+        return clientCapabilities;
     }
 
     Context context() {
         return context;
     }
 
+    void protocolVersion(McpProtocolVersion protocolVersion) {
+        this.protocolVersion = protocolVersion;
+        this.serializer = McpJsonSerializer.create(protocolVersion);
+    }
+
+    McpProtocolVersion protocolVersion() {
+        return protocolVersion;
+    }
+
+    McpJsonSerializer serializer() {
+        return serializer;
+    }
+
+    Optional<McpTransport> transport(JsonValue id) {
+        return transports.get(id);
+    }
+
     void state(State state) {
         this.state = state;
     }
 
-    String protocolVersion() {
-        return protocolVersion;
-    }
-
-    void protocolVersion(String protocolVersion) {
-        this.protocolVersion = protocolVersion;
-    }
-
-    boolean hasSubscription(String uri) {
-        return streamableSubscriptions.containsKey(uri) || sseSubscriptions.containsKey(uri);
-    }
-
-    Optional<SseSink> findSubscription(String uri) {
-        lock.readLock().lock();
-        try {
-            if (streamableSubscriptions.containsKey(uri)) {
-                return Optional.of(streamableSubscriptions.get(uri));
-            }
-            if (sseSubscriptions.containsKey(uri)) {
-                return Optional.empty();
-            }
-            throw new IllegalArgumentException("Subscription not found: " + uri);
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    Optional<SseSink> subscribe(JsonRpcRequest req, JsonRpcResponse res, String uri) {
-        if (!active.get()) {
-            return Optional.empty();
-        }
-
-        lock.writeLock().lock();
-        try {
-            SseSink sseSink = null;
-            if (isStreamableHttp(req.headers())) {
-                SseSink existing = streamableSubscriptions.get(uri);
-                if (existing != null) {
-                    existing.close();       // close old one
-                    log(Level.DEBUG, () -> "Removed existing subscription for " + uri);
-                }
-                sseSink = res.sink(SseSink.TYPE);
-                streamableSubscriptions.put(uri, sseSink);
-            } else {
-                McpSession existing = sseSubscriptions.get(uri);
-                if (existing != null) {
-                    log(Level.DEBUG, () -> "Found existing subscription for " + uri);
-                    return Optional.empty();
-                }
-                sseSubscriptions.put(uri, this);
-            }
-            log(Level.DEBUG, () -> "New subscription for " + uri);
-            return Optional.ofNullable(sseSink);
-        } finally {
-            lock.writeLock().unlock();
-        }
-    }
-
-    Optional<SseSink> unsubscribe(JsonRpcRequest req, String uri) {
-        if (!active.get()) {
-            return Optional.empty();
-        }
-
-        lock.writeLock().lock();
-        try {
-            SseSink sseSink = null;
-            if (isStreamableHttp(req.headers())) {
-                sseSink = streamableSubscriptions.remove(uri);
-                if (sseSink == null) {
-                    log(Level.DEBUG, () -> "No subscription found for " + uri);
-                }
-            } else {
-                McpSession session = sseSubscriptions.remove(uri);
-                if (session == null) {
-                    log(Level.DEBUG, () -> "No subscription found for " + uri);
-                }
-            }
-            log(Level.DEBUG, () -> "Removed subscription for " + uri);
-            return Optional.ofNullable(sseSink);
-        } finally {
-            lock.writeLock().unlock();
-        }
-    }
-
-    void blockSubscribe(String uri) throws InterruptedException {
-        if (active.get()) {
-            CountDownLatch latch = threadSubscriptions.computeIfAbsent(uri, k -> new CountDownLatch(1));
-            Duration timeout = config.subscriptionTimeout();
-            try {
-                boolean completed = latch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
-                if (!completed) {
-                    log(Level.TRACE, () -> "Timed out waiting subscription for " + uri);
-                }
-            } catch (InterruptedException e) {
-                log(Level.TRACE, () -> "Interrupted while waiting for subscription");
-            }
-        }
-    }
-
-    void unblockSubscribe(String uri) {
-        if (active.get()) {
-            CountDownLatch latch = threadSubscriptions.remove(uri);
-            if (latch != null) {
-                latch.countDown();
-            }
-        }
-    }
-
-    private void log(Level level, Supplier<String> message) {
-        if (LOGGER.isLoggable(level)) {
-            LOGGER.log(level, message);
-        }
+    State state() {
+        return state;
     }
 
     enum State {
