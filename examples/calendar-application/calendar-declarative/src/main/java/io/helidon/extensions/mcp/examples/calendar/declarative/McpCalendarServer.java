@@ -73,17 +73,12 @@ class McpCalendarServer {
      * attendees.
      *
      * @param features  the MCP features
-     * @param name      the event's name
-     * @param date      the event's date
-     * @param attendees the list of attendees
+     * @param event     the event
      * @return text confirming event being created
      */
     @Mcp.Tool("Adds a new event to the calendar")
-    List<McpToolContent> addCalendarEvent(McpFeatures features,
-                                          String name,
-                                          String date,
-                                          List<String> attendees) {
-        if (name.isEmpty() || date.isEmpty() || attendees.isEmpty()) {
+    List<McpToolContent> addCalendarEvent(McpFeatures features, CalendarEvent event) {
+        if (event.getName().isEmpty() || event.getDate().isEmpty() || event.getAttendees().isEmpty()) {
             throw new McpException("Missing required arguments name, date or attendees");
         }
 
@@ -92,7 +87,7 @@ class McpCalendarServer {
         progress.total(100);
         logger.info("Request to add new event");
         progress.send(0);
-        calendar.createNewEvent(name, date, attendees);
+        calendar.createNewEvent(event.getName(), event.getDate(), event.getAttendees());
         progress.send(50);
         features.subscriptions().sendUpdate(EVENTS_URI);
         progress.send(100);
