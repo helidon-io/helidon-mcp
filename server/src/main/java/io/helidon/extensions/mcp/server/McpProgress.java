@@ -16,13 +16,7 @@
 
 package io.helidon.extensions.mcp.server;
 
-import java.lang.System.Logger.Level;
 import java.util.Objects;
-
-import io.helidon.http.sse.SseEvent;
-import io.helidon.webserver.sse.SseSink;
-
-import static io.helidon.extensions.mcp.server.McpJsonRpc.toJson;
 
 /**
  * Progress notification to the client.
@@ -30,18 +24,15 @@ import static io.helidon.extensions.mcp.server.McpJsonRpc.toJson;
 public final class McpProgress extends McpFeature {
     private static final System.Logger LOGGER = System.getLogger(McpProgress.class.getName());
 
+    private final McpSession session;
     private int total;
     private int tokenInt;
     private String token;
     private boolean isSending;
 
-    McpProgress(McpSession session) {
-        super(session);
-        this.token = "";
-    }
-
-    McpProgress(McpSession session, SseSink sseSink) {
-        super(session, sseSink);
+    McpProgress(McpSession session, McpTransport transport) {
+        super(session, transport);
+        this.session = session;
         this.token = "";
     }
 
@@ -60,7 +51,7 @@ public final class McpProgress extends McpFeature {
      * @param progress progress
      */
     public void send(int progress) {
-        sendProgress(progress, null);
+        send(progress, "");
     }
 
     /**
@@ -72,30 +63,12 @@ public final class McpProgress extends McpFeature {
      */
     public void send(int progress, String message) {
         Objects.requireNonNull(message, "message is null");
-        String protocolVersion = session().protocolVersion();
-        if (protocolVersion.startsWith("2024")) {
-            if (LOGGER.isLoggable(Level.DEBUG)) {
-                LOGGER.log(Level.DEBUG, () -> "Ignoring message with protocol version " + protocolVersion);
-            }
-            sendProgress(progress, null);
-        } else {
-            sendProgress(progress, message);
-        }
-    }
-
-    void sendProgress(int progress, String message) {
         if (progress > total) {
             return;
         }
         if (isSending) {
-            if (sseSink().isPresent()) {
-                sseSink().get().emit(SseEvent.builder()
-                                             .name("message")
-                                             .data(toJson(this, progress, message))
-                                             .build());
-            } else {
-                session().send(toJson(this, progress, message));
-            }
+            var notification = session.serializer().toJson(this, progress, message);
+            transport().send(notification);
         }
         if (progress >= total) {
             isSending = false;
@@ -127,5 +100,24 @@ public final class McpProgress extends McpFeature {
     void stopSending() {
         token = "";
         isSending = false;
+    }
+
+    static class McpProgressListener implements McpFeatureLifecycle {
+
+        @Override
+        public void beforeRequest(McpParameters parameters, McpFeatures features) {
+            var progressToken = parameters.get("_meta").get("progressToken");
+            if (progressToken.isNumber()) {
+                features.progress().token(progressToken.asInteger().get());
+            }
+            if (progressToken.isString()) {
+                features.progress().token(progressToken.asString().get());
+            }
+        }
+
+        @Override
+        public void afterRequest(McpParameters parameters, McpFeatures features) {
+            features.progress().stopSending();
+        }
     }
 }

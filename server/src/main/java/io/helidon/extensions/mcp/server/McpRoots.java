@@ -19,33 +19,25 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import io.helidon.http.sse.SseEvent;
-import io.helidon.webserver.sse.SseSink;
-
 import jakarta.json.JsonObject;
 
-import static io.helidon.extensions.mcp.server.McpJsonRpc.METHOD_ROOTS_LIST;
-import static io.helidon.extensions.mcp.server.McpJsonRpc.createJsonRpcRequest;
-import static io.helidon.extensions.mcp.server.McpJsonRpc.parseRoots;
+import static io.helidon.extensions.mcp.server.McpJsonSerializer.METHOD_ROOTS_LIST;
 
 /**
  * MCP roots feature.
  */
 public final class McpRoots extends McpFeature {
-    private final List<McpRoot> roots = new CopyOnWriteArrayList<>();
-    private final Duration timeout;
     private final boolean enabled;
+    private final Duration timeout;
+    private final List<McpRoot> roots = new CopyOnWriteArrayList<>();
 
-    McpRoots(McpServerConfig config, McpSession session) {
-        super(session);
-        this.timeout = config.rootListTimeout();
-        this.enabled = session().capabilities().contains(McpCapability.ROOTS);
-    }
-
-    McpRoots(McpServerConfig config, McpSession session, SseSink sseSink) {
-        super(session, sseSink);
-        this.timeout = config.rootListTimeout();
-        this.enabled = session().capabilities().contains(McpCapability.ROOTS);
+    McpRoots(McpSession session, McpTransport transport) {
+        super(session, transport);
+        this.timeout = session.context()
+                .get(McpServerConfigBlueprint.class, McpServerConfig.class)
+                .orElseThrow(() -> new McpInternalException("Server configuration is not set"))
+                .rootListTimeout();
+        this.enabled = session.capability().contains(McpCapability.ROOTS);
     }
 
     /**
@@ -81,14 +73,10 @@ public final class McpRoots extends McpFeature {
      */
     private List<McpRoot> sendListRoot(Duration timeout) {
         long id = session().jsonRpcId();
-        JsonObject request = createJsonRpcRequest(id, METHOD_ROOTS_LIST);
-        sseSink().ifPresentOrElse(sink -> sink.emit(SseEvent.builder()
-                                                            .name("message")
-                                                            .data(request)
-                                                            .build()),
-                                  () -> session().send(request));
+        JsonObject request = session().serializer().createJsonRpcRequest(id, METHOD_ROOTS_LIST);
+        transport().send(request);
         JsonObject response = session().pollResponse(id, timeout);
-        List<McpRoot> updatedRoots = parseRoots(response);
+        List<McpRoot> updatedRoots = session().serializer().parseRoots(response);
         roots.clear();
         roots.addAll(updatedRoots);
         session().context().register(McpRootClassifier.class, false);

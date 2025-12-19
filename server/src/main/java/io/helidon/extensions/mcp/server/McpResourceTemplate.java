@@ -28,7 +28,7 @@ import io.helidon.jsonrpc.core.JsonRpcParams;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 
-import static io.helidon.extensions.mcp.server.McpJsonRpc.JSON_BUILDER_FACTORY;
+import static io.helidon.extensions.mcp.server.McpJsonSerializer.JSON_BUILDER_FACTORY;
 
 class McpResourceTemplate implements McpResource {
     private final Pattern pattern;

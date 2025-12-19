@@ -373,8 +373,8 @@ to be executed server side to handle those events.
 
 #### Interface
 
-Implement the `McpResourceSubscriber` interface and register it via `addResourceSubscriber`. Interfaces for subscribers and unsubscribers are identical, so we shall
-focus on subscribers in this section.
+Implement the `McpResourceSubscriber` interface and register it via `addResourceSubscriber`. Interfaces for 
+subscribers and unsubscribers are identical, so we shall focus on subscribers in this section.
 
 ```java
 class MyResourceSubscriber implements McpResourceSubscriber {
@@ -408,7 +408,7 @@ public Consumer<McpRequest> subscribe() {
             McpFeatures features = request.features();
             features.subscriptions().sendUpdate(uri());
         }
-    }
+    };
 }
 ```
 

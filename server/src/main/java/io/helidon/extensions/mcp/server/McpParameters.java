@@ -19,7 +19,9 @@ package io.helidon.extensions.mcp.server;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import io.helidon.common.GenericType;
@@ -117,6 +119,20 @@ public final class McpParameters {
      */
     public boolean isPresent() {
         return value != JsonValue.NULL;
+    }
+
+    /**
+     * If a value is present, performs the given action with the value,
+     * otherwise does nothing.
+     *
+     * @param action the action to be performed, if a value is present
+     * @throws java.lang.NullPointerException if the action is {@code null}
+     */
+    public void ifPresent(Consumer<McpParameters> action) {
+        Objects.requireNonNull(action, "action is null");
+        if (isPresent()) {
+            action.accept(this);
+        }
     }
 
     /**

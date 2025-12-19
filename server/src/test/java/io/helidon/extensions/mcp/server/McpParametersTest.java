@@ -17,6 +17,7 @@
 package io.helidon.extensions.mcp.server;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.helidon.common.mapper.OptionalValue;
 import io.helidon.jsonrpc.core.JsonRpcParams;
@@ -241,6 +242,45 @@ class McpParametersTest {
         boolean isNumber = parameters.get("foo").isString();
 
         assertThat(isNumber, is(false));
+    }
+
+    @Test
+    void testIfPresent() {
+        AtomicBoolean present = new AtomicBoolean(false);
+        JsonStructure object = Json.createObjectBuilder()
+                .add("foo", 1)
+                .build();
+        JsonRpcParams params = JsonRpcParams.create(object);
+        McpParameters parameters = new McpParameters(params, object);
+        parameters.get("foo").ifPresent(it -> present.set(true));
+        assertThat(present.get(), is(true));
+    }
+
+    @Test
+    void testIfNotPresent() {
+        AtomicBoolean present = new AtomicBoolean(false);
+        JsonStructure object = Json.createObjectBuilder()
+                .add("foo", 1)
+                .build();
+        JsonRpcParams params = JsonRpcParams.create(object);
+        McpParameters parameters = new McpParameters(params, object);
+        parameters.get("bar").ifPresent(it -> present.set(true));
+        assertThat(present.get(), is(false));
+    }
+
+    @Test
+    void testIfPresentNullPointerException() {
+        JsonStructure object = Json.createObjectBuilder()
+                .add("foo", 1)
+                .build();
+        JsonRpcParams params = JsonRpcParams.create(object);
+        McpParameters parameters = new McpParameters(params, object);
+        try {
+            parameters.get("foo").ifPresent(null);
+            assertThat("NullPointerException must be thrown", true, is(false));
+        } catch (NullPointerException exception) {
+            assertThat(exception.getMessage(), is("action is null"));
+        }
     }
 
     public static class Foo {

@@ -23,25 +23,29 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+import io.helidon.jsonrpc.core.JsonRpcParams;
+
+import jakarta.json.JsonString;
+
 /**
  * Support for MCP pagination feature.
  * <p>
  * Pagination is supported by the following MCP methods:
  * <ul>
  *     <li>
- *         {@link io.helidon.extensions.mcp.server.McpJsonRpc#METHOD_TOOLS_LIST}
+ *         {@link McpJsonSerializer#METHOD_TOOLS_LIST}
  *         List the tools registered on the server.
  *     </li>
  *     <li>
- *         {@link io.helidon.extensions.mcp.server.McpJsonRpc#METHOD_PROMPT_LIST}
+ *         {@link McpJsonSerializer#METHOD_PROMPT_LIST}
  *         List the prompts registered on the server.
  *     </li>
  *     <li>
- *         {@link io.helidon.extensions.mcp.server.McpJsonRpc#METHOD_RESOURCES_LIST}
+ *         {@link McpJsonSerializer#METHOD_RESOURCES_LIST}
  *         List the resources registered on the server.
  *     </li>
  *     <li>
- *         {@link io.helidon.extensions.mcp.server.McpJsonRpc#METHOD_RESOURCES_TEMPLATES_LIST}
+ *         {@link McpJsonSerializer#METHOD_RESOURCES_TEMPLATES_LIST}
  *         List the resource templates registered on the server.
  *     </li>
  * </ul>
@@ -91,6 +95,14 @@ class McpPagination<T> {
 
     McpPage<T> page(String cursor) {
         return pages.get(cursor);
+    }
+
+    McpPage<T> page(JsonRpcParams params) {
+        return params.find("cursor")
+                .map(JsonString.class::cast)
+                .map(JsonString::getString)
+                .map(this::page)
+                .orElse(this.firstPage());
     }
 
     List<T> content() {

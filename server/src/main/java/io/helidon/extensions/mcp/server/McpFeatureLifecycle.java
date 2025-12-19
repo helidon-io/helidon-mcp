@@ -16,28 +16,22 @@
 package io.helidon.extensions.mcp.server;
 
 /**
- * MCP request feature base class.
+ * Basic MCP feature operation lifecycle.
  */
-abstract class McpFeature {
+interface McpFeatureLifecycle {
     /**
-     * MCP session to access client information.
+     * Before the MCP request.
+     *
+     * @param parameters request parameters
+     * @param features MCP features
      */
-    private final McpSession session;
+    void beforeRequest(McpParameters parameters, McpFeatures features);
+
     /**
-     * MCP transport to access request transport.
+     * After the MCP request.
+     *
+     * @param parameters request parameters
+     * @param features MCP features
      */
-    private final McpTransport transport;
-
-    McpFeature(McpSession session, McpTransport transport) {
-        this.session = session;
-        this.transport = transport;
-    }
-
-    McpSession session() {
-        return session;
-    }
-
-    McpTransport transport() {
-        return transport;
-    }
+    void afterRequest(McpParameters parameters, McpFeatures features);
 }

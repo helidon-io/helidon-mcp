@@ -18,22 +18,16 @@ package io.helidon.extensions.mcp.server;
 
 import java.util.Objects;
 
-import io.helidon.http.sse.SseEvent;
-import io.helidon.webserver.sse.SseSink;
-
 /**
  * MCP logger sends notification to the client.
  */
 public final class McpLogger extends McpFeature {
     private final String name;
+    private final McpSession session;
 
-    McpLogger(McpSession session) {
-        super(session);
-        this.name = "helidon-logger";
-    }
-
-    McpLogger(McpSession session, SseSink sseSink) {
-        super(session, sseSink);
+    McpLogger(McpSession session, McpTransport transport) {
+        super(session, transport);
+        this.session = session;
         this.name = "helidon-logger";
     }
 
@@ -48,14 +42,8 @@ public final class McpLogger extends McpFeature {
         Objects.requireNonNull(message, "message must not be null");
 
         if (level.ordinal() >= level().ordinal()) {
-            if (sseSink().isPresent()) {
-                sseSink().get().emit(SseEvent.builder()
-                                     .name("message")
-                                     .data(McpJsonRpc.createLoggingNotification(level, name, message))
-                                     .build());
-            } else {
-                session().send(McpJsonRpc.createLoggingNotification(level, name, message));
-            }
+            var notification = session.serializer().createLoggingNotification(level, name, message);
+            transport().send(notification);
         }
     }
 
@@ -137,7 +125,7 @@ public final class McpLogger extends McpFeature {
      * @return the level
      */
     McpLogger.Level level() {
-        return context().get(ContextClassifier.class, Level.class).orElse(Level.INFO);
+        return session.context().get(ContextClassifier.class, Level.class).orElse(Level.INFO);
     }
 
     /**
@@ -147,7 +135,7 @@ public final class McpLogger extends McpFeature {
      * @param level the level
      */
     void setLevel(McpLogger.Level level) {
-        context().register(ContextClassifier.class, level);
+        session.context().register(ContextClassifier.class, level);
     }
 
     /**
