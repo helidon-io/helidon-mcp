@@ -20,6 +20,9 @@ import java.util.List;
 
 import io.helidon.json.schema.JsonSchema;
 
+/**
+ * Calendar Event.
+ */
 @JsonSchema.Schema
 @JsonSchema.Title("Calendar Event")
 public class CalendarEvent {
@@ -36,29 +39,62 @@ public class CalendarEvent {
     @JsonSchema.Description("Calendar event attendees")
     private List<String> attendees;
 
+    /**
+     * Create a new instance of {@code CalendarEvent}.
+     */
     public CalendarEvent() {
     }
 
+    /**
+     * Get event name.
+     *
+     * @return name
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Get event date.
+     *
+     * @return date
+     */
     public String getDate() {
         return date;
     }
 
+    /**
+     * Get event attendees.
+     *
+     * @return attendees
+     */
     public List<String> getAttendees() {
         return attendees;
     }
 
+    /**
+     * Set event name.
+     *
+     * @param name the event name
+     */
     public void setName(String name) {
         this.name = name;
     }
 
+    /**
+     * Set event date.
+     *
+     * @param date the event date
+     */
     public void setDate(String date) {
         this.date = date;
     }
 
+    /**
+     * Set event attendees.
+     *
+     * @param attendees the event attendees
+     */
     public void setAttendees(List<String> attendees) {
         this.attendees = attendees;
     }
