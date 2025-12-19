@@ -102,15 +102,13 @@ class Server {
     @Mcp.Name("MyTool")
     List<McpToolContent> myToolMethod(Coordinate coordinate) {
         String result = String.format("latitude: %s, longitude: %s", 
-                                      coordinate.latitude, 
-                                      coordinate.latitude);
+                                      coordinate.latitude(), 
+                                      coordinate.latitude());
         return List.of(McpToolContents.textContent(result));
     }
 
     @JsonSchema.Schema
-    static class Coordinate {
-        int latitude;
-        int longitude;
+    record Coordinate(int latitude, int longitude) {
     }
 }
 ```
@@ -118,7 +116,7 @@ class Server {
 #### JSON Schema
 
 Use JSON Schema to validate and describe input parameters and their structure. You can define schemas via the `@JsonSchema.Schema`
-annotation.
+annotation. The complete documentation is available on [Helidon documentation](https://helidon.io/docs/v4/se/json/schema).
 
 #### Tool Content Types
 

@@ -61,15 +61,15 @@ abstract class BaseTest {
 
         McpSchema.JsonSchema schema2 = tool2.inputSchema();
         assertThat(schema2.type(), is("object"));
-        assertThat(schema2.properties().keySet(), hasItems("name", "date", "attendees"));
+        assertThat(schema2.properties().keySet(), hasItems("event"));
     }
 
     @Test
     @Order(2)
     void testAddToolCall() {
-        Map<String, Object> arguments = Map.of("name", "Frank-birthday",
-                                               "date", "2021-04-20",
-                                               "attendees", List.of("Frank"));
+        Map<String, Object> arguments = Map.of("event", Map.of("name", "Frank-birthday",
+                                                               "date", "2021-04-20",
+                                                               "attendees", List.of("Frank")));
         McpSchema.CallToolRequest request = new McpSchema.CallToolRequest("addCalendarEvent", arguments);
         McpSchema.CallToolResult result = client().callTool(request);
         assertThat(result.isError(), is(false));

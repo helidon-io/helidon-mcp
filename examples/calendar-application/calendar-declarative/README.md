@@ -55,10 +55,10 @@ MCP server:
 1. Navigate to the **Resources** tab.
 2. Click **List Resources Template**.
 3. Select `eventResourceTemplate`.
-3. Type `F` for the name to trigger completion.
-4. Select `Frank birthday` from pop-up menu.
-5. Click `Read Resource`.
-4. Verify that the result displayed includes Frank's birthday event.
+4. Type `F` for the name to trigger completion.
+5. Select `Frank birthday` from pop-up menu.
+6. Click `Read Resource`.
+7. Verify that the result displayed includes Frank's birthday event.
 
 ### Testing the Prompt
 
