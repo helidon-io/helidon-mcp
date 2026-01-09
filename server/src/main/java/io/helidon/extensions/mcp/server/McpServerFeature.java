@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,6 @@ import static io.helidon.jsonrpc.core.JsonRpcError.INVALID_REQUEST;
 public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpServerConfig> {
     private static final int SESSION_CACHE_SIZE = 1000;
     private static final int RESOURCE_NOT_FOUND_CODE = -32002;
-    private static final List<String> PROTOCOL_VERSIONS = List.of("2024-11-05", "2025-03-26");
     private static final String DEFAULT_OIDC_METADATA_URI = "/.well-known/openid-configuration";
     private static final System.Logger LOGGER = System.getLogger(McpServerFeature.class.getName());
 

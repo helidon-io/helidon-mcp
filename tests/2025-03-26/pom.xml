@@ -47,7 +47,6 @@
     </dependencyManagement>
 
     <modules>
-        <module>declarative</module>
         <module>mcp</module>
     </modules>
 

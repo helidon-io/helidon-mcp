@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,10 @@ package io.helidon.extensions.mcp.server;
  * Supported MCP protocol version.
  */
 enum McpProtocolVersion {
+    /**
+     * 2025-06-18 protocol version.
+     */
+    VERSION_2025_06_18,
     /**
      * 2025-03-26 protocol version.
      */
@@ -63,6 +67,6 @@ enum McpProtocolVersion {
      * @return the lastest supported protocol version
      */
     static McpProtocolVersion lastest() {
-        return VERSION_2025_03_26;
+        return VERSION_2025_06_18;
     }
 }
