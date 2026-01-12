@@ -17,40 +17,38 @@
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>io.helidon.extensions.mcp</groupId>
-        <artifactId>helidon4-extensions-mcp-project</artifactId>
+        <artifactId>helidon4-extensions-mcp-tests-project</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>helidon4-extensions-mcp-tests-project</artifactId>
+    <artifactId>helidon4-extensions-mcp-2025-03-26-tests-project</artifactId>
     <packaging>pom</packaging>
-    <name>Helidon 4 Extensions MCP Tests Project</name>
+    <name>Helidon 4 Extensions MCP 2025-03-26 Tests Project</name>
 
     <properties>
-        <spotbugs.skip>true</spotbugs.skip>
-        <maven.deploy.skip>true</maven.deploy.skip>
-        <maven.sources.skip>true</maven.sources.skip>
-        <maven.javadoc.skip>true</maven.javadoc.skip>
-        <dependency-check.skip>true</dependency-check.skip>
+        <version.lib.mcp-sdk>0.11.3</version.lib.mcp-sdk>
     </properties>
 
-    <modules>
-        <module>codegen</module>
-    </modules>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.modelcontextprotocol.sdk</groupId>
+                <artifactId>mcp</artifactId>
+                <version>${version.lib.mcp-sdk}</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
-    <profiles>
-        <profile>
-            <id>compatibility</id>
-            <modules>
-                <module>2025-03-26</module>
-                <module>2024-11-05</module>
-            </modules>
-        </profile>
-    </profiles>
+    <modules>
+        <module>declarative</module>
+        <module>mcp</module>
+    </modules>
 
 </project>
