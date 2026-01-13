@@ -22,13 +22,13 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>io.helidon.extensions.mcp</groupId>
-        <artifactId>helidon4-extensions-mcp-2025-03-26-tests-project</artifactId>
+        <artifactId>helidon4-extensions-mcp-2025-06-18-tests-project</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>helidon4-extensions-mcp-2025-03-26-tests-declarative</artifactId>
-    <name>Helidon 4 Extensions MCP Tests Declarative</name>
+    <artifactId>helidon4-extensions-mcp-2025-06-18-tests-declarative</artifactId>
+    <name>Helidon 4 Extensions MCP 2025-06-18 Tests Declarative</name>
 
     <dependencies>
         <dependency>
