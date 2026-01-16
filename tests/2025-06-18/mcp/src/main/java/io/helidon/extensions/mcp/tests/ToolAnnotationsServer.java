@@ -36,7 +36,18 @@ class ToolAnnotationsServer {
                                    .path("/toolAnnotations")
                                    .name("mcp-server")
                                    .addTool(new Tool1())
-                                   .addTool(new Tool2()));
+                                   .addTool(new Tool2())
+                                   .addTool(tool -> tool
+                                           .name("tool3")
+                                           .title("Tool 3")
+                                           .description("Tool 3 description")
+                                           .schema("")
+                                           .annotations(annotations -> annotations.title("")
+                                                   .readOnlyHint(false)
+                                                   .destructiveHint(true)
+                                                   .idempotentHint(false)
+                                                   .openWorldHint(true))
+                                           .tool(request -> List.of(McpToolContents.textContent("")))));
     }
 
     private static class Tool1 implements McpTool {

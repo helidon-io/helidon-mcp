@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,15 +35,13 @@ class McpJsonSerializerV2 extends McpJsonSerializerV1 {
     public JsonObjectBuilder toJson(McpTool tool) {
         var builder = super.toJson(tool);
         McpToolAnnotations annotations = tool.annotations();
-        if (annotations != null) {
-            JsonObjectBuilder annotBuilder = JSON_BUILDER_FACTORY.createObjectBuilder();
-            annotBuilder.add("title", annotations.title());
-            annotBuilder.add("destructiveHint", annotations.destructiveHint());
-            annotBuilder.add("idempotentHint", annotations.idempotentHint());
-            annotBuilder.add("openWorldHint", annotations.openWorldHint());
-            annotBuilder.add("readOnlyHint", annotations.readOnlyHint());
-            builder.add("annotations", annotBuilder.build());
-        }
+        JsonObjectBuilder annotBuilder = JSON_BUILDER_FACTORY.createObjectBuilder();
+        annotBuilder.add("title", annotations.title());
+        annotBuilder.add("destructiveHint", annotations.destructiveHint());
+        annotBuilder.add("idempotentHint", annotations.idempotentHint());
+        annotBuilder.add("openWorldHint", annotations.openWorldHint());
+        annotBuilder.add("readOnlyHint", annotations.readOnlyHint());
+        builder.add("annotations", annotBuilder.build());
         return builder;
     }
 }

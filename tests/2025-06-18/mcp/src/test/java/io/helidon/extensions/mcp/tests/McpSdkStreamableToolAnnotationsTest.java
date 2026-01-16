@@ -53,7 +53,7 @@ class McpSdkStreamableToolAnnotationsTest extends AbstractMcpSdkTest {
     void testListToolsWithAnnotations() {
         var result = client.listTools();
         var tools = result.tools();
-        assertThat(tools.size(), is(2));
+        assertThat(tools.size(), is(3));
 
         var tool1 = tools.getFirst();
         assertThat(tool1.name(), is("tool1"));
@@ -65,7 +65,7 @@ class McpSdkStreamableToolAnnotationsTest extends AbstractMcpSdkTest {
         assertThat(annotations1.idempotentHint(), is(false));
         assertThat(annotations1.openWorldHint(), is(true));
 
-        var tool2 = tools.getLast();
+        var tool2 = tools.get(1);
         assertThat(tool2.name(), is("tool2"));
         assertThat(tool2.description(), is("Tool description"));
         McpSchema.ToolAnnotations annotations2 = tool2.annotations();
@@ -74,5 +74,16 @@ class McpSdkStreamableToolAnnotationsTest extends AbstractMcpSdkTest {
         assertThat(annotations2.destructiveHint(), is(false));
         assertThat(annotations2.idempotentHint(), is(true));
         assertThat(annotations2.openWorldHint(), is(false));
+
+        var tool3 = tools.getLast();
+        assertThat(tool3.name(), is("tool3"));
+        assertThat(tool3.title(), is("Tool 3"));
+        assertThat(tool3.description(), is("Tool 3 description"));
+        McpSchema.ToolAnnotations annotations3 = tool3.annotations();
+        assertThat(annotations3.title(), is(""));
+        assertThat(annotations3.readOnlyHint(), is(false));
+        assertThat(annotations3.destructiveHint(), is(true));
+        assertThat(annotations3.idempotentHint(), is(false));
+        assertThat(annotations3.openWorldHint(), is(true));
     }
 }

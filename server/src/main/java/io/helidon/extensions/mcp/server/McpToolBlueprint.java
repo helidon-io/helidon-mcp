@@ -26,7 +26,7 @@ import io.helidon.builder.api.Prototype;
  * An MCP Tool.
  */
 @Prototype.Blueprint
-@Prototype.IncludeDefaultMethods("title")
+@Prototype.IncludeDefaultMethods({"title", "annotations"})
 interface McpToolBlueprint {
 
     /**
@@ -68,6 +68,7 @@ interface McpToolBlueprint {
      *
      * @return set of annotations
      */
+    @Option.DefaultMethod("create")
     default McpToolAnnotations annotations() {
         return McpToolAnnotations.create();
     }
