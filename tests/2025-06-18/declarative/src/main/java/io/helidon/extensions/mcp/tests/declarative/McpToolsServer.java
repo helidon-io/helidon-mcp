@@ -23,6 +23,7 @@ import io.helidon.extensions.mcp.server.McpFeatures;
 import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpToolContent;
 import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.json.schema.JsonSchema;
 
 @Mcp.Server
@@ -97,6 +98,20 @@ class McpToolsServer {
     @Mcp.Tool(TOOL_DESCRIPTION)
     List<McpToolContent> tool11(McpRequest request) {
         return List.of(McpToolContents.textContent(TOOL_CONTENT));
+    }
+
+    @Mcp.Tool(TOOL_DESCRIPTION)
+    McpToolResult tool12(McpRequest request) {
+        return McpToolResult.builder()
+                .addContent(McpToolContents.textContent(TOOL_CONTENT))
+                .build();
+    }
+
+    @Mcp.Tool(value = TOOL_DESCRIPTION, outputSchema = "outputSchema")
+    McpToolResult tool13(McpRequest request) {
+        return McpToolResult.builder()
+                .addContent(McpToolContents.textContent(TOOL_CONTENT))
+                .build();
     }
 
     @JsonSchema.Schema

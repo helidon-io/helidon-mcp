@@ -27,6 +27,7 @@ import io.helidon.extensions.mcp.server.McpTool;
 import io.helidon.extensions.mcp.server.McpToolContent;
 import io.helidon.extensions.mcp.server.McpToolContents;
 import io.helidon.extensions.mcp.server.McpToolErrorException;
+import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.webserver.http.HttpRouting;
 
 class RootsServer {
@@ -35,7 +36,7 @@ class RootsServer {
 
     static void setUpRoute(HttpRouting.Builder builder) {
         builder.addFeature(McpServerFeature.builder()
-                                   .path("")
+                                   .path("/")
                                    .addTool(new RootNameTool())
                                    .addTool(new RootUriTool()));
     }
@@ -57,14 +58,17 @@ class RootsServer {
         }
 
         @Override
-        public Function<McpRequest, List<McpToolContent>> tool() {
+        public Function<McpRequest, McpToolResult> tool() {
             return request -> {
                 List<McpRoot> roots = request.features().roots().listRoots();
-                return roots.stream()
+                List<McpToolContent> contents = roots.stream()
                         .map(McpRoot::name)
                         .flatMap(Optional::stream)
                         .map(McpToolContents::textContent)
                         .toList();
+                return McpToolResult.builder()
+                        .addContents(contents)
+                        .build();
             };
         }
     }
@@ -86,17 +90,20 @@ class RootsServer {
         }
 
         @Override
-        public Function<McpRequest, List<McpToolContent>> tool() {
+        public Function<McpRequest, McpToolResult> tool() {
             return request -> {
                 if (!request.features().roots().enabled()) {
                     throw new McpToolErrorException("Roots is disabled");
                 }
                 List<McpRoot> roots = request.features().roots().listRoots();
-                return roots.stream()
+                List<McpToolContent> contents = roots.stream()
                         .map(McpRoot::uri)
                         .map(URI::toASCIIString)
                         .map(McpToolContents::textContent)
                         .toList();
+                return McpToolResult.builder()
+                        .addContents(contents)
+                        .build();
             };
         }
     }

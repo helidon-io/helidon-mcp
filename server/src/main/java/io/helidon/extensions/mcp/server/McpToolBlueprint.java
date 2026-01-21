@@ -16,7 +16,6 @@
 
 package io.helidon.extensions.mcp.server;
 
-import java.util.List;
 import java.util.function.Function;
 
 import io.helidon.builder.api.Option;
@@ -26,9 +25,8 @@ import io.helidon.builder.api.Prototype;
  * An MCP Tool.
  */
 @Prototype.Blueprint
-@Prototype.IncludeDefaultMethods({"title", "annotations"})
+@Prototype.IncludeDefaultMethods
 interface McpToolBlueprint {
-
     /**
      * Tool name.
      *
@@ -74,9 +72,19 @@ interface McpToolBlueprint {
     }
 
     /**
+     * Tool output schema. Describes this tool response format.
+     *
+     * @return the tool output schema
+     */
+    @Option.Default("")
+    default String outputSchema() {
+        return "";
+    }
+
+    /**
      * Tool execution function.
      *
      * @return function
      */
-    Function<McpRequest, List<McpToolContent>> tool();
+    Function<McpRequest, McpToolResult> tool();
 }

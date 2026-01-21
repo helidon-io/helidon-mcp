@@ -402,7 +402,6 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             return;
         }
         boolean error = false;
-        List<McpToolContent> contents;
         McpSession session = foundSession.get();
         McpParameters parameters = new McpParameters(req.params(), req.params().asJsonObject());
 
@@ -419,23 +418,18 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
 
         McpFeatures features = session.createFeatures(requestId, req, res);
         session.beforeFeatureRequest(parameters, requestId);
-        try {
-            contents = tool.get()
-                    .tool()
-                    .apply(McpRequest.builder()
-                                   .parameters(parameters.get("arguments"))
-                                   .features(features)
-                                   .protocolVersion(session.protocolVersion().text())
-                                   .sessionContext(session.context())
-                                   .requestContext(req.context())
-                                   .build());
-        } catch (McpToolErrorException e) {
-            error = true;
-            contents = e.contents();
-        }
+        McpToolResult result = tool.get()
+                .tool()
+                .apply(McpRequest.builder()
+                               .parameters(parameters.get("arguments"))
+                               .features(features)
+                               .protocolVersion(session.protocolVersion().text())
+                               .sessionContext(session.context())
+                               .requestContext(req.context())
+                               .build());
         session.afterFeatureRequest(parameters, requestId);
 
-        var toolCall = session.serializer().toolCall(error, contents);
+        var toolCall = session.serializer().toolCall(tool.get(), result).build();
         res.result(toolCall);
         session.send(requestId, res);
     }

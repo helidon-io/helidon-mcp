@@ -15,16 +15,48 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.util.Map;
 import java.util.Set;
 
+import jakarta.json.Json;
+import jakarta.json.JsonBuilderFactory;
+import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.JsonbBuilder;
 
 class McpJsonSerializerV3 extends McpJsonSerializerV2 {
+    private static final Jsonb JSON_B = JsonbBuilder.create();
+    private static final System.Logger LOGGER = System.getLogger(McpJsonSerializerV3.class.getName());
+    private static final JsonBuilderFactory JSON_BUILDER_FACTORY = Json.createBuilderFactory(Map.of());
 
     @Override
     public JsonObjectBuilder toJson(Set<McpCapability> capabilities, McpServerConfig config) {
         return super.toJson(capabilities, config)
                 .add("protocolVersion", McpProtocolVersion.VERSION_2025_06_18.text());
+    }
+
+    @Override
+    public JsonObjectBuilder toolCall(McpTool tool, McpToolResult result) {
+        if (tool.outputSchema().isBlank() && result.structuredContent().isPresent()) {
+            if (LOGGER.isLoggable(System.Logger.Level.WARNING)) {
+                LOGGER.log(System.Logger.Level.WARNING, "Output schema must be specified for tool '"
+                        + tool.name() + "' when returning a structured output.");
+            }
+        }
+
+        JsonObjectBuilder builder = super.toolCall(tool, result);
+        result.structuredContent().ifPresent((content) -> {
+            String json = JSON_B.toJson(content);
+            JsonObject sc = JSON_B.fromJson(json, JsonObject.class);
+            builder.add("structuredContent", sc);
+            if (result.contents().isEmpty()) {
+                var text = McpToolContents.textContent(json);
+                builder.add("content", JSON_BUILDER_FACTORY.createArrayBuilder()
+                        .add(toJson(text.content())));
+            }
+        });
+        return builder;
     }
 
     @Override

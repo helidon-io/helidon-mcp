@@ -17,7 +17,9 @@ package io.helidon.extensions.mcp.server;
 
 import io.helidon.common.media.type.MediaTypes;
 
+import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -102,5 +104,75 @@ class McpJsonSerializerV3Test {
         assertThat(payload.getString("title"), is("title"));
         assertThat(payload.getBoolean("required"), is(true));
         assertThat(payload.getString("description"), is("description"));
+    }
+
+    @Test
+    void testStructuredContent() {
+        McpToolResult result = McpToolResult.builder()
+                .structuredContent(new StructuredContent("bar"))
+                .build();
+        McpTool tool = McpTool.builder()
+                .schema("")
+                .name("name")
+                .description("description")
+                .tool((request) -> null)
+                .build();
+        JsonObject object = MJS.toolCall(tool, result).build();
+        assertThat(object, is(notNullValue()));
+        assertThat(object.get("content"), is(notNullValue()));
+        assertThat(object.get("structuredContent"), is(notNullValue()));
+
+        JsonArray array = object.getJsonArray("content");
+        assertThat(array, is(notNullValue()));
+        assertThat(array.size(), is(1));
+
+        String content = array.getJsonObject(0).getString("text");
+        assertThat(content, is("{\"foo\":\"bar\"}"));
+
+        JsonObject structuredContent = object.getJsonObject("structuredContent");
+        assertThat(structuredContent.getString("foo"), is("bar"));
+    }
+
+    @Test
+    void testStructuredContentWithContent() {
+        McpToolResult result = McpToolResult.builder()
+                .addContent(McpToolContents.textContent("foo"))
+                .structuredContent(new StructuredContent("bar"))
+                .build();
+        McpTool tool = McpTool.builder()
+                .schema("")
+                .name("name")
+                .description("description")
+                .tool((request) -> null)
+                .build();
+        JsonObject object = MJS.toolCall(tool, result).build();
+        assertThat(object, is(notNullValue()));
+        assertThat(object.get("content"), is(notNullValue()));
+        assertThat(object.get("structuredContent"), is(notNullValue()));
+
+        JsonArray array = object.getJsonArray("content");
+        assertThat(array, is(notNullValue()));
+        assertThat(array.size(), is(1));
+
+        String content = array.getJsonObject(0).getString("text");
+        assertThat(content, is("foo"));
+
+        JsonObject structuredContent = object.getJsonObject("structuredContent");
+        assertThat(structuredContent.getString("foo"), is("bar"));
+    }
+
+    public static class StructuredContent {
+        private String foo;
+
+        public StructuredContent(String foo) {
+            this.foo = foo;
+        }
+
+        public String getFoo() {
+            return foo;
+        }
+        public void setFoo(String foo) {
+            this.foo = foo;
+        }
     }
 }

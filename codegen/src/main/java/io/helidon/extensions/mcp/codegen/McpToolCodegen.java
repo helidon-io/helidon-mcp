@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,13 +41,14 @@ import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isList;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isMcpType;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isNumber;
 import static io.helidon.extensions.mcp.codegen.McpJsonSchemaCodegen.addSchemaMethodBody;
-import static io.helidon.extensions.mcp.codegen.McpTypes.FUNCTION_REQUEST_LIST_TOOL_CONTENT;
+import static io.helidon.extensions.mcp.codegen.McpTypes.FUNCTION_REQUEST_TOOL_RESULT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.LIST_MCP_TOOL_CONTENT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_DESCRIPTION;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_NAME;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_CONTENTS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_INTERFACE;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_RESULT;
 
 class McpToolCodegen {
     private final McpRecorder recorder;
@@ -71,8 +72,18 @@ class McpToolCodegen {
                     .addMethod(method -> addToolDescriptionMethod(method, description))
                     .addMethod(method -> addToolSchemaMethod(method, element))
                     .addMethod(method -> addToolMethod(method, classModel, element))
-                    .addMethod(method -> addToolAnnotationsMethod(method, toolAnnotation)));
+                    .addMethod(method -> addToolAnnotationsMethod(method, toolAnnotation))
+                    .addMethod(method -> addToolOutputSchema(method, toolAnnotation)));
         });
+    }
+
+    private void addToolOutputSchema(Method.Builder builder, Annotation toolAnnotation) {
+        builder.name("outputSchema")
+                .returnType(TypeNames.STRING)
+                .addAnnotation(Annotations.OVERRIDE)
+                .addContent("return \"")
+                .addContent(toolAnnotation.getValue("outputSchema").orElse(""))
+                .addContent("\";");
     }
 
     private void addToolSchemaMethod(Method.Builder builder, TypedElementInfo element) {
@@ -107,7 +118,7 @@ class McpToolCodegen {
         TypeName returnType = element.signature().type();
 
         builder.name("tool")
-                .returnType(returned -> returned.type(FUNCTION_REQUEST_LIST_TOOL_CONTENT))
+                .returnType(returned -> returned.type(FUNCTION_REQUEST_TOOL_RESULT))
                 .addAnnotation(Annotations.OVERRIDE);
         builder.addContentLine("return request -> {");
 
@@ -169,6 +180,8 @@ class McpToolCodegen {
         String params = String.join(", ", parameters);
         if (returnType.equals(TypeNames.STRING)) {
             builder.addContent("return ")
+                    .addContent(MCP_TOOL_RESULT)
+                    .addContent(".builder().contents(")
                     .addContent(List.class)
                     .addContent(".of(")
                     .addContent(MCP_TOOL_CONTENTS)
@@ -176,12 +189,24 @@ class McpToolCodegen {
                     .addContent(element.elementName())
                     .addContent("(")
                     .addContent(params)
-                    .addContentLine(")));")
+                    .addContentLine(")))).build();")
                     .decreaseContentPadding()
                     .addContentLine("};");
             return;
         }
         if (returnType.equals(LIST_MCP_TOOL_CONTENT)) {
+            builder.addContent("return ")
+                    .addContent(MCP_TOOL_RESULT)
+                    .addContent(".builder().contents(delegate.")
+                    .addContent(element.elementName())
+                    .addContent("(")
+                    .addContent(params)
+                    .addContentLine(")).build();")
+                    .decreaseContentPadding()
+                    .addContentLine("};");
+            return;
+        }
+        if (returnType.equals(MCP_TOOL_RESULT)) {
             builder.addContent("return delegate.")
                     .addContent(element.elementName())
                     .addContent("(")
@@ -192,9 +217,7 @@ class McpToolCodegen {
             return;
         }
         throw new CodegenException(String.format("Method %s must return one the following return type: %s",
-                                                 element.elementName(),
-                                                 String.join(", ", List.of("String",
-                                                                           LIST_MCP_TOOL_CONTENT.classNameWithTypes()))));
+                                                 element.elementName(), MCP_TOOL_RESULT));
     }
 
     private void addToolNameMethod(Method.Builder builder, TypedElementInfo element) {

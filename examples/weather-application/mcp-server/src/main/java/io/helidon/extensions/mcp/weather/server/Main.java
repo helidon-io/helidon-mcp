@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import io.helidon.config.Config;
 import io.helidon.extensions.mcp.server.McpParameters;
 import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpServerConfig;
-import io.helidon.extensions.mcp.server.McpToolContent;
 import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.json.schema.Schema;
 import io.helidon.webclient.api.HttpClientResponse;
 import io.helidon.webclient.api.WebClient;
@@ -74,7 +74,7 @@ public class Main {
                 .generate();
     }
 
-    private static List<McpToolContent> getWeatherAlertFromState(McpRequest request) {
+    private static McpToolResult getWeatherAlertFromState(McpRequest request) {
         McpParameters mcpParameters = request.parameters();
         String state = mcpParameters.get("state").asString().orElse("NY");
 
@@ -96,9 +96,13 @@ public class Main {
                     .collect(Collectors.joining("\n"));
 
             if (content.isEmpty()) {
-                return List.of(McpToolContents.textContent("There is no alert for this state"));
+                return McpToolResult.builder()
+                        .addContent(McpToolContents.textContent("There is no alert for this state"))
+                        .build();
             }
-            return List.of(McpToolContents.textContent(content));
+            return McpToolResult.builder()
+                    .addContent(McpToolContents.textContent(content))
+                    .build();
         }
     }
 

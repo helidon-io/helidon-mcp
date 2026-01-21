@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,19 +87,18 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     }
 
     @Override
-    public JsonObject toolCall(boolean error, List<McpToolContent> contents) {
+    public JsonObjectBuilder toolCall(McpTool tool, McpToolResult result) {
         JsonArrayBuilder array = JSON_BUILDER_FACTORY.createArrayBuilder();
-        for (McpToolContent content : contents) {
+        for (McpToolContent content : result.contents()) {
             if (content instanceof McpToolResourceContent trc) {
                 array.add(toJson(trc));
-                continue;
+            } else {
+                array.add(toJson(content.content()));
             }
-            array.add(toJson(content.content()));
         }
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("content", array)
-                .add("isError", error)
-                .build();
+                .add("isError", result.error());
     }
 
     @Override

@@ -34,6 +34,7 @@ import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
 import io.helidon.extensions.mcp.server.McpToolContent;
 import io.helidon.extensions.mcp.server.McpToolErrorException;
+import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.json.schema.Schema;
 import io.helidon.webserver.http.HttpRouting;
 
@@ -72,11 +73,11 @@ class SamplingServer {
         }
 
         @Override
-        public Function<McpRequest, List<McpToolContent>> tool() {
+        public Function<McpRequest, McpToolResult> tool() {
             return this::sampling;
         }
 
-        List<McpToolContent> sampling(McpRequest request) {
+        McpToolResult sampling(McpRequest request) {
             McpSampling sampling = request.features().sampling();
             McpContent.ContentType requestType = request.parameters()
                     .get("type")
@@ -88,10 +89,11 @@ class SamplingServer {
             McpSamplingMessage message = createMessage(requestType);
             McpSamplingResponse response = sampling.request(req -> req.addMessage(message));
             var type = response.message().type();
+            var result = McpToolResult.builder();
             return switch (type) {
-                case TEXT -> List.of(textContent(response.asTextMessage().text()));
-                case IMAGE -> List.of(textContent(new String(response.asImageMessage().data())));
-                case AUDIO -> List.of(textContent(new String(response.asAudioMessage().data())));
+                case TEXT -> result.addContent(textContent(response.asTextMessage().text())).build();
+                case IMAGE -> result.addContent(textContent(new String(response.asImageMessage().data()))).build();
+                case AUDIO -> result.addContent(textContent(new String(response.asAudioMessage().data()))).build();
             };
         }
 
@@ -116,16 +118,19 @@ class SamplingServer {
         }
 
         @Override
-        public Function<McpRequest, List<McpToolContent>> tool() {
+        public Function<McpRequest, McpToolResult> tool() {
             return this::enabledSampling;
         }
 
-        private List<McpToolContent> enabledSampling(McpRequest request) {
+        private McpToolResult enabledSampling(McpRequest request) {
             McpSampling sampling = request.features().sampling();
             if (sampling.enabled()) {
                 return sampling(request);
             }
-            throw new McpToolErrorException(textContent("sampling is disabled"));
+            return McpToolResult.builder()
+                    .addContent(textContent("sampling is disabled"))
+                    .error(true)
+                    .build();
         }
     }
 
@@ -138,7 +143,7 @@ class SamplingServer {
         }
 
         @Override
-        public Function<McpRequest, List<McpToolContent>> tool() {
+        public Function<McpRequest, McpToolResult> tool() {
             return request -> {
                 McpSampling sampling = request.features().sampling();
                 var response = sampling.request(req -> req.addMessage(message));
@@ -154,7 +159,7 @@ class SamplingServer {
         }
 
         @Override
-        public Function<McpRequest, List<McpToolContent>> tool() {
+        public Function<McpRequest, McpToolResult> tool() {
             return request -> {
                 try {
                     request.features()
@@ -163,7 +168,10 @@ class SamplingServer {
                                     .addMessage(McpSamplingMessages.textMessage("timeout", USER)));
                     throw new McpException("Timeout should have been triggered");
                 } catch (McpSamplingException e) {
-                    throw new McpToolErrorException(e.getMessage());
+                    return McpToolResult.builder()
+                            .addContent(textContent(e.getMessage()))
+                            .error(true)
+                            .build();
                 }
             };
         }
@@ -176,7 +184,7 @@ class SamplingServer {
         }
 
         @Override
-        public Function<McpRequest, List<McpToolContent>> tool() {
+        public Function<McpRequest, McpToolResult> tool() {
             return request -> {
                 try {
                     request.features()
@@ -184,7 +192,10 @@ class SamplingServer {
                             .request(req -> req.addMessage(McpSamplingMessages.textMessage("error", USER)));
                     throw new McpException("MCP sampling exception should have been triggered");
                 } catch (McpSamplingException e) {
-                    throw new McpToolErrorException(e.getMessage());
+                    return McpToolResult.builder()
+                            .addContent(textContent(e.getMessage()))
+                            .error(true)
+                            .build();
                 }
             };
         }

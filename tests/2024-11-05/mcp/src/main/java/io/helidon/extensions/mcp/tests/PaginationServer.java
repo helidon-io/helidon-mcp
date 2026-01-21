@@ -34,6 +34,7 @@ import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
 import io.helidon.extensions.mcp.server.McpToolContent;
 import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.json.schema.Schema;
 import io.helidon.json.schema.SchemaString;
 import io.helidon.webserver.http.HttpRouting;
@@ -82,8 +83,10 @@ class PaginationServer {
         }
 
         @Override
-        public Function<McpRequest, List<McpToolContent>> tool() {
-            return request -> List.of(McpToolContents.textContent("text"));
+        public Function<McpRequest, McpToolResult> tool() {
+            return request -> McpToolResult.builder()
+                    .addContent(McpToolContents.textContent("text"))
+                    .build();
         }
     }
 

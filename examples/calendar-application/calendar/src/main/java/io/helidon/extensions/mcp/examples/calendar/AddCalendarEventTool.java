@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import io.helidon.extensions.mcp.server.McpParameters;
 import io.helidon.extensions.mcp.server.McpProgress;
 import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpTool;
-import io.helidon.extensions.mcp.server.McpToolContent;
 import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpToolResult;
 
 import static io.helidon.extensions.mcp.examples.calendar.Calendar.EVENTS_URI;
 
@@ -83,11 +83,11 @@ final class AddCalendarEventTool implements McpTool {
     }
 
     @Override
-    public Function<McpRequest, List<McpToolContent>> tool() {
+    public Function<McpRequest, McpToolResult> tool() {
         return this::addCalendarEvent;
     }
 
-    private List<McpToolContent> addCalendarEvent(McpRequest request) {
+    private McpToolResult addCalendarEvent(McpRequest request) {
         McpFeatures features = request.features();
         McpLogger logger = features.logger();
         McpParameters mcpParameters = request.parameters();
@@ -116,7 +116,9 @@ final class AddCalendarEventTool implements McpTool {
         features.subscriptions().sendUpdate(EVENTS_URI);
         progress.send(100);
 
-        return List.of(McpToolContents.textContent("New event added to the calendar"));
+        return McpToolResult.builder()
+                .addContent(McpToolContents.textContent("New event added to the calendar"))
+                .build();
     }
 
     private RuntimeException requiredArgument(String argument) {
