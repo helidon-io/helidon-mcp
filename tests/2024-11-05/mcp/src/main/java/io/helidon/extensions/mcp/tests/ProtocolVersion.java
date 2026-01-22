@@ -16,8 +16,6 @@
 
 package io.helidon.extensions.mcp.tests;
 
-import java.util.List;
-
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
 import io.helidon.extensions.mcp.server.McpToolContents;

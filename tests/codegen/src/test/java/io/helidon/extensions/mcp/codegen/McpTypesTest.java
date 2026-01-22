@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -153,6 +154,7 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "MCP_RESOURCE_UNSUBSCRIBER_INTERFACE", McpResourceUnsubscriber.class);
 
         checkField(toCheck, checked, fields, "SERVICES", Services.class);
+        checkField(toCheck, checked, fields, "OPTIONAL_STRING", Optional.class);
         checkField(toCheck, checked, fields, "CONSUMER_REQUEST", Consumer.class);
         checkField(toCheck, checked, fields, "GLOBAL_SERVICE_REGISTRY", GlobalServiceRegistry.class);
         checkField(toCheck, checked, fields, "LIST_STRING", List.class);

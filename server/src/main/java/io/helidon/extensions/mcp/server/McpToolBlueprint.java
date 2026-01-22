@@ -16,6 +16,7 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 import io.helidon.builder.api.Option;
@@ -76,9 +77,8 @@ interface McpToolBlueprint {
      *
      * @return the tool output schema
      */
-    @Option.Default("")
-    default String outputSchema() {
-        return "";
+    default Optional<String> outputSchema() {
+        return Optional.empty();
     }
 
     /**

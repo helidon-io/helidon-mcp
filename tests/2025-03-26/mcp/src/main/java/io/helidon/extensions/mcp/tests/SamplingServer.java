@@ -18,7 +18,6 @@ package io.helidon.extensions.mcp.tests;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.List;
 import java.util.function.Function;
 
 import io.helidon.common.media.type.MediaTypes;
@@ -32,7 +31,6 @@ import io.helidon.extensions.mcp.server.McpSamplingMessages;
 import io.helidon.extensions.mcp.server.McpSamplingResponse;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
-import io.helidon.extensions.mcp.server.McpToolContent;
 import io.helidon.extensions.mcp.server.McpToolErrorException;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.json.schema.Schema;

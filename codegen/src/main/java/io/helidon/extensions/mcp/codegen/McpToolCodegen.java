@@ -49,6 +49,7 @@ import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_CONTENTS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_INTERFACE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_RESULT;
+import static io.helidon.extensions.mcp.codegen.McpTypes.OPTIONAL_STRING;
 
 class McpToolCodegen {
     private final McpRecorder recorder;
@@ -78,12 +79,20 @@ class McpToolCodegen {
     }
 
     private void addToolOutputSchema(Method.Builder builder, Annotation toolAnnotation) {
+        var outputSchema = toolAnnotation.getValue("outputSchema");
         builder.name("outputSchema")
-                .returnType(TypeNames.STRING)
-                .addAnnotation(Annotations.OVERRIDE)
-                .addContent("return \"")
-                .addContent(toolAnnotation.getValue("outputSchema").orElse(""))
-                .addContent("\";");
+                .returnType(OPTIONAL_STRING)
+                .addAnnotation(Annotations.OVERRIDE);
+        if (outputSchema.isPresent() && !outputSchema.get().isBlank()) {
+            String schema = toolAnnotation.getValue("outputSchema")
+                    .orElse("\"\"")
+                            .replace("\"", "\\\"");
+            builder.addContent("return Optional.of(\"")
+                    .addContent(schema)
+                    .addContent("\");");
+            return;
+        }
+        builder.addContent("return Optional.empty();");
     }
 
     private void addToolSchemaMethod(Method.Builder builder, TypedElementInfo element) {

@@ -23,7 +23,6 @@ import io.helidon.webserver.testing.junit5.SetUpRoute;
 
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.Test;
 

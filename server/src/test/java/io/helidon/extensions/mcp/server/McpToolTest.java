@@ -38,7 +38,7 @@ class McpToolTest {
         assertThat(tool.title(), is("title"));
         assertThat(tool.schema(), is("schema"));
         assertThat(tool.description(), is("description"));
-        assertThat(tool.outputSchema(), is("outputSchema"));
+        assertThat(tool.outputSchema().orElse(""), is("outputSchema"));
     }
 
     @Test
@@ -52,8 +52,8 @@ class McpToolTest {
         assertThat(tool.title(), is(""));
         assertThat(tool.name(), is("name"));
         assertThat(tool.schema(), is("schema"));
-        assertThat(tool.outputSchema(), is(""));
         assertThat(tool.description(), is("description"));
+        assertThat(tool.outputSchema().isPresent(), is(false));
     }
 
     @Test
@@ -62,8 +62,8 @@ class McpToolTest {
         assertThat(foo.title(), is(""));
         assertThat(foo.name(), is("name"));
         assertThat(foo.schema(), is("schema"));
-        assertThat(foo.outputSchema(), is(""));
         assertThat(foo.description(), is("description"));
+        assertThat(foo.outputSchema().isPresent(), is(false));
     }
 
     static class Foo implements McpTool {

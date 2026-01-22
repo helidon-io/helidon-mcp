@@ -16,14 +16,12 @@
 
 package io.helidon.extensions.mcp.tests;
 
-import java.util.List;
 import java.util.function.Function;
 
 import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
 import io.helidon.extensions.mcp.server.McpToolContent;
-import io.helidon.extensions.mcp.server.McpToolErrorException;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.webserver.http.HttpRouting;
 

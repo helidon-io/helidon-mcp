@@ -45,7 +45,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     private static final Map<String, JsonObject> CACHE = new ConcurrentHashMap<>();
     private static final JsonReaderFactory JSON_READER_FACTORY = Json.createReaderFactory(Map.of());
     private static final JsonBuilderFactory JSON_BUILDER_FACTORY = Json.createBuilderFactory(Map.of());
-    private static final JsonObject EMPTY_OBJECT_SCHEMA = JSON_BUILDER_FACTORY.createObjectBuilder()
+    static final JsonObject EMPTY_OBJECT_SCHEMA = JSON_BUILDER_FACTORY.createObjectBuilder()
             .add("type", "object")
             .add("properties", JsonObject.EMPTY_JSON_OBJECT)
             .build();

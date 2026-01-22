@@ -32,7 +32,6 @@ import io.helidon.extensions.mcp.server.McpResourceContents;
 import io.helidon.extensions.mcp.server.McpRole;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
-import io.helidon.extensions.mcp.server.McpToolContent;
 import io.helidon.extensions.mcp.server.McpToolContents;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.json.schema.Schema;

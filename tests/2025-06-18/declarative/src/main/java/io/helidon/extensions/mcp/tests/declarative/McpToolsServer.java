@@ -31,6 +31,7 @@ import io.helidon.json.schema.JsonSchema;
 class McpToolsServer {
     public static final String TOOL_CONTENT = "Tool Content";
     public static final String TOOL_DESCRIPTION = "Tool description";
+    public static final String OUTPUT_SCHEMA = "{\"type\":\"object\",\"properties\": {}}";
 
     @Mcp.Tool(TOOL_DESCRIPTION)
     String tool(String value, Foo foo) {
@@ -107,7 +108,7 @@ class McpToolsServer {
                 .build();
     }
 
-    @Mcp.Tool(value = TOOL_DESCRIPTION, outputSchema = "outputSchema")
+    @Mcp.Tool(value = TOOL_DESCRIPTION, outputSchema = OUTPUT_SCHEMA)
     McpToolResult tool13(McpRequest request) {
         return McpToolResult.builder()
                 .addContent(McpToolContents.textContent(TOOL_CONTENT))

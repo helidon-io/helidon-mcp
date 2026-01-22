@@ -16,10 +16,11 @@
 package io.helidon.extensions.mcp.server;
 
 import io.helidon.common.media.type.MediaTypes;
+import io.helidon.json.schema.Schema;
+import io.helidon.json.schema.SchemaString;
 
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -36,6 +37,7 @@ class McpJsonSerializerV3Test {
                 .title("title")
                 .schema("")
                 .description("description")
+                .outputSchema("")
                 .tool(request -> null)
                 .build();
 
@@ -44,6 +46,39 @@ class McpJsonSerializerV3Test {
         assertThat(payload.getString("title"), is("title"));
         assertThat(payload.getString("description"), is("description"));
         assertThat(payload.getJsonObject("inputSchema"), notNullValue());
+
+        JsonObject outputSchema = payload.getJsonObject("outputSchema");
+        assertThat(outputSchema, notNullValue());
+        assertThat(outputSchema.getString("type"), is("object"));
+        assertThat(outputSchema.getJsonObject("properties"), is(JsonObject.EMPTY_JSON_OBJECT));
+    }
+
+    @Test
+    void testSerializeToolOutputSchema() {
+        McpTool tool = McpTool.builder()
+                .name("name")
+                .title("title")
+                .schema("")
+                .description("description")
+                .outputSchema(Schema.builder()
+                                      .rootObject(root -> root.addStringProperty("foo", SchemaString.create()))
+                                      .build()
+                                      .generate())
+                .tool(request -> null)
+                .build();
+
+        JsonObject payload = MJS.toJson(tool).build();
+        assertThat(payload.getString("name"), is("name"));
+        assertThat(payload.getString("title"), is("title"));
+        assertThat(payload.getString("description"), is("description"));
+        assertThat(payload.getJsonObject("inputSchema"), notNullValue());
+
+        JsonObject outputSchema = payload.getJsonObject("outputSchema");
+        assertThat(outputSchema, notNullValue());
+        assertThat(outputSchema.getString("type"), is("object"));
+
+        String foo = outputSchema.getJsonObject("properties").getJsonObject("foo").getString("type");
+        assertThat(foo, is("string"));
     }
 
     @Test

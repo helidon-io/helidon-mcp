@@ -90,9 +90,10 @@ final class McpTypes {
     static final TypeName HELIDON_MEDIA_TYPES = TypeName.create("io.helidon.common.media.type.MediaTypes");
     static final TypeName HTTP_ROUTING_BUILDER = TypeName.create("io.helidon.webserver.http.HttpRouting.Builder");
     static final TypeName GLOBAL_SERVICE_REGISTRY = TypeName.create("io.helidon.service.registry.GlobalServiceRegistry");
-    static final TypeName LIST_MCP_PROMPT_ARGUMENT = ResolvedType.create(TypeName.builder(LIST)
-                                                                                 .addTypeArgument(MCP_PROMPT_ARGUMENT)
-                                                                                 .build()).type();
+    static final TypeName OPTIONAL_STRING = TypeName.builder(TypeNames.OPTIONAL).addTypeArgument(TypeNames.STRING).build();
+    static final TypeName LIST_MCP_PROMPT_ARGUMENT = TypeName.builder(LIST)
+            .addTypeArgument(MCP_PROMPT_ARGUMENT)
+            .build();
     static final TypeName FUNCTION_REQUEST_COMPLETION_CONTENT =
             ResolvedType.create(TypeName.builder(FUNCTION)
                                         .addTypeArguments(List.of(MCP_REQUEST,

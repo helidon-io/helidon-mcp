@@ -28,7 +28,6 @@ import io.helidon.extensions.mcp.server.McpResourceContent;
 import io.helidon.extensions.mcp.server.McpResourceContents;
 import io.helidon.extensions.mcp.server.McpRole;
 import io.helidon.extensions.mcp.server.McpServerFeature;
-import io.helidon.extensions.mcp.server.McpToolContent;
 import io.helidon.extensions.mcp.server.McpToolContents;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.webserver.http.HttpRouting;
