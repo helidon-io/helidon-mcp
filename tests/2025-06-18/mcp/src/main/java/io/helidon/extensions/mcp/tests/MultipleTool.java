@@ -131,7 +131,7 @@ class MultipleTool {
     public static class StructuredContent {
         private String foo;
 
-        public StructuredContent(String foo) {
+        StructuredContent(String foo) {
             this.foo = foo;
         }
 
