@@ -79,7 +79,13 @@ class MultipleTool {
                                                    .addContent(audioContent(McpMedia.media("helidon.wav"),
                                                                             McpMedia.AUDIO_WAV))
                                                    .build()))
-                                   .addTool(new TownTool()));
+                                   .addTool(new TownTool())
+                                   .addTool(tool -> tool.name("tool5")
+                                           .schema("")
+                                           .description("Tool 5")
+                                           .tool(request -> McpToolResult.builder()
+                                                   .structuredContent(new StructuredContent("foo"))
+                                                   .build())));
     }
 
     static final class TownTool implements McpTool {
@@ -119,6 +125,21 @@ class MultipleTool {
                         .addContent(textContent(content))
                         .build();
             };
+        }
+    }
+
+    public static class StructuredContent {
+        private String foo;
+
+        public StructuredContent(String foo) {
+            this.foo = foo;
+        }
+
+        public String getFoo() {
+            return foo;
+        }
+        public void setFoo(String foo) {
+            this.foo = foo;
         }
     }
 }

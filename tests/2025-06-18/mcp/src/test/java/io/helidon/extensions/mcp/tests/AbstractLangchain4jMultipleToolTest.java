@@ -49,7 +49,7 @@ abstract class AbstractLangchain4jMultipleToolTest {
     @Test
     void testListTools() {
         List<ToolSpecification> tools = client.listTools();
-        assertThat(tools.size(), is(4));
+        assertThat(tools.size(), is(5));
 
         ToolSpecification tool1 = tools.getFirst();
         assertThat(tool1.name(), is("tool1"));
@@ -73,6 +73,11 @@ abstract class AbstractLangchain4jMultipleToolTest {
         assertThat(tool4.description(), is("Tool 4"));
         assertThat(tool4.parameters().properties().isEmpty(), is(false));
         assertThat(tool4.metadata().getOrDefault("title", ""), is("Tool 4 Title"));
+
+        ToolSpecification tool5 = tools.get(4);
+        assertThat(tool5.name(), is("tool5"));
+        assertThat(tool5.description(), is("Tool 5"));
+        assertThat(tool5.parameters().properties().isEmpty(), is(true));
     }
 
     @Test
