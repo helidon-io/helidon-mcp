@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ final class McpTypes {
     static final TypeName MCP_SAMPLING = TypeName.create("io.helidon.extensions.mcp.server.McpSampling");
     static final TypeName MCP_TOOL_INTERFACE = TypeName.create("io.helidon.extensions.mcp.server.McpTool");
     static final TypeName MCP_PARAMETERS = TypeName.create("io.helidon.extensions.mcp.server.McpParameters");
+    static final TypeName MCP_TOOL_RESULT = TypeName.create("io.helidon.extensions.mcp.server.McpToolResult");
     static final TypeName MCP_PROMPT_INTERFACE = TypeName.create("io.helidon.extensions.mcp.server.McpPrompt");
     static final TypeName MCP_TOOL_CONTENT = TypeName.create("io.helidon.extensions.mcp.server.McpToolContent");
     static final TypeName MCP_CANCELLATION = TypeName.create("io.helidon.extensions.mcp.server.McpCancellation");
@@ -89,9 +90,10 @@ final class McpTypes {
     static final TypeName HELIDON_MEDIA_TYPES = TypeName.create("io.helidon.common.media.type.MediaTypes");
     static final TypeName HTTP_ROUTING_BUILDER = TypeName.create("io.helidon.webserver.http.HttpRouting.Builder");
     static final TypeName GLOBAL_SERVICE_REGISTRY = TypeName.create("io.helidon.service.registry.GlobalServiceRegistry");
-    static final TypeName LIST_MCP_PROMPT_ARGUMENT = ResolvedType.create(TypeName.builder(LIST)
-                                                                                 .addTypeArgument(MCP_PROMPT_ARGUMENT)
-                                                                                 .build()).type();
+    static final TypeName OPTIONAL_STRING = TypeName.builder(TypeNames.OPTIONAL).addTypeArgument(TypeNames.STRING).build();
+    static final TypeName LIST_MCP_PROMPT_ARGUMENT = TypeName.builder(LIST)
+            .addTypeArgument(MCP_PROMPT_ARGUMENT)
+            .build();
     static final TypeName FUNCTION_REQUEST_COMPLETION_CONTENT =
             ResolvedType.create(TypeName.builder(FUNCTION)
                                         .addTypeArguments(List.of(MCP_REQUEST,
@@ -109,10 +111,10 @@ final class McpTypes {
     static final TypeName LIST_MCP_TOOL_CONTENT = ResolvedType.create(TypeName.builder(LIST)
                                                                               .addTypeArgument(MCP_TOOL_CONTENT)
                                                                               .build()).type();
-    static final TypeName FUNCTION_REQUEST_LIST_TOOL_CONTENT =
+    static final TypeName FUNCTION_REQUEST_TOOL_RESULT =
             ResolvedType.create(TypeName.builder(FUNCTION)
-                                        .addTypeArguments(List.of(MCP_REQUEST,
-                                                                  LIST_MCP_TOOL_CONTENT))
+                                        .addTypeArgument(MCP_REQUEST)
+                                        .addTypeArgument(MCP_TOOL_RESULT)
                                         .build()).type();
     static final TypeName LIST_MCP_PROMPT_CONTENT = ResolvedType.create(TypeName.builder(LIST)
                                                                                 .addTypeArgument(MCP_PROMPT_CONTENT)

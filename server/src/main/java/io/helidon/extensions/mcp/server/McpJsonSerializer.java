@@ -163,7 +163,7 @@ interface McpJsonSerializer {
 
     JsonObjectBuilder toJson(McpTool tool);
 
-    JsonObject toolCall(boolean error, List<McpToolContent> contents);
+    JsonObjectBuilder toolCall(McpTool tool, McpToolResult result);
 
     JsonObject listResources(McpPage<McpResource> page);
 

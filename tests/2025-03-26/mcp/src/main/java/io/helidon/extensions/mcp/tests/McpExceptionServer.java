@@ -32,7 +32,7 @@ import io.helidon.extensions.mcp.server.McpResource;
 import io.helidon.extensions.mcp.server.McpResourceContent;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
-import io.helidon.extensions.mcp.server.McpToolContent;
+import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.webserver.http.HttpRouting;
 
 import static io.helidon.jsonrpc.core.JsonRpcError.INTERNAL_ERROR;
@@ -73,7 +73,7 @@ class McpExceptionServer {
         }
 
         @Override
-        public Function<McpRequest, List<McpToolContent>> tool() {
+        public Function<McpRequest, McpToolResult> tool() {
             return request -> {
                 throw new McpException(INTERNAL_ERROR, MESSAGE);
             };
@@ -92,7 +92,7 @@ class McpExceptionServer {
         }
 
         @Override
-        public Function<McpRequest, List<McpToolContent>> tool() {
+        public Function<McpRequest, McpToolResult> tool() {
             return request -> {
                 request.features().logger().info("Switching to the SSE channel");
                 throw new McpException(INTERNAL_ERROR, MESSAGE);

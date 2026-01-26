@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,6 +186,16 @@ public final class Mcp {
          * @return the hint
          */
         boolean openWorldHint() default true;
+
+        /**
+         * The tool output schema is a JSON schema that defines the tool content output.
+         * The string must be compliant with
+         * <a href="https://json-schema.org/draft/2020-12">JSON Schema Version 2020-12</a>.
+         * If the output schema is defined, the tool must set {@link McpToolResult.Builder#structuredContent(Object)}.
+         *
+         * @return the tool output schema
+         */
+        String outputSchema() default "";
     }
 
     /**

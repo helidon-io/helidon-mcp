@@ -30,7 +30,9 @@ import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 
 @ServerTest
 class McpSdkStreamableMultipleToolTest extends AbstractMcpSdkTest {
@@ -55,7 +57,7 @@ class McpSdkStreamableMultipleToolTest extends AbstractMcpSdkTest {
     @Test
     void testListTools() {
         McpSchema.ListToolsResult result = client().listTools();
-        assertThat(result.tools().size(), is(4));
+        assertThat(result.tools().size(), is(5));
     }
 
     @Test
@@ -124,5 +126,19 @@ class McpSdkStreamableMultipleToolTest extends AbstractMcpSdkTest {
 
         McpSchema.TextContent text = (McpSchema.TextContent) tool4.content().getFirst();
         assertThat(text.text(), is("Paris has a population of 10 inhabitants"));
+    }
+
+    @Test
+    void testTool5() {
+        McpSchema.CallToolRequest request = McpSchema.CallToolRequest.builder().name("tool5").build();
+        McpSchema.CallToolResult tool5 = client().callTool(request);
+
+        assertThat(tool5.content().size(), is(1));
+        McpSchema.TextContent text = (McpSchema.TextContent) tool5.content().getFirst();
+
+        assertThat(tool5.structuredContent(), is(notNullValue()));
+        assertThat(tool5.structuredContent(), is(instanceOf(Map.class)));
+        Map<String, String> content = (Map<String, String>) tool5.structuredContent();
+        assertThat(content.get("foo"), is("foo"));
     }
 }

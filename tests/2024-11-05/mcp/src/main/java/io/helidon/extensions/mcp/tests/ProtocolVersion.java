@@ -16,11 +16,10 @@
 
 package io.helidon.extensions.mcp.tests;
 
-import java.util.List;
-
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
 import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.webserver.http.HttpRouting;
 
 class ProtocolVersion {
@@ -32,8 +31,9 @@ class ProtocolVersion {
         builder.addFeature(McpServerFeature.builder()
                                    .path("")
                                    .addTool(McpTool.builder()
-                                                    .tool(r -> List.of(
-                                                            McpToolContents.textContent(r.protocolVersion())))
+                                                    .tool(r -> McpToolResult.builder()
+                                                            .addContent(McpToolContents.textContent(r.protocolVersion()))
+                                                            .build())
                                                     .description("A tool that returns the protocol version")
                                                     .name("protocolVersion")
                                                     .schema("")

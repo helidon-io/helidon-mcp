@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,13 @@
 
 package io.helidon.extensions.mcp.examples.calendar;
 
-import java.util.List;
 import java.util.function.Function;
 
 import io.helidon.extensions.mcp.server.McpParameters;
 import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpTool;
-import io.helidon.extensions.mcp.server.McpToolContent;
 import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpToolResult;
 
 /**
  * MCP tool to list calendar events. Available as an alternative to using
@@ -65,18 +64,17 @@ final class ListCalendarEventTool implements McpTool {
     }
 
     @Override
-    public Function<McpRequest, List<McpToolContent>> tool() {
-        return this::listCalendarEvents;
-    }
+    public Function<McpRequest, McpToolResult> tool() {
+        return request -> {
+            McpParameters mcpParameters = request.parameters();
+            String date = mcpParameters.get("date")
+                    .asString()
+                    .orElse(null);
+            String entries = calendar.readContentMatchesLine(line -> date == null || line.contains(date));
 
-    private List<McpToolContent> listCalendarEvents(McpRequest request) {
-        McpParameters mcpParameters = request.parameters();
-
-        String date = mcpParameters.get("date")
-                .asString()
-                .orElse(null);
-
-        String entries = calendar.readContentMatchesLine(line -> date == null || line.contains(date));
-        return List.of(McpToolContents.textContent(entries));
+            return McpToolResult.builder()
+                    .addContent(McpToolContents.textContent(entries))
+                    .build();
+        };
     }
 }

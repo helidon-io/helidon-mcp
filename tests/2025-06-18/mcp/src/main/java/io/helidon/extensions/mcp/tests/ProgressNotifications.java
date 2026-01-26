@@ -16,19 +16,17 @@
 
 package io.helidon.extensions.mcp.tests;
 
-import java.util.List;
 import java.util.function.Function;
 
 import io.helidon.extensions.mcp.server.McpFeatures;
 import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
-import io.helidon.extensions.mcp.server.McpToolContent;
 import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.webserver.http.HttpRouting;
 
 class ProgressNotifications {
-
     private ProgressNotifications() {
     }
 
@@ -56,32 +54,32 @@ class ProgressNotifications {
         }
 
         @Override
-        public Function<McpRequest, List<McpToolContent>> tool() {
-            return this::process;
-        }
+        public Function<McpRequest, McpToolResult> tool() {
+            return request -> {
+                McpFeatures features = request.features();
 
-        List<McpToolContent> process(McpRequest request) {
-            McpFeatures features = request.features();
+                // add a message to notifications
+                boolean addMessage = !request.protocolVersion().startsWith("2024");
 
-            // add a message to notifications
-            boolean addMessage = !request.protocolVersion().startsWith("2024");
-
-            // send progress reports
-            var progress = features.progress();
-            progress.total(100);
-            try {
-                for (int i = 1; i <= 10; i++) {
-                    Thread.sleep(50);
-                    if (addMessage) {
-                        progress.send(i * 10, "Elapsed time is " + (50 * i));
-                    } else {
-                        progress.send(i * 10);
+                // send progress reports
+                var progress = features.progress();
+                progress.total(100);
+                try {
+                    for (int i = 1; i <= 10; i++) {
+                        Thread.sleep(50);
+                        if (addMessage) {
+                            progress.send(i * 10, "Elapsed time is " + (50 * i));
+                        } else {
+                            progress.send(i * 10);
+                        }
                     }
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            return List.of(McpToolContents.textContent("Dummy text"));
+                return McpToolResult.builder()
+                        .addContent(McpToolContents.textContent("Dummy text"))
+                        .build();
+            };
         }
     }
 }

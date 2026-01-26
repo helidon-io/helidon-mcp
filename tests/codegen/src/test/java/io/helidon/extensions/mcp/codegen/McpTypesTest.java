@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2024, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -58,6 +59,7 @@ import io.helidon.extensions.mcp.server.McpTool;
 import io.helidon.extensions.mcp.server.McpToolAnnotations;
 import io.helidon.extensions.mcp.server.McpToolContent;
 import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.service.registry.GlobalServiceRegistry;
 import io.helidon.service.registry.Services;
 import io.helidon.webserver.http.HttpFeature;
@@ -129,6 +131,7 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "MCP_SAMPLING", McpSampling.class);
         checkField(toCheck, checked, fields, "MCP_TOOL_INTERFACE", McpTool.class);
         checkField(toCheck, checked, fields, "MCP_PARAMETERS", McpParameters.class);
+        checkField(toCheck, checked, fields, "MCP_TOOL_RESULT", McpToolResult.class);
         checkField(toCheck, checked, fields, "MCP_PROMPT_INTERFACE", McpPrompt.class);
         checkField(toCheck, checked, fields, "MCP_CANCELLATION", McpCancellation.class);
         checkField(toCheck, checked, fields, "MCP_SERVER_CONFIG", McpServerConfig.class);
@@ -151,6 +154,7 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "MCP_RESOURCE_UNSUBSCRIBER_INTERFACE", McpResourceUnsubscriber.class);
 
         checkField(toCheck, checked, fields, "SERVICES", Services.class);
+        checkField(toCheck, checked, fields, "OPTIONAL_STRING", Optional.class);
         checkField(toCheck, checked, fields, "CONSUMER_REQUEST", Consumer.class);
         checkField(toCheck, checked, fields, "GLOBAL_SERVICE_REGISTRY", GlobalServiceRegistry.class);
         checkField(toCheck, checked, fields, "LIST_STRING", List.class);
@@ -162,9 +166,9 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "MCP_RESOURCE_CONTENT", McpResourceContent.class);
         checkField(toCheck, checked, fields, "MCP_PROMPT_CONTENT", McpPromptContent.class);
         checkField(toCheck, checked, fields, "MCP_TOOL_CONTENT", McpToolContent.class);
+        checkField(toCheck, checked, fields, "FUNCTION_REQUEST_TOOL_RESULT", Function.class);
         checkField(toCheck, checked, fields, "FUNCTION_REQUEST_COMPLETION_CONTENT", Function.class);
         checkField(toCheck, checked, fields, "FUNCTION_REQUEST_LIST_RESOURCE_CONTENT", Function.class);
-        checkField(toCheck, checked, fields, "FUNCTION_REQUEST_LIST_TOOL_CONTENT", Function.class);
         checkField(toCheck, checked, fields, "FUNCTION_REQUEST_LIST_PROMPT_CONTENT", Function.class);
 
         assertThat("All the types from McpTypes must be tested.", toCheck, IsEmptyCollection.empty());

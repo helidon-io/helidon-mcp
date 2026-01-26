@@ -27,6 +27,7 @@ import io.helidon.common.media.type.MediaTypes;
 
 class McpMedia {
     public static final MediaType IMAGE_PNG = MediaTypes.create("image/png");
+    public static final MediaType AUDIO_WAV = MediaTypes.create("audio/wav");
     public static final String IMAGE_PNG_VALUE = IMAGE_PNG.text();
 
     private static final ReentrantLock LOCK = new ReentrantLock();

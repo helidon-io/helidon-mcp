@@ -16,15 +16,14 @@
 
 package io.helidon.extensions.mcp.tests;
 
-import java.util.List;
 import java.util.function.Function;
 
 import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
 import io.helidon.extensions.mcp.server.McpToolAnnotations;
-import io.helidon.extensions.mcp.server.McpToolContent;
 import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.webserver.http.HttpRouting;
 
 class ToolAnnotationsServer {
@@ -47,7 +46,9 @@ class ToolAnnotationsServer {
                                                    .destructiveHint(true)
                                                    .idempotentHint(false)
                                                    .openWorldHint(true))
-                                           .tool(request -> List.of(McpToolContents.textContent("")))));
+                                           .tool(request -> McpToolResult.builder()
+                                                   .addContent(McpToolContents.textContent(""))
+                                                   .build())));
     }
 
     private static class Tool1 implements McpTool {
@@ -68,8 +69,10 @@ class ToolAnnotationsServer {
         }
 
         @Override
-        public Function<McpRequest, List<McpToolContent>> tool() {
-            return request -> List.of(McpToolContents.textContent(""));
+        public Function<McpRequest, McpToolResult> tool() {
+            return request -> McpToolResult.builder()
+                    .addContent(McpToolContents.textContent(""))
+                    .build();
         }
 
         @Override
@@ -103,8 +106,10 @@ class ToolAnnotationsServer {
         }
 
         @Override
-        public Function<McpRequest, List<McpToolContent>> tool() {
-            return request -> List.of(McpToolContents.textContent(""));
+        public Function<McpRequest, McpToolResult> tool() {
+            return request -> McpToolResult.builder()
+                    .addContent(McpToolContents.textContent(""))
+                    .build();
         }
 
         @Override

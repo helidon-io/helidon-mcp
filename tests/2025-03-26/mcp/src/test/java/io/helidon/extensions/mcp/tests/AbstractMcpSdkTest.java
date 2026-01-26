@@ -22,7 +22,6 @@ import java.util.concurrent.TimeUnit;
 import io.helidon.faulttolerance.Async;
 
 import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
 import io.modelcontextprotocol.spec.McpClientTransport;
 import org.junit.jupiter.api.AfterEach;

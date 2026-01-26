@@ -16,14 +16,10 @@
 
 package io.helidon.extensions.mcp.tests;
 
-import java.util.List;
-import java.util.function.Function;
-
-import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
-import io.helidon.extensions.mcp.server.McpToolContent;
 import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.webserver.http.HttpRouting;
 
 class LoggingNotifications {
@@ -35,20 +31,16 @@ class LoggingNotifications {
         builder.addFeature(McpServerFeature.builder()
                                    .path("/")
                                    .addTool(McpTool.builder()
-                                                    .tool(new LoggingTool())
+                                                    .tool(request -> {
+                                                        request.features().logger().info("Logging data");
+                                                        request.features().logger().debug("Logging data");
+                                                        return McpToolResult.builder()
+                                                                .addContent(McpToolContents.textContent("Dummy text"))
+                                                                .build();
+                                                    })
                                                     .description("A tool that uses logging")
                                                     .name("logging")
                                                     .schema("")
                                                     .build()));
-    }
-
-    static class LoggingTool implements Function<McpRequest, List<McpToolContent>> {
-
-        @Override
-        public List<McpToolContent> apply(McpRequest request) {
-            request.features().logger().info("Logging data");
-            request.features().logger().debug("Logging data");
-            return List.of(McpToolContents.textContent("Dummy text"));
-        }
     }
 }

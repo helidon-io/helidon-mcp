@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,12 @@ package io.helidon.extensions.mcp.server;
 import java.io.StringReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.IntStream;
 
 import io.helidon.common.media.type.MediaType;
@@ -42,13 +43,14 @@ import jakarta.json.JsonValue;
 import static io.helidon.jsonrpc.core.JsonRpcError.INTERNAL_ERROR;
 
 class McpJsonSerializerV1 implements McpJsonSerializer {
-    private static final Map<String, JsonObject> CACHE = new ConcurrentHashMap<>();
+    private static final Map<String, JsonObject> CACHE = new HashMap<>();
     private static final JsonReaderFactory JSON_READER_FACTORY = Json.createReaderFactory(Map.of());
     private static final JsonBuilderFactory JSON_BUILDER_FACTORY = Json.createBuilderFactory(Map.of());
-    private static final JsonObject EMPTY_OBJECT_SCHEMA = JSON_BUILDER_FACTORY.createObjectBuilder()
+    static final JsonObject EMPTY_OBJECT_SCHEMA = JSON_BUILDER_FACTORY.createObjectBuilder()
             .add("type", "object")
             .add("properties", JsonObject.EMPTY_JSON_OBJECT)
             .build();
+    private final ReentrantLock lock = new ReentrantLock();
 
     @Override
     public JsonObjectBuilder toJson(Set<McpCapability> capabilities, McpServerConfig config) {
@@ -72,14 +74,30 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
 
     @Override
     public JsonObjectBuilder toJson(McpTool tool) {
-        JsonObject jsonSchema = CACHE.computeIfAbsent(tool.schema(), schema -> {
-            if (schema.isEmpty()) {
-                return EMPTY_OBJECT_SCHEMA;
+        String schema = tool.schema();
+        JsonObject jsonSchema = CACHE.get(schema);
+        if (jsonSchema == null) {
+            // lock to write the newly parsed input schema
+            lock.lock();
+            try {
+                jsonSchema = CACHE.get(schema);
+                // double check that another thread did not write the schema outside of this lock
+                if (jsonSchema == null) {
+                    JsonObject parsed;
+                    if (schema.isEmpty()) {
+                        parsed = EMPTY_OBJECT_SCHEMA;
+                    } else {
+                        try (var r = JSON_READER_FACTORY.createReader(new StringReader(schema))) {
+                            parsed = r.readObject();
+                        }
+                    }
+                    CACHE.put(schema, parsed);
+                    jsonSchema = parsed;
+                }
+            } finally {
+                lock.unlock();
             }
-            try (var r = JSON_READER_FACTORY.createReader(new StringReader(schema))) {
-                return r.readObject();      // in-memory parsing
-            }
-        });
+        }
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("name", tool.name())
                 .add("description", tool.description())
@@ -87,19 +105,18 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     }
 
     @Override
-    public JsonObject toolCall(boolean error, List<McpToolContent> contents) {
+    public JsonObjectBuilder toolCall(McpTool tool, McpToolResult result) {
         JsonArrayBuilder array = JSON_BUILDER_FACTORY.createArrayBuilder();
-        for (McpToolContent content : contents) {
+        for (McpToolContent content : result.contents()) {
             if (content instanceof McpToolResourceContent trc) {
                 array.add(toJson(trc));
-                continue;
+            } else {
+                array.add(toJson(content.content()));
             }
-            array.add(toJson(content.content()));
         }
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("content", array)
-                .add("isError", error)
-                .build();
+                .add("isError", result.error());
     }
 
     @Override
