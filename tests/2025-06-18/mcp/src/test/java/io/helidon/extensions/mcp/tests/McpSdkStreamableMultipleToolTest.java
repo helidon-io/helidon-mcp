@@ -91,16 +91,20 @@ class McpSdkStreamableMultipleToolTest extends AbstractMcpSdkTest {
     @Test
     void testTool3() {
         McpSchema.CallToolResult tool3 = client().callTool(new McpSchema.CallToolRequest("tool3", Map.of()));
-        assertThat(tool3.content().size(), is(4));
+        assertThat(tool3.content().size(), is(6));
 
         McpSchema.Content first = tool3.content().getFirst();
         McpSchema.Content second = tool3.content().get(1);
         McpSchema.Content third = tool3.content().get(2);
         McpSchema.Content fourth = tool3.content().get(3);
+        McpSchema.Content fifth = tool3.content().get(4);
+        McpSchema.Content sixth = tool3.content().get(5);
         assertThat(first.type(), is("image"));
         assertThat(second.type(), is("resource"));
         assertThat(third.type(), is("text"));
         assertThat(fourth.type(), is("audio"));
+        assertThat(fifth.type(), is("resource_link"));
+        assertThat(sixth.type(), is("resource_link"));
 
         McpSchema.ImageContent image = (McpSchema.ImageContent) first;
         assertThat(image.data(), is(McpMedia.base64Media("helidon.png")));
@@ -116,6 +120,18 @@ class McpSdkStreamableMultipleToolTest extends AbstractMcpSdkTest {
         McpSchema.AudioContent audio = (McpSchema.AudioContent) fourth;
         assertThat(audio.data(), is(McpMedia.base64Media("helidon.wav")));
         assertThat(audio.mimeType(), is(McpMedia.AUDIO_WAV_VALUE));
+
+        McpSchema.ResourceLink link = (McpSchema.ResourceLink) fifth;
+        assertThat(link.uri(), is("https://foo"));
+        assertThat(link.name(), is("resource-link-default"));
+
+        McpSchema.ResourceLink link1 = (McpSchema.ResourceLink) sixth;
+        assertThat(link1.size(), is(10L));
+        assertThat(link1.title(), is("title"));
+        assertThat(link1.uri(), is("https://foo"));
+        assertThat(link1.description(), is("description"));
+        assertThat(link1.name(), is("resource-link-custom"));
+        assertThat(link1.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
     }
 
     @Test
