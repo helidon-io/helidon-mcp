@@ -68,6 +68,14 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
     }
 
     @Override
+    public JsonObjectBuilder toJson(McpContent content) {
+        if (content instanceof McpResourceLinkContent link) {
+            return toJson(link);
+        }
+        return super.toJson(content);
+    }
+
+    @Override
     public JsonObjectBuilder toJson(McpTool tool) {
         var builder = super.toJson(tool);
 
@@ -127,6 +135,18 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
         if (!argument.title().isBlank()) {
             builder.add("title", argument.title());
         }
+        return builder;
+    }
+
+    private JsonObjectBuilder toJson(McpResourceLinkContent content) {
+        var builder = JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("type", content.type().text())
+                .add("uri", content.uri())
+                .add("name", content.name());
+        content.size().ifPresent(size -> builder.add("size", size));
+        content.title().ifPresent(title -> builder.add("title", title));
+        content.mediaType().ifPresent(mediaType -> builder.add("mimeType", mediaType.text()));
+        content.description().ifPresent(description -> builder.add("description", description));
         return builder;
     }
 }

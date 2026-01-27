@@ -19,6 +19,7 @@ package io.helidon.extensions.mcp.tests;
 import java.net.URI;
 import java.util.function.Function;
 
+import io.helidon.common.media.type.MediaTypes;
 import io.helidon.extensions.mcp.server.McpParameters;
 import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpResourceContents;
@@ -33,6 +34,7 @@ import io.helidon.webserver.http.HttpRouting;
 import static io.helidon.extensions.mcp.server.McpToolContents.audioContent;
 import static io.helidon.extensions.mcp.server.McpToolContents.imageContent;
 import static io.helidon.extensions.mcp.server.McpToolContents.resourceContent;
+import static io.helidon.extensions.mcp.server.McpToolContents.resourceLinkContent;
 import static io.helidon.extensions.mcp.server.McpToolContents.textContent;
 
 class MultipleTool {
@@ -78,6 +80,13 @@ class MultipleTool {
                                                    .addContent(textContent("text"))
                                                    .addContent(audioContent(McpMedia.media("helidon.wav"),
                                                                             McpMedia.AUDIO_WAV))
+                                                   .addContent(resourceLinkContent("resource-link-default", "https://foo"))
+                                                   .addContent(resourceLinkContent(link -> link.name("resource-link-custom")
+                                                           .size(10)
+                                                           .title("title")
+                                                           .uri("https://foo")
+                                                           .description("description")
+                                                           .mediaType(MediaTypes.TEXT_PLAIN)))
                                                    .build()))
                                    .addTool(new TownTool())
                                    .addTool(tool -> tool.name("tool5")
@@ -138,6 +147,7 @@ class MultipleTool {
         public String getFoo() {
             return foo;
         }
+
         public void setFoo(String foo) {
             this.foo = foo;
         }
