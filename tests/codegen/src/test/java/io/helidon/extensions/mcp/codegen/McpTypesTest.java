@@ -36,6 +36,7 @@ import io.helidon.extensions.mcp.server.McpCancellation;
 import io.helidon.extensions.mcp.server.McpCompletion;
 import io.helidon.extensions.mcp.server.McpCompletionContent;
 import io.helidon.extensions.mcp.server.McpCompletionContents;
+import io.helidon.extensions.mcp.server.McpCompletionRequest;
 import io.helidon.extensions.mcp.server.McpCompletionType;
 import io.helidon.extensions.mcp.server.McpFeatures;
 import io.helidon.extensions.mcp.server.McpLogger;
@@ -148,6 +149,7 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "HELIDON_MEDIA_TYPES", MediaTypes.class);
         checkField(toCheck, checked, fields, "HTTP_ROUTING_BUILDER", HttpRouting.Builder.class);
         checkField(toCheck, checked, fields, "MCP_TOOL_ANNOTATIONS", McpToolAnnotations.class);
+        checkField(toCheck, checked, fields, "MCP_COMPLETION_REQUEST", McpCompletionRequest.class);
         checkField(toCheck, checked, fields, "MCP_RESOURCE_SUBSCRIBER", Mcp.ResourceSubscriber.class);
         checkField(toCheck, checked, fields, "MCP_RESOURCE_UNSUBSCRIBER", Mcp.ResourceUnsubscriber.class);
         checkField(toCheck, checked, fields, "MCP_RESOURCE_SUBSCRIBER_INTERFACE", McpResourceSubscriber.class);
@@ -167,9 +169,9 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "MCP_PROMPT_CONTENT", McpPromptContent.class);
         checkField(toCheck, checked, fields, "MCP_TOOL_CONTENT", McpToolContent.class);
         checkField(toCheck, checked, fields, "FUNCTION_REQUEST_TOOL_RESULT", Function.class);
-        checkField(toCheck, checked, fields, "FUNCTION_REQUEST_COMPLETION_CONTENT", Function.class);
         checkField(toCheck, checked, fields, "FUNCTION_REQUEST_LIST_RESOURCE_CONTENT", Function.class);
         checkField(toCheck, checked, fields, "FUNCTION_REQUEST_LIST_PROMPT_CONTENT", Function.class);
+        checkField(toCheck, checked, fields, "FUNCTION_COMPLETION_REQUEST_COMPLETION_CONTENT", Function.class);
 
         assertThat("All the types from McpTypes must be tested.", toCheck, IsEmptyCollection.empty());
     }
