@@ -718,14 +718,14 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             };
             McpFeatures features = session.createFeatures(requestId, req, res);
             session.beforeFeatureRequest(parameters, requestId);
-            McpCompletionContent result = completion.completion()
-                    .apply(McpRequest.builder()
-                                   .parameters(parameters.get("argument"))
-                                   .features(features)
-                                   .protocolVersion(session.protocolVersion().text())
-                                   .sessionContext(session.context())
-                                   .requestContext(req.context())
-                                   .build());
+            McpRequest request = McpRequest.builder()
+                    .parameters(parameters)
+                    .features(features)
+                    .protocolVersion(session.protocolVersion().text())
+                    .sessionContext(session.context())
+                    .requestContext(req.context())
+                    .build();
+            McpCompletionContent result = completion.completion().apply(new McpCompletionRequestImpl(request));
             session.afterFeatureRequest(parameters, requestId);
             var payload = session.serializer().toJson(result);
             res.result(payload);

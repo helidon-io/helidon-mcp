@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,29 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import io.helidon.common.mapper.OptionalValue;
 import io.helidon.jsonrpc.core.JsonRpcParams;
 
-import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonStructure;
+import jakarta.json.spi.JsonProvider;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 class McpParametersTest {
+    private static final JsonProvider JSON_PROVIDER = JsonProvider.provider();
 
     @Test
     void testSimpleString() {
-        JsonObject object = Json.createObjectBuilder()
+        JsonObject object = JSON_PROVIDER.createObjectBuilder()
                 .add("foo", "bar")
                 .build();
         JsonRpcParams rpcParams = JsonRpcParams.create(object);
@@ -45,7 +49,7 @@ class McpParametersTest {
 
     @Test
     void testSimpleBoolean() {
-        JsonObject object = Json.createObjectBuilder()
+        JsonObject object = JSON_PROVIDER.createObjectBuilder()
                 .add("foo", true)
                 .build();
         JsonRpcParams rpcParams = JsonRpcParams.create(object);
@@ -56,7 +60,7 @@ class McpParametersTest {
 
     @Test
     void testSimpleByte() {
-        JsonObject object = Json.createObjectBuilder()
+        JsonObject object = JSON_PROVIDER.createObjectBuilder()
                 .add("foo", 1)
                 .build();
         JsonRpcParams rpcParams = JsonRpcParams.create(object);
@@ -67,7 +71,7 @@ class McpParametersTest {
 
     @Test
     void testSimpleShort() {
-        JsonObject object = Json.createObjectBuilder()
+        JsonObject object = JSON_PROVIDER.createObjectBuilder()
                 .add("foo", 1)
                 .build();
         JsonRpcParams rpcParams = JsonRpcParams.create(object);
@@ -78,7 +82,7 @@ class McpParametersTest {
 
     @Test
     void testSimpleInteger() {
-        JsonObject object = Json.createObjectBuilder()
+        JsonObject object = JSON_PROVIDER.createObjectBuilder()
                 .add("foo", 1)
                 .build();
         JsonRpcParams rpcParams = JsonRpcParams.create(object);
@@ -89,7 +93,7 @@ class McpParametersTest {
 
     @Test
     void testSimpleLong() {
-        JsonObject object = Json.createObjectBuilder()
+        JsonObject object = JSON_PROVIDER.createObjectBuilder()
                 .add("foo", 1L)
                 .build();
         JsonRpcParams rpcParams = JsonRpcParams.create(object);
@@ -100,7 +104,7 @@ class McpParametersTest {
 
     @Test
     void testSimpleDouble() {
-        JsonObject object = Json.createObjectBuilder()
+        JsonObject object = JSON_PROVIDER.createObjectBuilder()
                 .add("foo", 1.0D)
                 .build();
         JsonRpcParams rpcParams = JsonRpcParams.create(object);
@@ -111,7 +115,7 @@ class McpParametersTest {
 
     @Test
     void testSimpleFloat() {
-        JsonObject object = Json.createObjectBuilder()
+        JsonObject object = JSON_PROVIDER.createObjectBuilder()
                 .add("foo", 1.0F)
                 .build();
         JsonRpcParams rpcParams = JsonRpcParams.create(object);
@@ -122,8 +126,8 @@ class McpParametersTest {
 
     @Test
     void testSimpleList() {
-        JsonObject object = Json.createObjectBuilder()
-                .add("foo", Json.createArrayBuilder()
+        JsonObject object = JSON_PROVIDER.createObjectBuilder()
+                .add("foo", JSON_PROVIDER.createArrayBuilder()
                         .add("foo1")
                         .add("foo2"))
                 .build();
@@ -141,8 +145,8 @@ class McpParametersTest {
 
     @Test
     void testNestedObject() {
-        JsonObject object = Json.createObjectBuilder()
-                .add("person", Json.createObjectBuilder()
+        JsonObject object = JSON_PROVIDER.createObjectBuilder()
+                .add("person", JSON_PROVIDER.createObjectBuilder()
                         .add("name", "Frank")
                         .add("age", 10))
                 .build();
@@ -157,7 +161,7 @@ class McpParametersTest {
 
     @Test
     void testCasting() {
-        JsonStructure object = Json.createObjectBuilder()
+        JsonStructure object = JSON_PROVIDER.createObjectBuilder()
                 .add("foo", "value1")
                 .add("bar", "value2")
                 .build();
@@ -171,8 +175,8 @@ class McpParametersTest {
 
     @Test
     void testNestedCasting() {
-        JsonStructure object = Json.createObjectBuilder()
-                .add("foo", Json.createObjectBuilder()
+        JsonStructure object = JSON_PROVIDER.createObjectBuilder()
+                .add("foo", JSON_PROVIDER.createObjectBuilder()
                         .add("foo", "value1")
                         .add("bar", "value2"))
                 .build();
@@ -186,7 +190,7 @@ class McpParametersTest {
 
     @Test
     void testIsNumberInt() {
-        JsonStructure object = Json.createObjectBuilder()
+        JsonStructure object = JSON_PROVIDER.createObjectBuilder()
                 .add("foo", 1)
                 .build();
         JsonRpcParams params = JsonRpcParams.create(object);
@@ -198,7 +202,7 @@ class McpParametersTest {
 
     @Test
     void testIsNumberDouble() {
-        JsonStructure object = Json.createObjectBuilder()
+        JsonStructure object = JSON_PROVIDER.createObjectBuilder()
                 .add("foo", 1.0)
                 .build();
         JsonRpcParams params = JsonRpcParams.create(object);
@@ -210,7 +214,7 @@ class McpParametersTest {
 
     @Test
     void testIsNumberString() {
-        JsonStructure object = Json.createObjectBuilder()
+        JsonStructure object = JSON_PROVIDER.createObjectBuilder()
                 .add("foo", "notANumber")
                 .build();
         JsonRpcParams params = JsonRpcParams.create(object);
@@ -222,7 +226,7 @@ class McpParametersTest {
 
     @Test
     void testIsString() {
-        JsonStructure object = Json.createObjectBuilder()
+        JsonStructure object = JSON_PROVIDER.createObjectBuilder()
                 .add("foo", "notANumber")
                 .build();
         JsonRpcParams params = JsonRpcParams.create(object);
@@ -234,7 +238,7 @@ class McpParametersTest {
 
     @Test
     void testIsStringNumber() {
-        JsonStructure object = Json.createObjectBuilder()
+        JsonStructure object = JSON_PROVIDER.createObjectBuilder()
                 .add("foo", 1)
                 .build();
         JsonRpcParams params = JsonRpcParams.create(object);
@@ -247,7 +251,7 @@ class McpParametersTest {
     @Test
     void testIfPresent() {
         AtomicBoolean present = new AtomicBoolean(false);
-        JsonStructure object = Json.createObjectBuilder()
+        JsonStructure object = JSON_PROVIDER.createObjectBuilder()
                 .add("foo", 1)
                 .build();
         JsonRpcParams params = JsonRpcParams.create(object);
@@ -259,7 +263,7 @@ class McpParametersTest {
     @Test
     void testIfNotPresent() {
         AtomicBoolean present = new AtomicBoolean(false);
-        JsonStructure object = Json.createObjectBuilder()
+        JsonStructure object = JSON_PROVIDER.createObjectBuilder()
                 .add("foo", 1)
                 .build();
         JsonRpcParams params = JsonRpcParams.create(object);
@@ -270,7 +274,7 @@ class McpParametersTest {
 
     @Test
     void testIfPresentNullPointerException() {
-        JsonStructure object = Json.createObjectBuilder()
+        JsonStructure object = JSON_PROVIDER.createObjectBuilder()
                 .add("foo", 1)
                 .build();
         JsonRpcParams params = JsonRpcParams.create(object);
@@ -281,6 +285,53 @@ class McpParametersTest {
         } catch (NullPointerException exception) {
             assertThat(exception.getMessage(), is("action is null"));
         }
+    }
+
+    @Test
+    void testAsMap() {
+        JsonObject object = JSON_PROVIDER.createObjectBuilder()
+                .add("foo", "foo")
+                .add("bar", "bar")
+                .build();
+        JsonRpcParams params = JsonRpcParams.create(object);
+        McpParameters parameters = new McpParameters(params, object);
+
+        Map<String, McpParameters> map = parameters.asMap()
+                .orElseGet(HashMap::new);
+        assertThat(map.size(), is(2));
+        assertThat(map.containsKey("foo"), is(true));
+        assertThat(map.containsKey("bar"), is(true));
+
+        McpParameters foo = map.get("foo");
+        assertThat(foo.isPresent(), is(true));
+        assertThat(foo.asString().orElse(""), is("foo"));
+
+        McpParameters bar = map.get("bar");
+        assertThat(bar.isPresent(), is(true));
+        assertThat(bar.asString().orElse(""), is("bar"));
+    }
+
+    @Test
+    void testAsStringMap() {
+        JsonObject object = JSON_PROVIDER.createObjectBuilder()
+                .add("foo", "foo")
+                .add("bar", "bar")
+                .build();
+        JsonRpcParams params = JsonRpcParams.create(object);
+        McpParameters parameters = new McpParameters(params, object);
+
+        Map<String, String> map = parameters.asMap()
+                .orElseGet(HashMap::new)
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey,
+                                          e -> e.getValue().asString().orElse("")));
+
+        assertThat(map.size(), is(2));
+        assertThat(map.containsKey("foo"), is(true));
+        assertThat(map.containsKey("bar"), is(true));
+        assertThat(map.get("foo"), is("foo"));
+        assertThat(map.get("bar"), is("bar"));
     }
 
     public static class Foo {

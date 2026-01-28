@@ -16,6 +16,8 @@
 
 package io.helidon.extensions.mcp.tests;
 
+import java.util.Map;
+
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.testing.junit5.ServerTest;
@@ -75,5 +77,20 @@ class McpSdkStreamableCompletionTest extends AbstractMcpSdkTest {
                                       () -> client().completeCompletion(request).completion());
         assertThat(error.getJsonRpcError().code(), is(INVALID_PARAMS));
         assertThat(error.getJsonRpcError().message(), is("No prompt completion found"));
+    }
+
+    @Test
+    void testMcpSdkCompletionContext() {
+        McpSchema.CompleteRequest request = new McpSchema.CompleteRequest(
+                new McpSchema.PromptReference("context"),
+                new McpSchema.CompleteRequest.CompleteArgument("hello", "world"),
+                new McpSchema.CompleteRequest.CompleteContext(Map.of("foo", "bar")));
+        McpSchema.CompleteResult.CompleteCompletion result = client().completeCompletion(request).completion();
+        assertThat(result.total(), is(1));
+        assertThat(result.hasMore(), is(false));
+
+        var list = result.values();
+        assertThat(list.size(), is(1));
+        assertThat(list.getFirst(), is("foo,bar"));
     }
 }

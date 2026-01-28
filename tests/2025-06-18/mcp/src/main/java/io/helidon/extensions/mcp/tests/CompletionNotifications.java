@@ -16,14 +16,18 @@
 
 package io.helidon.extensions.mcp.tests;
 
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import io.helidon.extensions.mcp.server.McpCompletion;
 import io.helidon.extensions.mcp.server.McpCompletionContent;
 import io.helidon.extensions.mcp.server.McpCompletionContents;
+import io.helidon.extensions.mcp.server.McpCompletionContext;
+import io.helidon.extensions.mcp.server.McpCompletionRequest;
 import io.helidon.extensions.mcp.server.McpCompletionType;
-import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.webserver.http.HttpRouting;
 
@@ -34,7 +38,8 @@ class CompletionNotifications {
     static void setUpRoute(HttpRouting.Builder builder) {
         builder.addFeature(McpServerFeature.builder()
                                    .path("/")
-                                   .addCompletion(new CompletionHandler()));
+                                   .addCompletion(new CompletionHandler())
+                                   .addCompletion(new CompletionContext()));
     }
 
     private static class CompletionHandler implements McpCompletion {
@@ -50,16 +55,37 @@ class CompletionNotifications {
         }
 
         @Override
-        public Function<McpRequest, McpCompletionContent> completion() {
+        public Function<McpCompletionRequest, McpCompletionContent> completion() {
             return this::complete;
         }
 
-        McpCompletionContent complete(McpRequest request) {
-            String argument = request.parameters().get("value").asString().get();
-            if (Objects.equals(argument, "Hel")) {
+        McpCompletionContent complete(McpCompletionRequest request) {
+            if (Objects.equals(request.value(), "Hel")) {
                 return McpCompletionContents.completion("Helidon");
             }
             return McpCompletionContents.completion();
+        }
+    }
+
+    private static class CompletionContext implements McpCompletion {
+
+        @Override
+        public String reference() {
+            return "context";
+        }
+
+        @Override
+        public Function<McpCompletionRequest, McpCompletionContent> completion() {
+            return completion -> {
+                String content = completion.context()
+                        .map(McpCompletionContext::arguments)
+                        .map(Map::entrySet)
+                        .stream()
+                        .flatMap(Set::stream)
+                        .map(entry -> entry.getKey() + "," + entry.getValue())
+                        .collect(Collectors.joining(","));
+                return McpCompletionContents.completion(content);
+            };
         }
     }
 }

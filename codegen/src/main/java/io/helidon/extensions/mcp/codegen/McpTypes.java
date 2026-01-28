@@ -74,6 +74,7 @@ final class McpTypes {
     static final TypeName MCP_TOOL_ANNOTATIONS = TypeName.create("io.helidon.extensions.mcp.server.McpToolAnnotations");
     static final TypeName MCP_RESOURCE_CONTENT = TypeName.create("io.helidon.extensions.mcp.server.McpResourceContent");
     static final TypeName MCP_RESOURCE_CONTENTS = TypeName.create("io.helidon.extensions.mcp.server.McpResourceContents");
+    static final TypeName MCP_COMPLETION_REQUEST = TypeName.create("io.helidon.extensions.mcp.server.McpCompletionRequest");
     static final TypeName MCP_COMPLETION_CONTENT = TypeName.create("io.helidon.extensions.mcp.server.McpCompletionContent");
     static final TypeName MCP_COMPLETION_CONTENTS = TypeName.create("io.helidon.extensions.mcp.server.McpCompletionContents");
     static final TypeName MCP_RESOURCE_SUBSCRIBER_INTERFACE =
@@ -94,11 +95,10 @@ final class McpTypes {
     static final TypeName LIST_MCP_PROMPT_ARGUMENT = TypeName.builder(LIST)
             .addTypeArgument(MCP_PROMPT_ARGUMENT)
             .build();
-    static final TypeName FUNCTION_REQUEST_COMPLETION_CONTENT =
-            ResolvedType.create(TypeName.builder(FUNCTION)
-                                        .addTypeArguments(List.of(MCP_REQUEST,
-                                                                  MCP_COMPLETION_CONTENT))
-                                        .build()).type();
+    static final TypeName FUNCTION_COMPLETION_REQUEST_COMPLETION_CONTENT = TypeName.builder(FUNCTION)
+            .addTypeArgument(MCP_COMPLETION_REQUEST)
+            .addTypeArgument(MCP_COMPLETION_CONTENT)
+            .build();
     static final TypeName LIST_MCP_RESOURCE_CONTENT = ResolvedType.create(TypeName.builder(LIST)
                                                                                   .addTypeArgument(MCP_RESOURCE_CONTENT)
                                                                                   .build()).type();
