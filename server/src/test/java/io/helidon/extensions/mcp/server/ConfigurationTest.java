@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,8 @@ class ConfigurationTest {
 
     @Test
     void testConfiguration() {
-        var config = McpServerConfig.create(Config.just(ConfigSources.classpath("application-server.yaml"))
-                                                             .get(McpServerConfigBlueprint.CONFIG_ROOT));
+        McpServerConfig config = McpServerConfig.create(Config.just(ConfigSources.classpath("application-server.yaml"))
+                                                                .get(McpServerConfigBlueprint.CONFIG_ROOT));
 
         assertThat(config.path(), is("/path"));
         assertThat(config.version(), is("1.0.0"));
@@ -46,17 +46,19 @@ class ConfigurationTest {
         assertThat(config.resourcesPageSize(), is(10));
         assertThat(config.resourceTemplatesPageSize(), is(10));
         assertThat(config.rootListTimeout(), is(Duration.ofSeconds(1)));
+        assertThat(config.instructions().orElse(""), is("instructions"));
         assertThat(config.subscriptionTimeout(), is(Duration.ofSeconds(1)));
     }
 
     @Test
     void testConfigurationDefaultValues() {
-        var config = McpServerConfig.create(Config.just(ConfigSources.classpath("application-empty.yaml"))
-                                                             .get(McpServerConfigBlueprint.CONFIG_ROOT));
+        McpServerConfig config = McpServerConfig.create(Config.just(ConfigSources.classpath("application-empty.yaml"))
+                                                                .get(McpServerConfigBlueprint.CONFIG_ROOT));
 
         assertThat(config.path(), is("/mcp"));
         assertThat(config.version(), is("0.0.1"));
         assertThat(config.name(), is("mcp-server"));
+        assertThat(config.instructions().isEmpty(), is(true));
         assertThat(config.toolsPageSize(), is(DEFAULT_PAGE_SIZE));
         assertThat(config.promptsPageSize(), is(DEFAULT_PAGE_SIZE));
         assertThat(config.resourcesPageSize(), is(DEFAULT_PAGE_SIZE));

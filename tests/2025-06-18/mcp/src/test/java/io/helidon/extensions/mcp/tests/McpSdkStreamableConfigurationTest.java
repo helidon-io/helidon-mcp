@@ -51,8 +51,10 @@ class McpSdkStreamableConfigurationTest extends AbstractMcpSdkTest {
     void toolAnnotationConfig() {
         var result = client().initialize();
         var infos = result.serverInfo();
-
-        assertThat(infos.version(), is("1.0.0-CONFIG"));
         assertThat(infos.name(), is("Config Named"));
+        assertThat(infos.version(), is("1.0.0-CONFIG"));
+
+        var instructions = result.instructions();
+        assertThat(instructions, is("instructions"));
     }
 }

@@ -28,6 +28,7 @@ class ConfigurationServer {
     static void setUpRoute(HttpRouting.Builder builder) {
         Config mcpServerConfig = Config.just(ConfigSources.classpath("application-mcp-server.yaml"));
         builder.addFeature(McpServerFeature.builder()
-                                   .config(mcpServerConfig.get("mcp.server")));
+                                   .config(mcpServerConfig.get("mcp.server"))
+                                   .instructions("instructions"));
     }
 }
