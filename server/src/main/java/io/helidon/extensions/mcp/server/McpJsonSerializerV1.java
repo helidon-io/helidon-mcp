@@ -69,7 +69,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
                 .add("serverInfo", JSON_BUILDER_FACTORY.createObjectBuilder()
                         .add("name", config.name())
                         .add("version", config.version()))
-                .add("instructions", "");
+                .add("instructions", config.instructions().orElse(""));
     }
 
     @Override
