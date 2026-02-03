@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,7 @@ import jakarta.json.JsonObject;
 /**
  * MCP transport provides a way to send data to the connected client.
  */
-sealed interface McpTransport extends McpTransportLifecycle permits McpSsePostTransport,
-                                                                    McpStreamableHttpTransport {
+sealed interface McpTransport permits McpSsePostTransport, McpStreamableHttpTransport {
     /**
      * Send a JSON object to the client. The payload has to follow
      * the JSON-RPC 2.0 specification.

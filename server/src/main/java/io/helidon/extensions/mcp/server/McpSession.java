@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,9 +47,9 @@ class McpSession {
 
     private final String id;
     private final McpSessions sessions;
+    private final McpTransportManager manager;
     private final Context context = Context.create();
     private final Set<McpCapability> clientCapabilities;
-    private final McpTransportLifecycle transportListener;
     private final AtomicLong jsonRpcId = new AtomicLong(0);
     private final List<McpFeatureLifecycle> featureListeners;
     private final LazyValue<McpSessionFeatures> sessionFeatures;
@@ -62,10 +62,10 @@ class McpSession {
     private volatile State state = UNINITIALIZED;
     private volatile McpProtocolVersion protocolVersion;
 
-    McpSession(McpSessions sessions, McpTransportLifecycle transportListener, McpServerConfig config, String id) {
+    McpSession(McpSessions sessions, McpTransportManager manager, McpServerConfig config, String id) {
         this.id = id;
+        this.manager = manager;
         this.sessions = sessions;
-        this.transportListener = transportListener;
         this.clientCapabilities = new HashSet<>();
         this.featureListeners = new CopyOnWriteArrayList<>();
         this.featureListeners.add(new McpProgress.McpProgressListener());
@@ -82,20 +82,26 @@ class McpSession {
 
     void onConnect(ServerResponse response) {
         context.register(McpRoots.McpRootClassifier.class, true);
-        transportListener.onConnect(response);
+        manager.onConnect(response);
     }
 
     void onDisconnect(ServerResponse response) {
         active.compareAndSet(true, false);
         sessions.remove(id);
-        transportListener.onDisconnect(response);
+        manager.onDisconnect(response);
     }
 
     McpSession onRequest(JsonValue id, JsonRpcRequest req, JsonRpcResponse res) {
         if (transports.get(id).isEmpty()) {
-            McpTransport transport = transportListener.onRequest(req, res);
+            McpTransport transport = this.manager.create(req, res);
             transports.put(id, transport);
         }
+        manager.onRequest(req, res);
+        return this;
+    }
+
+    McpSession onNotification(JsonRpcRequest req, JsonRpcResponse res) {
+        manager.onNotification(req, res);
         return this;
     }
 

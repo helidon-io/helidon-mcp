@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import io.helidon.common.UncheckedException;
 import io.helidon.http.HeaderValues;
 import io.helidon.http.sse.SseEvent;
 import io.helidon.webserver.http.ServerResponse;
-import io.helidon.webserver.jsonrpc.JsonRpcRequest;
 import io.helidon.webserver.jsonrpc.JsonRpcResponse;
 import io.helidon.webserver.sse.SseSink;
 
@@ -74,7 +73,14 @@ final class McpSsePostTransport implements McpTransport {
     }
 
     @Override
-    public void onConnect(ServerResponse response) {
+    public void block(Duration timeout) {
+    }
+
+    @Override
+    public void unblock() {
+    }
+
+    void onConnect(ServerResponse response) {
         response.header(HeaderValues.CONTENT_TYPE_EVENT_STREAM);
         try (SseSink sink = response.sink(SseSink.TYPE)) {
             sink.emit(SseEvent.builder()
@@ -88,30 +94,13 @@ final class McpSsePostTransport implements McpTransport {
         }
     }
 
-    @Override
-    public void onDisconnect(ServerResponse response) {
+    void onDisconnect() {
         if (active.compareAndSet(true, false)) {
             var disconnect = JSON_BUILDER_FACTORY.createObjectBuilder()
                     .add("disconnect", true)
                     .build();
             messages.add(disconnect);
         }
-    }
-
-    @Override
-    public void block(Duration timeout) {
-    }
-
-    @Override
-    public void unblock() {
-    }
-
-    @Override
-    public McpTransport onRequest(JsonRpcRequest request, JsonRpcResponse response) {
-        if (LOGGER.isLoggable(System.Logger.Level.DEBUG)) {
-            LOGGER.log(System.Logger.Level.DEBUG, "SSE Request:\n" + prettyPrint(request.asJsonObject()));
-        }
-        return this;
     }
 
     private void poll(Consumer<JsonObject> consumer) {
