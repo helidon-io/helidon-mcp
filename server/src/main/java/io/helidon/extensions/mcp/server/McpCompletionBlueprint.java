@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,15 @@ package io.helidon.extensions.mcp.server;
 
 import java.util.function.Function;
 
+import io.helidon.builder.api.Option;
 import io.helidon.builder.api.Prototype;
 
 /**
  * Configuration of an MCP Completion.
  */
 @Prototype.Blueprint
+@Prototype.IncludeDefaultMethods
 interface McpCompletionBlueprint {
-
     /**
      * Completion reference must be a {@link McpPromptArgument} name or a {@link McpResource} uri template.
      *
@@ -38,6 +39,7 @@ interface McpCompletionBlueprint {
      *
      * @return reference type
      */
+    @Option.Default("PROMPT")
     default McpCompletionType referenceType() {
         return McpCompletionType.PROMPT;
     }
@@ -48,5 +50,5 @@ interface McpCompletionBlueprint {
      *
      * @return completion suggestion
      */
-    Function<McpRequest, McpCompletionContent> completion();
+    Function<McpCompletionRequest, McpCompletionContent> completion();
 }

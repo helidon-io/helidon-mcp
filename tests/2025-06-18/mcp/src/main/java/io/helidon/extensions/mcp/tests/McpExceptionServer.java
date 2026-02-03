@@ -23,6 +23,7 @@ import io.helidon.common.media.type.MediaType;
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.extensions.mcp.server.McpCompletion;
 import io.helidon.extensions.mcp.server.McpCompletionContent;
+import io.helidon.extensions.mcp.server.McpCompletionRequest;
 import io.helidon.extensions.mcp.server.McpException;
 import io.helidon.extensions.mcp.server.McpPrompt;
 import io.helidon.extensions.mcp.server.McpPromptArgument;
@@ -196,7 +197,7 @@ class McpExceptionServer {
         }
 
         @Override
-        public Function<McpRequest, McpCompletionContent> completion() {
+        public Function<McpCompletionRequest, McpCompletionContent> completion() {
             return request -> {
                 throw new McpException(INTERNAL_ERROR, MESSAGE);
             };
@@ -210,7 +211,7 @@ class McpExceptionServer {
         }
 
         @Override
-        public Function<McpRequest, McpCompletionContent> completion() {
+        public Function<McpCompletionRequest, McpCompletionContent> completion() {
             return request -> {
                 request.features().logger().info("Switching to the SSE channel");
                 throw new McpException(INTERNAL_ERROR, MESSAGE);

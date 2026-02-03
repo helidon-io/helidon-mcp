@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@
 package io.helidon.extensions.mcp.server;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -279,6 +281,23 @@ public final class McpParameters {
             return empty();
         }
         throw new IllegalStateException("Cannot get " + value.getValueType() + "as a list");
+    }
+
+    /**
+     * Get optional value of the parameter as a map.
+     *
+     * @return optional map value
+     */
+    public OptionalValue<Map<String, McpParameters>> asMap() {
+        if (value instanceof JsonObject object) {
+            Map<String, McpParameters> map = new HashMap<>();
+            object.forEach((key, value) -> map.put(key, new McpParameters(params, value, key + "-" + value)));
+            return OptionalValue.create(MAPPERS, key, map);
+        }
+        if (value == JsonValue.NULL) {
+            return empty();
+        }
+        throw new IllegalStateException("Cannot get " + value.getValueType() + "as a map");
     }
 
     /**

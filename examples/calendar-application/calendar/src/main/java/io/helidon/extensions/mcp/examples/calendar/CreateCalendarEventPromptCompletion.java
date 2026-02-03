@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import java.util.function.Function;
 import io.helidon.extensions.mcp.server.McpCompletion;
 import io.helidon.extensions.mcp.server.McpCompletionContent;
 import io.helidon.extensions.mcp.server.McpCompletionContents;
+import io.helidon.extensions.mcp.server.McpCompletionRequest;
 import io.helidon.extensions.mcp.server.McpCompletionType;
-import io.helidon.extensions.mcp.server.McpRequest;
 
 /**
  * Auto-completion for {@link CreateCalendarEventPrompt}.
@@ -47,15 +47,12 @@ final class CreateCalendarEventPromptCompletion implements McpCompletion {
     }
 
     @Override
-    public Function<McpRequest, McpCompletionContent> completion() {
+    public Function<McpCompletionRequest, McpCompletionContent> completion() {
         return this::complete;
     }
 
-    private McpCompletionContent complete(McpRequest request) {
-        String promptName = request.parameters()
-                .get("name")
-                .asString()
-                .orElse(null);
+    private McpCompletionContent complete(McpCompletionRequest request) {
+        String promptName = request.name();
         if ("name".equals(promptName)) {
             return McpCompletionContents.completion("Frank & Friends");
         }

@@ -109,7 +109,8 @@ class McpSdkStreamableErrorServerTest extends AbstractMcpSdkTest {
     void testErrorCompletion(String name) {
         try {
             var reference = new McpSchema.PromptReference(name);
-            var request = new McpSchema.CompleteRequest(reference, null);
+            var argument = new McpSchema.CompleteRequest.CompleteArgument("foo", "bar");
+            var request = new McpSchema.CompleteRequest(reference, argument);
             client().completeCompletion(request);
             assertThat("Completion execution must throw an exception", true, is(false));
         } catch (McpError e) {

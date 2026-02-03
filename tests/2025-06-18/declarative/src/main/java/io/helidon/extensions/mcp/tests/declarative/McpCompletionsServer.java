@@ -31,7 +31,7 @@ import io.helidon.extensions.mcp.server.McpRequest;
 class McpCompletionsServer {
     @Mcp.Completion("prompt1")
     McpCompletionContent completionPrompt(McpParameters parameters) {
-        String argument = parameters.get("value").asString().orElse(null);
+        String argument = parameters.get("argument").get("value").asString().orElse(null);
         return McpCompletionContents.completion(argument);
     }
 
@@ -42,13 +42,13 @@ class McpCompletionsServer {
 
     @Mcp.Completion("prompt3")
     McpCompletionContent completionPromptParametersFeatures(McpParameters parameters, McpFeatures features) {
-        String argument = parameters.get("value").asString().orElse(null);
+        String argument = parameters.get("argument").get("value").asString().orElse(null);
         return McpCompletionContents.completion(argument);
     }
 
     @Mcp.Completion("prompt4")
     McpCompletionContent completionPromptFeaturesParameters(McpFeatures features, McpParameters parameters) {
-        String argument = parameters.get("value").asString().orElse(null);
+        String argument = parameters.get("argument").get("value").asString().orElse(null);
         return McpCompletionContents.completion(argument);
     }
 
@@ -69,7 +69,7 @@ class McpCompletionsServer {
 
     @Mcp.Completion(value = "resource/{path1}", type = McpCompletionType.RESOURCE)
     McpCompletionContent completionResource(McpParameters parameters) {
-        String argument = parameters.get("value").asString().orElse(null);
+        String argument = parameters.get("argument").get("value").asString().orElse(null);
         return McpCompletionContents.completion(argument);
     }
 
@@ -91,7 +91,7 @@ class McpCompletionsServer {
 
     @Mcp.Completion("prompt8")
     List<String> completionPromptList(McpParameters parameters) {
-        String argument = parameters.get("value").asString().orElse(null);
+        String argument = parameters.get("argument").get("value").asString().orElse(null);
         return List.of(argument);
     }
 
@@ -102,13 +102,13 @@ class McpCompletionsServer {
 
     @Mcp.Completion("prompt10")
     List<String> completionPromptListParametersFeatures(McpParameters parameters, McpFeatures features) {
-        String argument = parameters.get("value").asString().orElse(null);
+        String argument = parameters.get("argument").get("value").asString().orElse(null);
         return List.of(argument);
     }
 
     @Mcp.Completion("prompt11")
     List<String> completionPromptListFeaturesParameters(McpFeatures features, McpParameters parameters) {
-        String argument = parameters.get("value").asString().orElse(null);
+        String argument = parameters.get("argument").get("value").asString().orElse(null);
         return List.of(argument);
     }
 
@@ -139,13 +139,13 @@ class McpCompletionsServer {
 
     @Mcp.Completion(value = "resource/{path5}", type = McpCompletionType.RESOURCE)
     List<String> completionResourceListParametersFeatures(McpParameters parameters, McpFeatures features) {
-        String argument = parameters.get("value").asString().orElse(null);
+        String argument = parameters.get("argument").get("value").asString().orElse(null);
         return List.of(argument);
     }
 
     @Mcp.Completion(value = "resource/{path6}", type = McpCompletionType.RESOURCE)
     List<String> completionResourceListParameters(McpParameters parameters) {
-        String argument = parameters.get("value").asString().orElse(null);
+        String argument = parameters.get("argument").get("value").asString().orElse(null);
         return List.of(argument);
     }
 
@@ -154,9 +154,9 @@ class McpCompletionsServer {
         return List.of("path7");
     }
 
-    @Mcp.Completion(value = "resource/{path9}", type = McpCompletionType.RESOURCE)
+    @Mcp.Completion(value = "resource/{path8}", type = McpCompletionType.RESOURCE)
     List<String> completion1McpRequest(McpRequest request) {
-        String argument = request.parameters().get("value").asString().orElse(null);
+        String argument = request.parameters().get("argument").get("value").asString().orElse(null);
         return List.of(argument);
     }
 

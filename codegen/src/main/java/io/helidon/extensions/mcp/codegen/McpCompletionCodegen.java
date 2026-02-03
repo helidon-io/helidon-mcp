@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.MCP_TYPES;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.createClassName;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.getElementsWithAnnotation;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isMcpType;
-import static io.helidon.extensions.mcp.codegen.McpTypes.FUNCTION_REQUEST_COMPLETION_CONTENT;
+import static io.helidon.extensions.mcp.codegen.McpTypes.FUNCTION_COMPLETION_REQUEST_COMPLETION_CONTENT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.LIST_STRING;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_COMPLETION;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_COMPLETION_CONTENT;
@@ -92,7 +92,7 @@ class McpCompletionCodegen {
         List<String> parameters = new ArrayList<>();
 
         builder.name("completion")
-                .returnType(returned -> returned.type(FUNCTION_REQUEST_COMPLETION_CONTENT))
+                .returnType(returned -> returned.type(FUNCTION_COMPLETION_REQUEST_COMPLETION_CONTENT))
                 .addAnnotation(Annotations.OVERRIDE);
         builder.addContentLine("return request -> {");
 
@@ -104,7 +104,7 @@ class McpCompletionCodegen {
                 parameters.add(parameter.elementName());
                 builder.addContent("var ")
                         .addContent(parameter.elementName())
-                        .addContentLine(" = request.parameters().get(\"value\").asString().orElse(\"\");");
+                        .addContentLine(" = request.value();");
                 continue;
             }
             throw new CodegenException(String.format("Wrong parameter type for method: %s. Supported types are: %s, or String.",
