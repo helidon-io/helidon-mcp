@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,10 @@ import io.helidon.common.LazyValue;
  *         {@link io.helidon.extensions.mcp.server.McpRoots} - MCP Roots feature.
  *         List the available filesystem root from client.
  *     </li>
+ *     <li>
+ *         {@link io.helidon.extensions.mcp.server.McpElicitation} - Mcp Elicitation feature.
+ *         Request additional information from the user.
+ *     </li>
  * </ul>
  */
 public final class McpFeatures {
@@ -55,6 +59,7 @@ public final class McpFeatures {
     private final LazyValue<McpLogger> logger;
     private final LazyValue<McpSampling> sampling;
     private final LazyValue<McpProgress> progress;
+    private final LazyValue<McpElicitation> elicitation;
     private final LazyValue<McpCancellation> cancellation;
 
     McpFeatures(McpSession session, McpTransport transport) {
@@ -66,6 +71,7 @@ public final class McpFeatures {
         this.logger = LazyValue.create(() -> new McpLogger(session, transport));
         this.sampling = LazyValue.create(() -> new McpSampling(session, transport));
         this.progress = LazyValue.create(() -> new McpProgress(session, transport));
+        this.elicitation = LazyValue.create(() -> new McpElicitation(session, transport));
     }
 
     /**
@@ -111,6 +117,15 @@ public final class McpFeatures {
      */
     public McpCancellation cancellation() {
         return cancellation.get();
+    }
+
+    /**
+     * Get a {@link io.helidon.extensions.mcp.server.McpElicitation} feature.
+     *
+     * @return the MCP elicitation
+     */
+    public McpElicitation elicitation() {
+        return elicitation.get();
     }
 
     /**
