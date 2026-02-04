@@ -75,6 +75,7 @@ class McpSdkStreamableClientTest extends AbstractMcpSdkTest {
     @Test
     void testClientInitialize() {
         McpSchema.InitializeResult result = client().initialize();
+        assertThat(result.instructions(), is(""));
 
         var implementation = result.serverInfo();
         assertThat(implementation.name(), is(SERVER_NAME));
