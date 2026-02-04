@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public final class McpRoots extends McpFeature {
                 .get(McpServerConfigBlueprint.class, McpServerConfig.class)
                 .orElseThrow(() -> new McpInternalException("Server configuration is not set"))
                 .rootListTimeout();
-        this.enabled = session.capability().contains(McpCapability.ROOTS);
+        this.enabled = session.capabilities().contains(McpCapability.ROOTS);
     }
 
     /**
@@ -73,7 +73,9 @@ public final class McpRoots extends McpFeature {
      */
     private List<McpRoot> sendListRoot(Duration timeout) {
         long id = session().jsonRpcId();
-        JsonObject request = session().serializer().createJsonRpcRequest(id, METHOD_ROOTS_LIST);
+        JsonObject request = session().serializer()
+                .createJsonRpcRequest(id, METHOD_ROOTS_LIST)
+                .build();
         transport().send(request);
         JsonObject response = session().pollResponse(id, timeout);
         List<McpRoot> updatedRoots = session().serializer().parseRoots(response);

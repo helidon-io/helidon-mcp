@@ -15,12 +15,17 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.util.Map;
+
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.json.schema.Schema;
 import io.helidon.json.schema.SchemaString;
 
+import jakarta.json.Json;
 import jakarta.json.JsonArray;
+import jakarta.json.JsonBuilderFactory;
 import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
 import org.junit.jupiter.api.Test;
 
 import static io.helidon.extensions.mcp.server.McpToolContents.resourceLinkContent;
@@ -29,6 +34,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
 class McpJsonSerializerV3Test {
+    private static final JsonBuilderFactory JSON_BUILDER_FACTORY = Json.createBuilderFactory(Map.of());
     private static final McpJsonSerializer MJS = McpJsonSerializer.create(McpProtocolVersion.VERSION_2025_06_18);
 
     @Test
@@ -140,6 +146,42 @@ class McpJsonSerializerV3Test {
         assertThat(payload.getString("title"), is("title"));
         assertThat(payload.getBoolean("required"), is(true));
         assertThat(payload.getString("description"), is("description"));
+    }
+
+    @Test
+    void testSerializeElicitationRequest() {
+        long id = 1;
+        McpElicitationRequest elicitationRequest = McpElicitationRequest.builder()
+                .message("message")
+                .schema(Schema.builder()
+                                .rootObject(root -> root.addStringProperty("foo", SchemaString.create()))
+                                .build()
+                                .generate())
+                .build();
+
+        JsonObject request = MJS.createElicitationRequest(id, elicitationRequest);
+        assertThat(request.getInt("id"), is((int) id));
+        assertThat(request.containsKey("params"), is(true));
+
+        JsonObject params = request.getJsonObject("params");
+        assertThat(params.getString("message"), is("message"));
+
+        JsonValue schema = params.get("requestedSchema");
+        assertThat(schema.getValueType(), is(JsonValue.ValueType.OBJECT));
+    }
+
+    @Test
+    void testSerializeElicitationResponse() {
+        JsonObject params = JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("action", "accept")
+                .add("content", JsonValue.EMPTY_JSON_OBJECT)
+                .build();
+        JsonObject elicitation = MJS.createJsonRpcResultResponse(1, params);
+
+        McpElicitationResponse response = MJS.createElicitationResponse(elicitation);
+        assertThat(response.action(), is(McpElicitationAction.ACCEPT));
+        assertThat(response.content().isEmpty(), is(false));
+        assertThat(response.content().map(McpParameters::isPresent).orElse(false), is(true));
     }
 
     @Test
