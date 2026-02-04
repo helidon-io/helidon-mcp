@@ -23,6 +23,7 @@ import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import org.junit.jupiter.api.Test;
 
+import static io.helidon.extensions.mcp.server.McpToolContents.resourceLinkContent;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -194,6 +195,57 @@ class McpJsonSerializerV3Test {
 
         JsonObject structuredContent = object.getJsonObject("structuredContent");
         assertThat(structuredContent.getString("foo"), is("bar"));
+    }
+
+    @Test
+    void testSerializeResourceLinkDefault() {
+        McpToolContent link = resourceLinkContent("name", "https://foo");
+
+        JsonObject payload = MJS.toJson(link.content()).build();
+        assertThat(payload.getString("type"), is(McpContent.ContentType.RESOURCE_LINK.text()));
+        assertThat(payload.getString("uri"), is("https://foo"));
+        assertThat(payload.getString("name"), is("name"));
+    }
+
+    @Test
+    void testSerializeResourceLinkCustom() {
+        McpToolContent link = resourceLinkContent(resource -> resource.uri("https://foo")
+                .size(10)
+                .name("name")
+                .title("title")
+                .description("description")
+                .mediaType(MediaTypes.APPLICATION_JSON));
+
+        JsonObject payload = MJS.toJson(link.content()).build();
+        assertThat(payload.getJsonNumber("size").longValue(), is(10L));
+        assertThat(payload.getString("type"), is(McpContent.ContentType.RESOURCE_LINK.text()));
+        assertThat(payload.getString("name"), is("name"));
+        assertThat(payload.getString("title"), is("title"));
+        assertThat(payload.getString("uri"), is("https://foo"));
+        assertThat(payload.getString("description"), is("description"));
+        assertThat(payload.getString("mimeType"), is(MediaTypes.APPLICATION_JSON_VALUE));
+    }
+
+    @Test
+    void testSerializeToolCallDefault() {
+        McpToolResult result = McpToolResult.builder()
+                .addContent(resourceLinkContent("name", "https://foo"))
+                .build();
+        McpTool tool = McpTool.builder()
+                .schema("")
+                .name("name")
+                .description("description")
+                .tool((request) -> null)
+                .build();
+        JsonObject payload = MJS.toolCall(tool, result).build();
+
+        JsonArray content = payload.getJsonArray("content");
+        assertThat(content.size(), is(1));
+
+        JsonObject resourceLink = content.getJsonObject(0);
+        assertThat(resourceLink.getString("name"), is("name"));
+        assertThat(resourceLink.getString("uri"), is("https://foo"));
+        assertThat(resourceLink.getString("type"), is("resource_link"));
     }
 
     public static class StructuredContent {
