@@ -56,6 +56,11 @@ final class McpCompletionRequestImpl implements McpCompletionRequest {
     }
 
     @Override
+    public McpParameters meta() {
+        return request.meta();
+    }
+
+    @Override
     public McpFeatures features() {
         return request.features();
     }
