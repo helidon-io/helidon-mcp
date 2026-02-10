@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
+ * Copyright (c) 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.helidon.extensions.mcp.server;
 
-enum McpCapability {
-    TOOL_LIST_CHANGED,
-    RESOURCE_LIST_CHANGED,
-    RESOURCE_SUBSCRIBE,
-    PROMPT_LIST_CHANGED,
-    LOGGING,
-    ELICITATION,
-    COMPLETION,
-    PAGINATION,
-    SAMPLING,
-    ROOTS,
-    PROGRESS;
+import java.util.Optional;
 
-    String text() {
-        return this.name().toLowerCase();
-    }
+/**
+ * The client's response to an elicitation request.
+ */
+public sealed interface McpElicitationResponse permits McpElicitationResponseImpl {
+    /**
+     * The elicitation result action from the client.
+     *
+     * @return action
+     */
+    McpElicitationAction action();
+
+    /**
+     * The submitted form data, only present when action is "accept".
+     *
+     * @return values matching the requested schema.
+     */
+    Optional<McpParameters> content();
 }

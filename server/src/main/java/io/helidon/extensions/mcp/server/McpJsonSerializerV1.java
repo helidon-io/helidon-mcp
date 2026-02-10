@@ -15,10 +15,8 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.io.StringReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,7 +41,7 @@ import jakarta.json.JsonValue;
 import static io.helidon.jsonrpc.core.JsonRpcError.INTERNAL_ERROR;
 
 class McpJsonSerializerV1 implements McpJsonSerializer {
-    private static final Map<String, JsonObject> CACHE = new HashMap<>();
+    private static final Map<String, JsonObject> INPUT_SCHEMA = new McpSchemaHashMap();
     private static final JsonReaderFactory JSON_READER_FACTORY = Json.createReaderFactory(Map.of());
     private static final JsonBuilderFactory JSON_BUILDER_FACTORY = Json.createBuilderFactory(Map.of());
     static final JsonObject EMPTY_OBJECT_SCHEMA = JSON_BUILDER_FACTORY.createObjectBuilder()
@@ -65,7 +63,8 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
                         .add("resources", JSON_BUILDER_FACTORY.createObjectBuilder()
                                 .add("listChanged", capabilities.contains(McpCapability.RESOURCE_LIST_CHANGED))
                                 .add("subscribe", capabilities.contains(McpCapability.RESOURCE_SUBSCRIBE)))
-                        .add("completions", JsonValue.EMPTY_JSON_OBJECT))
+                        .add("completions", JsonValue.EMPTY_JSON_OBJECT)
+                        .add("elicitation", JsonValue.EMPTY_JSON_OBJECT))
                 .add("serverInfo", JSON_BUILDER_FACTORY.createObjectBuilder()
                         .add("name", config.name())
                         .add("version", config.version()))
@@ -75,33 +74,10 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     @Override
     public JsonObjectBuilder toJson(McpTool tool) {
         String schema = tool.schema();
-        JsonObject jsonSchema = CACHE.get(schema);
-        if (jsonSchema == null) {
-            // lock to write the newly parsed input schema
-            lock.lock();
-            try {
-                jsonSchema = CACHE.get(schema);
-                // double check that another thread did not write the schema outside of this lock
-                if (jsonSchema == null) {
-                    JsonObject parsed;
-                    if (schema.isEmpty()) {
-                        parsed = EMPTY_OBJECT_SCHEMA;
-                    } else {
-                        try (var r = JSON_READER_FACTORY.createReader(new StringReader(schema))) {
-                            parsed = r.readObject();
-                        }
-                    }
-                    CACHE.put(schema, parsed);
-                    jsonSchema = parsed;
-                }
-            } finally {
-                lock.unlock();
-            }
-        }
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("name", tool.name())
                 .add("description", tool.description())
-                .add("inputSchema", jsonSchema);
+                .add("inputSchema", INPUT_SCHEMA.get(schema));
     }
 
     @Override
@@ -497,12 +473,11 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     }
 
     @Override
-    public JsonObject createJsonRpcRequest(long id, String method) {
+    public JsonObjectBuilder createJsonRpcRequest(long id, String method) {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("jsonrpc", "2.0")
                 .add("id", id)
-                .add("method", method)
-                .build();
+                .add("method", method);
     }
 
     @Override
@@ -589,6 +564,16 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
         } catch (Exception e) {
             throw new McpSamplingException("Wrong sampling response format", e);
         }
+    }
+
+    @Override
+    public McpElicitationResponse createElicitationResponse(JsonObject object) throws McpElicitationException {
+        throw new McpElicitationException("Elicitation not supported");
+    }
+
+    @Override
+    public JsonObject createElicitationRequest(long id, McpElicitationRequest request) {
+        throw new McpElicitationException("Elicitation not supported");
     }
 
     McpSamplingMessage parseMessage(McpRole role, JsonObject object) {

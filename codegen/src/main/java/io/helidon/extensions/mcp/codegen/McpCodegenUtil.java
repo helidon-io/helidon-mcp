@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import io.helidon.common.types.TypedElementInfo;
 import static io.helidon.common.types.TypeNames.LIST;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_CANCELLATION;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_DESCRIPTION;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ELICITATION;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_FEATURES;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_LOGGER;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PARAMETERS;
@@ -55,6 +56,7 @@ class McpCodegenUtil {
                                                   MCP_PROGRESS.classNameWithEnclosingNames(),
                                                   MCP_CANCELLATION.classNameWithEnclosingNames(),
                                                   MCP_SAMPLING.classNameWithEnclosingNames(),
+                                                  MCP_ELICITATION.classNameWithEnclosingNames(),
                                                   MCP_PARAMETERS.classNameWithEnclosingNames());
 
     private McpCodegenUtil() {
@@ -119,6 +121,7 @@ class McpCodegenUtil {
                 || MCP_FEATURES.equals(typeName)
                 || MCP_PROGRESS.equals(typeName)
                 || MCP_SAMPLING.equals(typeName)
+                || MCP_ELICITATION.equals(typeName)
                 || MCP_CANCELLATION.equals(typeName);
     }
 
@@ -193,6 +196,10 @@ class McpCodegenUtil {
         }
         if (MCP_PARAMETERS.equals(type.typeName())) {
             parameters.add("request.parameters()");
+            return true;
+        }
+        if (MCP_ELICITATION.equals(type.typeName())) {
+            parameters.add("request.features().elicitation()");
             return true;
         }
         return false;

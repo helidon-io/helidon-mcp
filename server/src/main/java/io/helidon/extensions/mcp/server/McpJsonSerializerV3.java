@@ -15,23 +15,25 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.io.StringReader;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
+
+import io.helidon.jsonrpc.core.JsonRpcError;
 
 import jakarta.json.Json;
 import jakarta.json.JsonBuilderFactory;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.JsonReaderFactory;
+import jakarta.json.JsonValue;
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
 
 class McpJsonSerializerV3 extends McpJsonSerializerV2 {
     private static final Jsonb JSON_B = JsonbBuilder.create();
-    private static final Map<String, JsonObject> CACHE = new HashMap<>();
+    private static final Map<String, JsonObject> OUTPUT_SCHEMA = new McpSchemaHashMap();
+    private static final Map<String, JsonObject> ELICITATION_SCHEMA = new McpSchemaHashMap();
     private static final JsonReaderFactory JSON_READER_FACTORY = Json.createReaderFactory(Map.of());
     private static final System.Logger LOGGER = System.getLogger(McpJsonSerializerV3.class.getName());
     private static final JsonBuilderFactory JSON_BUILDER_FACTORY = Json.createBuilderFactory(Map.of());
@@ -82,32 +84,9 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
         if (!tool.title().isBlank()) {
             builder.add("title", tool.title());
         }
-        tool.outputSchema().ifPresent(outputSchema -> {
-            JsonObject jsonSchema = CACHE.get(outputSchema);
-            if (jsonSchema == null) {
-                // lock to write the newly parsed output schema
-                lock.lock();
-                try {
-                    jsonSchema = CACHE.get(outputSchema);
-                    // double check that another thread did not write the schema outside of this lock
-                    if (jsonSchema == null) {
-                        JsonObject parsed;
-                        if (outputSchema.isEmpty()) {
-                            parsed = EMPTY_OBJECT_SCHEMA;
-                        } else {
-                            try (var r = JSON_READER_FACTORY.createReader(new StringReader(outputSchema))) {
-                                parsed = r.readObject();
-                            }
-                        }
-                        CACHE.put(outputSchema, parsed);
-                        jsonSchema = parsed;
-                    }
-                } finally {
-                    lock.unlock();
-                }
-            }
-            builder.add("outputSchema", jsonSchema);
-        });
+        tool.outputSchema()
+                .map(OUTPUT_SCHEMA::get)
+                .ifPresent(outputSchema -> builder.add("outputSchema", outputSchema));
         return builder;
     }
 
@@ -148,5 +127,42 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
         content.mediaType().ifPresent(mediaType -> builder.add("mimeType", mediaType.text()));
         content.description().ifPresent(description -> builder.add("description", description));
         return builder;
+    }
+
+    @Override
+    public McpElicitationResponse createElicitationResponse(JsonObject object) throws McpElicitationException {
+        find(object, "error")
+                .filter(this::isJsonObject)
+                .map(JsonValue::asJsonObject)
+                .map(JsonRpcError::create)
+                .ifPresent(error -> {
+                    throw new McpElicitationException(error.message());
+                });
+        try {
+            var result = find(object, "result")
+                    .filter(this::isJsonObject)
+                    .map(JsonValue::asJsonObject)
+                    .orElseThrow(() -> new McpElicitationException(String.format("Elicitation result not found: %s", object)));
+
+            McpElicitationAction action = McpElicitationAction.valueOf(result.getString("action").toUpperCase());
+            JsonObject content = find(result, "content")
+                    .filter(this::isJsonObject)
+                    .map(JsonObject.class::cast)
+                    .orElse(null);
+            return new McpElicitationResponseImpl(action, content);
+        } catch (Exception e) {
+            throw new McpElicitationException("Wrong elicitation response format", e);
+        }
+    }
+
+    @Override
+    public JsonObject createElicitationRequest(long id, McpElicitationRequest request) {
+        var builder = createJsonRpcRequest(id, METHOD_ELICITATION_CREATE);
+        var params = JSON_BUILDER_FACTORY.createObjectBuilder();
+        JsonObject jsonSchema = ELICITATION_SCHEMA.get(request.schema());
+        params.add("message", request.message());
+        params.add("requestedSchema", jsonSchema);
+        builder.add("params", params);
+        return builder.build();
     }
 }
