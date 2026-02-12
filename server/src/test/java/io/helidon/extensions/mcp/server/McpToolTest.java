@@ -35,8 +35,8 @@ class McpToolTest {
                 .tool((request) -> null)
                 .build();
         assertThat(tool.name(), is("name"));
-        assertThat(tool.title(), is("title"));
         assertThat(tool.schema(), is("schema"));
+        assertThat(tool.title().orElse(""), is("title"));
         assertThat(tool.description(), is("description"));
         assertThat(tool.outputSchema().orElse(""), is("outputSchema"));
     }
@@ -49,9 +49,9 @@ class McpToolTest {
                 .description("description")
                 .tool((request) -> null)
                 .build();
-        assertThat(tool.title(), is(""));
         assertThat(tool.name(), is("name"));
         assertThat(tool.schema(), is("schema"));
+        assertThat(tool.title().isEmpty(), is(true));
         assertThat(tool.description(), is("description"));
         assertThat(tool.outputSchema().isPresent(), is(false));
     }
@@ -59,9 +59,9 @@ class McpToolTest {
     @Test
     void testMcpToolImplementation() {
         Foo foo = new Foo();
-        assertThat(foo.title(), is(""));
         assertThat(foo.name(), is("name"));
         assertThat(foo.schema(), is("schema"));
+        assertThat(foo.title().isEmpty(), is(true));
         assertThat(foo.description(), is("description"));
         assertThat(foo.outputSchema().isPresent(), is(false));
     }

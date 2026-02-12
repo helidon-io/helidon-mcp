@@ -18,6 +18,7 @@ package io.helidon.extensions.mcp.tests;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -99,8 +100,8 @@ class MultipleResource {
         }
 
         @Override
-        public String title() {
-            return "Resource 3 Title";
+        public Optional<String> title() {
+            return Optional.of("Resource 3 Title");
         }
 
         @Override

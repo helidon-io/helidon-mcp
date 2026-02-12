@@ -17,6 +17,7 @@
 package io.helidon.extensions.mcp.tests;
 
 import java.net.URI;
+import java.util.Optional;
 import java.util.function.Function;
 
 import io.helidon.extensions.mcp.server.McpParameters;
@@ -104,8 +105,8 @@ class MultipleTool {
         }
 
         @Override
-        public String title() {
-            return "Tool 4 Title";
+        public Optional<String> title() {
+            return Optional.of("Tool 4 Title");
         }
 
         @Override

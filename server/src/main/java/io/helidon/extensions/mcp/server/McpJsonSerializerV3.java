@@ -29,6 +29,9 @@ import jakarta.json.JsonReaderFactory;
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
 
+/**
+ * JSON serializer for {@code 2025-06-18} MCP specification.
+ */
 class McpJsonSerializerV3 extends McpJsonSerializerV2 {
     private static final Jsonb JSON_B = JsonbBuilder.create();
     private static final Map<String, JsonObject> CACHE = new HashMap<>();
@@ -78,10 +81,7 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
     @Override
     public JsonObjectBuilder toJson(McpTool tool) {
         var builder = super.toJson(tool);
-
-        if (!tool.title().isBlank()) {
-            builder.add("title", tool.title());
-        }
+        tool.title().ifPresent(title -> builder.add("title", title));
         tool.outputSchema().ifPresent(outputSchema -> {
             JsonObject jsonSchema = CACHE.get(outputSchema);
             if (jsonSchema == null) {
@@ -114,27 +114,21 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
     @Override
     public JsonObjectBuilder toJson(McpResource resource) {
         var builder = super.toJson(resource);
-        if (!resource.title().isBlank()) {
-            builder.add("title", resource.title());
-        }
+        resource.title().ifPresent(title -> builder.add("title", title));
         return builder;
     }
 
     @Override
     public JsonObjectBuilder toJson(McpPrompt prompt) {
         var builder = super.toJson(prompt);
-        if (!prompt.title().isBlank()) {
-            builder.add("title", prompt.title());
-        }
+        prompt.title().ifPresent(title -> builder.add("title", title));
         return builder;
     }
 
     @Override
     public JsonObjectBuilder toJson(McpPromptArgument argument) {
         var builder = super.toJson(argument);
-        if (!argument.title().isBlank()) {
-            builder.add("title", argument.title());
-        }
+        argument.title().ifPresent(title -> builder.add("title", title));
         return builder;
     }
 
