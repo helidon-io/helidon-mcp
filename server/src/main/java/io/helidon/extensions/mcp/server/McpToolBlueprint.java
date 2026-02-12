@@ -40,9 +40,8 @@ interface McpToolBlueprint {
      *
      * @return the tool title
      */
-    @Option.Default("")
-    default String title() {
-        return "";
+    default Optional<String> title() {
+        return Optional.empty();
     }
 
     /**

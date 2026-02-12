@@ -25,10 +25,12 @@ import java.util.stream.Collectors;
 import io.helidon.common.mapper.OptionalValue;
 import io.helidon.jsonrpc.core.JsonRpcParams;
 
+import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonStructure;
 import jakarta.json.spi.JsonProvider;
 import org.junit.jupiter.api.Test;
+import org.junit.platform.commons.JUnitException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -141,6 +143,216 @@ class McpParametersTest {
                 .map(OptionalValue::get)
                 .toList();
         assertThat(foo, is(List.of("foo1", "foo2")));
+    }
+
+    @Test
+    void testStringList() {
+        JsonObject object = JSON_PROVIDER.createObjectBuilder()
+                .add("foo", JSON_PROVIDER.createArrayBuilder()
+                        .add("foo1")
+                        .add("foo2"))
+                .build();
+        JsonRpcParams rpcParams = JsonRpcParams.create(object);
+        McpParameters parameters = new McpParameters(rpcParams, object);
+        List<String> foo = parameters.get("foo")
+                .asList(String.class)
+                .orElse(List.of());
+        assertThat(foo, is(List.of("foo1", "foo2")));
+    }
+
+    @Test
+    void testBooleanList() {
+        JsonArray array = JSON_PROVIDER.createArrayBuilder()
+                .add(true)
+                .add(false)
+                .build();
+        JsonRpcParams rpcParams = JsonRpcParams.create(array);
+        McpParameters parameters = new McpParameters(rpcParams, array);
+        List<Boolean> booleans = parameters.asList(Boolean.class).orElse(List.of());
+        assertThat(booleans.size(), is(2));
+        assertThat(booleans, is(List.of(true, false)));
+    }
+
+    @Test
+    void testIntegerList() {
+        JsonArray array = JSON_PROVIDER.createArrayBuilder()
+                .add(1)
+                .add(2)
+                .build();
+        JsonRpcParams rpcParams = JsonRpcParams.create(array);
+        McpParameters parameters = new McpParameters(rpcParams, array);
+        List<Integer> booleans = parameters.asList(Integer.class).orElse(List.of());
+        assertThat(booleans.size(), is(2));
+        assertThat(booleans, is(List.of(1, 2)));
+    }
+
+    @Test
+    void testLongList() {
+        JsonArray array = JSON_PROVIDER.createArrayBuilder()
+                .add(1L)
+                .add(2L)
+                .build();
+        JsonRpcParams rpcParams = JsonRpcParams.create(array);
+        McpParameters parameters = new McpParameters(rpcParams, array);
+        List<Long> booleans = parameters.asList(Long.class).orElse(List.of());
+        assertThat(booleans.size(), is(2));
+        assertThat(booleans, is(List.of(1L, 2L)));
+    }
+
+    @Test
+    void testDoubleList() {
+        JsonArray array = JSON_PROVIDER.createArrayBuilder()
+                .add(1D)
+                .add(2D)
+                .build();
+        JsonRpcParams rpcParams = JsonRpcParams.create(array);
+        McpParameters parameters = new McpParameters(rpcParams, array);
+        List<Double> booleans = parameters.asList(Double.class).orElse(List.of());
+        assertThat(booleans.size(), is(2));
+        assertThat(booleans, is(List.of(1D, 2D)));
+    }
+
+    @Test
+    void testFloatList() {
+        JsonArray array = JSON_PROVIDER.createArrayBuilder()
+                .add(1.0F)
+                .add(2.0F)
+                .build();
+        JsonRpcParams rpcParams = JsonRpcParams.create(array);
+        McpParameters parameters = new McpParameters(rpcParams, array);
+        List<Float> booleans = parameters.asList(Float.class).orElse(List.of());
+        assertThat(booleans.size(), is(2));
+        assertThat(booleans, is(List.of(1.0F, 2.0F)));
+    }
+
+    @Test
+    void testShortList() {
+        JsonArray array = JSON_PROVIDER.createArrayBuilder()
+                .add(1)
+                .add(2)
+                .build();
+        JsonRpcParams rpcParams = JsonRpcParams.create(array);
+        McpParameters parameters = new McpParameters(rpcParams, array);
+        List<Short> booleans = parameters.asList(Short.class).orElse(List.of());
+        assertThat(booleans.size(), is(2));
+        assertThat(booleans, is(List.of((short) 1, (short) 2)));
+    }
+
+    @Test
+    void testByteList() {
+        JsonArray array = JSON_PROVIDER.createArrayBuilder()
+                .add(1)
+                .add(2)
+                .build();
+        JsonRpcParams rpcParams = JsonRpcParams.create(array);
+        McpParameters parameters = new McpParameters(rpcParams, array);
+        List<Byte> booleans = parameters.asList(Byte.class).orElse(List.of());
+        assertThat(booleans.size(), is(2));
+        assertThat(booleans, is(List.of((byte) 1, (byte) 2)));
+    }
+
+    @Test
+    void testPojoList() {
+        JsonArray array = JSON_PROVIDER.createArrayBuilder()
+                .add(JSON_PROVIDER.createObjectBuilder()
+                             .add("foo", "foo1")
+                             .add("bar", "bar1"))
+                .add(JSON_PROVIDER.createObjectBuilder()
+                             .add("foo", "foo2")
+                             .add("bar", "bar2"))
+                .build();
+        JsonRpcParams rpcParams = JsonRpcParams.create(array);
+        McpParameters parameters = new McpParameters(rpcParams, array);
+        List<Foo> foos = parameters
+                .asList(Foo.class)
+                .orElse(List.of());
+        assertThat(foos.size(), is(2));
+
+        Foo foo1 = foos.getFirst();
+        assertThat(foo1.foo, is("foo1"));
+        assertThat(foo1.bar, is("bar1"));
+
+        Foo foo2 = foos.getLast();
+        assertThat(foo2.foo, is("foo2"));
+        assertThat(foo2.bar, is("bar2"));
+    }
+
+    @Test
+    void testListOfMap() {
+        JsonArray array = JSON_PROVIDER.createArrayBuilder()
+                .add(JSON_PROVIDER.createObjectBuilder()
+                             .add("value1", JSON_PROVIDER.createObjectBuilder()
+                                     .add("foo", "foo1")
+                                     .add("bar", "bar1")))
+                .add(JSON_PROVIDER.createObjectBuilder()
+                             .add("value2", JSON_PROVIDER.createObjectBuilder()
+                                     .add("foo", "foo2")
+                                     .add("bar", "bar2")))
+                .build();
+        JsonRpcParams rpcParams = JsonRpcParams.create(array);
+        McpParameters parameters = new McpParameters(rpcParams, array);
+        List<Map<String, McpParameters>> listMap = parameters.asList()
+                .map(list -> list.stream()
+                        .map(McpParameters::asMap)
+                        .filter(OptionalValue::isPresent)
+                        .map(OptionalValue::get)
+                        .toList())
+                .orElse(List.of());
+        assertThat(listMap.size(), is(2));
+
+        Map<String, McpParameters> map = listMap.getFirst();
+        assertThat(map.size(), is(1));
+        assertThat(map.containsKey("value1"), is(true));
+
+        Foo value1 = map.get("value1")
+                .as(Foo.class)
+                .orElseThrow(() -> new JUnitException("Cannot convert value1 to Foo.class"));
+        assertThat(value1.foo, is("foo1"));
+        assertThat(value1.bar, is("bar1"));
+
+        map = listMap.getLast();
+        assertThat(map.size(), is(1));
+        assertThat(map.containsKey("value2"), is(true));
+
+        Foo value2 = map.get("value2")
+                .as(Foo.class)
+                .orElseThrow(() -> new JUnitException("Cannot convert value2 to Foo.class"));
+        assertThat(value2.foo, is("foo2"));
+        assertThat(value2.bar, is("bar2"));
+    }
+
+    @Test
+    void testMapOfList() {
+        JsonObject object = JSON_PROVIDER.createObjectBuilder()
+                .add("value1", JSON_PROVIDER.createArrayBuilder()
+                        .add(JSON_PROVIDER.createObjectBuilder()
+                                     .add("foo", "foo1")
+                                     .add("bar", "bar1")))
+                .add("value2", JSON_PROVIDER.createArrayBuilder()
+                        .add(JSON_PROVIDER.createObjectBuilder()
+                                     .add("foo", "foo2")
+                                     .add("bar", "bar2")))
+                .build();
+        JsonRpcParams rpcParams = JsonRpcParams.create(object);
+        McpParameters parameters = new McpParameters(rpcParams, object);
+        Map<String, McpParameters> map = parameters.asMap().orElse(Map.of());
+        assertThat(map.size(), is(2));
+        assertThat(map.containsKey("value1"), is(true));
+        assertThat(map.containsKey("value2"), is(true));
+
+        List<Foo> value1 = map.get("value1").asList(Foo.class).orElse(List.of());
+        assertThat(value1.size(), is(1));
+
+        Foo foo1 = value1.getFirst();
+        assertThat(foo1.foo, is("foo1"));
+        assertThat(foo1.bar, is("bar1"));
+
+        List<Foo> value2 = map.get("value2").asList(Foo.class).orElse(List.of());
+        assertThat(value2.size(), is(1));
+
+        Foo foo2 = value2.getFirst();
+        assertThat(foo2.foo, is("foo2"));
+        assertThat(foo2.bar, is("bar2"));
     }
 
     @Test

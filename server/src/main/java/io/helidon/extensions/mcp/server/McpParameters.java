@@ -80,6 +80,10 @@ public final class McpParameters {
                     JsonRpcParams rpcParams = JsonRpcParams.create(rpcObject);
                     return new McpParameters(rpcParams, v, key);
                 }
+                if (params.get(key) instanceof JsonArray jsonArray) {
+                    JsonRpcParams rpcParams = JsonRpcParams.create(jsonArray);
+                    return new McpParameters(rpcParams, v, key);
+                }
                 return new McpParameters(params, v, key);
             }
             return EMPTY;
@@ -140,7 +144,7 @@ public final class McpParameters {
     /**
      * If the value is a JSON number, returns {@code true}, otherwise {code false}.
      *
-     * @return  {@code true} if value is a JSON number, otherwise {@code false}
+     * @return {@code true} if value is a JSON number, otherwise {@code false}
      */
     public boolean isNumber() {
         return value instanceof JsonNumber;
@@ -149,7 +153,7 @@ public final class McpParameters {
     /**
      * If the value is a JSON string, returns {@code true}, otherwise {code false}.
      *
-     * @return  {@code true} if value is a JSON string, otherwise {@code false}
+     * @return {@code true} if value is a JSON string, otherwise {@code false}
      */
     public boolean isString() {
         return value instanceof JsonString;
@@ -269,18 +273,43 @@ public final class McpParameters {
      * @return optional list value
      */
     public OptionalValue<List<McpParameters>> asList() {
+        if (value == JsonValue.NULL) {
+            return empty();
+        }
         if (value instanceof JsonArray array) {
             List<McpParameters> list = new ArrayList<>();
             int i = 0;
             for (JsonValue value : array) {
+                if (value instanceof JsonObject object) {
+                    list.add(new McpParameters(JsonRpcParams.create(object), value, key + "-" + i++));
+                    continue;
+                }
+                if (value instanceof JsonArray jsonArray) {
+                    list.add(new McpParameters(JsonRpcParams.create(jsonArray), value, key + "-" + i++));
+                    continue;
+                }
                 list.add(new McpParameters(params, value, key + "-" + i++));
             }
             return OptionalValue.create(MAPPERS, key, list);
         }
-        if (value == JsonValue.NULL) {
-            return empty();
-        }
         throw new IllegalStateException("Cannot get " + value.getValueType() + "as a list");
+    }
+
+    /**
+     * Get optional value of the parameter as a list of provided type.
+     *
+     * @param clazz the type class
+     * @param <T>   type
+     * @return List of provided type
+     */
+    public <T> OptionalValue<List<T>> asList(Class<T> clazz) {
+        List<T> result = asList()
+                .map(list -> list.stream()
+                        .map(p -> p.as(clazz)
+                                .orElseThrow(() -> new McpException("Cannot convert element to " + clazz.getSimpleName())))
+                        .toList())
+                .orElseGet(List::of);
+        return OptionalValue.create(MAPPERS, key, result);
     }
 
     /**
@@ -290,8 +319,21 @@ public final class McpParameters {
      */
     public OptionalValue<Map<String, McpParameters>> asMap() {
         if (value instanceof JsonObject object) {
+            int i = 0;
             Map<String, McpParameters> map = new HashMap<>();
-            object.forEach((key, value) -> map.put(key, new McpParameters(params, value, key + "-" + value)));
+            for (Map.Entry<String, JsonValue> entry : object.entrySet()) {
+                McpParameters parameter;
+                if (entry.getValue() instanceof JsonObject jsonObject) {
+                    JsonRpcParams rpcParams = JsonRpcParams.create(jsonObject);
+                    parameter = new McpParameters(rpcParams, jsonObject, entry.getKey() + "-" + i++);
+                } else if (entry.getValue() instanceof JsonArray array) {
+                    JsonRpcParams rpcParams = JsonRpcParams.create(array);
+                    parameter = new McpParameters(rpcParams, array, entry.getKey() + "-" + i++);
+                } else {
+                    parameter = new McpParameters(params, entry.getValue(), entry.getKey() + "-" + i++);
+                }
+                map.put(entry.getKey(), parameter);
+            }
             return OptionalValue.create(MAPPERS, key, map);
         }
         if (value == JsonValue.NULL) {
@@ -304,7 +346,7 @@ public final class McpParameters {
      * Get optional value of the parameter as the mapping function.
      *
      * @param function mapping function
-     * @param <T> optional value type
+     * @param <T>      optional value type
      * @return optional value
      */
     public <T> OptionalValue<T> as(Function<McpParameters, T> function) {
@@ -318,7 +360,7 @@ public final class McpParameters {
      * Get optional value of the parameter as the mapping class.
      *
      * @param clazz mapping class
-     * @param <T> class type
+     * @param <T>   class type
      * @return optional value
      */
     @SuppressWarnings("unchecked")
@@ -326,20 +368,24 @@ public final class McpParameters {
         if (value == JsonValue.NULL) {
             return empty();
         }
-        if (clazz == String.class) {
-            return (OptionalValue<T>) asString();
-        }
-        var value = OptionalValue.create(MAPPERS, key, clazz);
-        return value.isEmpty()
-                ? OptionalValue.create(MAPPERS, key, params.as(clazz))
-                : value;
+        return switch (clazz.getName()) {
+            case "java.lang.Byte" -> (OptionalValue<T>) asByte();
+            case "java.lang.Long" -> (OptionalValue<T>) asLong();
+            case "java.lang.Float" -> (OptionalValue<T>) asFloat();
+            case "java.lang.Short" -> (OptionalValue<T>) asShort();
+            case "java.lang.Double" -> (OptionalValue<T>) asDouble();
+            case "java.lang.String" -> (OptionalValue<T>) asString();
+            case "java.lang.Boolean" -> (OptionalValue<T>) asBoolean();
+            case "java.lang.Integer" -> (OptionalValue<T>) asInteger();
+            default -> OptionalValue.create(MAPPERS, key, params.as(clazz));
+        };
     }
 
     /**
      * Get optional value of the parameter as the mapping type.
      *
      * @param type mapping type
-     * @param <T> type
+     * @param <T>  type
      * @return optional value
      */
     public <T> OptionalValue<T> as(GenericType<T> type) {
