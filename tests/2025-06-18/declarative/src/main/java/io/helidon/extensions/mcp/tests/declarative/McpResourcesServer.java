@@ -79,4 +79,23 @@ class McpResourcesServer {
     List<McpResourceContent> resource5(McpRequest request) {
         return List.of(McpResourceContents.textContent(RESOURCE_CONTENT));
     }
+
+    @Mcp.Resource(
+            uri = "resource5",
+            mediaType = RESOURCE_MEDIA_TYPE,
+            description = """
+                    Description code block
+                    """)
+    List<McpResourceContent> resource6(McpRequest request) {
+        return List.of(McpResourceContents.textContent(RESOURCE_CONTENT));
+    }
+
+    @Mcp.Resource(
+            uri = "resource5",
+            mediaType = RESOURCE_MEDIA_TYPE,
+            description = "first line\n"
+                    + "second line")
+    List<McpResourceContent> resource7(McpRequest request) {
+        return List.of(McpResourceContents.textContent(RESOURCE_CONTENT));
+    }
 }

@@ -93,4 +93,16 @@ class McpPromptsServer {
     String prompt8(McpRequest request) {
         return PROMPT_CONTENT;
     }
+
+    @Mcp.Prompt("""
+            Description code block
+            """)
+    String prompt9(McpRequest request) {
+        return PROMPT_CONTENT;
+    }
+
+    @Mcp.Prompt("first line\n second line\n")
+    String prompt10(McpRequest request) {
+        return PROMPT_CONTENT;
+    }
 }
