@@ -21,6 +21,7 @@ import io.helidon.json.schema.SchemaString;
 
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
+import jakarta.json.spi.JsonProvider;
 import org.junit.jupiter.api.Test;
 
 import static io.helidon.extensions.mcp.server.McpToolContents.resourceLinkContent;
@@ -30,6 +31,7 @@ import static org.hamcrest.Matchers.notNullValue;
 
 class McpJsonSerializerV3Test {
     private static final McpJsonSerializer MJS = McpJsonSerializer.create(McpProtocolVersion.VERSION_2025_06_18);
+    private static final JsonProvider JSON_PROVIDER = JsonProvider.provider();
 
     @Test
     void testSerializeTool() {
@@ -201,7 +203,7 @@ class McpJsonSerializerV3Test {
     void testSerializeResourceLinkDefault() {
         McpToolContent link = resourceLinkContent("name", "https://foo");
 
-        JsonObject payload = MJS.toJson(link.content()).build();
+        JsonObject payload = MJS.toJson(link.content()).orElseGet(JSON_PROVIDER::createObjectBuilder).build();
         assertThat(payload.getString("type"), is(McpContent.ContentType.RESOURCE_LINK.text()));
         assertThat(payload.getString("uri"), is("https://foo"));
         assertThat(payload.getString("name"), is("name"));
@@ -216,7 +218,7 @@ class McpJsonSerializerV3Test {
                 .description("description")
                 .mediaType(MediaTypes.APPLICATION_JSON));
 
-        JsonObject payload = MJS.toJson(link.content()).build();
+        JsonObject payload = MJS.toJson(link.content()).orElseGet(JSON_PROVIDER::createObjectBuilder).build();
         assertThat(payload.getJsonNumber("size").longValue(), is(10L));
         assertThat(payload.getString("type"), is(McpContent.ContentType.RESOURCE_LINK.text()));
         assertThat(payload.getString("name"), is("name"));
