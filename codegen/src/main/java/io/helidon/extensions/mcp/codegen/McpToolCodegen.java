@@ -86,7 +86,7 @@ class McpToolCodegen {
         if (outputSchema.isPresent() && !outputSchema.get().isBlank()) {
             String schema = toolAnnotation.getValue("outputSchema")
                     .orElse("\"\"")
-                            .replace("\"", "\\\"");
+                    .replace("\"", "\\\"");
             builder.addContent("return Optional.of(\"")
                     .addContent(schema)
                     .addContent("\");");
@@ -244,10 +244,17 @@ class McpToolCodegen {
     private void addToolDescriptionMethod(Method.Builder builder, String description) {
         builder.name("description")
                 .addAnnotation(Annotations.OVERRIDE)
-                .returnType(TypeNames.STRING)
-                .addContent("return \"")
-                .addContent(description)
-                .addContentLine("\";");
+                .returnType(TypeNames.STRING);
+        if (description.contains("\n")) {
+            builder.addContentLine("return \"\"\"")
+                    .increaseContentPadding()
+                    .addContent(description)
+                    .addContentLine("\"\"\";");
+        } else {
+            builder.addContent("return \"")
+                    .addContent(description)
+                    .addContentLine("\";");
+        }
     }
 
     private void addToolAnnotationsMethod(Method.Builder builder, Annotation toolAnnotation) {

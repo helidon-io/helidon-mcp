@@ -17,6 +17,7 @@
 package io.helidon.extensions.mcp.tests.declarative;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
+import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.mcp.client.McpClient;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
@@ -41,7 +42,13 @@ abstract class AbstractLangchain4jToolsServerTest {
     @Test
     void testListTools() {
         var list = client.listTools();
-        assertThat(list.size(), is(14));
+        assertThat(list.size(), is(16));
+
+        ToolSpecification tool1 = list.get(14);
+        assertThat(tool1.description(), is("Tool description block\n"));
+
+        ToolSpecification tool2 = list.getLast();
+        assertThat(tool2.description(), is("first line\nsecond line\n"));
     }
 
     @ParameterizedTest

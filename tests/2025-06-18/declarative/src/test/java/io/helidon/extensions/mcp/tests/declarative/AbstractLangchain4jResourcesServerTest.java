@@ -19,9 +19,11 @@ package io.helidon.extensions.mcp.tests.declarative;
 import java.util.List;
 
 import dev.langchain4j.mcp.client.McpClient;
+import dev.langchain4j.mcp.client.McpResource;
 import dev.langchain4j.mcp.client.McpResourceContents;
 import dev.langchain4j.mcp.client.McpTextResourceContents;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -38,6 +40,18 @@ abstract class AbstractLangchain4jResourcesServerTest {
         if (client != null) {
             client.close();
         }
+    }
+
+    @Test
+    void listResources() {
+        List<McpResource> list = client.listResources();
+        assertThat(list.size(), is(8));
+
+        McpResource resource = list.get(6);
+        assertThat(resource.description(), is("Description code block\n"));
+
+        McpResource resource2 = list.get(7);
+        assertThat(resource2.description(), is("first line\nsecond line"));
     }
 
     @ParameterizedTest

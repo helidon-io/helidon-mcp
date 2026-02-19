@@ -16,14 +16,17 @@
 
 package io.helidon.extensions.mcp.tests.declarative;
 
+import java.util.List;
 import java.util.Map;
 
 import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.McpGetPromptResult;
+import dev.langchain4j.mcp.client.McpPrompt;
 import dev.langchain4j.mcp.client.McpPromptContent;
 import dev.langchain4j.mcp.client.McpRole;
 import dev.langchain4j.mcp.client.McpTextContent;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -40,6 +43,15 @@ abstract class AbstractLangchain4jPromptsServerTest {
         if (client != null) {
             client.close();
         }
+    }
+
+    @Test
+    void testListPrompt() {
+        List<McpPrompt> prompts = client.listPrompts();
+        assertThat(prompts.size(), is(14));
+
+        assertThat(prompts.get(12).description(), is("Description code block\n"));
+        assertThat(prompts.get(13).description(), is("first line\n second line\n"));
     }
 
     @ParameterizedTest
