@@ -27,13 +27,79 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>helidon4-extensions-mcp-2025-06-18-tests-project</artifactId>
-    <packaging>pom</packaging>
-    <name>Helidon 4 Extensions MCP 2025-06-18 Tests Project</name>
+    <artifactId>helidon4-extensions-mcp-2025-06-18-tests</artifactId>
+    <name>Helidon 4 Extensions MCP 2025-06-18 Tests</name>
 
-    <modules>
-        <module>declarative</module>
-        <module>mcp</module>
-    </modules>
-
+    <dependencies>
+        <dependency>
+            <groupId>io.helidon.extensions.mcp</groupId>
+            <artifactId>helidon4-extensions-mcp-server</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.helidon.json.schema</groupId>
+            <artifactId>helidon-json-schema</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.helidon.extensions.mcp</groupId>
+            <artifactId>helidon4-extensions-mcp-tests-common</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.helidon.webserver.testing.junit5</groupId>
+            <artifactId>helidon-webserver-testing-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.helidon.fault-tolerance</groupId>
+            <artifactId>helidon-fault-tolerance</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse</groupId>
+            <artifactId>yasson</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-all</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-mcp</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.modelcontextprotocol.sdk</groupId>
+            <artifactId>mcp</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 </project>
