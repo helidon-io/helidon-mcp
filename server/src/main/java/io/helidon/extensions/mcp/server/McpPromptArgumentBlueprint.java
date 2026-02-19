@@ -16,6 +16,8 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.util.Optional;
+
 import io.helidon.builder.api.Option;
 import io.helidon.builder.api.Prototype;
 
@@ -38,9 +40,8 @@ interface McpPromptArgumentBlueprint {
      *
      * @return the prompt argument title
      */
-    @Option.Default("")
-    default String title() {
-        return "";
+    default Optional<String> title() {
+        return Optional.empty();
     }
 
     /**

@@ -22,6 +22,9 @@ import jakarta.json.Json;
 import jakarta.json.JsonBuilderFactory;
 import jakarta.json.JsonObjectBuilder;
 
+/**
+ * JSON serializer for {@code 2025-03-26} MCP specification.
+ */
 class McpJsonSerializerV2 extends McpJsonSerializerV1 {
     private static final JsonBuilderFactory JSON_BUILDER_FACTORY = Json.createBuilderFactory(Map.of());
 
@@ -29,6 +32,30 @@ class McpJsonSerializerV2 extends McpJsonSerializerV1 {
     public JsonObjectBuilder toJson(Set<McpCapability> capabilities, McpServerConfig config) {
         return super.toJson(capabilities, config)
                 .add("protocolVersion", McpProtocolVersion.VERSION_2025_03_26.text());
+    }
+
+    @Override
+    public JsonObjectBuilder toJson(McpContent content) {
+        if (content instanceof McpAudioContent audio) {
+            return toJson(audio);
+        }
+        return super.toJson(content);
+    }
+
+    @Override
+    public JsonObjectBuilder toJson(McpPromptContent content) {
+        if (content instanceof McpPromptAudioContent resource) {
+            return toJson(resource);
+        }
+        return super.toJson(content);
+    }
+
+    @Override
+    public JsonObjectBuilder toJson(McpAudioContent content) {
+        return JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("type", content.type().text())
+                .add("data", content.base64Data())
+                .add("mimeType", content.mediaType().text());
     }
 
     @Override

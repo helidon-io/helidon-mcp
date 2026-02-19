@@ -42,6 +42,9 @@ import jakarta.json.JsonValue;
 
 import static io.helidon.jsonrpc.core.JsonRpcError.INTERNAL_ERROR;
 
+/**
+ * JSON serializer for {@code 2024-11-05} MCP specification.
+ */
 class McpJsonSerializerV1 implements McpJsonSerializer {
     private static final Map<String, JsonObject> CACHE = new HashMap<>();
     private static final JsonReaderFactory JSON_READER_FACTORY = Json.createReaderFactory(Map.of());
@@ -255,9 +258,6 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
         if (content instanceof McpPromptResourceContent resource) {
             return toJson(resource);
         }
-        if (content instanceof McpPromptAudioContent resource) {
-            return toJson(resource);
-        }
         throw new IllegalArgumentException("Unsupported content type: " + content.getClass().getName());
     }
 
@@ -271,9 +271,6 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
         }
         if (content instanceof McpResourceContent resource) {
             return toJson(resource);
-        }
-        if (content instanceof McpAudioContent audio) {
-            return toJson(audio);
         }
         throw new IllegalArgumentException("Unsupported content type: " + content.getClass().getName());
     }
@@ -380,10 +377,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
 
     @Override
     public JsonObjectBuilder toJson(McpAudioContent content) {
-        return JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("type", content.type().text())
-                .add("data", content.base64Data())
-                .add("mimeType", content.mediaType().text());
+        throw new UnsupportedOperationException("Specification 2024-11-05 does not support audio content");
     }
 
     @Override
