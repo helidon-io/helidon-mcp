@@ -28,6 +28,7 @@
     </parent>
 
     <artifactId>helidon4-extensions-mcp-tests-common</artifactId>
+    <name>Helidon 4 Extensions MCP Tests Common</name>
 
     <dependencies>
         <dependency>
