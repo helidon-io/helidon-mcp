@@ -13,21 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.helidon.extensions.mcp.server;
 
 /**
  * Tool contents that can be returned as part of the tool execution.
  */
-public sealed interface McpToolContent permits McpToolTextContent,
-                                               McpToolImageContent,
-                                               McpToolResourceContent,
-                                               McpToolResourceLinkContent,
-                                               McpToolAudioContent {
-    /**
-     * Get the content of this {@code ToolContent}.
-     *
-     * @return content
-     */
-    McpContent content();
+interface McpToolContent extends McpContent {
 }

@@ -16,22 +16,19 @@
 package io.helidon.extensions.mcp.tests.common;
 
 import java.util.List;
-import java.util.function.Function;
 
 import io.helidon.common.media.type.MediaType;
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.extensions.mcp.server.McpPrompt;
 import io.helidon.extensions.mcp.server.McpPromptArgument;
-import io.helidon.extensions.mcp.server.McpPromptContent;
-import io.helidon.extensions.mcp.server.McpPromptContents;
-import io.helidon.extensions.mcp.server.McpRequest;
+import io.helidon.extensions.mcp.server.McpPromptRequest;
+import io.helidon.extensions.mcp.server.McpPromptResult;
 import io.helidon.extensions.mcp.server.McpResource;
-import io.helidon.extensions.mcp.server.McpResourceContent;
-import io.helidon.extensions.mcp.server.McpResourceContents;
-import io.helidon.extensions.mcp.server.McpRole;
+import io.helidon.extensions.mcp.server.McpResourceRequest;
+import io.helidon.extensions.mcp.server.McpResourceResult;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
-import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpToolRequest;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.json.schema.Schema;
 import io.helidon.json.schema.SchemaString;
@@ -89,9 +86,9 @@ public class PaginationServer {
         }
 
         @Override
-        public Function<McpRequest, McpToolResult> tool() {
-            return request -> McpToolResult.builder()
-                    .addContent(McpToolContents.textContent("text"))
+        public McpToolResult tool(McpToolRequest request) {
+            return McpToolResult.builder()
+                    .addTextContent("text")
                     .build();
         }
     }
@@ -108,8 +105,10 @@ public class PaginationServer {
         }
 
         @Override
-        public Function<McpRequest, List<McpPromptContent>> prompt() {
-            return request -> List.of(McpPromptContents.textContent("text", McpRole.USER));
+        public McpPromptResult prompt(McpPromptRequest request) {
+            return McpPromptResult.builder()
+                    .addTextContent("text")
+                    .build();
         }
     }
 
@@ -130,8 +129,10 @@ public class PaginationServer {
         }
 
         @Override
-        public Function<McpRequest, List<McpResourceContent>> resource() {
-            return request -> List.of(McpResourceContents.textContent("text"));
+        public McpResourceResult resource(McpResourceRequest request) {
+            return McpResourceResult.builder()
+                    .addTextContent("text")
+                    .build();
         }
     }
 
@@ -157,8 +158,8 @@ public class PaginationServer {
         }
 
         @Override
-        public Function<McpRequest, List<McpResourceContent>> resource() {
-            return null;
+        public McpResourceResult resource(McpResourceRequest request) {
+            return McpResourceResult.create();
         }
     }
 }

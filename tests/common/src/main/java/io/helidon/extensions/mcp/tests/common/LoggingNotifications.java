@@ -17,7 +17,6 @@ package io.helidon.extensions.mcp.tests.common;
 
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
-import io.helidon.extensions.mcp.server.McpToolContents;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.webserver.http.HttpRouting;
 
@@ -44,7 +43,7 @@ public class LoggingNotifications {
                                                         request.features().logger().info("Logging data");
                                                         request.features().logger().debug("Logging data");
                                                         return McpToolResult.builder()
-                                                                .addContent(McpToolContents.textContent("Dummy text"))
+                                                                .addTextContent("Dummy text")
                                                                 .build();
                                                     })
                                                     .build()));

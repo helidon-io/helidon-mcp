@@ -15,9 +15,6 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.util.List;
-import java.util.function.Function;
-
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -32,7 +29,7 @@ class McpToolTest {
                 .schema("schema")
                 .description("description")
                 .outputSchema("outputSchema")
-                .tool((request) -> null)
+                .tool(request -> McpToolResult.create())
                 .build();
         assertThat(tool.name(), is("name"));
         assertThat(tool.schema(), is("schema"));
@@ -47,7 +44,7 @@ class McpToolTest {
                 .name("name")
                 .schema("schema")
                 .description("description")
-                .tool((request) -> null)
+                .tool(request -> McpToolResult.create())
                 .build();
         assertThat(tool.name(), is("name"));
         assertThat(tool.schema(), is("schema"));
@@ -67,22 +64,24 @@ class McpToolTest {
     }
 
     static class Foo implements McpTool {
+        @Override
         public String name() {
             return "name";
         }
 
+        @Override
         public String description() {
             return "description";
         }
 
+        @Override
         public String schema() {
             return "schema";
         }
 
-        public Function<McpRequest, McpToolResult> tool() {
-            return request -> McpToolResult.builder()
-                    .contents(List.of())
-                    .build();
+        @Override
+        public McpToolResult tool(McpToolRequest request) {
+            return McpToolResult.create();
         }
     }
 }

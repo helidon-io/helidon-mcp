@@ -186,7 +186,12 @@ public final class Mcp {
          * @return the hint
          */
         boolean openWorldHint() default true;
+    }
 
+    /**
+     * Tool output schema.
+     */
+    public @interface ToolOutputSchema {
         /**
          * The tool output schema is a JSON schema that defines the tool content output.
          * The string must be compliant with
@@ -195,7 +200,22 @@ public final class Mcp {
          *
          * @return the tool output schema
          */
-        String outputSchema() default "";
+        Class<?> value();
+    }
+
+    /**
+     * Tool output schema.
+     */
+    public @interface ToolOutputSchemaText {
+        /**
+         * The tool output schema is a JSON schema that defines the tool content output.
+         * The string must be compliant with
+         * <a href="https://json-schema.org/draft/2020-12">JSON Schema Version 2020-12</a>.
+         * If the output schema is defined, the tool must set {@link McpToolResult.Builder#structuredContent(Object)}.
+         *
+         * @return the tool output schema
+         */
+        String value();
     }
 
     /**

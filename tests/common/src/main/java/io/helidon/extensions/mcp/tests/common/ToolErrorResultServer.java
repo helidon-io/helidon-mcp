@@ -15,16 +15,11 @@
  */
 package io.helidon.extensions.mcp.tests.common;
 
-import java.util.function.Function;
-
-import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
-import io.helidon.extensions.mcp.server.McpToolContent;
+import io.helidon.extensions.mcp.server.McpToolRequest;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.webserver.http.HttpRouting;
-
-import static io.helidon.extensions.mcp.server.McpToolContents.textContent;
 
 /**
  * Tool error result server.
@@ -63,14 +58,11 @@ public class ToolErrorResultServer {
         }
 
         @Override
-        public Function<McpRequest, McpToolResult> tool() {
-            return request -> {
-                McpToolContent content = textContent("Tool error message");
-                return McpToolResult.builder()
-                        .error(true)
-                        .addContent(content)
-                        .build();
-            };
+        public McpToolResult tool(McpToolRequest request) {
+            return McpToolResult.builder()
+                    .error(true)
+                    .addTextContent("Tool error message")
+                    .build();
         }
     }
 
@@ -81,14 +73,11 @@ public class ToolErrorResultServer {
         }
 
         @Override
-        public Function<McpRequest, McpToolResult> tool() {
-            return request -> {
-                McpToolContent content = textContent("Tool error message");
-                return  McpToolResult.builder()
-                        .error(true)
-                        .addContent(content)
-                        .build();
-            };
+        public McpToolResult tool(McpToolRequest request) {
+            return McpToolResult.builder()
+                    .error(true)
+                    .addTextContent("Tool error message")
+                    .build();
         }
     }
 
@@ -99,16 +88,12 @@ public class ToolErrorResultServer {
         }
 
         @Override
-        public Function<McpRequest, McpToolResult> tool() {
-            return request -> {
-                McpToolContent content = textContent("Tool error message");
-                McpToolContent content1 = textContent("Second error message");
-                return McpToolResult.builder()
-                        .error(true)
-                        .addContent(content)
-                        .addContent(content1)
-                        .build();
-            };
+        public McpToolResult tool(McpToolRequest request) {
+            return McpToolResult.builder()
+                    .error(true)
+                    .addTextContent("Tool error message")
+                    .addTextContent("Second error message")
+                    .build();
         }
     }
 }

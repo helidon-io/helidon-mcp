@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.util.Base64;
+
 import io.helidon.common.media.type.MediaType;
 
-sealed interface McpMediaContent extends McpContent permits McpImageContent, McpAudioContent {
+interface McpMediaContent extends McpContent {
     /**
      * Image content data.
      *
@@ -26,17 +28,19 @@ sealed interface McpMediaContent extends McpContent permits McpImageContent, Mcp
     byte[] data();
 
     /**
-     * Media content data encoded in base64.
-     *
-     * @return content in base64.
-     */
-    String base64Data();
-
-    /**
      * Image content MIME type.
      *
      * @return MIME type
      */
     MediaType mediaType();
+
+    /**
+     * Media content data encoded in base64.
+     *
+     * @return content in base64.
+     */
+    default String base64Data() {
+        return Base64.getEncoder().encodeToString(data());
+    }
 }
 

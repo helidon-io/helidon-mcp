@@ -18,16 +18,13 @@ package io.helidon.extensions.mcp.tests.common;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
-import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpRoot;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
-import io.helidon.extensions.mcp.server.McpToolContent;
-import io.helidon.extensions.mcp.server.McpToolContents;
-import io.helidon.extensions.mcp.server.McpToolErrorException;
+import io.helidon.extensions.mcp.server.McpToolRequest;
 import io.helidon.extensions.mcp.server.McpToolResult;
+import io.helidon.extensions.mcp.server.McpToolTextContent;
 import io.helidon.webserver.http.HttpRouting;
 
 /**
@@ -66,18 +63,18 @@ public class RootsServer {
         }
 
         @Override
-        public Function<McpRequest, McpToolResult> tool() {
-            return request -> {
-                List<McpRoot> roots = request.features().roots().listRoots();
-                List<McpToolContent> contents = roots.stream()
-                        .map(McpRoot::name)
-                        .flatMap(Optional::stream)
-                        .map(McpToolContents::textContent)
-                        .toList();
-                return McpToolResult.builder()
-                        .addContents(contents)
-                        .build();
-            };
+        public McpToolResult tool(McpToolRequest request) {
+            List<McpRoot> roots = request.features().roots().listRoots();
+            List<McpToolTextContent> contents = roots.stream()
+                    .map(McpRoot::name)
+                    .flatMap(Optional::stream)
+                    .map(text -> McpToolTextContent.builder()
+                            .text(text)
+                            .build())
+                    .toList();
+            return McpToolResult.builder()
+                    .addTextContents(contents)
+                    .build();
         }
     }
 
@@ -98,21 +95,24 @@ public class RootsServer {
         }
 
         @Override
-        public Function<McpRequest, McpToolResult> tool() {
-            return request -> {
-                if (!request.features().roots().enabled()) {
-                    throw new McpToolErrorException("Roots is disabled");
-                }
-                List<McpRoot> roots = request.features().roots().listRoots();
-                List<McpToolContent> contents = roots.stream()
-                        .map(McpRoot::uri)
-                        .map(URI::toASCIIString)
-                        .map(McpToolContents::textContent)
-                        .toList();
+        public McpToolResult tool(McpToolRequest request) {
+            if (!request.features().roots().enabled()) {
                 return McpToolResult.builder()
-                        .addContents(contents)
+                        .error(true)
+                        .addTextContent("Roots is disabled")
                         .build();
-            };
+            }
+            List<McpRoot> roots = request.features().roots().listRoots();
+            List<McpToolTextContent> contents = roots.stream()
+                    .map(McpRoot::uri)
+                    .map(URI::toASCIIString)
+                    .map(text -> McpToolTextContent.builder()
+                            .text(text)
+                            .build())
+                    .toList();
+            return McpToolResult.builder()
+                    .addTextContents(contents)
+                    .build();
         }
     }
 }

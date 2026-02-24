@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,11 @@
 
 package io.helidon.extensions.mcp.examples.calendar;
 
-import java.util.List;
-import java.util.function.Function;
-
 import io.helidon.common.media.type.MediaType;
 import io.helidon.common.media.type.MediaTypes;
-import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpResource;
-import io.helidon.extensions.mcp.server.McpResourceContent;
-import io.helidon.extensions.mcp.server.McpResourceContents;
+import io.helidon.extensions.mcp.server.McpResourceRequest;
+import io.helidon.extensions.mcp.server.McpResourceResult;
 
 /**
  * Resource that represents a calendar event registry.
@@ -57,13 +53,11 @@ final class CalendarEventResource implements McpResource {
     }
 
     @Override
-    public Function<McpRequest, List<McpResourceContent>> resource() {
-        return this::readRegistry;
-    }
-
-    private List<McpResourceContent> readRegistry(McpRequest request) {
+    public McpResourceResult resource(McpResourceRequest request) {
         request.features().logger().debug("Reading calendar events from registry...");
         String content = calendar.readContent();
-        return List.of(McpResourceContents.textContent(content));
+        return McpResourceResult.builder()
+                .addTextContent(content)
+                .build();
     }
 }

@@ -16,11 +16,8 @@
 
 package io.helidon.extensions.mcp.examples.secured;
 
-import java.util.function.Function;
-
-import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpTool;
-import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpToolRequest;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.security.SecurityContext;
 
@@ -45,15 +42,11 @@ final class SecuredTool implements McpTool {
     }
 
     @Override
-    public Function<McpRequest, McpToolResult> tool() {
-        return request -> {
-            String username = request.requestContext()
-                    .get(SecurityContext.class)
-                    .map(SecurityContext::userName)
-                    .orElse("Unknown");
-            return McpToolResult.builder()
-                    .addContent(McpToolContents.textContent("Username: " + username))
-                    .build();
-        };
+    public McpToolResult tool(McpToolRequest request) {
+        String username = request.requestContext()
+                .get(SecurityContext.class)
+                .map(SecurityContext::userName)
+                .orElse("Unknown");
+        return McpToolResult.create("Username: " + username);
     }
 }

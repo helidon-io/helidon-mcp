@@ -175,7 +175,7 @@ class McpSdkStreamableClientTest extends AbstractMcpSdkTest {
     void testPromptCall() {
         var result = client().getPrompt(
                 new McpSchema.GetPromptRequest(PROMPT_NAME, Map.of(PROMPT_ARGUMENT_NAME, "Praha")));
-        assertThat(result.description(), is(PROMPT_DESCRIPTION));
+        assertThat(result.description(), is(nullValue()));
 
         var messages = result.messages();
         assertThat(messages.size(), is(1));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 
 @TestMethodOrder(OrderAnnotation.class)
@@ -141,7 +142,7 @@ abstract class BaseTest {
         Map<String, Object> arguments = Map.of("name", "Frank-birthday", "date", "2021-04-20", "attendees", "Frank");
         McpSchema.GetPromptRequest request = new McpSchema.GetPromptRequest("createEventPrompt", arguments);
         McpSchema.GetPromptResult promptResult = client().getPrompt(request);
-        assertThat(promptResult.description(), is("Prompt to create a new event given a name, date and attendees"));
+        assertThat(promptResult.description(), is(nullValue()));
 
         List<McpSchema.PromptMessage> messages = promptResult.messages();
         assertThat(messages.size(), is(1));

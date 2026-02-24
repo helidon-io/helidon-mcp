@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package io.helidon.extensions.mcp.server;
 /**
  * Text content.
  */
-sealed interface McpTextContent extends McpContent permits McpTextContent.McpTextContentImpl {
+interface McpTextContent extends McpContent {
     /**
      * Text content as string.
      *
@@ -27,21 +27,8 @@ sealed interface McpTextContent extends McpContent permits McpTextContent.McpTex
      */
     String text();
 
-    final class McpTextContentImpl implements McpTextContent {
-        private final String text;
-
-        McpTextContentImpl(String text) {
-            this.text = text;
-        }
-
-        @Override
-        public String text() {
-            return text;
-        }
-
-        @Override
-        public ContentType type() {
-            return ContentType.TEXT;
-        }
+    @Override
+    default McpContentType type() {
+        return McpContentType.TEXT;
     }
 }

@@ -16,7 +16,6 @@
 
 package io.helidon.extensions.mcp.server;
 
-import java.util.List;
 import java.util.regex.PatternSyntaxException;
 
 import io.helidon.common.media.type.MediaTypes;
@@ -28,11 +27,11 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 
 class McpResourceTemplatePathMatchingTest {
-    private final McpResource.Builder builder = McpResource.builder()
+    private final McpResourceConfig.Builder builder = McpResource.builder()
             .name("name")
             .description("description")
             .mediaType(MediaTypes.TEXT_PLAIN)
-            .resource(this::resource);
+            .resource(request -> McpResourceResult.create());
 
     @Test
     void testSingleVariablePath() {
@@ -87,9 +86,5 @@ class McpResourceTemplatePathMatchingTest {
         } catch (PatternSyntaxException e) {
             assertThat(e.getMessage(), startsWith("Illegal repetition near index 9"));
         }
-    }
-
-    private List<McpResourceContent> resource(McpRequest request) {
-        return List.of();
     }
 }

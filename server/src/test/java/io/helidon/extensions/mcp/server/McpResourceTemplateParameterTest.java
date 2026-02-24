@@ -16,8 +16,6 @@
 
 package io.helidon.extensions.mcp.server;
 
-import java.util.List;
-
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.jsonrpc.core.JsonRpcParams;
 
@@ -28,11 +26,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 class McpResourceTemplateParameterTest {
-    private final McpResource.Builder builder = McpResource.builder()
+    private final McpResourceConfig.Builder builder = McpResource.builder()
             .name("name")
             .description("description")
             .mediaType(MediaTypes.TEXT_PLAIN)
-            .resource(request -> List.of());
+            .resource(request -> McpResourceResult.create());
 
     @Test
     void testSimpleParameter() {

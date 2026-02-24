@@ -15,15 +15,11 @@
  */
 package io.helidon.extensions.mcp.tests.common;
 
-import java.util.List;
-import java.util.function.Function;
-
 import io.helidon.common.media.type.MediaType;
 import io.helidon.common.media.type.MediaTypes;
-import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpResource;
-import io.helidon.extensions.mcp.server.McpResourceContent;
-import io.helidon.extensions.mcp.server.McpResourceContents;
+import io.helidon.extensions.mcp.server.McpResourceRequest;
+import io.helidon.extensions.mcp.server.McpResourceResult;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.webserver.http.HttpRouting;
 
@@ -71,12 +67,14 @@ public class MultipleResourceTemplate {
                                    .addResource(new MyResource()));
     }
 
-    private static List<McpResourceContent> resource(McpRequest request) {
+    private static McpResourceResult resource(McpResourceRequest request) {
         String path = request.parameters()
                 .get("path")
                 .asString()
                 .orElse("Unknown");
-        return List.of(McpResourceContents.textContent(path));
+        return McpResourceResult.builder()
+                .addTextContent(path)
+                .build();
     }
 
     private static final class MyResource implements McpResource {
@@ -101,11 +99,7 @@ public class MultipleResourceTemplate {
         }
 
         @Override
-        public Function<McpRequest, List<McpResourceContent>> resource() {
-            return this::read;
-        }
-
-        List<McpResourceContent> read(McpRequest request) {
+        public McpResourceResult resource(McpResourceRequest request) {
             String foo = request.parameters()
                     .get("foo")
                     .asString()
@@ -114,9 +108,10 @@ public class MultipleResourceTemplate {
                     .get("bar")
                     .asString()
                     .orElse("Unknown");
-            return List.of(
-                    McpResourceContents.textContent(foo),
-                    McpResourceContents.textContent(bar));
+            return McpResourceResult.builder()
+                    .addTextContent(foo)
+                    .addTextContent(bar)
+                    .build();
         }
     }
 }

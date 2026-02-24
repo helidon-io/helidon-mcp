@@ -17,7 +17,6 @@ package io.helidon.extensions.mcp.tests.common;
 
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
-import io.helidon.extensions.mcp.server.McpToolContents;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.webserver.http.HttpRouting;
 
@@ -39,7 +38,7 @@ public class ProtocolVersion {
                                    .path("/")
                                    .addTool(McpTool.builder()
                                                     .tool(r -> McpToolResult.builder()
-                                                            .addContent(McpToolContents.textContent(r.protocolVersion()))
+                                                            .addTextContent(r.protocolVersion())
                                                             .build())
                                                     .description("A tool that returns the protocol version")
                                                     .name("protocolVersion")

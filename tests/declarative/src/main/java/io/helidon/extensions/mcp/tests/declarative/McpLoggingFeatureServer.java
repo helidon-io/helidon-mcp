@@ -16,19 +16,13 @@
 
 package io.helidon.extensions.mcp.tests.declarative;
 
-import java.util.List;
-
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.extensions.mcp.server.Mcp;
 import io.helidon.extensions.mcp.server.McpFeatures;
 import io.helidon.extensions.mcp.server.McpLogger;
-import io.helidon.extensions.mcp.server.McpPromptContent;
-import io.helidon.extensions.mcp.server.McpPromptContents;
-import io.helidon.extensions.mcp.server.McpResourceContent;
-import io.helidon.extensions.mcp.server.McpResourceContents;
-import io.helidon.extensions.mcp.server.McpRole;
-import io.helidon.extensions.mcp.server.McpToolContent;
-import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpPromptResult;
+import io.helidon.extensions.mcp.server.McpResourceResult;
+import io.helidon.extensions.mcp.server.McpToolResult;
 
 @Mcp.Server
 @Mcp.Path("/logging")
@@ -41,9 +35,9 @@ class McpLoggingFeatureServer {
     }
 
     @Mcp.Tool("Tool description")
-    List<McpToolContent> loggerTool(McpLogger logger) {
+    McpToolResult loggerTool(McpLogger logger) {
         logger.info("Logging notification");
-        return List.of(McpToolContents.textContent("Hello World"));
+        return McpToolResult.builder().addTextContent("Hello World").build();
     }
 
     @Mcp.Prompt("Prompt description")
@@ -53,9 +47,9 @@ class McpLoggingFeatureServer {
     }
 
     @Mcp.Prompt("Prompt description")
-    List<McpPromptContent> loggerPrompt(McpLogger logger) {
+    McpPromptResult loggerPrompt(McpLogger logger) {
         logger.info("Logging notification");
-        return List.of(McpPromptContents.textContent("Hello World", McpRole.ASSISTANT));
+        return McpPromptResult.builder().addTextContent("Hello World").build();
     }
 
     @Mcp.Resource(
@@ -71,8 +65,8 @@ class McpLoggingFeatureServer {
             uri = "file://hello/world1",
             mediaType = MediaTypes.TEXT_PLAIN_VALUE,
             description = "Resource description")
-    List<McpResourceContent> loggerResource(McpLogger logger) {
+    McpResourceResult loggerResource(McpLogger logger) {
         logger.info("Logging notification");
-        return List.of(McpResourceContents.textContent("Hello World"));
+        return McpResourceResult.builder().addTextContent("Hello World").build();
     }
 }

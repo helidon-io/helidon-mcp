@@ -20,6 +20,8 @@ import io.helidon.extensions.mcp.server.Mcp;
 import io.helidon.extensions.mcp.server.McpFeatures;
 import io.helidon.extensions.mcp.server.McpLogger;
 import io.helidon.extensions.mcp.server.McpRequest;
+import io.helidon.extensions.mcp.server.McpSubscribeRequest;
+import io.helidon.extensions.mcp.server.McpUnsubscribeRequest;
 
 @Mcp.Server
 @Mcp.Path("/subscribers")
@@ -42,5 +44,13 @@ class McpSubscribersServer {
 
     @Mcp.ResourceUnsubscriber("http://myresource")
     void unsubscribe(McpRequest request, McpFeatures features, McpLogger logger) {
+    }
+
+    @Mcp.ResourceSubscriber("http://myresource")
+    void subscribe(McpSubscribeRequest request, McpFeatures features, McpLogger logger) {
+    }
+
+    @Mcp.ResourceUnsubscriber("http://myresource")
+    void unsubscribe(McpUnsubscribeRequest request, McpFeatures features, McpLogger logger) {
     }
 }

@@ -41,7 +41,7 @@ abstract class AbstractLangchain4jToolsServerTest {
     @Test
     void testListTools() {
         var list = client.listTools();
-        assertThat(list.size(), is(14));
+        assertThat(list.size(), is(18));
     }
 
     @ParameterizedTest
@@ -67,7 +67,7 @@ abstract class AbstractLangchain4jToolsServerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"tool1", "tool3", "tool10", "tool11", "tool12", "tool13"})
+    @ValueSource(strings = {"tool1", "tool3", "tool10", "tool11", "tool12", "tool13", "tool14", "tool15", "tool16", "tool17"})
     void runToolTest(String name) {
         var result = client.executeTool(ToolExecutionRequest.builder()
                                                 .name(name)

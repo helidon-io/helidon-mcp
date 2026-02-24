@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import io.helidon.codegen.classmodel.ClassModel;
+import io.helidon.codegen.classmodel.Executable;
 import io.helidon.codegen.classmodel.Method;
 import io.helidon.codegen.classmodel.Parameter;
 import io.helidon.common.types.AccessModifier;
@@ -34,19 +35,28 @@ import io.helidon.common.types.TypedElementInfo;
 
 import static io.helidon.common.types.TypeNames.LIST;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_CANCELLATION;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_COMPLETION_REQUEST;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_DESCRIPTION;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_FEATURES;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_LOGGER;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PARAMETERS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROGRESS;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_REQUEST;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_REQUEST;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_REQUEST;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ROOTS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SAMPLING;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SUBSCRIBE_REQUEST;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_REQUEST;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_UNSUBSCRIBE_REQUEST;
 
 /**
  * Utility class for methods used by several MCP code generator.
  */
 class McpCodegenUtil {
+    /**
+     * Pattern to match the first character of a string.
+     */
     private static final Pattern PATTERN = Pattern.compile("^.");
 
     static final List<String> MCP_TYPES = List.of(MCP_REQUEST.classNameWithEnclosingNames(),
@@ -119,7 +129,12 @@ class McpCodegenUtil {
                 || MCP_FEATURES.equals(typeName)
                 || MCP_PROGRESS.equals(typeName)
                 || MCP_SAMPLING.equals(typeName)
-                || MCP_CANCELLATION.equals(typeName);
+                || MCP_PARAMETERS.equals(typeName)
+                || MCP_CANCELLATION.equals(typeName)
+                || MCP_TOOL_REQUEST.equals(typeName)
+                || MCP_PROMPT_REQUEST.equals(typeName)
+                || MCP_RESOURCE_REQUEST.equals(typeName)
+                || MCP_COMPLETION_REQUEST.equals(typeName);
     }
 
     static boolean isResourceTemplate(String uri) {
@@ -152,6 +167,23 @@ class McpCodegenUtil {
                 .increaseContentPadding()
                 .addContentLine(".map(p -> p.get()).toList();");
         classModel.addMethod(method.build());
+    }
+
+    /**
+     * Add text content to the builder as literal. The text can be multi line.
+     *
+     * @param builder executable builder
+     * @param text text content
+     */
+    static void generateSafeMultiLine(Executable.Builder<?, ?> builder, String text) {
+        if (text.contains("\n")) {
+            builder.addContentLine("\"\"\"")
+                    .increaseContentPadding()
+                    .addContent(text.replace("\\\"", "\""))
+                    .addContent("\"\"\"");
+        } else {
+            builder.addContentLiteral(text);
+        }
     }
 
     /**
@@ -193,6 +225,14 @@ class McpCodegenUtil {
         }
         if (MCP_PARAMETERS.equals(type.typeName())) {
             parameters.add("request.parameters()");
+            return true;
+        }
+        if (MCP_UNSUBSCRIBE_REQUEST.equals(type.typeName())) {
+            parameters.add("request");
+            return true;
+        }
+        if (MCP_SUBSCRIBE_REQUEST.equals(type.typeName())) {
+            parameters.add("request");
             return true;
         }
         return false;

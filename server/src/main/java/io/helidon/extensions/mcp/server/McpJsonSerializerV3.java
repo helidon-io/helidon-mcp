@@ -43,13 +43,13 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
     private final ReentrantLock lock = new ReentrantLock();
 
     @Override
-    public JsonObjectBuilder toJson(Set<McpCapability> capabilities, McpServerConfig config) {
-        return super.toJson(capabilities, config)
+    public JsonObjectBuilder initialize(Set<McpCapability> capabilities, McpServerConfig config) {
+        return super.initialize(capabilities, config)
                 .add("protocolVersion", McpProtocolVersion.VERSION_2025_06_18.text());
     }
 
     @Override
-    public JsonObjectBuilder toolCall(McpTool tool, McpToolResult result) {
+    public JsonObject toolCall(McpTool tool, McpToolResult result) {
         if (tool.outputSchema().isEmpty() && result.structuredContent().isPresent()) {
             if (LOGGER.isLoggable(System.Logger.Level.WARNING)) {
                 LOGGER.log(System.Logger.Level.WARNING, "Output schema must be specified for tool '"
@@ -57,18 +57,17 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
             }
         }
 
-        JsonObjectBuilder builder = super.toolCall(tool, result);
+        JsonObjectBuilder builder = JSON_BUILDER_FACTORY.createObjectBuilder(super.toolCall(tool, result));
         result.structuredContent().ifPresent((content) -> {
             String json = JSON_B.toJson(content);
             JsonObject sc = JSON_B.fromJson(json, JsonObject.class);
             builder.add("structuredContent", sc);
-            if (result.contents().isEmpty()) {
-                var text = McpToolContents.textContent(json);
-                toJson(text.content())
-                        .ifPresent(it -> builder.add("content", JSON_BUILDER_FACTORY.createArrayBuilder().add(it)));
+            if (result.textContents().isEmpty()) {
+                McpToolContent text = McpToolTextContent.builder().text(json).build();
+                toJson(text).ifPresent(it -> builder.add("content", JSON_BUILDER_FACTORY.createArrayBuilder().add(it)));
             }
         });
-        return builder;
+        return builder.build();
     }
 
     @Override

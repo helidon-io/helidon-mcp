@@ -26,7 +26,7 @@ class McpResourceLinkContentTest {
 
     @Test
     void testDefaultResourceLinkContent() {
-        var content = McpResourceLinkContent.builder()
+        var content = McpToolResourceLinkContent.builder()
                 .name("name")
                 .uri("https://foo")
                 .build();
@@ -41,7 +41,7 @@ class McpResourceLinkContentTest {
 
     @Test
     void testCustomResourceLinkContent() {
-        var content = McpResourceLinkContent.builder()
+        var content = McpToolResourceLinkContent.builder()
                 .size(10)
                 .name("name")
                 .title("title")

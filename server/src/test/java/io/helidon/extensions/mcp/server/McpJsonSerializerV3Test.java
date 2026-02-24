@@ -24,7 +24,6 @@ import jakarta.json.JsonObject;
 import jakarta.json.spi.JsonProvider;
 import org.junit.jupiter.api.Test;
 
-import static io.helidon.extensions.mcp.server.McpToolContents.resourceLinkContent;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -155,7 +154,7 @@ class McpJsonSerializerV3Test {
                 .description("description")
                 .tool((request) -> null)
                 .build();
-        JsonObject object = MJS.toolCall(tool, result).build();
+        JsonObject object = MJS.toolCall(tool, result);
         assertThat(object, is(notNullValue()));
         assertThat(object.get("content"), is(notNullValue()));
         assertThat(object.get("structuredContent"), is(notNullValue()));
@@ -174,7 +173,7 @@ class McpJsonSerializerV3Test {
     @Test
     void testStructuredContentWithContent() {
         McpToolResult result = McpToolResult.builder()
-                .addContent(McpToolContents.textContent("foo"))
+                .addTextContent("foo")
                 .structuredContent(new StructuredContent("bar"))
                 .build();
         McpTool tool = McpTool.builder()
@@ -183,7 +182,7 @@ class McpJsonSerializerV3Test {
                 .description("description")
                 .tool((request) -> null)
                 .build();
-        JsonObject object = MJS.toolCall(tool, result).build();
+        JsonObject object = MJS.toolCall(tool, result);
         assertThat(object, is(notNullValue()));
         assertThat(object.get("content"), is(notNullValue()));
         assertThat(object.get("structuredContent"), is(notNullValue()));
@@ -201,26 +200,30 @@ class McpJsonSerializerV3Test {
 
     @Test
     void testSerializeResourceLinkDefault() {
-        McpToolContent link = resourceLinkContent("name", "https://foo");
+        McpToolContent link = McpToolResourceLinkContent.builder()
+                .name("name")
+                .uri("https://foo").build();
 
-        JsonObject payload = MJS.toJson(link.content()).orElseGet(JSON_PROVIDER::createObjectBuilder).build();
-        assertThat(payload.getString("type"), is(McpContent.ContentType.RESOURCE_LINK.text()));
+        JsonObject payload = MJS.toJson(link).orElseGet(JSON_PROVIDER::createObjectBuilder).build();
+        assertThat(payload.getString("type"), is(McpContentType.RESOURCE_LINK.text()));
         assertThat(payload.getString("uri"), is("https://foo"));
         assertThat(payload.getString("name"), is("name"));
     }
 
     @Test
     void testSerializeResourceLinkCustom() {
-        McpToolContent link = resourceLinkContent(resource -> resource.uri("https://foo")
+        McpToolContent link = McpToolResourceLinkContent.builder()
                 .size(10)
                 .name("name")
                 .title("title")
+                .uri("https://foo")
                 .description("description")
-                .mediaType(MediaTypes.APPLICATION_JSON));
+                .mediaType(MediaTypes.APPLICATION_JSON)
+                .build();
 
-        JsonObject payload = MJS.toJson(link.content()).orElseGet(JSON_PROVIDER::createObjectBuilder).build();
+        JsonObject payload = MJS.toJson(link).orElseGet(JSON_PROVIDER::createObjectBuilder).build();
         assertThat(payload.getJsonNumber("size").longValue(), is(10L));
-        assertThat(payload.getString("type"), is(McpContent.ContentType.RESOURCE_LINK.text()));
+        assertThat(payload.getString("type"), is(McpContentType.RESOURCE_LINK.text()));
         assertThat(payload.getString("name"), is("name"));
         assertThat(payload.getString("title"), is("title"));
         assertThat(payload.getString("uri"), is("https://foo"));
@@ -231,7 +234,7 @@ class McpJsonSerializerV3Test {
     @Test
     void testSerializeToolCallDefault() {
         McpToolResult result = McpToolResult.builder()
-                .addContent(resourceLinkContent("name", "https://foo"))
+                .addResourceLinkContent("name", "https://foo")
                 .build();
         McpTool tool = McpTool.builder()
                 .schema("")
@@ -239,7 +242,7 @@ class McpJsonSerializerV3Test {
                 .description("description")
                 .tool((request) -> null)
                 .build();
-        JsonObject payload = MJS.toolCall(tool, result).build();
+        JsonObject payload = MJS.toolCall(tool, result);
 
         JsonArray content = payload.getJsonArray("content");
         assertThat(content.size(), is(1));

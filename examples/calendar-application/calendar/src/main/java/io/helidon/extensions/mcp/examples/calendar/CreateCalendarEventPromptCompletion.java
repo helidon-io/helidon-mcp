@@ -18,12 +18,12 @@ package io.helidon.extensions.mcp.examples.calendar;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.function.Function;
+import java.util.ArrayList;
+import java.util.List;
 
 import io.helidon.extensions.mcp.server.McpCompletion;
-import io.helidon.extensions.mcp.server.McpCompletionContent;
-import io.helidon.extensions.mcp.server.McpCompletionContents;
 import io.helidon.extensions.mcp.server.McpCompletionRequest;
+import io.helidon.extensions.mcp.server.McpCompletionResult;
 import io.helidon.extensions.mcp.server.McpCompletionType;
 
 /**
@@ -32,9 +32,7 @@ import io.helidon.extensions.mcp.server.McpCompletionType;
 final class CreateCalendarEventPromptCompletion implements McpCompletion {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    private static final String[] FRIENDS = new String[] {
-            "Frank, Tweety", "Frank, Daffy", "Frank, Tweety, Daffy"
-    };
+    private static final List<String> FRIENDS = List.of("Frank, Tweety", "Frank, Daffy", "Frank, Tweety, Daffy");
 
     @Override
     public String reference() {
@@ -47,27 +45,23 @@ final class CreateCalendarEventPromptCompletion implements McpCompletion {
     }
 
     @Override
-    public Function<McpCompletionRequest, McpCompletionContent> completion() {
-        return this::complete;
-    }
-
-    private McpCompletionContent complete(McpCompletionRequest request) {
+    public McpCompletionResult completion(McpCompletionRequest request) {
         String promptName = request.name();
         if ("name".equals(promptName)) {
-            return McpCompletionContents.completion("Frank & Friends");
+            return McpCompletionResult.create("Frank & Friends");
         }
         if ("date".equals(promptName)) {
             LocalDate today = LocalDate.now();
-            String[] dates = new String[3];
-            for (int i = 0; i < dates.length; i++) {
-                dates[i] = today.plusDays(i).format(FORMATTER);
+            List<String> dates = new ArrayList<>();
+            for (int i = 0; i < 3; i++) {
+                dates.add(today.plusDays(i).format(FORMATTER));
             }
-            return McpCompletionContents.completion(dates);
+            return McpCompletionResult.create(dates);
         }
         if ("attendees".equals(promptName)) {
-            return McpCompletionContents.completion(FRIENDS);
+            return McpCompletionResult.create(FRIENDS);
         }
         // no completion
-        return McpCompletionContents.completion();
+        return McpCompletionResult.create();
     }
 }

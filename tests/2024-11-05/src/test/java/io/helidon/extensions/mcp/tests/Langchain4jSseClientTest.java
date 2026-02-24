@@ -51,6 +51,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 @ServerTest
 class Langchain4jSseClientTest {
@@ -145,7 +146,7 @@ class Langchain4jSseClientTest {
     @Test
     void testPromptCall() {
         var result = client.getPrompt(PROMPT_NAME, Map.of(PROMPT_ARGUMENT_NAME, "Praha"));
-        assertThat(result.description(), is(PROMPT_DESCRIPTION));
+        assertThat(result.description(), is(nullValue()));
 
         var messages = result.messages();
         assertThat(messages.size(), is(1));

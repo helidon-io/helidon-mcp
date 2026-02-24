@@ -16,17 +16,11 @@
 
 package io.helidon.extensions.mcp.tests.declarative;
 
-import java.util.List;
-
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.extensions.mcp.server.Mcp;
-import io.helidon.extensions.mcp.server.McpPromptContent;
-import io.helidon.extensions.mcp.server.McpPromptContents;
-import io.helidon.extensions.mcp.server.McpResourceContent;
-import io.helidon.extensions.mcp.server.McpResourceContents;
-import io.helidon.extensions.mcp.server.McpRole;
-import io.helidon.extensions.mcp.server.McpToolContent;
-import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpPromptResult;
+import io.helidon.extensions.mcp.server.McpResourceResult;
+import io.helidon.extensions.mcp.server.McpToolResult;
 
 @Mcp.Server
 @Mcp.Path("/pagination")
@@ -37,54 +31,54 @@ import io.helidon.extensions.mcp.server.McpToolContents;
 class McpPaginationServer {
 
     @Mcp.Tool("Tool description")
-    List<McpToolContent> tool1() {
-        return List.of(McpToolContents.textContent("text1"));
+    McpToolResult tool1() {
+        return McpToolResult.builder().addTextContent("text1").build();
     }
 
     @Mcp.Tool("Tool description")
-    List<McpToolContent> tool2() {
-        return List.of(McpToolContents.textContent("text2"));
+    McpToolResult tool2() {
+        return McpToolResult.builder().addTextContent("text2").build();
     }
 
     @Mcp.Prompt("Prompt description")
-    List<McpPromptContent> prompt1() {
-        return List.of(McpPromptContents.textContent("text1", McpRole.USER));
+    McpPromptResult prompt1() {
+        return McpPromptResult.builder().addTextContent("text1").build();
     }
 
     @Mcp.Prompt("Prompt description")
-    List<McpPromptContent> prompt2() {
-        return List.of(McpPromptContents.textContent("text2", McpRole.USER));
+    McpPromptResult prompt2() {
+        return McpPromptResult.builder().addTextContent("text2").build();
     }
 
     @Mcp.Resource(
             uri = "https://path1",
             mediaType = MediaTypes.TEXT_PLAIN_VALUE,
             description = "Resource description")
-    List<McpResourceContent> resource1() {
-        return List.of(McpResourceContents.textContent("text1"));
+    McpResourceResult resource1() {
+        return McpResourceResult.builder().addTextContent("text1").build();
     }
 
     @Mcp.Resource(
             uri = "https://path2",
             mediaType = MediaTypes.TEXT_PLAIN_VALUE,
             description = "Resource description")
-    List<McpResourceContent> resource2() {
-        return List.of(McpResourceContents.textContent("text2"));
+    McpResourceResult resource2() {
+        return McpResourceResult.builder().addTextContent("text2").build();
     }
 
     @Mcp.Resource(
             uri = "https://{path1}",
             mediaType = MediaTypes.TEXT_PLAIN_VALUE,
             description = "Resource Template description")
-    List<McpResourceContent> resourceTemplate1() {
-        return List.of(McpResourceContents.textContent("text1"));
+    McpResourceResult resourceTemplate1() {
+        return McpResourceResult.builder().addTextContent("text1").build();
     }
 
     @Mcp.Resource(
             uri = "https://{path2}",
             mediaType = MediaTypes.TEXT_PLAIN_VALUE,
             description = "Resource Template description")
-    List<McpResourceContent> resourceTemplate2() {
-        return List.of(McpResourceContents.textContent("text2"));
+    McpResourceResult resourceTemplate2() {
+        return McpResourceResult.builder().addTextContent("text2").build();
     }
 }

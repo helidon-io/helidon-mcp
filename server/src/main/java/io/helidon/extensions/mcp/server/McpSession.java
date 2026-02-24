@@ -150,7 +150,7 @@ class McpSession {
                         return response;
                     }
                 } else {
-                    return serializer.timeoutResponse(requestId);
+                    return serializer.jsonrpcErrorTimeoutResponse(requestId);
                 }
             } catch (ClassCastException e) {
                 if (LOGGER.isLoggable(Level.TRACE)) {

@@ -1,0 +1,90 @@
+/*
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.helidon.extensions.mcp.server;
+
+import java.util.function.Consumer;
+
+import io.helidon.builder.api.Option;
+import io.helidon.builder.api.RuntimeType;
+
+/**
+ * Configuration of an MCP Completion.
+ */
+@RuntimeType.PrototypedBy(McpCompletionConfig.class)
+public interface McpCompletion extends RuntimeType.Api<McpCompletionConfig> {
+    /**
+     * Create a prompt configuration builder.
+     *
+     * @return builder
+     */
+    static McpCompletionConfig.Builder builder() {
+        return McpCompletionConfig.builder();
+    }
+
+    /**
+     * Create a prompt from its configuration.
+     *
+     * @param configuration prompt configuration
+     * @return prompt instance
+     */
+    static McpCompletion create(McpCompletionConfig configuration) {
+        return new McpCompletionImpl(configuration);
+    }
+
+    /**
+     * Create a prompt from its configuration builder.
+     *
+     * @param consumer prompt configuration
+     * @return prompt instance
+     */
+    static McpCompletion create(Consumer<McpCompletionConfig.Builder> consumer) {
+        return builder().update(consumer).build();
+    }
+
+    /**
+     * Completion reference must be a {@link McpPromptArgument} name or a {@link McpResource} uri template.
+     *
+     * @return completion reference
+     */
+    String reference();
+
+    /**
+     * The reference type of this completion.
+     *
+     * @return reference type
+     */
+    @Option.Default("PROMPT")
+    default McpCompletionType referenceType() {
+        return McpCompletionType.PROMPT;
+    }
+
+    /**
+     * Completion request handler.
+     *
+     * @param request completion request
+     * @return completion suggestion
+     */
+    McpCompletionResult completion(McpCompletionRequest request);
+
+    @Override
+    default McpCompletionConfig prototype() {
+        return McpCompletionConfig.builder()
+                .reference(reference())
+                .referenceType(referenceType())
+                .completion(this::completion)
+                .buildPrototype();
+    }
+}

@@ -13,60 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.helidon.extensions.mcp.server;
 
 /**
  * General content type for all MCP component contents.
  */
-public sealed interface McpContent permits McpTextContent,
-                                           McpMediaContent,
-                                           McpResourceContent,
-                                           McpResourceLinkContent,
-                                           McpEmbeddedResource {
+interface McpContent {
     /**
      * Content type.
      *
      * @return type
      */
-    ContentType type();
-
-    /**
-     * Content types.
-     */
-    enum ContentType {
-        /**
-         * Text.
-         */
-        TEXT,
-
-        /**
-         * Image.
-         */
-        IMAGE,
-
-        /**
-         * Resource.
-         */
-        RESOURCE,
-
-        /**
-         * Resource link.
-         */
-        RESOURCE_LINK,
-
-        /**
-         * Audio.
-         */
-        AUDIO;
-
-        /**
-         * Return text representation.
-         *
-         * @return text representation
-         */
-        public String text() {
-            return this.name().toLowerCase();
-        }
-    }
+    McpContentType type();
 }

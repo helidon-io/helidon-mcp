@@ -30,8 +30,8 @@ class McpJsonSerializerV2 extends McpJsonSerializerV1 {
     private static final JsonBuilderFactory JSON_BUILDER_FACTORY = Json.createBuilderFactory(Map.of());
 
     @Override
-    public JsonObjectBuilder toJson(Set<McpCapability> capabilities, McpServerConfig config) {
-        return super.toJson(capabilities, config)
+    public JsonObjectBuilder initialize(Set<McpCapability> capabilities, McpServerConfig config) {
+        return super.initialize(capabilities, config)
                 .add("protocolVersion", McpProtocolVersion.VERSION_2025_03_26.text());
     }
 
@@ -60,16 +60,25 @@ class McpJsonSerializerV2 extends McpJsonSerializerV1 {
     }
 
     @Override
+    public Optional<JsonObjectBuilder> toJson(McpPromptAudioContent audio) {
+        return toJson((McpAudioContent) audio)
+                .map(content -> JSON_BUILDER_FACTORY.createObjectBuilder()
+                        .add("role", audio.role().text())
+                        .add("content", content));
+    }
+
+    @Override
     public JsonObjectBuilder toJson(McpTool tool) {
         var builder = super.toJson(tool);
-        McpToolAnnotations annotations = tool.annotations();
-        JsonObjectBuilder annotBuilder = JSON_BUILDER_FACTORY.createObjectBuilder();
-        annotBuilder.add("title", annotations.title());
-        annotBuilder.add("destructiveHint", annotations.destructiveHint());
-        annotBuilder.add("idempotentHint", annotations.idempotentHint());
-        annotBuilder.add("openWorldHint", annotations.openWorldHint());
-        annotBuilder.add("readOnlyHint", annotations.readOnlyHint());
-        builder.add("annotations", annotBuilder.build());
+        tool.annotations().ifPresent(annotations -> {
+            JsonObjectBuilder annotBuilder = JSON_BUILDER_FACTORY.createObjectBuilder();
+            annotBuilder.add("title", annotations.title());
+            annotBuilder.add("destructiveHint", annotations.destructiveHint());
+            annotBuilder.add("idempotentHint", annotations.idempotentHint());
+            annotBuilder.add("openWorldHint", annotations.openWorldHint());
+            annotBuilder.add("readOnlyHint", annotations.readOnlyHint());
+            builder.add("annotations", annotBuilder.build());
+        });
         return builder;
     }
 }

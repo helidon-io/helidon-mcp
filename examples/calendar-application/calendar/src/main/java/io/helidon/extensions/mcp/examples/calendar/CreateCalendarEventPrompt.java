@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,14 @@
 package io.helidon.extensions.mcp.examples.calendar;
 
 import java.util.List;
-import java.util.function.Function;
 
 import io.helidon.extensions.mcp.server.McpException;
 import io.helidon.extensions.mcp.server.McpLogger;
 import io.helidon.extensions.mcp.server.McpParameters;
 import io.helidon.extensions.mcp.server.McpPrompt;
 import io.helidon.extensions.mcp.server.McpPromptArgument;
-import io.helidon.extensions.mcp.server.McpPromptContent;
-import io.helidon.extensions.mcp.server.McpPromptContents;
-import io.helidon.extensions.mcp.server.McpRequest;
+import io.helidon.extensions.mcp.server.McpPromptRequest;
+import io.helidon.extensions.mcp.server.McpPromptResult;
 import io.helidon.extensions.mcp.server.McpRole;
 
 /**
@@ -67,13 +65,9 @@ final class CreateCalendarEventPrompt implements McpPrompt {
     }
 
     @Override
-    public Function<McpRequest, List<McpPromptContent>> prompt() {
-        return this::createCalendarEvent;
-    }
-
-    private List<McpPromptContent> createCalendarEvent(McpRequest request) {
+    public McpPromptResult prompt(McpPromptRequest request) {
         McpLogger logger = request.features().logger();
-        McpParameters mcpParameters = request.parameters();
+        McpParameters mcpParameters = request.arguments();
 
         logger.debug("Creating calendar event prompt...");
 
@@ -89,11 +83,15 @@ final class CreateCalendarEventPrompt implements McpPrompt {
 
         logger.debug("Argument successfully parsed from client request");
 
-        return List.of(McpPromptContents.textContent(
-                """
-                        Create a new calendar event with name %s, on %s with attendees %s. Make
-                        sure all attendees are free to attend the event.
-                        """.formatted(name, date, attendees), McpRole.USER));
+        return McpPromptResult.builder()
+                .description("New event created")
+                .addTextContent(content -> content
+                        .text("""
+                                  Create a new calendar event with name %s, on %s with attendees %s. Make
+                                  sure all attendees are free to attend the event.
+                                  """.formatted(name, date, attendees))
+                        .role(McpRole.USER))
+                .build();
     }
 
     private RuntimeException requiredArgument(String argument) {

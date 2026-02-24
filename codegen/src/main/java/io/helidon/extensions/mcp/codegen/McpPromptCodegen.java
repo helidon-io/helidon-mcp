@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package io.helidon.extensions.mcp.codegen;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import io.helidon.codegen.CodegenException;
 import io.helidon.codegen.classmodel.ClassModel;
@@ -35,15 +34,14 @@ import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.createClassName;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.getElementsWithAnnotation;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isIgnoredSchemaElement;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isMcpType;
-import static io.helidon.extensions.mcp.codegen.McpTypes.FUNCTION_REQUEST_LIST_PROMPT_CONTENT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.LIST_MCP_PROMPT_ARGUMENT;
-import static io.helidon.extensions.mcp.codegen.McpTypes.LIST_MCP_PROMPT_CONTENT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_DESCRIPTION;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_NAME;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_ARGUMENT;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_CONTENTS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_INTERFACE;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_REQUEST;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPT_RESULT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ROLE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ROLE_ENUM;
 
@@ -95,16 +93,21 @@ class McpPromptCodegen {
     private void addPromptMethod(Method.Builder builder, ClassModel.Builder classModel, TypedElementInfo element) {
         List<String> parameters = new ArrayList<>();
         TypeName returnType = element.signature().type();
-        Optional<String> role = element.findAnnotation(MCP_ROLE)
-                .flatMap(annotation -> annotation.value());
+        String role = element.findAnnotation(MCP_ROLE)
+                .flatMap(annotation -> annotation.value())
+                .orElse("ASSISTANT");
 
         builder.name("prompt")
-                .returnType(returned -> returned.type(FUNCTION_REQUEST_LIST_PROMPT_CONTENT))
+                .returnType(returned -> returned.type(MCP_PROMPT_RESULT))
+                .addParameter(parameter -> parameter.type(MCP_PROMPT_REQUEST).name("request"))
                 .addAnnotation(Annotations.OVERRIDE);
-        builder.addContentLine("return request -> {");
 
         for (TypedElementInfo param : element.parameterArguments()) {
             if (isMcpType(parameters, param)) {
+                continue;
+            }
+            if (param.typeName().equals(MCP_PROMPT_REQUEST)) {
+                parameters.add("request");
                 continue;
             }
             if (param.typeName().equals(TypeNames.STRING)) {
@@ -112,7 +115,7 @@ class McpPromptCodegen {
                 builder.addContent(param.typeName().classNameWithEnclosingNames())
                         .addContent(" ")
                         .addContent(param.elementName())
-                        .addContent(" = request.parameters().get(\"")
+                        .addContent(" = request.arguments().get(\"")
                         .addContent(param.elementName())
                         .addContentLine("\").asString().orElse(\"\");");
                 continue;
@@ -123,37 +126,35 @@ class McpPromptCodegen {
         }
 
         String params = String.join(", ", parameters);
-        if (returnType.equals(TypeNames.STRING)) {
-            builder.addContent("return ")
-                    .addContent(List.class)
-                    .addContent(".of(")
-                    .addContent(MCP_PROMPT_CONTENTS)
-                    .addContent(".textContent(delegate.")
-                    .addContent(element.elementName())
-                    .addContent("(")
-                    .addContent(params)
-                    .addContent("), ")
-                    .addContent(MCP_ROLE_ENUM)
-                    .addContent(".")
-                    .addContent(role.orElse("ASSISTANT"))
-                    .addContentLine("));")
-                    .decreaseContentPadding()
-                    .addContentLine("};");
-            return;
-        }
-        if (returnType.equals(LIST_MCP_PROMPT_CONTENT)) {
+        if (returnType.equals(MCP_PROMPT_RESULT)) {
             builder.addContent("return delegate.")
                     .addContent(element.elementName())
                     .addContent("(")
                     .addContent(params)
-                    .addContentLine(");")
-                    .decreaseContentPadding()
-                    .addContentLine("};");
+                    .addContentLine(");");
+            return;
+        }
+        if (returnType.equals(TypeNames.STRING)) {
+            builder.addContent("return ")
+                    .addContent(MCP_PROMPT_RESULT)
+                    .addContentLine(".builder()")
+                    .increaseContentPadding()
+                    .addContent(".addTextContent(t -> t.text(")
+                    .addContent("delegate.")
+                    .addContent(element.elementName())
+                    .addContent("(")
+                    .addContent(params)
+                    .addContent(")).role(")
+                    .addContent(MCP_ROLE_ENUM)
+                    .addContent(".")
+                    .addContent(role)
+                    .addContentLine("))")
+                    .addContentLine(".build();");
             return;
         }
         throw new CodegenException(String.format("Wrong return type for method: %s. Supported types are: %s, or String.",
                                                  element.elementName(),
-                                                 LIST_MCP_PROMPT_CONTENT.classNameWithTypes()));
+                                                 MCP_PROMPT_RESULT.classNameWithTypes()));
     }
 
     private void addPromptArgumentsMethod(Method.Builder builder, TypedElementInfo element) {

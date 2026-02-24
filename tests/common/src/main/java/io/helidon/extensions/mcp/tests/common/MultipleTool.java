@@ -17,25 +17,18 @@ package io.helidon.extensions.mcp.tests.common;
 
 import java.net.URI;
 import java.util.Optional;
-import java.util.function.Function;
 
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.extensions.mcp.server.McpParameters;
-import io.helidon.extensions.mcp.server.McpRequest;
-import io.helidon.extensions.mcp.server.McpResourceContents;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
+import io.helidon.extensions.mcp.server.McpToolRequest;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.json.schema.Schema;
 import io.helidon.json.schema.SchemaNumber;
 import io.helidon.json.schema.SchemaString;
 import io.helidon.webserver.http.HttpRouting;
 
-import static io.helidon.extensions.mcp.server.McpToolContents.audioContent;
-import static io.helidon.extensions.mcp.server.McpToolContents.imageContent;
-import static io.helidon.extensions.mcp.server.McpToolContents.resourceContent;
-import static io.helidon.extensions.mcp.server.McpToolContents.resourceLinkContent;
-import static io.helidon.extensions.mcp.server.McpToolContents.textContent;
 
 /**
  * Tool server test.
@@ -65,36 +58,34 @@ public class MultipleTool {
                                            .description("Tool 1")
                                            .schema(SIMPLE_SCHEMA)
                                            .tool(request -> McpToolResult.builder()
-                                                   .addContent(imageContent(McpMedia.media("helidon.png"),
-                                                                            McpMedia.IMAGE_PNG))
+                                                   .addImageContent(McpMedia.media("helidon.png"), McpMedia.IMAGE_PNG)
                                                    .build()))
                                    .addTool(tool -> tool.name("tool2")
                                            .description("Tool 2")
                                            .schema(SIMPLE_SCHEMA)
                                            .tool(request -> McpToolResult.builder()
-                                                   .addContent(resourceContent(
-                                                           URI.create("http://resource"),
-                                                           McpResourceContents.textContent("resource")))
+                                                   .addTextResourceContent(resource -> resource.uri(URI.create("http://resource"))
+                                                           .text("resource")
+                                                           .mimeType(MediaTypes.TEXT_PLAIN))
                                                    .build()))
                                    .addTool(tool -> tool.name("tool3")
                                            .description("Tool 3")
                                            .schema(SIMPLE_SCHEMA)
                                            .title("Tool 3 Title")
                                            .tool(request -> McpToolResult.builder()
-                                                   .addContent(imageContent(McpMedia.media("helidon.png"),
-                                                                            McpMedia.IMAGE_PNG))
-                                                   .addContent(resourceContent(URI.create("http://resource"),
-                                                                               McpResourceContents.textContent("resource")))
-                                                   .addContent(textContent("text"))
-                                                   .addContent(audioContent(McpMedia.media("helidon.wav"),
-                                                                            McpMedia.AUDIO_WAV))
-                                                   .addContent(resourceLinkContent("resource-link-default", "https://foo"))
-                                                   .addContent(resourceLinkContent(link -> link.name("resource-link-custom")
+                                                   .addImageContent(McpMedia.media("helidon.png"), McpMedia.IMAGE_PNG)
+                                                   .addTextResourceContent(resource -> resource.uri(URI.create("http://resource"))
+                                                           .text("resource")
+                                                           .mimeType(MediaTypes.TEXT_PLAIN))
+                                                   .addTextContent("text")
+                                                   .addAudioContent(McpMedia.media("helidon.wav"), McpMedia.AUDIO_WAV)
+                                                   .addResourceLinkContent("resource-link-default", "https://foo")
+                                                   .addResourceLinkContent(link -> link.name("resource-link-custom")
                                                            .size(10)
                                                            .title("title")
                                                            .uri("https://foo")
                                                            .description("description")
-                                                           .mediaType(MediaTypes.TEXT_PLAIN)))
+                                                           .mediaType(MediaTypes.TEXT_PLAIN))
                                                    .build()))
                                    .addTool(new TownTool())
                                    .addTool(tool -> tool.name("tool5")
@@ -127,21 +118,19 @@ public class MultipleTool {
         }
 
         @Override
-        public Optional<String> title() {
-            return Optional.of("Tool 4 Title");
+        public McpToolResult tool(McpToolRequest request) {
+            McpParameters parameters = request.arguments();
+            String name = parameters.get("name").asString().orElse("unknown");
+            int population = parameters.get("population").asInteger().orElse(-1);
+            String content = String.format("%s has a population of %d inhabitants", name, population);
+            return McpToolResult.builder()
+                    .addTextContent(content)
+                    .build();
         }
 
         @Override
-        public Function<McpRequest, McpToolResult> tool() {
-            return request -> {
-                McpParameters parameters = request.parameters();
-                String name = parameters.get("name").asString().orElse("unknown");
-                int population = parameters.get("population").asInteger().orElse(-1);
-                String content = String.format("%s has a population of %d inhabitants", name, population);
-                return McpToolResult.builder()
-                        .addContent(textContent(content))
-                        .build();
-            };
+        public Optional<String> title() {
+            return Optional.of("Tool 4 Title");
         }
     }
 

@@ -15,31 +15,25 @@
  */
 package io.helidon.extensions.mcp.tests.declarative;
 
-import java.util.List;
-
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.extensions.mcp.server.Mcp;
-import io.helidon.extensions.mcp.server.McpPromptContent;
-import io.helidon.extensions.mcp.server.McpPromptContents;
+import io.helidon.extensions.mcp.server.McpPromptResult;
 import io.helidon.extensions.mcp.server.McpRequest;
-import io.helidon.extensions.mcp.server.McpResourceContent;
-import io.helidon.extensions.mcp.server.McpResourceContents;
-import io.helidon.extensions.mcp.server.McpRole;
+import io.helidon.extensions.mcp.server.McpResourceResult;
 import io.helidon.extensions.mcp.server.McpRoots;
-import io.helidon.extensions.mcp.server.McpToolContent;
-import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpToolResult;
 
 @Mcp.Server
 @Mcp.Path("/roots")
 class McpRootsServer {
     @Mcp.Tool("Roots tool")
-    List<McpToolContent> tool(McpRoots roots) {
-        return List.of(McpToolContents.textContent(""));
+    McpToolResult tool(McpRoots roots) {
+        return McpToolResult.builder().addTextContent("").build();
     }
 
     @Mcp.Tool("Roots tool")
-    List<McpToolContent> tool1(McpRoots roots, String value) {
-        return List.of(McpToolContents.textContent(""));
+    McpToolResult tool1(McpRoots roots, String value) {
+        return McpToolResult.builder().addTextContent("").build();
     }
 
     @Mcp.Tool("Roots tool")
@@ -53,13 +47,13 @@ class McpRootsServer {
     }
 
     @Mcp.Prompt("Roots prompt")
-    List<McpPromptContent> prompt(McpRoots roots) {
-        return List.of(McpPromptContents.textContent("", McpRole.USER));
+    McpPromptResult prompt(McpRoots roots) {
+        return McpPromptResult.builder().addTextContent("").build();
     }
 
     @Mcp.Prompt("Roots prompt")
-    List<McpPromptContent> prompt1(McpRoots roots, String value) {
-        return List.of(McpPromptContents.textContent("", McpRole.USER));
+    McpPromptResult prompt1(McpRoots roots, String value) {
+        return McpPromptResult.builder().addTextContent("").build();
     }
 
     @Mcp.Prompt("Roots prompt")
@@ -75,15 +69,15 @@ class McpRootsServer {
     @Mcp.Resource(uri = "https://resource",
                   description = "Roots resource",
                   mediaType = MediaTypes.TEXT_PLAIN_VALUE)
-    List<McpResourceContent> resource(McpRoots roots) {
-        return List.of(McpResourceContents.textContent(""));
+    McpResourceResult resource(McpRoots roots) {
+        return McpResourceResult.create("");
     }
 
     @Mcp.Resource(uri = "https://resource1",
                   description = "Roots resource",
                   mediaType = MediaTypes.TEXT_PLAIN_VALUE)
-    List<McpResourceContent> resource1(McpRoots roots, McpRequest request) {
-        return List.of(McpResourceContents.textContent(""));
+    McpResourceResult resource1(McpRoots roots, McpRequest request) {
+        return McpResourceResult.create("");
     }
 
     @Mcp.Resource(uri = "https://resource2",

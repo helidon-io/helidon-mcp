@@ -160,11 +160,9 @@ interface McpJsonSerializer {
         return !payload.containsKey("method") && payload.containsKey("id");
     }
 
-    JsonObjectBuilder toJson(Set<McpCapability> capabilities, McpServerConfig config);
+    JsonObjectBuilder initialize(Set<McpCapability> capabilities, McpServerConfig config);
 
-    JsonObjectBuilder toJson(McpTool tool);
-
-    JsonObjectBuilder toolCall(McpTool tool, McpToolResult result);
+    // ---------- LIST RESPONSE ----------
 
     JsonObject listResources(McpPage<McpResource> page);
 
@@ -174,7 +172,9 @@ interface McpJsonSerializer {
 
     JsonObject listPrompts(McpPage<McpPrompt> page);
 
-    Optional<JsonObjectBuilder> toJson(McpToolResourceContent content);
+    // ---------- LIST RESPONSE COMPONENT MAPPING ----------
+
+    JsonObjectBuilder toJson(McpTool tool);
 
     JsonObjectBuilder toJson(McpPrompt prompt);
 
@@ -184,25 +184,57 @@ interface McpJsonSerializer {
 
     JsonObjectBuilder resourceTemplates(McpResource resource);
 
-    JsonObject readResource(String uri, List<McpResourceContent> contents);
+    // ---------- COMPONENT EXECUTION RESULT ----------
 
-    JsonObject toJson(List<McpPromptContent> contents, String description);
+    JsonObject toolCall(McpTool tool, McpToolResult result);
 
-    Optional<JsonObjectBuilder> toJson(McpPromptContent content);
+    JsonObject resourceRead(String uri, McpResourceResult result);
+
+    JsonObject promptGet(McpPromptResult result);
+
+    JsonObject completionComplete(McpCompletionResult result);
+
+    // ---------- CONTENTS ----------
 
     Optional<JsonObjectBuilder> toJson(McpContent content);
 
-    JsonObjectBuilder toJson(McpSamplingMessage message);
+    JsonObjectBuilder toJson(McpTextContent content);
 
-    JsonObjectBuilder toJson(McpResourceContent content);
+    JsonObjectBuilder toJson(McpImageContent content);
 
-    Optional<JsonObjectBuilder> toJson(McpPromptResourceContent resource);
+    JsonObjectBuilder toJson(McpEmbeddedTextResourceContent content);
 
-    Optional<JsonObjectBuilder> toJson(McpPromptImageContent image);
+    JsonObjectBuilder toJson(McpEmbeddedBinaryResourceContent content);
 
-    Optional<JsonObjectBuilder> toJson(McpPromptTextContent content);
+    Optional<JsonObjectBuilder> toJson(McpAudioContent content);
+
+    // ---------- PROMPT CONTENTS ----------
+
+    Optional<JsonObjectBuilder> toJson(McpPromptContent content);
+
+    JsonObjectBuilder toJson(McpPromptImageContent image);
+
+    JsonObjectBuilder toJson(McpPromptTextResourceContent text);
+
+    JsonObjectBuilder toJson(McpPromptBinaryResourceContent binary);
 
     Optional<JsonObjectBuilder> toJson(McpPromptAudioContent audio);
+
+    JsonObjectBuilder toJson(McpPromptTextContent content);
+
+    // ---------- RESOURCE CONTENTS ----------
+
+    Optional<JsonObjectBuilder> toJson(McpResourceContent content);
+
+    JsonObjectBuilder toJson(McpResourceBinaryContent content);
+
+    JsonObjectBuilder toJson(McpResourceTextContent content);
+
+    // ---------- SAMPLING ----------
+
+    JsonObjectBuilder toJson(McpSamplingRequest request);
+
+    JsonObjectBuilder toJson(McpSamplingMessage message);
 
     JsonObjectBuilder toJson(McpSamplingImageMessage image);
 
@@ -210,25 +242,19 @@ interface McpJsonSerializer {
 
     JsonObjectBuilder toJson(McpSamplingAudioMessage audio);
 
-    JsonObjectBuilder toJson(McpTextContent content);
+    JsonObject createSamplingRequest(long id, McpSamplingRequest request);
 
-    JsonObjectBuilder toJson(McpImageContent content);
+    McpSamplingResponse createSamplingResponse(JsonObject object) throws McpSamplingException;
 
-    Optional<JsonObjectBuilder> toJson(McpAudioContent content);
+    // ---------- NOTIFICATIONS ----------
 
-    JsonObjectBuilder toJson(McpResourceBinaryContent content);
-
-    JsonObjectBuilder toJson(McpResourceTextContent content);
-
-    JsonObject toJson(McpProgress progress, int newProgress, String message);
+    JsonObject progressNotification(McpProgress progress, int newProgress, String message);
 
     JsonObject createLoggingNotification(McpLogger.Level level, String name, String message);
 
     JsonObject createUpdateNotification(String uri);
 
-    JsonObject toJson(McpCompletionContent content);
-
-    JsonObjectBuilder toJson(McpSamplingRequest request);
+    // ---------- JSON-RPC ----------
 
     JsonObject createJsonRpcNotification(String method, JsonObjectBuilder params);
 
@@ -240,11 +266,9 @@ interface McpJsonSerializer {
 
     JsonObject createJsonRpcResultResponse(long id, JsonValue params);
 
-    JsonObject timeoutResponse(long requestId);
+    JsonObject jsonrpcErrorTimeoutResponse(long requestId);
+
+    // ---------- ROOTS ----------
 
     List<McpRoot> parseRoots(JsonObject response);
-
-    JsonObject createSamplingRequest(long id, McpSamplingRequest request);
-
-    McpSamplingResponse createSamplingResponse(JsonObject object) throws McpSamplingException;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ final class McpCodegen implements CodegenExtension {
     McpCodegen(CodegenContext context) {
         logger = context.logger();
         recorder = new McpRecorder();
-        toolCodegen = new McpToolCodegen(recorder);
+        toolCodegen = new McpToolCodegen(recorder, context);
         promptCodegen = new McpPromptCodegen(recorder);
         resourceCodegen = new McpResourceCodegen(recorder);
         completionCodegen = new McpCompletionCodegen(recorder);

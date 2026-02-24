@@ -17,15 +17,13 @@ package io.helidon.extensions.mcp.tests.common;
 
 import java.net.URI;
 import java.util.List;
-import java.util.function.Function;
 
+import io.helidon.common.media.type.MediaTypes;
 import io.helidon.extensions.mcp.server.McpParameters;
 import io.helidon.extensions.mcp.server.McpPrompt;
 import io.helidon.extensions.mcp.server.McpPromptArgument;
-import io.helidon.extensions.mcp.server.McpPromptContent;
-import io.helidon.extensions.mcp.server.McpPromptContents;
-import io.helidon.extensions.mcp.server.McpRequest;
-import io.helidon.extensions.mcp.server.McpResourceContents;
+import io.helidon.extensions.mcp.server.McpPromptRequest;
+import io.helidon.extensions.mcp.server.McpPromptResult;
 import io.helidon.extensions.mcp.server.McpRole;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.webserver.http.HttpRouting;
@@ -47,34 +45,36 @@ public class MultiplePrompt {
                                    .path("/")
                                    .addPrompt(prompt -> prompt.name("prompt1")
                                            .description("Prompt 1")
-                                           .prompt(request ->
-                                                           List.of(McpPromptContents.textContent("text", McpRole.USER))))
+                                           .prompt(request -> McpPromptResult.builder()
+                                                   .addTextContent("text")
+                                                   .build()))
 
                                    .addPrompt(prompt -> prompt.name("prompt2")
                                            .description("Prompt 2")
-                                           .prompt(request ->
-                                                           List.of(McpPromptContents.imageContent(
-                                                                   McpMedia.media("helidon.png"),
-                                                                   McpMedia.IMAGE_PNG,
-                                                                   McpRole.ASSISTANT))))
+                                           .prompt(request -> McpPromptResult.builder()
+                                                   .addImageContent(image -> image.data(McpMedia.media("helidon.png"))
+                                                           .mediaType(McpMedia.IMAGE_PNG)
+                                                           .role(McpRole.ASSISTANT))
+                                                   .build()))
 
                                    .addPrompt(prompt -> prompt.name("prompt3")
                                            .description("Prompt 3")
-                                           .prompt(request ->
-                                                           List.of(McpPromptContents.resourceContent(
-                                                                   URI.create("http://resource"),
-                                                                   McpResourceContents.textContent("resource"),
-                                                                   McpRole.ASSISTANT))))
+                                           .prompt(request -> McpPromptResult.builder()
+                                                   .addTextResourceContent(resource -> resource.uri(URI.create("http://resource"))
+                                                           .text("resource")
+                                                           .mimeType(MediaTypes.TEXT_PLAIN)
+                                                           .role(McpRole.ASSISTANT))
+                                                   .build()))
 
                                    .addPrompt(new MyPrompt())
 
                                    .addPrompt(prompt -> prompt.name("prompt5")
                                            .description("Prompt 5")
-                                           .prompt(request ->
-                                                           List.of(McpPromptContents.audioContent(
-                                                                   McpMedia.media("helidon.wav"),
-                                                                   McpMedia.AUDIO_WAV,
-                                                                   McpRole.ASSISTANT)))));
+                                           .prompt(request -> McpPromptResult.builder()
+                                                   .addAudioContent(audio -> audio.data(McpMedia.media("helidon.wav"))
+                                                           .mediaType(McpMedia.AUDIO_WAV)
+                                                           .role(McpRole.ASSISTANT))
+                                                   .build())));
     }
 
     private static class MyPrompt implements McpPrompt {
@@ -92,27 +92,25 @@ public class MultiplePrompt {
         @Override
         public List<McpPromptArgument> arguments() {
             return List.of(McpPromptArgument.builder()
-                                  .name("argument1")
-                                  .description("Argument 1")
-                                  .required(true)
-                                  .build());
+                                   .name("argument1")
+                                   .description("Argument 1")
+                                   .required(true)
+                                   .build());
         }
 
         @Override
-        public Function<McpRequest, List<McpPromptContent>> prompt() {
-            return this::prompts;
-        }
-
-        public List<McpPromptContent> prompts(McpRequest request) {
-            McpParameters parameters = request.parameters();
-            return List.of(
-                    McpPromptContents.imageContent(McpMedia.media("helidon.png"),
-                                                   McpMedia.IMAGE_PNG,
-                                                   McpRole.USER),
-                    McpPromptContents.textContent(parameters.get("argument1").asString().orElse("missing"), McpRole.USER),
-                    McpPromptContents.resourceContent(URI.create("http://resource"),
-                                                      McpResourceContents.textContent("resource"),
-                                                      McpRole.USER));
+        public McpPromptResult prompt(McpPromptRequest request) {
+            McpParameters parameters = request.arguments();
+            return McpPromptResult.builder()
+                    .addImageContent(image -> image.data(McpMedia.media("helidon.png"))
+                            .mediaType(McpMedia.IMAGE_PNG)
+                            .role(McpRole.USER))
+                    .addTextContent(parameters.get("argument1").asString().orElse("missing"))
+                    .addTextResourceContent(resource -> resource.text("resource")
+                            .uri(URI.create("http://resource"))
+                            .mimeType(MediaTypes.TEXT_PLAIN)
+                            .role(McpRole.USER))
+                    .build();
         }
     }
 }

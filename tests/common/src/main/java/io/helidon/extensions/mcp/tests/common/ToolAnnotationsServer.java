@@ -15,13 +15,12 @@
  */
 package io.helidon.extensions.mcp.tests.common;
 
-import java.util.function.Function;
+import java.util.Optional;
 
-import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
 import io.helidon.extensions.mcp.server.McpToolAnnotations;
-import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpToolRequest;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.webserver.http.HttpRouting;
 
@@ -54,7 +53,7 @@ public class ToolAnnotationsServer {
                                                    .idempotentHint(false)
                                                    .openWorldHint(true))
                                            .tool(request -> McpToolResult.builder()
-                                                   .addContent(McpToolContents.textContent(""))
+                                                   .addTextContent("")
                                                    .build())));
     }
 
@@ -76,21 +75,21 @@ public class ToolAnnotationsServer {
         }
 
         @Override
-        public Function<McpRequest, McpToolResult> tool() {
-            return request -> McpToolResult.builder()
-                    .addContent(McpToolContents.textContent(""))
+        public McpToolResult tool(McpToolRequest request) {
+            return McpToolResult.builder()
+                    .addTextContent("")
                     .build();
         }
 
         @Override
-        public McpToolAnnotations annotations() {
+        public Optional<McpToolAnnotations> annotations() {
             var builder = McpToolAnnotations.builder();
             builder.title("")
                     .readOnlyHint(false)
                     .destructiveHint(true)
                     .idempotentHint(false)
                     .openWorldHint(true);
-            return builder.build();
+            return Optional.of(builder.build());
         }
 
     }
@@ -113,21 +112,21 @@ public class ToolAnnotationsServer {
         }
 
         @Override
-        public Function<McpRequest, McpToolResult> tool() {
-            return request -> McpToolResult.builder()
-                    .addContent(McpToolContents.textContent(""))
+        public McpToolResult tool(McpToolRequest request) {
+            return McpToolResult.builder()
+                    .addTextContent("")
                     .build();
         }
 
         @Override
-        public McpToolAnnotations annotations() {
+        public Optional<McpToolAnnotations> annotations() {
             var builder = McpToolAnnotations.builder();
             builder.title("tool2 title")
                     .readOnlyHint(true)
                     .destructiveHint(false)
                     .idempotentHint(true)
                     .openWorldHint(false);
-            return builder.build();
+            return Optional.of(builder.build());
         }
     }
 }

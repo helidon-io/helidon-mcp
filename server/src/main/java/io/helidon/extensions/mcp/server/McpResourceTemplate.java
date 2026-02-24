@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.helidon.extensions.mcp.server;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.helidon.common.LazyValue;
 import io.helidon.common.media.type.MediaType;
 import io.helidon.jsonrpc.core.JsonRpcParams;
 
@@ -31,14 +31,14 @@ import jakarta.json.JsonObjectBuilder;
 import static io.helidon.extensions.mcp.server.McpJsonSerializer.JSON_BUILDER_FACTORY;
 
 class McpResourceTemplate implements McpResource {
-    private final Pattern pattern;
     private final McpResource delegate;
     private final List<String> variables;
+    private final LazyValue<Pattern> pattern;
 
     McpResourceTemplate(McpResource resource) {
         this.delegate = resource;
         this.variables = new ArrayList<>();
-        this.pattern = createPattern(resource.uri());
+        this.pattern = LazyValue.create(() -> createPattern(resource.uri()));
     }
 
     @Override
@@ -62,17 +62,22 @@ class McpResourceTemplate implements McpResource {
     }
 
     @Override
-    public Function<McpRequest, List<McpResourceContent>> resource() {
-        return delegate.resource();
+    public McpResourceResult resource(McpResourceRequest request) {
+        return delegate.resource(request);
+    }
+
+    @Override
+    public Optional<String> title() {
+        return delegate.title();
     }
 
     boolean matches(String uri) {
-        return pattern.matcher(uri).matches();
+        return pattern.get().matcher(uri).matches();
     }
 
     McpParameters parameters(JsonRpcParams params, String uri) {
         JsonObjectBuilder builder = JSON_BUILDER_FACTORY.createObjectBuilder();
-        Matcher matcher = pattern.matcher(uri);
+        Matcher matcher = pattern.get().matcher(uri);
         if (matcher.matches()) {
             for (int i = 0; i < matcher.groupCount(); i++) {
                 builder.add(variables.get(i), matcher.group(i + 1));
