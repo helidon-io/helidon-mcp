@@ -19,6 +19,7 @@ package io.helidon.extensions.mcp.codegen;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import io.helidon.codegen.classmodel.Method;
 import io.helidon.common.types.TypeName;
@@ -41,6 +42,10 @@ class McpJsonSchemaCodegen {
     }
 
     static void addSchemaMethodBody(Method.Builder method, List<TypedElementInfo> fields) {
+        addSchemaMethodBody(method, fields, List.of());
+    }
+
+    static void addSchemaMethodBody(Method.Builder method, List<TypedElementInfo> fields, List<String> requiredFields) {
         method.addContentLine("var builder = new StringBuilder();");
         method.addContentLine("builder.append(\"{\");");
         method.addContentLine("builder.append(\"\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\");");
@@ -53,7 +58,18 @@ class McpJsonSchemaCodegen {
                 method.addContentLine("builder.append(\", \");");
             }
         }
-        method.addContentLine("builder.append(\"}}\");");
+        method.addContentLine("builder.append(\"}\");");
+
+        if (!requiredFields.isEmpty()) {
+            String requiredJson = requiredFields.stream()
+                    .map(f -> "\\\"" + f + "\\\"")
+                    .collect(Collectors.joining(", "));
+            method.addContent("builder.append(\", \\\"required\\\": [")
+                    .addContent(requiredJson)
+                    .addContentLine("]\");");
+        }
+
+        method.addContentLine("builder.append(\"}\");");
         method.addContentLine("return builder.toString();");
     }
 

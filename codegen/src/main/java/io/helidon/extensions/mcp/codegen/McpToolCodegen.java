@@ -39,6 +39,7 @@ import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isBoolean;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isIgnoredSchemaElement;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isList;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isMcpType;
+import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isNullable;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isNumber;
 import static io.helidon.extensions.mcp.codegen.McpJsonSchemaCodegen.addSchemaMethodBody;
 import static io.helidon.extensions.mcp.codegen.McpTypes.FUNCTION_REQUEST_TOOL_RESULT;
@@ -101,6 +102,7 @@ class McpToolCodegen {
                 .addAnnotation(Annotations.OVERRIDE);
 
         List<TypedElementInfo> fields = new ArrayList<>();
+        List<String> requiredFields = new ArrayList<>();
         for (TypedElementInfo param : element.parameterArguments()) {
             if (isIgnoredSchemaElement(param.typeName())) {
                 continue;
@@ -113,10 +115,14 @@ class McpToolCodegen {
                     .accessModifier(AccessModifier.PUBLIC);
             description.ifPresent(desc -> field.addAnnotation(Annotation.create(MCP_DESCRIPTION, desc)));
             fields.add(field.build());
+
+            if (!isNullable(param)) {
+                requiredFields.add(param.elementName());
+            }
         }
 
         if (!fields.isEmpty()) {
-            addSchemaMethodBody(method, fields);
+            addSchemaMethodBody(method, fields, requiredFields);
         } else {
             method.addContentLine("return \"\";");
         }
