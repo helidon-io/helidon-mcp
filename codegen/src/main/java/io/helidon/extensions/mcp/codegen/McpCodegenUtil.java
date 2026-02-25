@@ -62,7 +62,8 @@ class McpCodegenUtil {
     }
 
     static boolean isNullable(TypedElementInfo param) {
-        return Stream.concat(param.annotations().stream(), param.elementTypeAnnotations().stream())
+        return Stream.of(param.annotations(), param.elementTypeAnnotations(), param.typeName().annotations())
+                .flatMap(List::stream)
                 .anyMatch(a -> a.typeName().className().equals("Nullable"));
     }
 
