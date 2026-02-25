@@ -16,6 +16,7 @@
 package io.helidon.extensions.mcp.server;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import jakarta.json.Json;
@@ -35,7 +36,7 @@ class McpJsonSerializerV2 extends McpJsonSerializerV1 {
     }
 
     @Override
-    public JsonObjectBuilder toJson(McpContent content) {
+    public Optional<JsonObjectBuilder> toJson(McpContent content) {
         if (content instanceof McpAudioContent audio) {
             return toJson(audio);
         }
@@ -43,7 +44,7 @@ class McpJsonSerializerV2 extends McpJsonSerializerV1 {
     }
 
     @Override
-    public JsonObjectBuilder toJson(McpPromptContent content) {
+    public Optional<JsonObjectBuilder> toJson(McpPromptContent content) {
         if (content instanceof McpPromptAudioContent resource) {
             return toJson(resource);
         }
@@ -51,11 +52,11 @@ class McpJsonSerializerV2 extends McpJsonSerializerV1 {
     }
 
     @Override
-    public JsonObjectBuilder toJson(McpAudioContent content) {
-        return JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("type", content.type().text())
-                .add("data", content.base64Data())
-                .add("mimeType", content.mediaType().text());
+    public Optional<JsonObjectBuilder> toJson(McpAudioContent content) {
+        return Optional.of(JSON_BUILDER_FACTORY.createObjectBuilder()
+                                   .add("type", content.type().text())
+                                   .add("data", content.base64Data())
+                                   .add("mimeType", content.mediaType().text()));
     }
 
     @Override

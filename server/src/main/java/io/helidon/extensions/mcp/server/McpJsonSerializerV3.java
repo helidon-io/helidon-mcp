@@ -18,6 +18,7 @@ package io.helidon.extensions.mcp.server;
 import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -63,17 +64,17 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
             builder.add("structuredContent", sc);
             if (result.contents().isEmpty()) {
                 var text = McpToolContents.textContent(json);
-                builder.add("content", JSON_BUILDER_FACTORY.createArrayBuilder()
-                        .add(toJson(text.content())));
+                toJson(text.content())
+                        .ifPresent(it -> builder.add("content", JSON_BUILDER_FACTORY.createArrayBuilder().add(it)));
             }
         });
         return builder;
     }
 
     @Override
-    public JsonObjectBuilder toJson(McpContent content) {
+    public Optional<JsonObjectBuilder> toJson(McpContent content) {
         if (content instanceof McpResourceLinkContent link) {
-            return toJson(link);
+            return Optional.of(toJson(link));
         }
         return super.toJson(content);
     }

@@ -40,8 +40,10 @@
     </properties>
 
     <modules>
-        <module>2025-06-18</module>
+        <module>common</module>
         <module>codegen</module>
+        <module>2025-06-18</module>
+        <module>declarative</module>
     </modules>
 
     <profiles>

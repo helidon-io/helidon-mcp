@@ -19,6 +19,7 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import jakarta.json.Json;
@@ -173,7 +174,7 @@ interface McpJsonSerializer {
 
     JsonObject listPrompts(McpPage<McpPrompt> page);
 
-    JsonObjectBuilder toJson(McpToolResourceContent content);
+    Optional<JsonObjectBuilder> toJson(McpToolResourceContent content);
 
     JsonObjectBuilder toJson(McpPrompt prompt);
 
@@ -187,21 +188,21 @@ interface McpJsonSerializer {
 
     JsonObject toJson(List<McpPromptContent> contents, String description);
 
-    JsonObjectBuilder toJson(McpPromptContent content);
+    Optional<JsonObjectBuilder> toJson(McpPromptContent content);
 
-    JsonObjectBuilder toJson(McpContent content);
+    Optional<JsonObjectBuilder> toJson(McpContent content);
 
     JsonObjectBuilder toJson(McpSamplingMessage message);
 
     JsonObjectBuilder toJson(McpResourceContent content);
 
-    JsonObjectBuilder toJson(McpPromptResourceContent resource);
+    Optional<JsonObjectBuilder> toJson(McpPromptResourceContent resource);
 
-    JsonObjectBuilder toJson(McpPromptImageContent image);
+    Optional<JsonObjectBuilder> toJson(McpPromptImageContent image);
 
-    JsonObjectBuilder toJson(McpPromptTextContent content);
+    Optional<JsonObjectBuilder> toJson(McpPromptTextContent content);
 
-    JsonObjectBuilder toJson(McpPromptAudioContent audio);
+    Optional<JsonObjectBuilder> toJson(McpPromptAudioContent audio);
 
     JsonObjectBuilder toJson(McpSamplingImageMessage image);
 
@@ -213,7 +214,7 @@ interface McpJsonSerializer {
 
     JsonObjectBuilder toJson(McpImageContent content);
 
-    JsonObjectBuilder toJson(McpAudioContent content);
+    Optional<JsonObjectBuilder> toJson(McpAudioContent content);
 
     JsonObjectBuilder toJson(McpResourceBinaryContent content);
 

@@ -112,9 +112,9 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
         JsonArrayBuilder array = JSON_BUILDER_FACTORY.createArrayBuilder();
         for (McpToolContent content : result.contents()) {
             if (content instanceof McpToolResourceContent trc) {
-                array.add(toJson(trc));
+                toJson(trc).ifPresent(array::add);
             } else {
-                array.add(toJson(content.content()));
+                toJson(content.content()).ifPresent(array::add);
             }
         }
         return JSON_BUILDER_FACTORY.createObjectBuilder()
@@ -179,11 +179,11 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     }
 
     @Override
-    public JsonObjectBuilder toJson(McpToolResourceContent content) {
-        return JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("type", content.type().text())
-                .add("resource", toJson(content.content())
-                        .add("uri", content.uri().toASCIIString()));
+    public Optional<JsonObjectBuilder> toJson(McpToolResourceContent content) {
+        return toJson(content.content())
+                .map(resource -> JSON_BUILDER_FACTORY.createObjectBuilder()
+                        .add("type", content.type().text())
+                        .add("resource", resource.add("uri", content.uri().toASCIIString())));
     }
 
     @Override
@@ -239,7 +239,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     public JsonObject toJson(List<McpPromptContent> contents, String description) {
         JsonArrayBuilder array = JSON_BUILDER_FACTORY.createArrayBuilder();
         for (McpPromptContent prompt : contents) {
-            array.add(toJson(prompt));
+            toJson(prompt).ifPresent(array::add);
         }
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("description", description)
@@ -248,7 +248,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     }
 
     @Override
-    public JsonObjectBuilder toJson(McpPromptContent content) {
+    public Optional<JsonObjectBuilder> toJson(McpPromptContent content) {
         if (content instanceof McpPromptImageContent image) {
             return toJson(image);
         }
@@ -258,21 +258,21 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
         if (content instanceof McpPromptResourceContent resource) {
             return toJson(resource);
         }
-        throw new IllegalArgumentException("Unsupported content type: " + content.getClass().getName());
+        return Optional.empty();
     }
 
     @Override
-    public JsonObjectBuilder toJson(McpContent content) {
+    public Optional<JsonObjectBuilder> toJson(McpContent content) {
         if (content instanceof McpTextContent text) {
-            return toJson(text);
+            return Optional.of(toJson(text));
         }
         if (content instanceof McpImageContent image) {
-            return toJson(image);
+            return Optional.of(toJson(image));
         }
         if (content instanceof McpResourceContent resource) {
-            return toJson(resource);
+            return Optional.of(toJson(resource));
         }
-        throw new IllegalArgumentException("Unsupported content type: " + content.getClass().getName());
+        return Optional.empty();
     }
 
     @Override
@@ -301,34 +301,38 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     }
 
     @Override
-    public JsonObjectBuilder toJson(McpPromptResourceContent resource) {
-        return JSON_BUILDER_FACTORY.createObjectBuilder()
+    public Optional<JsonObjectBuilder> toJson(McpPromptResourceContent resource) {
+        return toJson(resource.content())
+                .map(contentBuilder -> JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("role", resource.role().text())
                 .add("content", JSON_BUILDER_FACTORY.createObjectBuilder()
                         .add("type", resource.type().text())
-                        .add("resource", toJson(resource.content())
-                                .add("uri", resource.uri().toASCIIString())));
+                        .add("resource", contentBuilder
+                                .add("uri", resource.uri().toASCIIString()))));
     }
 
     @Override
-    public JsonObjectBuilder toJson(McpPromptImageContent image) {
-        return JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("role", image.role().text())
-                .add("content", toJson(image.content()));
+    public Optional<JsonObjectBuilder> toJson(McpPromptImageContent image) {
+        return toJson(image.content())
+                .map(content -> JSON_BUILDER_FACTORY.createObjectBuilder()
+                        .add("role", image.role().text())
+                        .add("content", content));
     }
 
     @Override
-    public JsonObjectBuilder toJson(McpPromptTextContent content) {
-        return JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("role", content.role().text())
-                .add("content", toJson(content.content()));
+    public Optional<JsonObjectBuilder> toJson(McpPromptTextContent content) {
+        return toJson(content.content())
+                .map(contentBuilder -> JSON_BUILDER_FACTORY.createObjectBuilder()
+                        .add("role", content.role().text())
+                        .add("content", contentBuilder));
     }
 
     @Override
-    public JsonObjectBuilder toJson(McpPromptAudioContent audio) {
-        return JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("role", audio.role().text())
-                .add("content", toJson(audio.content()));
+    public Optional<JsonObjectBuilder> toJson(McpPromptAudioContent audio) {
+        return toJson(audio.content())
+                .map(content -> JSON_BUILDER_FACTORY.createObjectBuilder()
+                        .add("role", audio.role().text())
+                        .add("content", content));
     }
 
     @Override
@@ -376,8 +380,8 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     }
 
     @Override
-    public JsonObjectBuilder toJson(McpAudioContent content) {
-        throw new UnsupportedOperationException("Specification 2024-11-05 does not support audio content");
+    public Optional<JsonObjectBuilder> toJson(McpAudioContent content) {
+        return Optional.empty();
     }
 
     @Override
