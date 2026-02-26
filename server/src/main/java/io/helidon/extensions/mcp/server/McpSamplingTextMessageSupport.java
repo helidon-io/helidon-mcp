@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,33 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.helidon.extensions.mcp.server;
 
-/**
- * MCP sampling text content.
- */
-final class McpSamplingTextMessageImpl implements McpSamplingTextMessage {
-    private final String text;
-    private final McpRole role;
+import io.helidon.builder.api.Prototype;
 
-    McpSamplingTextMessageImpl(String text, McpRole role) {
-        this.text = text;
-        this.role = role;
+class McpSamplingTextMessageSupport {
+    private McpSamplingTextMessageSupport() {
     }
 
-    @Override
-    public McpSamplingMessageType type() {
-        return McpSamplingMessageType.TEXT;
-    }
-
-    @Override
-    public McpRole role() {
-        return role;
-    }
-
-    @Override
-    public String text() {
-        return text;
+    /**
+     * Create a {@link io.helidon.extensions.mcp.server.McpSamplingTextMessage} instance from the provided text.
+     *
+     * @param text text message
+     * @return sampling text message instance
+     */
+    @Prototype.FactoryMethod
+    static McpSamplingTextMessage create(String text) {
+        return McpSamplingTextMessage.builder().text(text).role(McpRole.ASSISTANT).build();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.helidon.extensions.mcp.server;
 
 import java.time.Duration;
@@ -29,14 +28,31 @@ import jakarta.json.JsonValue;
  * Configuration of an MCP sampling request.
  */
 @Prototype.Blueprint
+@Prototype.CustomMethods(McpSamplingSupport.class)
 interface McpSamplingRequestBlueprint {
     /**
-     * Sampling messages sent to the client.
+     * Sampling text messages sent to the client.
      *
      * @return messages
      */
     @Option.Singular
-    List<McpSamplingMessage> messages();
+    List<McpSamplingTextMessage> textMessages();
+
+    /**
+     * Sampling image messages sent to the client.
+     *
+     * @return messages
+     */
+    @Option.Singular
+    List<McpSamplingImageMessage> imageMessages();
+
+    /**
+     * Sampling audio messages sent to the client.
+     *
+     * @return messages
+     */
+    @Option.Singular
+    List<McpSamplingAudioMessage> audioMessages();
 
     /**
      * Sampling model hints.

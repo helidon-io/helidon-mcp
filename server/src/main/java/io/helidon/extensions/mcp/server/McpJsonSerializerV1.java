@@ -291,13 +291,13 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
 
     @Override
     public JsonObjectBuilder toJson(McpSamplingMessage message) {
-        if (message instanceof McpSamplingTextMessageImpl text) {
+        if (message instanceof McpSamplingTextMessage text) {
             return toJson(text);
         }
-        if (message instanceof McpSamplingImageMessageImpl image) {
+        if (message instanceof McpSamplingImageMessage image) {
             return toJson(image);
         }
-        if (message instanceof McpSamplingAudioMessageImpl resource) {
+        if (message instanceof McpSamplingAudioMessage resource) {
             return toJson(resource);
         }
         throw new IllegalArgumentException("Unsupported content type: " + message.getClass().getName());
@@ -470,7 +470,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
         request.intelligencePriority().map(intelligence -> modelPreference.add("intelligencePriority", intelligence));
         params.add("modelPreference", modelPreference);
 
-        request.messages().stream()
+        McpSamplingSupport.aggregate(request).stream()
                 .map(this::toJson)
                 .forEach(messages::add);
         params.add("messages", messages);
@@ -605,16 +605,16 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
         String type = object.getString("type").toUpperCase();
         McpSamplingMessageType messageType = McpSamplingMessageType.valueOf(type);
         return switch (messageType) {
-            case TEXT -> new McpSamplingTextMessageImpl(object.getString("text"), role);
+            case TEXT -> McpSamplingTextMessage.builder().text(object.getString("text")).role(role).build();
             case IMAGE -> {
                 byte[] data = object.getString("data").getBytes(StandardCharsets.UTF_8);
                 MediaType mediaType = MediaTypes.create(object.getString("mimeType"));
-                yield new McpSamplingImageMessageImpl(data, mediaType, role);
+                yield McpSamplingImageMessage.builder().data(data).mediaType(mediaType).role(role).build();
             }
             case AUDIO -> {
                 byte[] data = object.getString("data").getBytes(StandardCharsets.UTF_8);
                 MediaType mediaType = MediaTypes.create(object.getString("mimeType"));
-                yield new McpSamplingAudioMessageImpl(data, mediaType, role);
+                yield McpSamplingAudioMessage.builder().data(data).mediaType(mediaType).role(role).build();
             }
         };
     }

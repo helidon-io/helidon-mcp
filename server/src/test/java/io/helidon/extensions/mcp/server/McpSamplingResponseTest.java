@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,6 @@ import io.helidon.common.media.type.MediaTypes;
 
 import org.junit.jupiter.api.Test;
 
-import static io.helidon.extensions.mcp.server.McpSamplingMessages.audioMessage;
-import static io.helidon.extensions.mcp.server.McpSamplingMessages.imageMessage;
-import static io.helidon.extensions.mcp.server.McpSamplingMessages.textMessage;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
@@ -33,7 +30,7 @@ class McpSamplingResponseTest {
 
     @Test
     void testSamplingResponseTextMessage() {
-        var message = textMessage("text", McpRole.USER);
+        var message = McpSamplingTextMessage.builder().text("text").role(McpRole.USER).build();
         McpSamplingResponse response = new McpSamplingResponseImpl(message, "helidon-model", McpStopReason.END_TURN);
 
         assertThat(response.model(), is("helidon-model"));
@@ -52,7 +49,11 @@ class McpSamplingResponseTest {
     @Test
     void testSamplingResponseImageMessage() {
         var data = "data".getBytes(StandardCharsets.UTF_8);
-        var message = imageMessage(data, MediaTypes.TEXT_PLAIN, McpRole.USER);
+        var message = McpSamplingImageMessage.builder()
+                .data(data)
+                .mediaType(MediaTypes.TEXT_PLAIN)
+                .role(McpRole.USER)
+                .build();
         McpSamplingResponse response = new McpSamplingResponseImpl(message, "helidon-model", McpStopReason.END_TURN);
 
         assertThat(response.model(), is("helidon-model"));
@@ -71,7 +72,11 @@ class McpSamplingResponseTest {
     @Test
     void testSamplingResponseAudioMessage() {
         var data = "data".getBytes(StandardCharsets.UTF_8);
-        var message = audioMessage(data, MediaTypes.TEXT_PLAIN, McpRole.USER);
+        var message = McpSamplingAudioMessage.builder()
+                .data(data)
+                .mediaType(MediaTypes.TEXT_PLAIN)
+                .role(McpRole.USER)
+                .build();
         McpSamplingResponse response = new McpSamplingResponseImpl(message, "helidon-model", McpStopReason.END_TURN);
 
         assertThat(response.model(), is("helidon-model"));

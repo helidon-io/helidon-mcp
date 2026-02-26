@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@ package io.helidon.extensions.mcp.server;
 import java.time.Duration;
 import java.util.List;
 
+import io.helidon.common.media.type.MediaTypes;
+
 import jakarta.json.JsonValue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 
 class McpSamplingRequestTest {
@@ -35,11 +36,13 @@ class McpSamplingRequestTest {
 
         assertThat(request.maxTokens(), is(100));
         assertThat(request.hints().isEmpty(), is(true));
-        assertThat(request.messages().isEmpty(), is(true));
         assertThat(request.metadata().isEmpty(), is(true));
         assertThat(request.temperature().isEmpty(), is(true));
+        assertThat(request.textMessages().isEmpty(), is(true));
         assertThat(request.costPriority().isEmpty(), is(true));
         assertThat(request.systemPrompt().isEmpty(), is(true));
+        assertThat(request.imageMessages().isEmpty(), is(true));
+        assertThat(request.audioMessages().isEmpty(), is(true));
         assertThat(request.stopSequences().isEmpty(), is(true));
         assertThat(request.speedPriority().isEmpty(), is(true));
         assertThat(request.includeContext().isEmpty(), is(true));
@@ -61,7 +64,9 @@ class McpSamplingRequestTest {
                 .timeout(Duration.ofSeconds(10))
                 .stopSequences(List.of("stop1"))
                 .includeContext(McpIncludeContext.NONE)
-                .addMessage(McpSamplingMessages.textMessage("text", McpRole.USER))
+                .addTextMessage(message -> message.text("text").role(McpRole.USER))
+                .addImageMessage(message -> message.data(new byte[0]).mediaType(MediaTypes.TEXT_PLAIN).role(McpRole.ASSISTANT))
+                .addAudioMessage(message -> message.data(new byte[0]).mediaType(MediaTypes.TEXT_PLAIN).role(McpRole.ASSISTANT))
                 .build();
 
         assertThat(request.maxTokens(), is(1));
@@ -70,13 +75,28 @@ class McpSamplingRequestTest {
         assertThat(request.hints().isEmpty(), is(false));
         assertThat(request.hints().get(), is(List.of("hint1")));
 
-        assertThat(request.messages().isEmpty(), is(false));
-        assertThat(request.messages().size(), is(1));
+        assertThat(request.textMessages().isEmpty(), is(false));
+        assertThat(request.textMessages().size(), is(1));
 
-        var message = request.messages().getFirst();
-        assertThat(message, instanceOf(McpSamplingTextMessage.class));
+        McpSamplingTextMessage message = request.textMessages().getFirst();
+        assertThat(message.text(), is("text"));
         assertThat(message.role(), is(McpRole.USER));
-        assertThat(((McpSamplingTextMessage) message).text(), is("text"));
+
+        assertThat(request.imageMessages().isEmpty(), is(false));
+        assertThat(request.imageMessages().size(), is(1));
+
+        McpSamplingImageMessage image = request.imageMessages().getFirst();
+        assertThat(image.data(), is(new byte[0]));
+        assertThat(image.role(), is(McpRole.ASSISTANT));
+        assertThat(image.mediaType(), is(MediaTypes.TEXT_PLAIN));
+
+        assertThat(request.audioMessages().isEmpty(), is(false));
+        assertThat(request.audioMessages().size(), is(1));
+
+        McpSamplingAudioMessage audio = request.audioMessages().getFirst();
+        assertThat(audio.data(), is(new byte[0]));
+        assertThat(audio.role(), is(McpRole.ASSISTANT));
+        assertThat(audio.mediaType(), is(MediaTypes.TEXT_PLAIN));
 
         assertThat(request.metadata().isEmpty(), is(false));
         assertThat(request.metadata().get(), is(JsonValue.TRUE));
