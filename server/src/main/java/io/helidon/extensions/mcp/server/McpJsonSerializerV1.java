@@ -443,11 +443,12 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
 
     @Override
     public JsonObject completionComplete(McpCompletionResult result) {
+        var builder = JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("values", JSON_BUILDER_FACTORY.createArrayBuilder(result.values()))
+                .add("hasMore", result.hasMore());
+        result.total().ifPresent(total -> builder.add("total", total));
         return JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("completion", JSON_BUILDER_FACTORY.createObjectBuilder()
-                        .add("values", JSON_BUILDER_FACTORY.createArrayBuilder(result.values()))
-                        .add("total", result.total())
-                        .add("hasMore", result.hasMore()))
+                .add("completion", builder)
                 .build();
     }
 

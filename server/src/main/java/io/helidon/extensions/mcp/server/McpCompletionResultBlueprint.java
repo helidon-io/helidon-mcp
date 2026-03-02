@@ -16,6 +16,7 @@
 package io.helidon.extensions.mcp.server;
 
 import java.util.List;
+import java.util.Optional;
 
 import io.helidon.builder.api.Option;
 import io.helidon.builder.api.Prototype;
@@ -36,7 +37,7 @@ interface McpCompletionResultBlueprint {
      *
      * @return total
      */
-    int total();
+    Optional<Integer> total();
 
     /**
      * Whether there is more values.
