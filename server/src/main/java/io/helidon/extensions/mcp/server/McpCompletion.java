@@ -17,7 +17,6 @@ package io.helidon.extensions.mcp.server;
 
 import java.util.function.Consumer;
 
-import io.helidon.builder.api.Option;
 import io.helidon.builder.api.RuntimeType;
 
 /**
@@ -66,7 +65,6 @@ public interface McpCompletion extends RuntimeType.Api<McpCompletionConfig> {
      *
      * @return reference type
      */
-    @Option.Default("PROMPT")
     default McpCompletionType referenceType() {
         return McpCompletionType.PROMPT;
     }

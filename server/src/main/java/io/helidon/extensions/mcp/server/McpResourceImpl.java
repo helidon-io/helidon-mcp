@@ -55,4 +55,9 @@ final class McpResourceImpl implements McpResource {
     public Optional<String> title() {
         return config.title();
     }
+
+    @Override
+    public McpResourceConfig prototype() {
+        return config;
+    }
 }

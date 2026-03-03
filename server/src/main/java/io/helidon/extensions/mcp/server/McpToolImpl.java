@@ -58,4 +58,9 @@ final class McpToolImpl implements McpTool {
     public Optional<String> outputSchema() {
         return config.outputSchema();
     }
+
+    @Override
+    public McpToolConfig prototype() {
+        return config;
+    }
 }

@@ -178,9 +178,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     }
 
     static McpServerFeature create(Consumer<McpServerConfig.Builder> consumer) {
-        McpServerConfig.Builder builder = McpServerConfig.builder();
-        consumer.accept(builder);
-        return builder.build();
+        return McpServerConfig.builder().update(consumer).build();
     }
 
     /**
@@ -313,7 +311,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 .filter(Boolean::booleanValue)
                 .ifPresent(it -> session.capability(McpCapability.ROOTS));
         session.state(INITIALIZING);
-        var payload = session.serializer().initialize(capabilities, config);
+        var payload = session.serializer().createJsonInitializeResponse(capabilities, config);
         session.onRequest(requestId, req, res);
         res.result(payload.build());
         session.send(requestId, res);

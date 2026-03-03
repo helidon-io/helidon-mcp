@@ -43,8 +43,8 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
     private final ReentrantLock lock = new ReentrantLock();
 
     @Override
-    public JsonObjectBuilder initialize(Set<McpCapability> capabilities, McpServerConfig config) {
-        return super.initialize(capabilities, config)
+    public JsonObjectBuilder createJsonInitializeResponse(Set<McpCapability> capabilities, McpServerConfig config) {
+        return super.createJsonInitializeResponse(capabilities, config)
                 .add("protocolVersion", McpProtocolVersion.VERSION_2025_06_18.text());
     }
 

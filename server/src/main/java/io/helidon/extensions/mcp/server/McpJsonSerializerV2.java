@@ -30,8 +30,8 @@ class McpJsonSerializerV2 extends McpJsonSerializerV1 {
     private static final JsonBuilderFactory JSON_BUILDER_FACTORY = Json.createBuilderFactory(Map.of());
 
     @Override
-    public JsonObjectBuilder initialize(Set<McpCapability> capabilities, McpServerConfig config) {
-        return super.initialize(capabilities, config)
+    public JsonObjectBuilder createJsonInitializeResponse(Set<McpCapability> capabilities, McpServerConfig config) {
+        return super.createJsonInitializeResponse(capabilities, config)
                 .add("protocolVersion", McpProtocolVersion.VERSION_2025_03_26.text());
     }
 

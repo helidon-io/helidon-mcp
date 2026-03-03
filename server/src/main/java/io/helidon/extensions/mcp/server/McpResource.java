@@ -18,7 +18,6 @@ package io.helidon.extensions.mcp.server;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import io.helidon.builder.api.Option;
 import io.helidon.builder.api.RuntimeType;
 import io.helidon.common.media.type.MediaType;
 
@@ -75,7 +74,6 @@ public interface McpResource extends RuntimeType.Api<McpResourceConfig> {
      *
      * @return description
      */
-    @Option.Default("No description available")
     String description();
 
     /**

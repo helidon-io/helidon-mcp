@@ -61,15 +61,6 @@ interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
     String version();
 
     /**
-     * Server logging configuration.
-     *
-     * @return logging
-     */
-    @Option.Configured
-    @Option.DefaultBoolean(true)
-    boolean logging();
-
-    /**
      * Server tools page size configuration.
      *
      * @return page size

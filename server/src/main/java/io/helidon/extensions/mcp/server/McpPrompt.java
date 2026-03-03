@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import io.helidon.builder.api.Option;
 import io.helidon.builder.api.RuntimeType;
 
 /**
@@ -75,7 +74,6 @@ public interface McpPrompt extends RuntimeType.Api<McpPromptConfig> {
      *
      * @return {@link List} of arguments
      */
-    @Option.Singular
     List<McpPromptArgument> arguments();
 
     /**

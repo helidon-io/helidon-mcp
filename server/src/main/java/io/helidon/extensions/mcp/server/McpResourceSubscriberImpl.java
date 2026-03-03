@@ -31,4 +31,9 @@ class McpResourceSubscriberImpl implements McpResourceSubscriber {
     public void subscribe(McpSubscribeRequest request) {
         config.subscribe().accept(request);
     }
+
+    @Override
+    public McpResourceSubscriberConfig prototype() {
+        return config;
+    }
 }

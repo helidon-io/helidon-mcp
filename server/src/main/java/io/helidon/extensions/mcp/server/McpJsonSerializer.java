@@ -160,7 +160,7 @@ interface McpJsonSerializer {
         return !payload.containsKey("method") && payload.containsKey("id");
     }
 
-    JsonObjectBuilder initialize(Set<McpCapability> capabilities, McpServerConfig config);
+    JsonObjectBuilder createJsonInitializeResponse(Set<McpCapability> capabilities, McpServerConfig config);
 
     // ---------- LIST RESPONSE ----------
 

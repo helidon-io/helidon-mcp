@@ -31,4 +31,9 @@ class McpResourceUnsubscriberImpl implements McpResourceUnsubscriber {
     public void unsubscribe(McpUnsubscribeRequest request) {
         config.unsubscribe().accept(request);
     }
+
+    @Override
+    public McpResourceUnsubscriberConfig prototype() {
+        return config;
+    }
 }

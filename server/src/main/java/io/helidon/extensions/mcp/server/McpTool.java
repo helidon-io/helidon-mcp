@@ -18,7 +18,6 @@ package io.helidon.extensions.mcp.server;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import io.helidon.builder.api.Option;
 import io.helidon.builder.api.RuntimeType;
 
 /**
@@ -67,7 +66,6 @@ public interface McpTool extends RuntimeType.Api<McpToolConfig> {
      *
      * @return description
      */
-    @Option.Default("No description available")
     String description();
 
     /**
