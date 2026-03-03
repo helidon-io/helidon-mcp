@@ -16,7 +16,6 @@
 
 package io.helidon.extensions.mcp.examples.calendar;
 
-import io.helidon.extensions.mcp.server.McpParameters;
 import io.helidon.extensions.mcp.server.McpTool;
 import io.helidon.extensions.mcp.server.McpToolRequest;
 import io.helidon.extensions.mcp.server.McpToolResult;
