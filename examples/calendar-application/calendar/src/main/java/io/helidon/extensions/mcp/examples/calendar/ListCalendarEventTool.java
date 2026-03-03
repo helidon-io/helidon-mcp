@@ -62,8 +62,8 @@ final class ListCalendarEventTool implements McpTool {
 
     @Override
     public McpToolResult tool(McpToolRequest request) {
-        McpParameters mcpParameters = request.arguments();
-        String date = mcpParameters.get("date")
+        String date = request.arguments()
+                .get("date")
                 .asString()
                 .orElse(null);
         String entries = calendar.readContentMatchesLine(line -> date == null || line.contains(date));
