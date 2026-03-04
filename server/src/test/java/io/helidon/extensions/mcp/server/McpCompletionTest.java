@@ -15,10 +15,14 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.util.Collections;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class McpCompletionTest {
 
@@ -31,4 +35,31 @@ class McpCompletionTest {
         assertThat(completion.reference(), is("acompletion"));
         assertThat(completion.referenceType(), is(McpCompletionType.PROMPT));       // default
     }
+
+    @Test
+    void testDefaultMcpCompletionResult() {
+        McpCompletionResult result = McpCompletionResult.create();
+        assertThat(result.values(), is(List.of()));
+        assertThat(result.total().isEmpty(), is(true));
+        assertThat(result.hasMore().isEmpty(), is(true));
+    }
+
+    @Test
+    void testCustomMcpCompletionResult() {
+        McpCompletionResult result = McpCompletionResult.create(List.of("foo"));
+        assertThat(result.values(), is(List.of("foo")));
+        assertThat(result.total().orElse(-1), is(1));
+        assertThat(result.hasMore().orElse(true), is(false));
+    }
+
+    @Test
+    void testTooManySuggestions() {
+        try {
+            McpCompletionResult result = McpCompletionResult.create(Collections.nCopies(101, "x"));
+            fail("Should have thrown exception");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), is("Completion values must be less than 100"));
+        }
+    }
+
 }

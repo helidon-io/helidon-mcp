@@ -25,24 +25,37 @@ import io.helidon.builder.api.Prototype;
 @Prototype.CustomMethods(McpCompletionSupport.class)
 interface McpCompletionResultBlueprint {
     /**
-     * List of completion values.
+     * Completion suggestions returned for the current request.
+     * <p>
+     * The list is capped at 100 elements by the MCP protocol. If you have more than 100
+     * suggestions available, return the first 100 items, set {@link #total()} to the total
+     * number of available suggestions, and set {@link #hasMore()} to {@code true}.
      *
-     * @return values
+     * @return completion suggestion values (max 100 items)
      */
     @Option.Singular
+    @Option.Decorator(McpDecorators.CompletionValuesDecorator.class)
     List<String> values();
 
     /**
-     * Total number of values.
+     * Total number of completion suggestions available.
+     * <p>
+     * This is typically set when {@link #values()} is truncated to the MCP limit (100 items).
+     * For example, if you return the first 100 suggestions out of 250 available, set this to 250.
+     * <p>
+     * If the total number of suggestions is unknown or not applicable, leave this empty.
      *
-     * @return total
+     * @return total number of available suggestions, if known
      */
     Optional<Integer> total();
 
     /**
-     * Whether there is more values.
+     * Indicates whether additional completion suggestions exist beyond {@link #values()}.
+     * <p>
+     * Set this to {@code true} when you have more suggestions than were returned in {@link #values()}.
+     * This is typically used together with {@link #total()}.
      *
-     * @return {code true} if there is more values, {code false} otherwise
+     * @return {@code true} if more suggestions exist beyond {@link #values()}, {@code false} otherwise
      */
     Optional<Boolean> hasMore();
 }
