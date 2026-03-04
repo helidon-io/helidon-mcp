@@ -15,6 +15,8 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.net.URI;
+
 /**
  * Resource read request.
  */
@@ -24,5 +26,5 @@ public sealed interface McpResourceRequest extends McpRequest permits McpResourc
      *
      * @return uri
      */
-    String uri();
+    URI uri();
 }

@@ -126,11 +126,7 @@ class McpCompletionCodegen {
                     .addContentLine(");");
             builder.addContent("return ")
                     .addContent(MCP_COMPLETION_RESULT)
-                    .addContentLine(".builder()")
-                    .increaseContentPadding()
-                    .addContentLine(".addValues(list)")
-                    .addContentLine(".total(list.size())")
-                    .addContentLine(".build();");
+                    .addContentLine(".create(list);");
             return;
         }
         if (element.typeName().equals(MCP_COMPLETION_RESULT)) {

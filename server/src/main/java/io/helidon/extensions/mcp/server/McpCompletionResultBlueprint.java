@@ -44,6 +44,5 @@ interface McpCompletionResultBlueprint {
      *
      * @return {code true} if there is more values, {code false} otherwise
      */
-    @Option.DefaultBoolean(false)
-    boolean hasMore();
+    Optional<Boolean> hasMore();
 }

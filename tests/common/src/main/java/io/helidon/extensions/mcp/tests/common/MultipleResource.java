@@ -73,7 +73,8 @@ public class MultipleResource {
 
                                    .addResource(myResource)
                                    .addResourceSubscriber(new MyResourceSubscriber(myResource))
-                                   .addResourceUnsubscriber(new MyResourceUnsubscriber(myResource)));
+                                   .addResourceUnsubscriber(new MyResourceUnsubscriber(myResource))
+                                   .addResource(new UriEchoResource()));
     }
 
     private static final Context CONTEXT = Context.create();
@@ -182,6 +183,34 @@ public class MultipleResource {
         public void unsubscribe(McpUnsubscribeRequest request) {
             State state = context().get(State.class).orElseThrow();
             state.cancelled.set(true);
+        }
+    }
+
+    private static class UriEchoResource implements McpResource {
+
+        @Override
+        public String uri() {
+            return "http://resource4";
+        }
+
+        @Override
+        public String name() {
+            return "resource4";
+        }
+
+        @Override
+        public String description() {
+            return "Uri Echo Resource";
+        }
+
+        @Override
+        public MediaType mediaType() {
+            return MediaTypes.TEXT_PLAIN;
+        }
+
+        @Override
+        public McpResourceResult resource(McpResourceRequest request) {
+            return McpResourceResult.create(request.uri().toASCIIString());
         }
     }
 }

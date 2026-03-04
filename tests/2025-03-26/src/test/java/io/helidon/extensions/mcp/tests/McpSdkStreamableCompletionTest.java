@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import static io.helidon.jsonrpc.core.JsonRpcError.INVALID_PARAMS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ServerTest
@@ -60,7 +61,7 @@ class McpSdkStreamableCompletionTest extends AbstractMcpSdkTest {
                 new McpSchema.CompleteRequest.CompleteArgument("argument", "Hel"));
         McpSchema.CompleteResult.CompleteCompletion result = client().completeCompletion(request).completion();
         assertThat(result.total(), is(1));
-        assertThat(result.hasMore(), is(false));
+        assertThat(result.hasMore(), is(nullValue()));
 
         var list = result.values();
         assertThat(list.size(), is(1));

@@ -54,10 +54,10 @@ abstract class AbstractLangchain4jMultipleResourceTest {
     @Test
     void listResources() {
         List<McpResource> list = client.listResources();
-        assertThat(list.size(), is(3));
+        assertThat(list.size(), is(4));
 
         List<String> names = list.stream().map(McpResource::name).toList();
-        assertThat(names, hasItems("resource1", "resource2", "resource3"));
+        assertThat(names, hasItems("resource1", "resource2", "resource3", "resource4"));
     }
 
     @Test
@@ -102,5 +102,17 @@ abstract class AbstractLangchain4jMultipleResourceTest {
         assertThat(second.uri(), is("http://resource3"));
         assertThat(second.blob(), is(Base64.getEncoder().encodeToString("binary".getBytes(StandardCharsets.UTF_8))));
         assertThat(second.mimeType(), is(MediaTypes.APPLICATION_JSON_VALUE));
+    }
+
+    @Test
+    void readResource4() {
+        McpReadResourceResult resource = client.readResource("http://resource4");
+        List<McpResourceContents> contents = resource.contents();
+        assertThat(contents.size(), is(1));
+
+        McpTextResourceContents first = (McpTextResourceContents) contents.getFirst();
+        assertThat(first.uri(), is("http://resource4"));
+        assertThat(first.text(), is("http://resource4"));
+        assertThat(first.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
     }
 }

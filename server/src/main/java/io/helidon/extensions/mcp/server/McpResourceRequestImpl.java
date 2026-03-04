@@ -15,6 +15,8 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.net.URI;
+
 import io.helidon.common.context.Context;
 
 final class McpResourceRequestImpl implements McpResourceRequest {
@@ -55,10 +57,11 @@ final class McpResourceRequestImpl implements McpResourceRequest {
     }
 
     @Override
-    public String uri() {
+    public URI uri() {
         return request.parameters()
                 .get("uri")
                 .asString()
+                .map(URI::create)
                 .orElseThrow(() -> new McpInternalException("'uri' parameter is missing from read request"));
     }
 }

@@ -87,10 +87,7 @@ public class CompletionNotifications {
                     .flatMap(Set::stream)
                     .map(entry -> entry.getKey() + "," + entry.getValue())
                     .collect(Collectors.joining(","));
-            return McpCompletionResult.builder()
-                    .addValue(content)
-                    .total(1)
-                    .build();
+            return McpCompletionResult.create(content);
         }
     }
 }

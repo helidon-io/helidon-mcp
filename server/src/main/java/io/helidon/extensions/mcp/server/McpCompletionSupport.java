@@ -20,7 +20,7 @@ import java.util.List;
 
 import io.helidon.builder.api.Prototype;
 
-class McpCompletionSupport {
+final class McpCompletionSupport {
     private McpCompletionSupport() {
     }
 
@@ -33,7 +33,11 @@ class McpCompletionSupport {
      */
     @Prototype.FactoryMethod
     static McpCompletionResult create(List<String> values) {
-        return McpCompletionResult.builder().values(values).total(values.size()).build();
+        return McpCompletionResult.builder()
+                .values(values)
+                .total(values.size())
+                .hasMore(false)
+                .build();
     }
 
     /**
@@ -45,6 +49,10 @@ class McpCompletionSupport {
      */
     @Prototype.FactoryMethod
     static McpCompletionResult create(String... values) {
-        return McpCompletionResult.builder().values(Arrays.asList(values)).total(values.length).build();
+        return McpCompletionResult.builder()
+                .values(Arrays.asList(values))
+                .total(values.length)
+                .hasMore(false)
+                .build();
     }
 }
