@@ -29,7 +29,7 @@ class McpResourceTest {
 
     @Test
     void testDefaultMcpResource() {
-        McpResource resource = McpResource.builder()
+        McpResourceConfig resource = McpResourceConfig.builder()
                 .uri("uri")
                 .name("name")
                 .mediaType(MediaTypes.TEXT_PLAIN)
@@ -45,7 +45,7 @@ class McpResourceTest {
 
     @Test
     void testCustomMcpResource() {
-        McpResource resource = McpResource.builder()
+        McpResourceConfig resource = McpResourceConfig.builder()
                 .uri("uri")
                 .name("name")
                 .title("title")

@@ -23,7 +23,7 @@ import static org.hamcrest.Matchers.is;
 class McpToolTest {
     @Test
     void testMcpToolCustom() {
-        McpTool tool = McpTool.builder()
+        McpToolConfig config = McpToolConfig.builder()
                 .name("name")
                 .title("title")
                 .schema("schema")
@@ -31,6 +31,7 @@ class McpToolTest {
                 .outputSchema("outputSchema")
                 .tool(request -> McpToolResult.create())
                 .build();
+        McpTool tool = new McpToolImpl(config);
         assertThat(tool.name(), is("name"));
         assertThat(tool.schema(), is("schema"));
         assertThat(tool.title().orElse(""), is("title"));
@@ -40,12 +41,13 @@ class McpToolTest {
 
     @Test
     void testMcpToolDefault() {
-        McpTool tool = McpTool.builder()
+        McpToolConfig config = McpToolConfig.builder()
                 .name("name")
                 .schema("schema")
                 .description("description")
                 .tool(request -> McpToolResult.create())
                 .build();
+        McpTool tool = new McpToolImpl(config);
         assertThat(tool.name(), is("name"));
         assertThat(tool.schema(), is("schema"));
         assertThat(tool.title().isEmpty(), is(true));

@@ -16,7 +16,7 @@
 package io.helidon.extensions.mcp.tests.common;
 
 import io.helidon.extensions.mcp.server.McpServerFeature;
-import io.helidon.extensions.mcp.server.McpTool;
+import io.helidon.extensions.mcp.server.McpToolConfig;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.webserver.http.HttpRouting;
 
@@ -36,7 +36,7 @@ public class ProtocolVersion {
     public static void setUpRoute(HttpRouting.Builder builder) {
         builder.addFeature(McpServerFeature.builder()
                                    .path("/")
-                                   .addTool(McpTool.builder()
+                                   .addTool(McpToolConfig.builder()
                                                     .tool(r -> McpToolResult.builder()
                                                             .addTextContent(r.protocolVersion())
                                                             .build())

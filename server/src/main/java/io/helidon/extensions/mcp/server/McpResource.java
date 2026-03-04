@@ -16,45 +16,13 @@
 package io.helidon.extensions.mcp.server;
 
 import java.util.Optional;
-import java.util.function.Consumer;
 
-import io.helidon.builder.api.RuntimeType;
 import io.helidon.common.media.type.MediaType;
 
 /**
- * Configuration of an MCP Resource.
+ * MCP Resource.
  */
-@RuntimeType.PrototypedBy(McpResourceConfig.class)
-public interface McpResource extends RuntimeType.Api<McpResourceConfig> {
-    /**
-     * Create a resource configuration builder.
-     *
-     * @return builder
-     */
-    static McpResourceConfig.Builder builder() {
-        return McpResourceConfig.builder();
-    }
-
-    /**
-     * Create a resource from its configuration.
-     *
-     * @param configuration Resource configuration
-     * @return resource instance
-     */
-    static McpResource create(McpResourceConfig configuration) {
-        return new McpResourceImpl(configuration);
-    }
-
-    /**
-     * Create a resource from its configuration builder.
-     *
-     * @param consumer Resource configuration
-     * @return resource instance
-     */
-    static McpResource create(Consumer<McpResourceConfig.Builder> consumer) {
-        return builder().update(consumer).build();
-    }
-
+public interface McpResource {
     /**
      * Resource URI.
      *
@@ -98,17 +66,5 @@ public interface McpResource extends RuntimeType.Api<McpResourceConfig> {
      */
     default Optional<String> title() {
         return Optional.empty();
-    }
-
-    @Override
-    default McpResourceConfig prototype() {
-        return McpResourceConfig.builder()
-                .uri(uri())
-                .name(name())
-                .title(title())
-                .description(description())
-                .mediaType(mediaType())
-                .resource(this::resource)
-                .buildPrototype();
     }
 }

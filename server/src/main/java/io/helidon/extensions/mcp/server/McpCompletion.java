@@ -15,44 +15,10 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.util.function.Consumer;
-
-import io.helidon.builder.api.RuntimeType;
-
 /**
  * Configuration of an MCP Completion.
  */
-@RuntimeType.PrototypedBy(McpCompletionConfig.class)
-public interface McpCompletion extends RuntimeType.Api<McpCompletionConfig> {
-    /**
-     * Create a prompt configuration builder.
-     *
-     * @return builder
-     */
-    static McpCompletionConfig.Builder builder() {
-        return McpCompletionConfig.builder();
-    }
-
-    /**
-     * Create a prompt from its configuration.
-     *
-     * @param configuration prompt configuration
-     * @return prompt instance
-     */
-    static McpCompletion create(McpCompletionConfig configuration) {
-        return new McpCompletionImpl(configuration);
-    }
-
-    /**
-     * Create a prompt from its configuration builder.
-     *
-     * @param consumer prompt configuration
-     * @return prompt instance
-     */
-    static McpCompletion create(Consumer<McpCompletionConfig.Builder> consumer) {
-        return builder().update(consumer).build();
-    }
-
+public interface McpCompletion {
     /**
      * Completion reference must be a {@link McpPromptArgument} name or a {@link McpResource} uri template.
      *
@@ -76,13 +42,4 @@ public interface McpCompletion extends RuntimeType.Api<McpCompletionConfig> {
      * @return completion suggestion
      */
     McpCompletionResult completion(McpCompletionRequest request);
-
-    @Override
-    default McpCompletionConfig prototype() {
-        return McpCompletionConfig.builder()
-                .reference(reference())
-                .referenceType(referenceType())
-                .completion(this::completion)
-                .buildPrototype();
-    }
 }

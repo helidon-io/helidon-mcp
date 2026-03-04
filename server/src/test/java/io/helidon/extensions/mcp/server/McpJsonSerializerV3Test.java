@@ -34,7 +34,7 @@ class McpJsonSerializerV3Test {
 
     @Test
     void testSerializeTool() {
-        McpTool tool = McpTool.builder()
+        McpToolConfig config = McpToolConfig.builder()
                 .name("name")
                 .title("title")
                 .schema("")
@@ -42,6 +42,7 @@ class McpJsonSerializerV3Test {
                 .outputSchema("")
                 .tool(request -> null)
                 .build();
+        McpTool tool = new McpToolImpl(config);
 
         JsonObject payload = MJS.toJson(tool).build();
         assertThat(payload.getString("name"), is("name"));
@@ -57,7 +58,7 @@ class McpJsonSerializerV3Test {
 
     @Test
     void testSerializeToolOutputSchema() {
-        McpTool tool = McpTool.builder()
+        McpToolConfig config = McpToolConfig.builder()
                 .name("name")
                 .title("title")
                 .schema("")
@@ -68,6 +69,7 @@ class McpJsonSerializerV3Test {
                                       .generate())
                 .tool(request -> null)
                 .build();
+        McpTool tool = new McpToolImpl(config);
 
         JsonObject payload = MJS.toJson(tool).build();
         assertThat(payload.getString("name"), is("name"));
@@ -85,7 +87,7 @@ class McpJsonSerializerV3Test {
 
     @Test
     void testSerializeResource() {
-        McpResource resource = McpResource.builder()
+        McpResourceConfig config = McpResourceConfig.builder()
                 .uri("https://foo")
                 .name("name")
                 .title("title")
@@ -93,6 +95,7 @@ class McpJsonSerializerV3Test {
                 .mediaType(MediaTypes.APPLICATION_JSON)
                 .resource(request -> null)
                 .build();
+        McpResource resource = new McpResourceImpl(config);
 
         JsonObject payload = MJS.toJson(resource).build();
         assertThat(payload.getString("name"), is("name"));
@@ -104,7 +107,7 @@ class McpJsonSerializerV3Test {
 
     @Test
     void testSerializePrompt() {
-        McpPrompt prompt = McpPrompt.builder()
+        McpPromptConfig config = McpPromptConfig.builder()
                 .name("name")
                 .title("title")
                 .description("description")
@@ -114,7 +117,7 @@ class McpJsonSerializerV3Test {
                         .required(true))
                 .prompt(request -> null)
                 .build();
-
+        McpPrompt prompt = new McpPromptImpl(config);
         JsonObject payload = MJS.toJson(prompt).build();
         assertThat(payload.getString("name"), is("name"));
         assertThat(payload.getString("title"), is("title"));
@@ -148,12 +151,14 @@ class McpJsonSerializerV3Test {
         McpToolResult result = McpToolResult.builder()
                 .structuredContent(new StructuredContent("bar"))
                 .build();
-        McpTool tool = McpTool.builder()
+        McpToolConfig config = McpToolConfig.builder()
                 .schema("")
                 .name("name")
                 .description("description")
                 .tool((request) -> null)
                 .build();
+        McpTool tool = new McpToolImpl(config);
+
         JsonObject object = MJS.toolCall(tool, result);
         assertThat(object, is(notNullValue()));
         assertThat(object.get("content"), is(notNullValue()));
@@ -176,12 +181,14 @@ class McpJsonSerializerV3Test {
                 .addTextContent("foo")
                 .structuredContent(new StructuredContent("bar"))
                 .build();
-        McpTool tool = McpTool.builder()
+        McpToolConfig config = McpToolConfig.builder()
                 .schema("")
                 .name("name")
                 .description("description")
                 .tool((request) -> null)
                 .build();
+        McpTool tool = new McpToolImpl(config);
+
         JsonObject object = MJS.toolCall(tool, result);
         assertThat(object, is(notNullValue()));
         assertThat(object.get("content"), is(notNullValue()));
@@ -236,12 +243,13 @@ class McpJsonSerializerV3Test {
         McpToolResult result = McpToolResult.builder()
                 .addResourceLinkContent("name", "https://foo")
                 .build();
-        McpTool tool = McpTool.builder()
+        McpToolConfig config = McpToolConfig.builder()
                 .schema("")
                 .name("name")
                 .description("description")
                 .tool((request) -> null)
                 .build();
+        McpTool tool = new McpToolImpl(config);
         JsonObject payload = MJS.toolCall(tool, result);
 
         JsonArray content = payload.getJsonArray("content");

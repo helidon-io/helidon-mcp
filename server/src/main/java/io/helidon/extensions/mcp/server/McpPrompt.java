@@ -17,44 +17,11 @@ package io.helidon.extensions.mcp.server;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
-
-import io.helidon.builder.api.RuntimeType;
 
 /**
- * Configuration of an MCP Prompt.
+ * MCP Prompt.
  */
-@RuntimeType.PrototypedBy(McpPromptConfig.class)
-public interface McpPrompt extends RuntimeType.Api<McpPromptConfig> {
-    /**
-     * Create a prompt configuration builder.
-     *
-     * @return builder
-     */
-    static McpPromptConfig.Builder builder() {
-        return McpPromptConfig.builder();
-    }
-
-    /**
-     * Create a prompt from its configuration.
-     *
-     * @param configuration prompt configuration
-     * @return prompt instance
-     */
-    static McpPrompt create(McpPromptConfig configuration) {
-        return new McpPromptImpl(configuration);
-    }
-
-    /**
-     * Create a prompt from its configuration builder.
-     *
-     * @param consumer prompt configuration
-     * @return prompt instance
-     */
-    static McpPrompt create(Consumer<McpPromptConfig.Builder> consumer) {
-        return builder().update(consumer).build();
-    }
-
+public interface McpPrompt {
     /**
      * Prompt name.
      *
@@ -91,16 +58,5 @@ public interface McpPrompt extends RuntimeType.Api<McpPromptConfig> {
      */
     default Optional<String> title() {
         return Optional.empty();
-    }
-
-    @Override
-    default McpPromptConfig prototype() {
-        return McpPromptConfig.builder()
-                .name(name())
-                .title(title())
-                .description(description())
-                .arguments(arguments())
-                .prompt(this::prompt)
-                .buildPrototype();
     }
 }

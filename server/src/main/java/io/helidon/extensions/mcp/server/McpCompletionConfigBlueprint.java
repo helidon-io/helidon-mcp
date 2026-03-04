@@ -24,7 +24,7 @@ import io.helidon.builder.api.Prototype;
  * Completion configuration.
  */
 @Prototype.Blueprint
-interface McpCompletionConfigBlueprint extends Prototype.Factory<McpCompletion> {
+interface McpCompletionConfigBlueprint {
     /**
      * Completion reference must be a {@link McpPromptArgument} name or a {@link McpResource} uri template.
      *

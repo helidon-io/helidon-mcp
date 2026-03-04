@@ -26,12 +26,13 @@ import static org.hamcrest.Matchers.is;
 class McpPromptTest {
     @Test
     void testMcpPromptCustom() {
-        McpPrompt prompt = McpPrompt.builder()
+        McpPromptConfig config = McpPromptConfig.builder()
                 .name("name")
                 .title("title")
                 .description("description")
                 .prompt(request -> McpPromptResult.create())
                 .build();
+        McpPrompt prompt = new McpPromptImpl(config);
         assertThat(prompt.name(), is("name"));
         assertThat(prompt.title().orElse(""), is("title"));
         assertThat(prompt.description(), is("description"));
@@ -39,18 +40,19 @@ class McpPromptTest {
 
     @Test
     void testMcpPromptDefault() {
-        McpPrompt prompt = McpPrompt.builder()
+        McpPromptConfig config = McpPromptConfig.builder()
                 .name("name")
                 .description("description")
                 .prompt(request -> McpPromptResult.create())
                 .build();
+        McpPrompt prompt = new McpPromptImpl(config);
         assertThat(prompt.name(), is("name"));
         assertThat(prompt.title().isEmpty(), is(true));
         assertThat(prompt.description(), is("description"));
     }
 
     @Test
-    void testMcpToolImplementation() {
+    void testMcpPromptImplementation() {
         Foo foo = new Foo();
         assertThat(foo.name(), is("name"));
         assertThat(foo.title().isEmpty(), is(false));

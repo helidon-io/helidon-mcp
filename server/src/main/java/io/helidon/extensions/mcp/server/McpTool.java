@@ -16,44 +16,11 @@
 package io.helidon.extensions.mcp.server;
 
 import java.util.Optional;
-import java.util.function.Consumer;
-
-import io.helidon.builder.api.RuntimeType;
 
 /**
- * An MCP Tool.
+ * MCP Tool.
  */
-@RuntimeType.PrototypedBy(McpToolConfig.class)
-public interface McpTool extends RuntimeType.Api<McpToolConfig> {
-    /**
-     * Create a tool configuration builder.
-     *
-     * @return builder
-     */
-    static McpToolConfig.Builder builder() {
-        return McpToolConfig.builder();
-    }
-
-    /**
-     * Create a tool from its configuration.
-     *
-     * @param configuration tool configuration
-     * @return tool instance
-     */
-    static McpTool create(McpToolConfig configuration) {
-        return new McpToolImpl(configuration);
-    }
-
-    /**
-     * Create a tool from its configuration builder.
-     *
-     * @param consumer tool configuration
-     * @return tool instance
-     */
-    static McpTool create(Consumer<McpToolConfig.Builder> consumer) {
-        return builder().update(consumer).build();
-    }
-
+public interface McpTool {
     /**
      * Tool name.
      *
@@ -110,18 +77,5 @@ public interface McpTool extends RuntimeType.Api<McpToolConfig> {
      */
     default Optional<String> outputSchema() {
         return Optional.empty();
-    }
-
-    @Override
-    default McpToolConfig prototype() {
-        return McpToolConfig.builder()
-                .name(name())
-                .description(description())
-                .schema(schema())
-                .annotations(annotations())
-                .title(title())
-                .outputSchema(outputSchema())
-                .tool(this::tool)
-                .buildPrototype();
     }
 }

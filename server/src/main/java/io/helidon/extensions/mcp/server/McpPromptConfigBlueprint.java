@@ -26,7 +26,7 @@ import io.helidon.builder.api.Prototype;
  * Prompt configuration.
  */
 @Prototype.Blueprint
-interface McpPromptConfigBlueprint extends Prototype.Factory<McpPrompt> {
+interface McpPromptConfigBlueprint {
     /**
      * Prompt name.
      *

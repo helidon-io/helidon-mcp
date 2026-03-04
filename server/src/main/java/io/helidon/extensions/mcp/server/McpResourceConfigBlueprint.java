@@ -26,7 +26,7 @@ import io.helidon.common.media.type.MediaType;
  * Resource configuration.
  */
 @Prototype.Blueprint
-interface McpResourceConfigBlueprint extends Prototype.Factory<McpResource> {
+interface McpResourceConfigBlueprint {
     /**
      * Resource URI.
      *

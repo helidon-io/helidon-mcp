@@ -36,9 +36,4 @@ final class McpCompletionImpl implements McpCompletion {
     public McpCompletionResult completion(McpCompletionRequest request) {
         return config.completion().apply(request);
     }
-
-    @Override
-    public McpCompletionConfig prototype() {
-        return config;
-    }
 }

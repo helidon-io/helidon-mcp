@@ -28,10 +28,11 @@ class McpCompletionTest {
 
     @Test
     void testDefaultMcpCompletion() {
-        McpCompletion completion = McpCompletion.builder()
+        McpCompletionConfig config = McpCompletionConfig.builder()
                 .reference("acompletion")
                 .completion(r -> McpCompletionResult.create())
                 .build();
+        McpCompletion completion = new McpCompletionImpl(config);
         assertThat(completion.reference(), is("acompletion"));
         assertThat(completion.referenceType(), is(McpCompletionType.PROMPT));       // default
     }

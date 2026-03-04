@@ -25,7 +25,7 @@ import io.helidon.builder.api.Prototype;
  * Tool configuration.
  */
 @Prototype.Blueprint
-interface McpToolConfigBlueprint extends Prototype.Factory<McpTool> {
+interface McpToolConfigBlueprint {
     /**
      * Tool name.
      *
