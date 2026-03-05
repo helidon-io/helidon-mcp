@@ -41,7 +41,7 @@ abstract class AbstractLangchain4jToolsServerTest {
     @Test
     void testListTools() {
         var list = client.listTools();
-        assertThat(list.size(), is(18));
+        assertThat(list.size(), is(19));
     }
 
     @ParameterizedTest

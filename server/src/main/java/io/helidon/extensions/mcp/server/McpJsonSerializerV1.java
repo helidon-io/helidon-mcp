@@ -179,7 +179,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     public JsonObjectBuilder toJson(McpEmbeddedTextResourceContent content) {
         var resource = JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("uri", content.uri().toASCIIString())
-                .add("mimeType", content.mimeType().text())
+                .add("mimeType", content.mediaType().text())
                 .add("text", content.text());
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("type", content.type().text())
@@ -190,7 +190,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     public JsonObjectBuilder toJson(McpEmbeddedBinaryResourceContent content) {
         var resource = JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("uri", content.uri().toASCIIString())
-                .add("mimeType", content.mimeType().text())
+                .add("mimeType", content.mediaType().text())
                 .add("blob", content.base64Data());
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("type", content.type().text())
@@ -399,14 +399,14 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     @Override
     public JsonObjectBuilder toJson(McpResourceBinaryContent content) {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("mimeType", content.mimeType().text())
+                .add("mimeType", content.mediaType().text())
                 .add("blob", content.base64Data());
     }
 
     @Override
     public JsonObjectBuilder toJson(McpResourceTextContent content) {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("mimeType", content.mimeType().text())
+                .add("mimeType", content.mediaType().text())
                 .add("text", content.text());
     }
 

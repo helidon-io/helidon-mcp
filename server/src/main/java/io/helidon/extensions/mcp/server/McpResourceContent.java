@@ -27,7 +27,7 @@ interface McpResourceContent extends McpContent {
      *
      * @return MIME type
      */
-    MediaType mimeType();
+    MediaType mediaType();
 
     @Override
     default McpContentType type() {

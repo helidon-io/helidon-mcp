@@ -132,7 +132,7 @@ public class MultipleResource {
             return McpResourceResult.builder()
                     .addTextContent("text")
                     .addBinaryContent(binary -> binary.data("binary".getBytes(StandardCharsets.UTF_8))
-                            .mimeType(MediaTypes.APPLICATION_JSON))
+                            .mediaType(MediaTypes.APPLICATION_JSON))
                     .build();
         }
     }

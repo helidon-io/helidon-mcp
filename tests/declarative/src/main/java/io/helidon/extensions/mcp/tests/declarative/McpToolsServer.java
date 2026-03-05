@@ -153,6 +153,14 @@ class McpToolsServer {
                 .build();
     }
 
+    @Mcp.Tool(value = TOOL_DESCRIPTION)
+    @Mcp.ToolOutputSchema(Bar.class)
+    McpToolResult tool18(McpToolRequest request) {
+        return McpToolResult.builder()
+                .addTextContent(TOOL_CONTENT)
+                .build();
+    }
+
     @JsonSchema.Schema
     public static class Foo {
         public String foo;
@@ -161,5 +169,9 @@ class McpToolsServer {
 
     @JsonSchema.Schema
     public static class OutputSchema {
+    }
+
+    @JsonSchema.Schema
+    public record Bar(String bar) {
     }
 }

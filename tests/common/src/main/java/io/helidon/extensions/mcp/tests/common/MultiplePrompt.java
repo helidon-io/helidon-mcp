@@ -62,7 +62,7 @@ public class MultiplePrompt {
                                            .prompt(request -> McpPromptResult.builder()
                                                    .addTextResourceContent(resource -> resource.uri(URI.create("http://resource"))
                                                            .text("resource")
-                                                           .mimeType(MediaTypes.TEXT_PLAIN)
+                                                           .mediaType(MediaTypes.TEXT_PLAIN)
                                                            .role(McpRole.ASSISTANT))
                                                    .build()))
 
@@ -108,7 +108,7 @@ public class MultiplePrompt {
                     .addTextContent(parameters.get("argument1").asString().orElse("missing"))
                     .addTextResourceContent(resource -> resource.text("resource")
                             .uri(URI.create("http://resource"))
-                            .mimeType(MediaTypes.TEXT_PLAIN)
+                            .mediaType(MediaTypes.TEXT_PLAIN)
                             .role(McpRole.USER))
                     .build();
         }

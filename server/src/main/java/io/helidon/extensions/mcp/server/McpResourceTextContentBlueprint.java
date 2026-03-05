@@ -27,7 +27,7 @@ import io.helidon.common.media.type.MediaTypes;
 interface McpResourceTextContentBlueprint extends McpTextContent, McpResourceContent {
 
     @Override
-    default MediaType mimeType() {
+    default MediaType mediaType() {
         return MediaTypes.TEXT_PLAIN;
     }
 

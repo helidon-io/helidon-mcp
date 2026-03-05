@@ -21,7 +21,6 @@ import java.util.Objects;
 
 import io.helidon.builder.api.Prototype;
 import io.helidon.common.media.type.MediaType;
-import io.helidon.common.media.type.MediaTypes;
 
 class McpResourceSupport {
     private McpResourceSupport() {
@@ -48,7 +47,7 @@ class McpResourceSupport {
     @Prototype.BuilderMethod
     static void addTextContent(McpResourceResult.BuilderBase<?, ?> builder, String text) {
         Objects.requireNonNull(text, "text is null");
-        builder.addTextContent(b -> b.text(text).mimeType(MediaTypes.TEXT_PLAIN));
+        builder.addTextContent(b -> b.text(text));
     }
 
     /**
@@ -62,7 +61,7 @@ class McpResourceSupport {
     static void addBinaryContent(McpResourceResult.BuilderBase<?, ?> builder, byte[] data, MediaType type) {
         Objects.requireNonNull(data, "data is null");
         Objects.requireNonNull(type, "media type is null");
-        builder.addBinaryContent(binary -> binary.data(data).mimeType(type));
+        builder.addBinaryContent(binary -> binary.data(data).mediaType(type));
     }
 
     /**
