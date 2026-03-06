@@ -37,6 +37,7 @@ import io.helidon.extensions.mcp.server.McpCompletion;
 import io.helidon.extensions.mcp.server.McpCompletionRequest;
 import io.helidon.extensions.mcp.server.McpCompletionResult;
 import io.helidon.extensions.mcp.server.McpCompletionType;
+import io.helidon.extensions.mcp.server.McpElicitation;
 import io.helidon.extensions.mcp.server.McpFeatures;
 import io.helidon.extensions.mcp.server.McpLogger;
 import io.helidon.extensions.mcp.server.McpParameters;
@@ -145,6 +146,7 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "HTTP_FEATURE", HttpFeature.class);
         checkField(toCheck, checked, fields, "HELIDON_MEDIA_TYPE", MediaType.class);
         checkField(toCheck, checked, fields, "HELIDON_MEDIA_TYPES", MediaTypes.class);
+        checkField(toCheck, checked, fields, "MCP_ELICITATION", McpElicitation.class);
         checkField(toCheck, checked, fields, "HTTP_ROUTING_BUILDER", HttpRouting.Builder.class);
         checkField(toCheck, checked, fields, "MCP_TOOL_ANNOTATIONS", McpToolAnnotations.class);
         checkField(toCheck, checked, fields, "MCP_COMPLETION_REQUEST", McpCompletionRequest.class);

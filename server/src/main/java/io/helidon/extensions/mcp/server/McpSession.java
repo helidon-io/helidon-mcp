@@ -194,7 +194,7 @@ class McpSession {
         clientCapabilities.add(capability);
     }
 
-    Set<McpCapability> capability() {
+    Set<McpCapability> capabilities() {
         return clientCapabilities;
     }
 
