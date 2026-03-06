@@ -44,6 +44,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 @ServerTest
 class Langchain4jSseMultiplePromptTest {
@@ -80,7 +81,7 @@ class Langchain4jSseMultiplePromptTest {
     @Test
     void testPrompt1() {
         McpGetPromptResult prompt = client.getPrompt("prompt1", Map.of());
-        assertThat(prompt.description(), is("Prompt 1"));
+        assertThat(prompt.description(), is(nullValue()));
 
         List<McpPromptMessage> messages = prompt.messages();
         assertThat(messages.size(), is(1));
@@ -95,7 +96,7 @@ class Langchain4jSseMultiplePromptTest {
     @Test
     void testPrompt2() {
         McpGetPromptResult prompt = client.getPrompt("prompt2", Map.of());
-        assertThat(prompt.description(), is("Prompt 2"));
+        assertThat(prompt.description(), is(nullValue()));
 
         List<McpPromptMessage> messages = prompt.messages();
         assertThat(messages.size(), is(1));
@@ -111,7 +112,7 @@ class Langchain4jSseMultiplePromptTest {
     @Test
     void testPrompt3() {
         McpGetPromptResult prompt = client.getPrompt("prompt3", Map.of());
-        assertThat(prompt.description(), is("Prompt 3"));
+        assertThat(prompt.description(), is(nullValue()));
 
         List<McpPromptMessage> messages = prompt.messages();
         assertThat(messages.size(), is(1));
@@ -128,7 +129,7 @@ class Langchain4jSseMultiplePromptTest {
     @Test
     void testPrompt4() {
         McpGetPromptResult prompt = client.getPrompt("prompt4", Map.of("argument1", "text"));
-        assertThat(prompt.description(), is("Prompt 4"));
+        assertThat(prompt.description(), is(nullValue()));
 
         List<McpPromptMessage> messages = prompt.messages();
         assertThat(messages.size(), is(3));
@@ -140,12 +141,12 @@ class Langchain4jSseMultiplePromptTest {
         assertThat(second.role(), is(McpRole.USER));
         assertThat(third.role(), is(McpRole.USER));
 
-        McpImageContent image = (McpImageContent) first.content();
+        McpTextContent text = (McpTextContent) first.content();
+        assertThat(text.text(), is("text"));
+
+        McpImageContent image = (McpImageContent) second.content();
         assertThat(image.data(), is(McpMedia.base64Media("helidon.png")));
         assertThat(image.mimeType(), is(McpMedia.IMAGE_PNG_VALUE));
-
-        McpTextContent text = (McpTextContent) second.content();
-        assertThat(text.text(), is("text"));
 
         McpEmbeddedResource resource = (McpEmbeddedResource) third.content();
         McpTextResourceContents content = (McpTextResourceContents) resource.resource();

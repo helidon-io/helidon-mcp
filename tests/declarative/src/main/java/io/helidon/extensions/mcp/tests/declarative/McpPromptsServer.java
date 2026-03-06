@@ -16,12 +16,10 @@
 
 package io.helidon.extensions.mcp.tests.declarative;
 
-import java.util.List;
-
 import io.helidon.extensions.mcp.server.Mcp;
 import io.helidon.extensions.mcp.server.McpFeatures;
-import io.helidon.extensions.mcp.server.McpPromptContent;
-import io.helidon.extensions.mcp.server.McpPromptContents;
+import io.helidon.extensions.mcp.server.McpPromptRequest;
+import io.helidon.extensions.mcp.server.McpPromptResult;
 import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpRole;
 
@@ -70,27 +68,32 @@ class McpPromptsServer {
     }
 
     @Mcp.Prompt(PROMPT_DESCRIPTION)
-    List<McpPromptContent> prompt4(String prompt) {
-        return List.of(McpPromptContents.textContent(PROMPT_CONTENT, McpRole.USER));
+    McpPromptResult prompt4(String prompt) {
+        return McpPromptResult.builder().addTextContent(PROMPT_CONTENT).build();
     }
 
     @Mcp.Prompt(PROMPT_DESCRIPTION)
-    List<McpPromptContent> prompt5(McpFeatures features) {
-        return List.of(McpPromptContents.textContent(PROMPT_CONTENT, McpRole.USER));
+    McpPromptResult prompt5(McpFeatures features) {
+        return McpPromptResult.builder().addTextContent(PROMPT_CONTENT).build();
     }
 
     @Mcp.Prompt(PROMPT_DESCRIPTION)
-    List<McpPromptContent> prompt6(McpFeatures features) {
-        return List.of(McpPromptContents.textContent(PROMPT_CONTENT, McpRole.USER));
+    McpPromptResult prompt6(McpFeatures features) {
+        return McpPromptResult.builder().addTextContent(PROMPT_CONTENT).build();
     }
 
     @Mcp.Prompt(PROMPT_DESCRIPTION)
-    List<McpPromptContent> prompt7(McpRequest request) {
-        return List.of(McpPromptContents.textContent(PROMPT_CONTENT, McpRole.USER));
+    McpPromptResult prompt7(McpRequest request) {
+        return McpPromptResult.builder().addTextContent(PROMPT_CONTENT).build();
     }
 
     @Mcp.Prompt(PROMPT_DESCRIPTION)
     String prompt8(McpRequest request) {
         return PROMPT_CONTENT;
+    }
+
+    @Mcp.Prompt(PROMPT_DESCRIPTION)
+    McpPromptResult prompt9(McpPromptRequest request) {
+        return McpPromptResult.builder().addTextContent(PROMPT_CONTENT).build();
     }
 }

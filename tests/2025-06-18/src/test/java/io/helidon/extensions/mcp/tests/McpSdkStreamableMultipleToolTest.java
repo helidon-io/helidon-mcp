@@ -101,27 +101,27 @@ class McpSdkStreamableMultipleToolTest extends AbstractMcpSdkTest {
         McpSchema.Content fourth = tool3.content().get(3);
         McpSchema.Content fifth = tool3.content().get(4);
         McpSchema.Content sixth = tool3.content().get(5);
-        assertThat(first.type(), is("image"));
-        assertThat(second.type(), is("resource"));
-        assertThat(third.type(), is("text"));
-        assertThat(fourth.type(), is("audio"));
+        assertThat(first.type(), is("text"));
+        assertThat(second.type(), is("image"));
+        assertThat(third.type(), is("audio"));
+        assertThat(fourth.type(), is("resource"));
         assertThat(fifth.type(), is("resource_link"));
         assertThat(sixth.type(), is("resource_link"));
 
-        McpSchema.ImageContent image = (McpSchema.ImageContent) first;
+        McpSchema.TextContent text = (McpSchema.TextContent) first;
+        assertThat(text.text(), is("text"));
+
+        McpSchema.ImageContent image = (McpSchema.ImageContent) second;
         assertThat(image.data(), is(McpMedia.base64Media("helidon.png")));
         assertThat(image.mimeType(), is(McpMedia.IMAGE_PNG_VALUE));
 
-        McpSchema.EmbeddedResource resource = (McpSchema.EmbeddedResource) second;
-        assertThat(resource.resource().uri(), is("http://resource"));
-        assertThat(resource.resource().mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
-
-        McpSchema.TextContent text = (McpSchema.TextContent) third;
-        assertThat(text.text(), is("text"));
-
-        McpSchema.AudioContent audio = (McpSchema.AudioContent) fourth;
+        McpSchema.AudioContent audio = (McpSchema.AudioContent) third;
         assertThat(audio.data(), is(McpMedia.base64Media("helidon.wav")));
         assertThat(audio.mimeType(), is(McpMedia.AUDIO_WAV_VALUE));
+
+        McpSchema.EmbeddedResource resource = (McpSchema.EmbeddedResource) fourth;
+        assertThat(resource.resource().uri(), is("http://resource"));
+        assertThat(resource.resource().mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
 
         McpSchema.ResourceLink link = (McpSchema.ResourceLink) fifth;
         assertThat(link.uri(), is("https://foo"));

@@ -18,14 +18,12 @@ package io.helidon.extensions.mcp.tests.common;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import io.helidon.extensions.mcp.server.McpCompletion;
-import io.helidon.extensions.mcp.server.McpCompletionContent;
-import io.helidon.extensions.mcp.server.McpCompletionContents;
 import io.helidon.extensions.mcp.server.McpCompletionContext;
 import io.helidon.extensions.mcp.server.McpCompletionRequest;
+import io.helidon.extensions.mcp.server.McpCompletionResult;
 import io.helidon.extensions.mcp.server.McpCompletionType;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.webserver.http.HttpRouting;
@@ -62,15 +60,14 @@ public class CompletionNotifications {
         }
 
         @Override
-        public Function<McpCompletionRequest, McpCompletionContent> completion() {
-            return this::complete;
-        }
-
-        McpCompletionContent complete(McpCompletionRequest request) {
+        public McpCompletionResult completion(McpCompletionRequest request) {
             if (Objects.equals(request.value(), "Hel")) {
-                return McpCompletionContents.completion("Helidon");
+                return McpCompletionResult.builder()
+                        .addValue("Helidon")
+                        .total(1)
+                        .build();
             }
-            return McpCompletionContents.completion();
+            return McpCompletionResult.create();
         }
     }
 
@@ -82,17 +79,15 @@ public class CompletionNotifications {
         }
 
         @Override
-        public Function<McpCompletionRequest, McpCompletionContent> completion() {
-            return completion -> {
-                String content = completion.context()
-                        .map(McpCompletionContext::arguments)
-                        .map(Map::entrySet)
-                        .stream()
-                        .flatMap(Set::stream)
-                        .map(entry -> entry.getKey() + "," + entry.getValue())
-                        .collect(Collectors.joining(","));
-                return McpCompletionContents.completion(content);
-            };
+        public McpCompletionResult completion(McpCompletionRequest request) {
+            String content = request.context()
+                    .map(McpCompletionContext::arguments)
+                    .map(Map::entrySet)
+                    .stream()
+                    .flatMap(Set::stream)
+                    .map(entry -> entry.getKey() + "," + entry.getValue())
+                    .collect(Collectors.joining(","));
+            return McpCompletionResult.create(content);
         }
     }
 }

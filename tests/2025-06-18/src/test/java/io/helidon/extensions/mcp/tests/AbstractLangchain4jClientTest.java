@@ -46,6 +46,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 abstract class AbstractLangchain4jClientTest {
     protected static McpClient client;
@@ -125,7 +126,7 @@ abstract class AbstractLangchain4jClientTest {
     @Test
     void testPromptCall() {
         var result = client.getPrompt(PROMPT_NAME, Map.of(PROMPT_ARGUMENT_NAME, "Praha"));
-        assertThat(result.description(), is(PROMPT_DESCRIPTION));
+        assertThat(result.description(), is(nullValue()));
 
         var messages = result.messages();
         assertThat(messages.size(), is(1));

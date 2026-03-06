@@ -34,12 +34,11 @@ import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.MCP_TYPES;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.createClassName;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.getElementsWithAnnotation;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isMcpType;
-import static io.helidon.extensions.mcp.codegen.McpTypes.FUNCTION_COMPLETION_REQUEST_COMPLETION_CONTENT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.LIST_STRING;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_COMPLETION;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_COMPLETION_CONTENT;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_COMPLETION_CONTENTS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_COMPLETION_INTERFACE;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_COMPLETION_REQUEST;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_COMPLETION_RESULT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_COMPLETION_TYPE;
 
 class McpCompletionCodegen {
@@ -92,12 +91,16 @@ class McpCompletionCodegen {
         List<String> parameters = new ArrayList<>();
 
         builder.name("completion")
-                .returnType(returned -> returned.type(FUNCTION_COMPLETION_REQUEST_COMPLETION_CONTENT))
+                .returnType(returned -> returned.type(MCP_COMPLETION_RESULT))
+                .addParameter(parameter -> parameter.type(MCP_COMPLETION_REQUEST).name("request"))
                 .addAnnotation(Annotations.OVERRIDE);
-        builder.addContentLine("return request -> {");
 
         for (TypedElementInfo parameter : element.parameterArguments()) {
             if (isMcpType(parameters, parameter)) {
+                continue;
+            }
+            if (parameter.typeName().equals(MCP_COMPLETION_REQUEST)) {
+                parameters.add("request");
                 continue;
             }
             if (parameter.typeName().equals(TypeNames.STRING)) {
@@ -114,31 +117,30 @@ class McpCompletionCodegen {
 
         String params = String.join(", ", parameters);
         if (element.typeName().equals(LIST_STRING)) {
-            builder.addContent("return ")
-                    .addContent(MCP_COMPLETION_CONTENTS)
-                    .addContent(".completion(delegate.")
+            // Create local variable for delegate result called "list".
+            builder.addContent(LIST_STRING)
+                    .addContent(" list = delegate.")
                     .addContent(element.elementName())
                     .addContent("(")
                     .addContent(params)
-                    .addContentLine("));")
-                    .decreaseContentPadding()
-                    .addContentLine("};");
+                    .addContentLine(");");
+            builder.addContent("return ")
+                    .addContent(MCP_COMPLETION_RESULT)
+                    .addContentLine(".create(list);");
             return;
         }
-        if (element.typeName().equals(MCP_COMPLETION_CONTENT)) {
+        if (element.typeName().equals(MCP_COMPLETION_RESULT)) {
             builder.addContent("return delegate.")
                     .addContent(element.elementName())
                     .addContent("(")
                     .addContent(params)
-                    .addContentLine(");")
-                    .decreaseContentPadding()
-                    .addContentLine("};");
+                    .addContentLine(");");
             return;
         }
         throw new CodegenException(String.format("Wrong return type for method: %s. Supported types are: %s, or %s.",
                                                  element.elementName(),
                                                  LIST_STRING,
-                                                 MCP_COMPLETION_CONTENT.classNameWithTypes()));
+                                                 MCP_COMPLETION_RESULT.classNameWithTypes()));
 
     }
 }

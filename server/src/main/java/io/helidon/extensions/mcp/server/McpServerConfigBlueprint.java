@@ -30,6 +30,7 @@ import static io.helidon.extensions.mcp.server.McpPagination.DEFAULT_PAGE_SIZE;
  */
 @Prototype.Blueprint
 @Prototype.Configured(McpServerConfigBlueprint.CONFIG_ROOT)
+@Prototype.CustomMethods(McpServerFeatureSupport.class)
 interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
     String CONFIG_ROOT = "mcp.server";
 
@@ -59,15 +60,6 @@ interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
     @Option.Configured
     @Option.Default("0.0.1")
     String version();
-
-    /**
-     * Server logging configuration.
-     *
-     * @return logging
-     */
-    @Option.Configured
-    @Option.DefaultBoolean(true)
-    boolean logging();
 
     /**
      * Server tools page size configuration.

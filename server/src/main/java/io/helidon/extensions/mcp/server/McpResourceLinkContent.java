@@ -22,7 +22,7 @@ import io.helidon.common.media.type.MediaType;
 /**
  * MCP resource link content.
  */
-public sealed interface McpResourceLinkContent extends McpContent permits McpResourceLinkContentImpl {
+interface McpResourceLinkContent extends McpContent {
     /**
      * Resource URI.
      *
@@ -65,153 +65,8 @@ public sealed interface McpResourceLinkContent extends McpContent permits McpRes
      */
     Optional<Long> size();
 
-    /**
-     * Create an MCP resource link content builder instance.
-     *
-     * @return resource link content builder instance
-     */
-    static McpResourceLinkContent.Builder builder() {
-        return new McpResourceLinkContent.Builder();
-    }
-
-    /**
-     * MCP resource link content builder.
-     */
-    final class Builder {
-        private Long size;
-        private String uri;
-        private String name;
-        private String title;
-        private String description;
-        private MediaType mediaType;
-
-        /**
-         * Set resource link uri.
-         *
-         * @param uri the uri
-         * @return this builder
-         */
-        public Builder uri(String uri) {
-            this.uri = uri;
-            return this;
-        }
-
-        /**
-         * Set resource link name.
-         *
-         * @param name the name
-         * @return this builder
-         */
-        public Builder name(String name) {
-            this.name = name;
-            return this;
-        }
-
-        /**
-         * Set resource link size.
-         *
-         * @param size the size
-         * @return this builder
-         */
-        public Builder size(long size) {
-            this.size = size;
-            return this;
-        }
-
-        /**
-         * Set resource link title.
-         *
-         * @param title the title
-         * @return this builder
-         */
-        public Builder title(String title) {
-            this.title = title;
-            return this;
-        }
-
-        /**
-         * Set resource link description.
-         *
-         * @param description the description
-         * @return this builder
-         */
-        public Builder description(String description) {
-            this.description = description;
-            return this;
-        }
-
-        /**
-         * Set resource link media type.
-         *
-         * @param mediaType the media type
-         * @return this builder
-         */
-        public Builder mediaType(MediaType mediaType) {
-            this.mediaType = mediaType;
-            return this;
-        }
-
-        /**
-         * Get resource link uri.
-         *
-         * @return the uri
-         */
-        public String uri() {
-            return uri;
-        }
-
-        /**
-         * Get resource link name.
-         *
-         * @return the name
-         */
-        public String name() {
-            return name;
-        }
-
-        /**
-         * Get resource link size.
-         *
-         * @return the size
-         */
-        public Long size() {
-            return size;
-        }
-
-        /**
-         * Get resource link title.
-         *
-         * @return the title
-         */
-        public String title() {
-            return title;
-        }
-
-        /**
-         * Get resource link description.
-         *
-         * @return the description
-         */
-        public String description() {
-            return description;
-        }
-
-        /**
-         * Get resource link media type.
-         *
-         * @return the media type
-         */
-        public MediaType mediaType() {
-            return mediaType;
-        }
-
-        /**
-         * Build an instance of {@link io.helidon.extensions.mcp.server.McpResourceLinkContent}.
-         *
-         * @return the instance
-         */
-        public McpResourceLinkContent build() {
-            return new McpResourceLinkContentImpl(this);
-        }
+    @Override
+    default McpContentType type() {
+        return McpContentType.RESOURCE_LINK;
     }
 }

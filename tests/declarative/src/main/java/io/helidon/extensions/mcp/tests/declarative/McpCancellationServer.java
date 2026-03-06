@@ -16,29 +16,23 @@
 
 package io.helidon.extensions.mcp.tests.declarative;
 
-import java.util.List;
-
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.extensions.mcp.server.Mcp;
 import io.helidon.extensions.mcp.server.McpCancellation;
 import io.helidon.extensions.mcp.server.McpLogger;
-import io.helidon.extensions.mcp.server.McpPromptContent;
-import io.helidon.extensions.mcp.server.McpPromptContents;
+import io.helidon.extensions.mcp.server.McpPromptResult;
 import io.helidon.extensions.mcp.server.McpRequest;
-import io.helidon.extensions.mcp.server.McpResourceContent;
-import io.helidon.extensions.mcp.server.McpResourceContents;
-import io.helidon.extensions.mcp.server.McpRole;
-import io.helidon.extensions.mcp.server.McpToolContent;
-import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpResourceResult;
+import io.helidon.extensions.mcp.server.McpToolResult;
 
 @Mcp.Server
 @Mcp.Path("/cancellation")
 class McpCancellationServer {
 
     @Mcp.Tool("Cancellation Tool")
-    List<McpToolContent> cancellationTool(McpCancellation cancellation) {
+    McpToolResult cancellationTool(McpCancellation cancellation) {
         String reason = cancellation.result().reason();
-        return List.of(McpToolContents.textContent(reason));
+        return McpToolResult.builder().addTextContent(reason).build();
     }
 
     @Mcp.Tool("Cancellation Tool")
@@ -47,9 +41,9 @@ class McpCancellationServer {
     }
 
     @Mcp.Prompt("Cancellation Prompt")
-    List<McpPromptContent> cancellationPrompt(McpCancellation cancellation) {
+    McpPromptResult cancellationPrompt(McpCancellation cancellation) {
         String reason = cancellation.result().reason();
-        return List.of(McpPromptContents.textContent(reason, McpRole.USER));
+        return McpPromptResult.builder().addTextContent(reason).build();
     }
 
     @Mcp.Prompt("Cancellation Prompt")
@@ -60,9 +54,9 @@ class McpCancellationServer {
     @Mcp.Resource(uri = "file://cancellation",
                   mediaType = MediaTypes.TEXT_PLAIN_VALUE,
                   description = "Cancellation Resource")
-    List<McpResourceContent> cancellationResource(McpCancellation cancellation) {
+    McpResourceResult cancellationResource(McpCancellation cancellation) {
         String reason = cancellation.result().reason();
-        return List.of(McpResourceContents.textContent(reason));
+        return McpResourceResult.builder().addTextContent(reason).build();
     }
 
     @Mcp.Resource(uri = "file://cancellation1",

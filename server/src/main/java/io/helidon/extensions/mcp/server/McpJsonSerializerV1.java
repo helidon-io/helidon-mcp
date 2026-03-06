@@ -56,7 +56,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     private final ReentrantLock lock = new ReentrantLock();
 
     @Override
-    public JsonObjectBuilder toJson(Set<McpCapability> capabilities, McpServerConfig config) {
+    public JsonObjectBuilder createJsonInitializeResponse(Set<McpCapability> capabilities, McpServerConfig config) {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("protocolVersion", McpProtocolVersion.VERSION_2024_11_05.text())
                 .add("capabilities", JSON_BUILDER_FACTORY.createObjectBuilder()
@@ -108,18 +108,15 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     }
 
     @Override
-    public JsonObjectBuilder toolCall(McpTool tool, McpToolResult result) {
+    public JsonObject toolCall(McpTool tool, McpToolResult result) {
         JsonArrayBuilder array = JSON_BUILDER_FACTORY.createArrayBuilder();
-        for (McpToolContent content : result.contents()) {
-            if (content instanceof McpToolResourceContent trc) {
-                toJson(trc).ifPresent(array::add);
-            } else {
-                toJson(content.content()).ifPresent(array::add);
-            }
+        for (McpToolContent content : McpToolSupport.aggregateContent(result)) {
+            toJson(content).ifPresent(array::add);
         }
         return JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("content", array)
-                .add("isError", result.error());
+                .add("isError", result.error())
+                .build();
     }
 
     @Override
@@ -179,11 +176,25 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     }
 
     @Override
-    public Optional<JsonObjectBuilder> toJson(McpToolResourceContent content) {
-        return toJson(content.content())
-                .map(resource -> JSON_BUILDER_FACTORY.createObjectBuilder()
-                        .add("type", content.type().text())
-                        .add("resource", resource.add("uri", content.uri().toASCIIString())));
+    public JsonObjectBuilder toJson(McpEmbeddedTextResourceContent content) {
+        var resource = JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("uri", content.uri().toASCIIString())
+                .add("mimeType", content.mediaType().text())
+                .add("text", content.text());
+        return JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("type", content.type().text())
+                .add("resource", resource);
+    }
+
+    @Override
+    public JsonObjectBuilder toJson(McpEmbeddedBinaryResourceContent content) {
+        var resource = JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("uri", content.uri().toASCIIString())
+                .add("mimeType", content.mediaType().text())
+                .add("blob", content.base64Data());
+        return JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("type", content.type().text())
+                .add("resource", resource);
     }
 
     @Override
@@ -225,38 +236,38 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     }
 
     @Override
-    public JsonObject readResource(String uri, List<McpResourceContent> contents) {
+    public JsonObject resourceRead(String uri, McpResourceResult result) {
         JsonArrayBuilder array = JSON_BUILDER_FACTORY.createArrayBuilder();
-        for (McpResourceContent content : contents) {
-            JsonObjectBuilder builder = toJson(content);
-            builder.add("uri", uri);
-            array.add(builder);
+        for (McpResourceContent content : McpResourceSupport.aggregateContent(result)) {
+            toJson(content).map(builder -> builder.add("uri", uri)).ifPresent(array::add);
         }
         return JSON_BUILDER_FACTORY.createObjectBuilder().add("contents", array).build();
     }
 
     @Override
-    public JsonObject toJson(List<McpPromptContent> contents, String description) {
+    public JsonObject promptGet(McpPromptResult result) {
         JsonArrayBuilder array = JSON_BUILDER_FACTORY.createArrayBuilder();
-        for (McpPromptContent prompt : contents) {
+        JsonObjectBuilder object = JSON_BUILDER_FACTORY.createObjectBuilder();
+        for (McpPromptContent prompt : McpPromptSupport.aggregateContent(result)) {
             toJson(prompt).ifPresent(array::add);
         }
-        return JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("description", description)
-                .add("messages", array)
-                .build();
+        result.description().ifPresent(description -> object.add("description", description));
+        return object.add("messages", array).build();
     }
 
     @Override
     public Optional<JsonObjectBuilder> toJson(McpPromptContent content) {
-        if (content instanceof McpPromptImageContent image) {
-            return toJson(image);
-        }
         if (content instanceof McpPromptTextContent text) {
-            return toJson(text);
+            return Optional.of(toJson(text));
         }
-        if (content instanceof McpPromptResourceContent resource) {
-            return toJson(resource);
+        if (content instanceof McpPromptImageContent image) {
+            return Optional.of(toJson(image));
+        }
+        if (content instanceof McpPromptTextResourceContent text) {
+            return Optional.of(toJson(text));
+        }
+        if (content instanceof McpPromptBinaryResourceContent binary) {
+            return Optional.of(toJson(binary));
         }
         return Optional.empty();
     }
@@ -269,70 +280,71 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
         if (content instanceof McpImageContent image) {
             return Optional.of(toJson(image));
         }
-        if (content instanceof McpResourceContent resource) {
-            return Optional.of(toJson(resource));
+        if (content instanceof McpEmbeddedTextResourceContent text) {
+            return Optional.of(toJson(text));
+        }
+        if (content instanceof McpEmbeddedBinaryResourceContent binary) {
+            return Optional.of(toJson(binary));
         }
         return Optional.empty();
     }
 
     @Override
     public JsonObjectBuilder toJson(McpSamplingMessage message) {
-        if (message instanceof McpSamplingTextMessageImpl text) {
+        if (message instanceof McpSamplingTextMessage text) {
             return toJson(text);
         }
-        if (message instanceof McpSamplingImageMessageImpl image) {
+        if (message instanceof McpSamplingImageMessage image) {
             return toJson(image);
         }
-        if (message instanceof McpSamplingAudioMessageImpl resource) {
+        if (message instanceof McpSamplingAudioMessage resource) {
             return toJson(resource);
         }
         throw new IllegalArgumentException("Unsupported content type: " + message.getClass().getName());
     }
 
     @Override
-    public JsonObjectBuilder toJson(McpResourceContent content) {
+    public Optional<JsonObjectBuilder> toJson(McpResourceContent content) {
         if (content instanceof McpResourceTextContent text) {
-            return toJson(text);
+            return Optional.of(toJson(text));
         }
         if (content instanceof McpResourceBinaryContent binary) {
-            return toJson(binary);
+            return Optional.of(toJson(binary));
         }
-        throw new IllegalArgumentException("Unsupported content type: " + content.getClass().getName());
+        return Optional.empty();
     }
 
     @Override
-    public Optional<JsonObjectBuilder> toJson(McpPromptResourceContent resource) {
-        return toJson(resource.content())
-                .map(contentBuilder -> JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("role", resource.role().text())
-                .add("content", JSON_BUILDER_FACTORY.createObjectBuilder()
-                        .add("type", resource.type().text())
-                        .add("resource", contentBuilder
-                                .add("uri", resource.uri().toASCIIString()))));
+    public JsonObjectBuilder toJson(McpPromptImageContent image) {
+        return JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("role", image.role().text())
+                .add("content", toJson((McpImageContent) image));
     }
 
     @Override
-    public Optional<JsonObjectBuilder> toJson(McpPromptImageContent image) {
-        return toJson(image.content())
-                .map(content -> JSON_BUILDER_FACTORY.createObjectBuilder()
-                        .add("role", image.role().text())
-                        .add("content", content));
+    public JsonObjectBuilder toJson(McpPromptTextResourceContent text) {
+        var builder = JSON_BUILDER_FACTORY.createObjectBuilder();
+        var content = toJson((McpEmbeddedTextResourceContent) text);
+        return builder.add("role", text.role().text()).add("content", content);
     }
 
     @Override
-    public Optional<JsonObjectBuilder> toJson(McpPromptTextContent content) {
-        return toJson(content.content())
-                .map(contentBuilder -> JSON_BUILDER_FACTORY.createObjectBuilder()
-                        .add("role", content.role().text())
-                        .add("content", contentBuilder));
+    public JsonObjectBuilder toJson(McpPromptBinaryResourceContent binary) {
+        var builder = JSON_BUILDER_FACTORY.createObjectBuilder();
+        var content = toJson((McpEmbeddedBinaryResourceContent) binary);
+        return builder.add("role", binary.role().text()).add("content", content);
+    }
+
+    @Override
+    public JsonObjectBuilder toJson(McpPromptTextContent content) {
+        return JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("role", content.role().text())
+                .add("content", toJson((McpTextContent) content));
     }
 
     @Override
     public Optional<JsonObjectBuilder> toJson(McpPromptAudioContent audio) {
-        return toJson(audio.content())
-                .map(content -> JSON_BUILDER_FACTORY.createObjectBuilder()
-                        .add("role", audio.role().text())
-                        .add("content", content));
+        return Optional.empty();
     }
 
     @Override
@@ -387,19 +399,19 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     @Override
     public JsonObjectBuilder toJson(McpResourceBinaryContent content) {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("mimeType", content.mimeType().text())
+                .add("mimeType", content.mediaType().text())
                 .add("blob", content.base64Data());
     }
 
     @Override
     public JsonObjectBuilder toJson(McpResourceTextContent content) {
         return JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("mimeType", content.mimeType().text())
+                .add("mimeType", content.mediaType().text())
                 .add("text", content.text());
     }
 
     @Override
-    public JsonObject toJson(McpProgress progress, int newProgress, String message) {
+    public JsonObject progressNotification(McpProgress progress, int newProgress, String message) {
         JsonObjectBuilder params = JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("progress", newProgress)
                 .add("total", progress.total());
@@ -430,12 +442,13 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     }
 
     @Override
-    public JsonObject toJson(McpCompletionContent content) {
+    public JsonObject completionComplete(McpCompletionResult result) {
+        var builder = JSON_BUILDER_FACTORY.createObjectBuilder()
+                .add("values", JSON_BUILDER_FACTORY.createArrayBuilder(result.values()));
+        result.hasMore().ifPresent(hasMore -> builder.add("hasMore", hasMore));
+        result.total().ifPresent(total -> builder.add("total", total));
         return JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("completion", JSON_BUILDER_FACTORY.createObjectBuilder()
-                        .add("values", JSON_BUILDER_FACTORY.createArrayBuilder(content.values()))
-                        .add("total", content.total())
-                        .add("hasMore", content.hasMore()))
+                .add("completion", builder)
                 .build();
     }
 
@@ -458,7 +471,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
         request.intelligencePriority().map(intelligence -> modelPreference.add("intelligencePriority", intelligence));
         params.add("modelPreference", modelPreference);
 
-        request.messages().stream()
+        McpSamplingSupport.aggregate(request).stream()
                 .map(this::toJson)
                 .forEach(messages::add);
         params.add("messages", messages);
@@ -522,7 +535,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     }
 
     @Override
-    public JsonObject timeoutResponse(long requestId) {
+    public JsonObject jsonrpcErrorTimeoutResponse(long requestId) {
         var error = JSON_BUILDER_FACTORY.createObjectBuilder()
                 .add("code", INTERNAL_ERROR)
                 .add("message", "response timeout");
@@ -593,16 +606,16 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
         String type = object.getString("type").toUpperCase();
         McpSamplingMessageType messageType = McpSamplingMessageType.valueOf(type);
         return switch (messageType) {
-            case TEXT -> new McpSamplingTextMessageImpl(object.getString("text"), role);
+            case TEXT -> McpSamplingTextMessage.builder().text(object.getString("text")).role(role).build();
             case IMAGE -> {
                 byte[] data = object.getString("data").getBytes(StandardCharsets.UTF_8);
                 MediaType mediaType = MediaTypes.create(object.getString("mimeType"));
-                yield new McpSamplingImageMessageImpl(data, mediaType, role);
+                yield McpSamplingImageMessage.builder().data(data).mediaType(mediaType).role(role).build();
             }
             case AUDIO -> {
                 byte[] data = object.getString("data").getBytes(StandardCharsets.UTF_8);
                 MediaType mediaType = MediaTypes.create(object.getString("mimeType"));
-                yield new McpSamplingAudioMessageImpl(data, mediaType, role);
+                yield McpSamplingAudioMessage.builder().data(data).mediaType(mediaType).role(role).build();
             }
         };
     }

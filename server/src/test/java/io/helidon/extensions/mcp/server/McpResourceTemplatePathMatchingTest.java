@@ -16,7 +16,6 @@
 
 package io.helidon.extensions.mcp.server;
 
-import java.util.List;
 import java.util.regex.PatternSyntaxException;
 
 import io.helidon.common.media.type.MediaTypes;
@@ -28,16 +27,16 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 
 class McpResourceTemplatePathMatchingTest {
-    private final McpResource.Builder builder = McpResource.builder()
+    private final McpResourceConfig.Builder builder = McpResourceConfig.builder()
             .name("name")
             .description("description")
             .mediaType(MediaTypes.TEXT_PLAIN)
-            .resource(this::resource);
+            .resource(request -> McpResourceResult.create());
 
     @Test
     void testSingleVariablePath() {
         var resource = builder.uri("https://{path}").build();
-        McpResourceTemplate template = new McpResourceTemplate(resource);
+        McpResourceTemplate template = new McpResourceTemplate(new McpResourceImpl(resource));
 
         assertThat(template.matches("https://foo"), is(true));
         assertThat(template.matches("https://foo/"), is(false));
@@ -55,7 +54,7 @@ class McpResourceTemplatePathMatchingTest {
     @Test
     void testMultipleVariablePath() {
         var resource = builder.uri("https://{path}/{path1}").build();
-        McpResourceTemplate template = new McpResourceTemplate(resource);
+        McpResourceTemplate template = new McpResourceTemplate(new McpResourceImpl(resource));
 
         assertThat(template.matches("https://foo/bar"), is(true));
         assertThat(template.matches("https://foo-bar/foo-bar"), is(true));
@@ -73,7 +72,7 @@ class McpResourceTemplatePathMatchingTest {
     void testWrongVariablePath() {
         var resource = builder.uri("https://{path/path1}").build();
         try {
-            McpResourceTemplate template = new McpResourceTemplate(resource);
+            McpResourceTemplate template = new McpResourceTemplate(new McpResourceImpl(resource));
         } catch (PatternSyntaxException e) {
             assertThat(e.getMessage(), startsWith("Illegal repetition near index 9"));
         }
@@ -83,13 +82,9 @@ class McpResourceTemplatePathMatchingTest {
     void testWrongPath() {
         var resource = builder.uri("https://{path/path1").build();
         try {
-            McpResourceTemplate template = new McpResourceTemplate(resource);
+            McpResourceTemplate template = new McpResourceTemplate(new McpResourceImpl(resource));
         } catch (PatternSyntaxException e) {
             assertThat(e.getMessage(), startsWith("Illegal repetition near index 9"));
         }
-    }
-
-    private List<McpResourceContent> resource(McpRequest request) {
-        return List.of();
     }
 }

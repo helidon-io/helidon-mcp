@@ -16,44 +16,39 @@
 
 package io.helidon.extensions.mcp.tests.declarative;
 
-import java.util.List;
-
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.extensions.mcp.server.Mcp;
-import io.helidon.extensions.mcp.server.McpCompletionContent;
-import io.helidon.extensions.mcp.server.McpCompletionContents;
-import io.helidon.extensions.mcp.server.McpPromptContent;
-import io.helidon.extensions.mcp.server.McpPromptContents;
-import io.helidon.extensions.mcp.server.McpResourceContent;
-import io.helidon.extensions.mcp.server.McpResourceContents;
-import io.helidon.extensions.mcp.server.McpRole;
-import io.helidon.extensions.mcp.server.McpToolContent;
-import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpCompletionResult;
+import io.helidon.extensions.mcp.server.McpPromptResult;
+import io.helidon.extensions.mcp.server.McpResourceResult;
+import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.json.schema.JsonSchema;
 
 @Mcp.Server("mcp-weather-server")
 class McpMixedComponentServer {
 
     @Mcp.Tool("Tool description")
-    List<McpToolContent> weatherAlert(String state, Alert alert) {
-        return List.of(McpToolContents.textContent("state: %s, alert name: %s".formatted(state, alert.name)));
+    McpToolResult weatherAlert(String state, Alert alert) {
+        return McpToolResult.builder()
+                .addTextContent("state: %s, alert name: %s".formatted(state, alert.name))
+                .build();
     }
 
     @Mcp.Prompt("Prompt description")
-    List<McpPromptContent> weatherInTown(@Mcp.Description("town's name") String town) {
-        return List.of(McpPromptContents.textContent("Town: " + town, McpRole.USER));
+    McpPromptResult weatherInTown(@Mcp.Description("town's name") String town) {
+        return McpPromptResult.builder().addTextContent("Town: " + town).build();
     }
 
     @Mcp.Resource(uri = "resource:resource",
                   mediaType = MediaTypes.TEXT_PLAIN_VALUE,
                   description = "Resource description")
-    List<McpResourceContent> weatherAlerts() {
-        return List.of(McpResourceContents.textContent("Resource content"));
+    McpResourceResult weatherAlerts() {
+        return McpResourceResult.builder().addTextContent("Resource content").build();
     }
 
     @Mcp.Completion("weatherInTown")
-    McpCompletionContent completion() {
-        return McpCompletionContents.completion();
+    McpCompletionResult completion() {
+        return McpCompletionResult.create();
     }
 
     @JsonSchema.Schema

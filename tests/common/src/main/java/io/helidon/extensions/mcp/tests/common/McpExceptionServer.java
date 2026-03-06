@@ -16,22 +16,23 @@
 package io.helidon.extensions.mcp.tests.common;
 
 import java.util.List;
-import java.util.function.Function;
 
 import io.helidon.common.media.type.MediaType;
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.extensions.mcp.server.McpCompletion;
-import io.helidon.extensions.mcp.server.McpCompletionContent;
 import io.helidon.extensions.mcp.server.McpCompletionRequest;
+import io.helidon.extensions.mcp.server.McpCompletionResult;
 import io.helidon.extensions.mcp.server.McpException;
 import io.helidon.extensions.mcp.server.McpPrompt;
 import io.helidon.extensions.mcp.server.McpPromptArgument;
-import io.helidon.extensions.mcp.server.McpPromptContent;
-import io.helidon.extensions.mcp.server.McpRequest;
+import io.helidon.extensions.mcp.server.McpPromptRequest;
+import io.helidon.extensions.mcp.server.McpPromptResult;
 import io.helidon.extensions.mcp.server.McpResource;
-import io.helidon.extensions.mcp.server.McpResourceContent;
+import io.helidon.extensions.mcp.server.McpResourceRequest;
+import io.helidon.extensions.mcp.server.McpResourceResult;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
+import io.helidon.extensions.mcp.server.McpToolRequest;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.webserver.http.HttpRouting;
 
@@ -81,10 +82,8 @@ public class McpExceptionServer {
         }
 
         @Override
-        public Function<McpRequest, McpToolResult> tool() {
-            return request -> {
-                throw new McpException(INTERNAL_ERROR, MESSAGE);
-            };
+        public McpToolResult tool(McpToolRequest request) {
+            throw new McpException(INTERNAL_ERROR, MESSAGE);
         }
     }
 
@@ -100,11 +99,9 @@ public class McpExceptionServer {
         }
 
         @Override
-        public Function<McpRequest, McpToolResult> tool() {
-            return request -> {
-                request.features().logger().info("Switching to the SSE channel");
-                throw new McpException(INTERNAL_ERROR, MESSAGE);
-            };
+        public McpToolResult tool(McpToolRequest request) {
+            request.features().logger().info("Switching to the SSE channel");
+            throw new McpException(INTERNAL_ERROR, MESSAGE);
         }
     }
 
@@ -132,10 +129,8 @@ public class McpExceptionServer {
         }
 
         @Override
-        public Function<McpRequest, List<McpResourceContent>> resource() {
-            return request -> {
-                throw new McpException(INTERNAL_ERROR, MESSAGE);
-            };
+        public McpResourceResult resource(McpResourceRequest request) {
+            throw new McpException(INTERNAL_ERROR, MESSAGE);
         }
     }
 
@@ -146,11 +141,9 @@ public class McpExceptionServer {
         }
 
         @Override
-        public Function<McpRequest, List<McpResourceContent>> resource() {
-            return request -> {
-                request.features().logger().info("Switching to the SSE channel");
-                throw new McpException(INTERNAL_ERROR, MESSAGE);
-            };
+        public McpResourceResult resource(McpResourceRequest request) {
+            request.features().logger().info("Switching to the SSE channel");
+            throw new McpException(INTERNAL_ERROR, MESSAGE);
         }
     }
 
@@ -173,10 +166,8 @@ public class McpExceptionServer {
         }
 
         @Override
-        public Function<McpRequest, List<McpPromptContent>> prompt() {
-            return request -> {
-                throw new McpException(INTERNAL_ERROR, MESSAGE);
-            };
+        public McpPromptResult prompt(McpPromptRequest request) {
+            throw new McpException(INTERNAL_ERROR, MESSAGE);
         }
     }
 
@@ -187,11 +178,9 @@ public class McpExceptionServer {
         }
 
         @Override
-        public Function<McpRequest, List<McpPromptContent>> prompt() {
-            return request -> {
-                request.features().logger().info("Switching to the SSE channel");
-                throw new McpException(INTERNAL_ERROR, MESSAGE);
-            };
+        public McpPromptResult prompt(McpPromptRequest request) {
+            request.features().logger().info("Switching to the SSE channel");
+            throw new McpException(INTERNAL_ERROR, MESSAGE);
         }
     }
 
@@ -204,10 +193,8 @@ public class McpExceptionServer {
         }
 
         @Override
-        public Function<McpCompletionRequest, McpCompletionContent> completion() {
-            return request -> {
-                throw new McpException(INTERNAL_ERROR, MESSAGE);
-            };
+        public McpCompletionResult completion(McpCompletionRequest request) {
+            throw new McpException(INTERNAL_ERROR, MESSAGE);
         }
     }
 
@@ -218,11 +205,9 @@ public class McpExceptionServer {
         }
 
         @Override
-        public Function<McpCompletionRequest, McpCompletionContent> completion() {
-            return request -> {
-                request.features().logger().info("Switching to the SSE channel");
-                throw new McpException(INTERNAL_ERROR, MESSAGE);
-            };
+        public McpCompletionResult completion(McpCompletionRequest request) {
+            request.features().logger().info("Switching to the SSE channel");
+            throw new McpException(INTERNAL_ERROR, MESSAGE);
         }
     }
 }

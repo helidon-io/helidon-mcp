@@ -16,12 +16,8 @@
 
 package io.helidon.extensions.mcp.examples.calendar;
 
-import java.util.function.Function;
-
-import io.helidon.extensions.mcp.server.McpParameters;
-import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpTool;
-import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpToolRequest;
 import io.helidon.extensions.mcp.server.McpToolResult;
 
 /**
@@ -64,17 +60,15 @@ final class ListCalendarEventTool implements McpTool {
     }
 
     @Override
-    public Function<McpRequest, McpToolResult> tool() {
-        return request -> {
-            McpParameters mcpParameters = request.parameters();
-            String date = mcpParameters.get("date")
-                    .asString()
-                    .orElse(null);
-            String entries = calendar.readContentMatchesLine(line -> date == null || line.contains(date));
+    public McpToolResult tool(McpToolRequest request) {
+        String date = request.arguments()
+                .get("date")
+                .asString()
+                .orElse(null);
+        String entries = calendar.readContentMatchesLine(line -> date == null || line.contains(date));
 
-            return McpToolResult.builder()
-                    .addContent(McpToolContents.textContent(entries))
-                    .build();
-        };
+        return McpToolResult.builder()
+                .addTextContent(entries)
+                .build();
     }
 }

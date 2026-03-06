@@ -16,28 +16,26 @@
 
 package io.helidon.extensions.mcp.tests.declarative;
 
-import java.util.List;
-
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.extensions.mcp.server.Mcp;
-import io.helidon.extensions.mcp.server.McpPromptContent;
+import io.helidon.extensions.mcp.server.McpPromptResult;
 import io.helidon.extensions.mcp.server.McpRequest;
-import io.helidon.extensions.mcp.server.McpResourceContent;
+import io.helidon.extensions.mcp.server.McpResourceResult;
 import io.helidon.extensions.mcp.server.McpSampling;
-import io.helidon.extensions.mcp.server.McpToolContent;
+import io.helidon.extensions.mcp.server.McpToolResult;
 
 @Mcp.Server
 @Mcp.Path("/sampling")
 class McpSamplingServer {
 
     @Mcp.Tool("Sampling tool")
-    List<McpToolContent> tool(McpSampling sampling) {
-        return List.of();
+    McpToolResult tool(McpSampling sampling) {
+        return McpToolResult.create();
     }
 
     @Mcp.Tool("Sampling tool")
-    List<McpToolContent> tool1(McpSampling sampling, String value) {
-        return List.of();
+    McpToolResult tool1(McpSampling sampling, String value) {
+        return McpToolResult.create();
     }
 
     @Mcp.Tool("Sampling tool")
@@ -51,13 +49,13 @@ class McpSamplingServer {
     }
 
     @Mcp.Prompt("Sampling prompt")
-    List<McpPromptContent> prompt(McpSampling sampling) {
-        return List.of();
+    McpPromptResult prompt(McpSampling sampling) {
+        return McpPromptResult.create();
     }
 
     @Mcp.Prompt("Sampling prompt")
-    List<McpPromptContent> prompt1(McpSampling sampling, String value) {
-        return List.of();
+    McpPromptResult prompt1(McpSampling sampling, String value) {
+        return McpPromptResult.create();
     }
 
     @Mcp.Prompt("Sampling prompt")
@@ -73,15 +71,15 @@ class McpSamplingServer {
     @Mcp.Resource(uri = "https://example.com",
                   description = "Sampling resource",
                   mediaType = MediaTypes.TEXT_PLAIN_VALUE)
-    List<McpResourceContent> resource(McpSampling sampling) {
-        return List.of();
+    McpResourceResult resource(McpSampling sampling) {
+        return McpResourceResult.create();
     }
 
     @Mcp.Resource(uri = "https://example.com",
                   description = "Sampling resource",
                   mediaType = MediaTypes.TEXT_PLAIN_VALUE)
-    List<McpResourceContent> resource1(McpSampling sampling, McpRequest request) {
-        return List.of();
+    McpResourceResult resource1(McpSampling sampling, McpRequest request) {
+        return McpResourceResult.create();
     }
 
     @Mcp.Resource(uri = "https://example.com",

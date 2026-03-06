@@ -68,9 +68,9 @@ class McpSession {
         this.sessions = sessions;
         this.clientCapabilities = new HashSet<>();
         this.featureListeners = new CopyOnWriteArrayList<>();
-        this.featureListeners.add(new McpProgress.McpProgressListener());
+        this.featureListeners.add(McpProgress.McpProgressListener.create());
         this.sessionFeatures = LazyValue.create(() -> new McpSessionFeatures(this));
-        context.register(McpServerConfigBlueprint.class, config);
+        this.context.register(McpServerConfigBlueprint.class, config);
     }
 
     void send(JsonValue id, JsonRpcResponse response) {
@@ -116,7 +116,7 @@ class McpSession {
     void afterFeatureRequest(McpParameters parameters, JsonValue requestId) {
         features.get(requestId).ifPresent(feature -> {
             for (McpFeatureLifecycle listener : featureListeners) {
-                listener.beforeRequest(parameters, feature);
+                listener.afterRequest(parameters, feature);
             }
         });
     }
@@ -150,7 +150,7 @@ class McpSession {
                         return response;
                     }
                 } else {
-                    return serializer.timeoutResponse(requestId);
+                    return serializer.jsonrpcErrorTimeoutResponse(requestId);
                 }
             } catch (ClassCastException e) {
                 if (LOGGER.isLoggable(Level.TRACE)) {

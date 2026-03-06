@@ -15,19 +15,15 @@
  */
 package io.helidon.extensions.mcp.tests.common;
 
-import java.util.List;
-
 import io.helidon.common.media.type.MediaType;
 import io.helidon.common.media.type.MediaTypes;
-import io.helidon.extensions.mcp.server.McpCompletionContents;
-import io.helidon.extensions.mcp.server.McpPromptContent;
-import io.helidon.extensions.mcp.server.McpPromptContents;
-import io.helidon.extensions.mcp.server.McpRequest;
-import io.helidon.extensions.mcp.server.McpResourceContent;
-import io.helidon.extensions.mcp.server.McpResourceContents;
-import io.helidon.extensions.mcp.server.McpRole;
+import io.helidon.extensions.mcp.server.McpCompletionResult;
+import io.helidon.extensions.mcp.server.McpPromptRequest;
+import io.helidon.extensions.mcp.server.McpPromptResult;
+import io.helidon.extensions.mcp.server.McpResourceRequest;
+import io.helidon.extensions.mcp.server.McpResourceResult;
 import io.helidon.extensions.mcp.server.McpServerFeature;
-import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpToolRequest;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.webserver.http.HttpRouting;
 
@@ -130,23 +126,30 @@ public class McpWeather {
 
                                    .addCompletion(completion -> completion
                                            .reference(PROMPT_NAME)
-                                           .completion(request -> McpCompletionContents.completion("foo"))));
+                                           .completion(request -> McpCompletionResult.builder()
+                                                   .addValue("foo")
+                                                   .total(1)
+                                                   .build())));
     }
 
-    static McpToolResult process(McpRequest request) {
-        String town = request.parameters().get("town").asString().orElse("unknown");
+    static McpToolResult process(McpToolRequest request) {
+        String town = request.arguments().get("town").asString().orElse("unknown");
         return McpToolResult.builder()
-                .addContent(McpToolContents.textContent("There is a hurricane in " + town))
+                .addTextContent("There is a hurricane in " + town)
                 .build();
     }
 
-    static List<McpPromptContent> prompt(McpRequest request) {
-        String town = request.parameters().get("town").asString().orElse("unknown");
+    static McpPromptResult prompt(McpPromptRequest request) {
+        String town = request.arguments().get("town").asString().orElse("unknown");
         String content = "What is the weather like in %s ?".formatted(town);
-        return List.of(McpPromptContents.textContent(content, McpRole.USER));
+        return McpPromptResult.builder()
+                .addTextContent(content)
+                .build();
     }
 
-    static List<McpResourceContent> read(McpRequest features) {
-        return List.of(McpResourceContents.textContent("There are severe weather alerts in Praha"));
+    static McpResourceResult read(McpResourceRequest features) {
+        return McpResourceResult.builder()
+                .addTextContent("There are severe weather alerts in Praha")
+                .build();
     }
 }

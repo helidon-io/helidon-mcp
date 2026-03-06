@@ -17,26 +17,23 @@ package io.helidon.extensions.mcp.tests.common;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.function.Function;
+import java.util.Optional;
 
 import io.helidon.common.media.type.MediaTypes;
-import io.helidon.extensions.mcp.server.McpContent;
+import io.helidon.extensions.mcp.server.McpContentType;
 import io.helidon.extensions.mcp.server.McpException;
-import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpSampling;
 import io.helidon.extensions.mcp.server.McpSamplingException;
-import io.helidon.extensions.mcp.server.McpSamplingMessage;
-import io.helidon.extensions.mcp.server.McpSamplingMessages;
+import io.helidon.extensions.mcp.server.McpSamplingRequest;
 import io.helidon.extensions.mcp.server.McpSamplingResponse;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
-import io.helidon.extensions.mcp.server.McpToolErrorException;
+import io.helidon.extensions.mcp.server.McpToolRequest;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.json.schema.Schema;
 import io.helidon.webserver.http.HttpRouting;
 
 import static io.helidon.extensions.mcp.server.McpRole.USER;
-import static io.helidon.extensions.mcp.server.McpToolContents.textContent;
 
 /**
  * Sampling server.
@@ -78,40 +75,52 @@ public class SamplingServer {
         }
 
         @Override
-        public Function<McpRequest, McpToolResult> tool() {
-            return this::sampling;
+        public McpToolResult tool(McpToolRequest request) {
+            return sampling(request);
         }
 
-        McpToolResult sampling(McpRequest request) {
+        McpToolResult sampling(McpToolRequest request) {
             McpSampling sampling = request.features().sampling();
-            McpContent.ContentType requestType = request.parameters()
+            Optional<McpContentType> requestType = request.arguments()
                     .get("type")
                     .asString()
                     .map(String::toUpperCase)
-                    .map(McpContent.ContentType::valueOf)
-                    .orElseThrow(() -> new McpToolErrorException("Error while parsing content type"));
+                    .map(McpContentType::valueOf);
 
-            McpSamplingMessage message = createMessage(requestType);
-            McpSamplingResponse response = sampling.request(req -> req.addMessage(message));
+            if (requestType.isEmpty()) {
+                return McpToolResult.builder()
+                        .addTextContent("Error while parsing content type")
+                        .error(true)
+                        .build();
+            }
+
+            McpSamplingRequest message = createMessage(requestType.get());
+            McpSamplingResponse response = sampling.request(message);
             var type = response.message().type();
             var result = McpToolResult.builder();
             return switch (type) {
-                case TEXT -> result.addContent(textContent(response.asTextMessage().text())).build();
-                case IMAGE -> result.addContent(textContent(new String(response.asImageMessage().data()))).build();
-                case AUDIO -> result.addContent(textContent(new String(response.asAudioMessage().data()))).build();
+                case TEXT -> result.addTextContent(response.asTextMessage().text()).build();
+                case IMAGE -> result.addTextContent(new String(response.asImageMessage().data())).build();
+                case AUDIO -> result.addTextContent(new String(response.asAudioMessage().data())).build();
             };
         }
 
-        McpSamplingMessage createMessage(McpContent.ContentType type) {
+        McpSamplingRequest createMessage(McpContentType type) {
             return switch (type) {
-                case TEXT -> McpSamplingMessages.textMessage("samplingMessage", USER);
-                case IMAGE -> McpSamplingMessages.imageMessage("samplingMessage".getBytes(StandardCharsets.UTF_8),
-                                                               MediaTypes.TEXT_PLAIN,
-                                                               USER);
-                case AUDIO -> McpSamplingMessages.audioMessage("samplingMessage".getBytes(StandardCharsets.UTF_8),
-                                                               MediaTypes.TEXT_PLAIN,
-                                                               USER);
-                default -> throw new McpToolErrorException(textContent("Unsupported sampling message type: " + type));
+                case TEXT -> McpSamplingRequest.builder()
+                        .addTextMessage(message -> message.text("samplingMessage").role(USER))
+                        .build();
+                case IMAGE -> McpSamplingRequest.builder()
+                        .addImageMessage(message -> message.data("samplingMessage".getBytes(StandardCharsets.UTF_8))
+                                .mediaType(MediaTypes.TEXT_PLAIN)
+                                .role(USER))
+                        .build();
+                case AUDIO -> McpSamplingRequest.builder()
+                        .addAudioMessage(message -> message.data("samplingMessage".getBytes(StandardCharsets.UTF_8))
+                                .mediaType(MediaTypes.TEXT_PLAIN)
+                                .role(USER))
+                        .build();
+                default -> throw new McpException("Unsupported sampling message type: " + type);
             };
         }
     }
@@ -123,37 +132,29 @@ public class SamplingServer {
         }
 
         @Override
-        public Function<McpRequest, McpToolResult> tool() {
-            return this::enabledSampling;
-        }
-
-        private McpToolResult enabledSampling(McpRequest request) {
+        public McpToolResult tool(McpToolRequest request) {
             McpSampling sampling = request.features().sampling();
             if (sampling.enabled()) {
                 return sampling(request);
             }
             return McpToolResult.builder()
-                    .addContent(textContent("sampling is disabled"))
+                    .addTextContent("sampling is disabled")
                     .error(true)
                     .build();
         }
     }
 
     private static class MultipleSamplingRequestTool extends SamplingTool {
-        private final McpSamplingMessage message = McpSamplingMessages.textMessage("ignored", USER);
-
         @Override
         public String name() {
             return "multiple-sampling-tool";
         }
 
         @Override
-        public Function<McpRequest, McpToolResult> tool() {
-            return request -> {
-                McpSampling sampling = request.features().sampling();
-                var response = sampling.request(req -> req.addMessage(message));
-                return sampling(request);
-            };
+        public McpToolResult tool(McpToolRequest request) {
+            McpSampling sampling = request.features().sampling();
+            var response = sampling.request(req -> req.addTextMessage(message -> message.text("ignored").role(USER)));
+            return sampling(request);
         }
     }
 
@@ -164,21 +165,19 @@ public class SamplingServer {
         }
 
         @Override
-        public Function<McpRequest, McpToolResult> tool() {
-            return request -> {
-                try {
-                    request.features()
-                            .sampling()
-                            .request(req -> req.timeout(Duration.ofSeconds(2))
-                                    .addMessage(McpSamplingMessages.textMessage("timeout", USER)));
-                    throw new McpException("Timeout should have been triggered");
-                } catch (McpSamplingException e) {
-                    return McpToolResult.builder()
-                            .addContent(textContent(e.getMessage()))
-                            .error(true)
-                            .build();
-                }
-            };
+        public McpToolResult tool(McpToolRequest request) {
+            try {
+                request.features()
+                        .sampling()
+                        .request(req -> req.timeout(Duration.ofSeconds(2))
+                                .addTextMessage(message -> message.text("timeout").role(USER)));
+                throw new McpException("Timeout should have been triggered");
+            } catch (McpSamplingException e) {
+                return McpToolResult.builder()
+                        .addTextContent(e.getMessage())
+                        .error(true)
+                        .build();
+            }
         }
     }
 
@@ -189,20 +188,18 @@ public class SamplingServer {
         }
 
         @Override
-        public Function<McpRequest, McpToolResult> tool() {
-            return request -> {
-                try {
-                    request.features()
-                            .sampling()
-                            .request(req -> req.addMessage(McpSamplingMessages.textMessage("error", USER)));
-                    throw new McpException("MCP sampling exception should have been triggered");
-                } catch (McpSamplingException e) {
-                    return McpToolResult.builder()
-                            .addContent(textContent(e.getMessage()))
-                            .error(true)
-                            .build();
-                }
-            };
+        public McpToolResult tool(McpToolRequest request) {
+            try {
+                request.features()
+                        .sampling()
+                        .request(req -> req.addTextMessage(message -> message.text("error").role(USER)));
+                throw new McpException("MCP sampling exception should have been triggered");
+            } catch (McpSamplingException e) {
+                return McpToolResult.builder()
+                        .addTextContent(e.getMessage())
+                        .error(true)
+                        .build();
+            }
         }
     }
 }

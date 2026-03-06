@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,11 @@
 
 package io.helidon.extensions.mcp.examples.calendar;
 
-import java.util.List;
-import java.util.function.Function;
-
 import io.helidon.common.media.type.MediaType;
 import io.helidon.common.media.type.MediaTypes;
-import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpResource;
-import io.helidon.extensions.mcp.server.McpResourceContent;
-import io.helidon.extensions.mcp.server.McpResourceContents;
+import io.helidon.extensions.mcp.server.McpResourceRequest;
+import io.helidon.extensions.mcp.server.McpResourceResult;
 
 /**
  * Resource template to help accessing to the event registry.
@@ -57,14 +53,12 @@ final class CalendarEventResourceTemplate implements McpResource {
     }
 
     @Override
-    public Function<McpRequest, List<McpResourceContent>> resource() {
-        return request -> {
-          String name = request.parameters()
-                  .get("name")
-                  .asString()
-                  .orElse("Unknown");
-          String content = calendar.readContentMatchesLine(line -> line.contains("name: " + name));
-          return List.of(McpResourceContents.textContent(content));
-        };
+    public McpResourceResult resource(McpResourceRequest request) {
+        String name = request.parameters()
+                .get("name")
+                .asString()
+                .orElse("Unknown");
+        String content = calendar.readContentMatchesLine(line -> line.contains("name: " + name));
+        return McpResourceResult.create(content);
     }
 }

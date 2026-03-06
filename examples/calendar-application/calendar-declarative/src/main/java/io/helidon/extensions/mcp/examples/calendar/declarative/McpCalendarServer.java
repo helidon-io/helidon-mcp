@@ -22,21 +22,17 @@ import java.util.List;
 
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.extensions.mcp.server.Mcp;
-import io.helidon.extensions.mcp.server.McpCompletionContent;
-import io.helidon.extensions.mcp.server.McpCompletionContents;
+import io.helidon.extensions.mcp.server.McpCompletionResult;
 import io.helidon.extensions.mcp.server.McpCompletionType;
 import io.helidon.extensions.mcp.server.McpException;
 import io.helidon.extensions.mcp.server.McpFeatures;
 import io.helidon.extensions.mcp.server.McpLogger;
 import io.helidon.extensions.mcp.server.McpParameters;
 import io.helidon.extensions.mcp.server.McpProgress;
-import io.helidon.extensions.mcp.server.McpPromptContent;
-import io.helidon.extensions.mcp.server.McpPromptContents;
-import io.helidon.extensions.mcp.server.McpResourceContent;
-import io.helidon.extensions.mcp.server.McpResourceContents;
+import io.helidon.extensions.mcp.server.McpPromptResult;
+import io.helidon.extensions.mcp.server.McpResourceResult;
 import io.helidon.extensions.mcp.server.McpRole;
-import io.helidon.extensions.mcp.server.McpToolContent;
-import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.service.registry.Service;
 
 @Mcp.Path("/calendar")
@@ -62,22 +58,22 @@ class McpCalendarServer {
      * @return list of calendar events
      */
     @Mcp.Tool("List calendar events")
-    List<McpToolContent> listCalendarEvents(String date) {
+    McpToolResult listCalendarEvents(String date) {
         String entries = calendar.readContentMatchesLine(
                 line -> date.isEmpty() || line.contains("date: " + date));
-        return List.of(McpToolContents.textContent(entries));
+        return McpToolResult.create(entries);
     }
 
     /**
      * Tool that adds a new calendar event with a name, date and list of
      * attendees.
      *
-     * @param features  the MCP features
-     * @param event     the event
+     * @param features the MCP features
+     * @param event    the event
      * @return text confirming event being created
      */
     @Mcp.Tool("Adds a new event to the calendar")
-    List<McpToolContent> addCalendarEvent(McpFeatures features, CalendarEvent event) {
+    McpToolResult addCalendarEvent(McpFeatures features, CalendarEvent event) {
         if (event.getName().isEmpty() || event.getDate().isEmpty() || event.getAttendees().isEmpty()) {
             throw new McpException("Missing required arguments name, date or attendees");
         }
@@ -92,7 +88,7 @@ class McpCalendarServer {
         features.subscriptions().sendUpdate(EVENTS_URI);
         progress.send(100);
 
-        return List.of(McpToolContents.textContent("New event added to the calendar"));
+        return McpToolResult.create("New event added to the calendar");
     }
 
     // -- Resources -----------------------------------------------------------
@@ -106,10 +102,10 @@ class McpCalendarServer {
     @Mcp.Resource(uri = EVENTS_URI,
                   mediaType = MediaTypes.TEXT_PLAIN_VALUE,
                   description = "List of calendar events created")
-    List<McpResourceContent> eventsResource(McpLogger logger) {
+    McpResourceResult eventsResource(McpLogger logger) {
         logger.debug("Reading calendar events from registry...");
         String content = calendar.readContent();
-        return List.of(McpResourceContents.textContent(content));
+        return McpResourceResult.create(content);
     }
 
     /**
@@ -122,10 +118,10 @@ class McpCalendarServer {
     @Mcp.Resource(uri = EVENTS_URI_TEMPLATE,
                   mediaType = MediaTypes.TEXT_PLAIN_VALUE,
                   description = "List single calendar event by name")
-    List<McpResourceContent> eventResourceTemplate(McpLogger logger, String name) {
+    McpResourceResult eventResourceTemplate(McpLogger logger, String name) {
         logger.debug("Reading calendar events from registry...");
         String content = calendar.readContentMatchesLine(line -> line.contains("name: " + name));
-        return List.of(McpResourceContents.textContent(content));
+        return McpResourceResult.builder().addTextContent(content).build();
     }
 
     /**
@@ -137,12 +133,12 @@ class McpCalendarServer {
      */
     @Mcp.Completion(value = EVENTS_URI_TEMPLATE,
                     type = McpCompletionType.RESOURCE)
-    McpCompletionContent eventResourceTemplateCompletion(String nameValue) {
+    McpCompletionResult eventResourceTemplateCompletion(String nameValue) {
         List<String> values = calendar.readEventNames()
                 .stream()
                 .filter(name -> name.contains(nameValue))
                 .toList();
-        return McpCompletionContents.completion(values);
+        return McpCompletionResult.create(values);
     }
 
     // -- Prompts -------------------------------------------------------------
@@ -157,16 +153,19 @@ class McpCalendarServer {
      * @return text with prompt
      */
     @Mcp.Prompt("Prompt to create a new event given a name, date and attendees")
-    List<McpPromptContent> createEventPrompt(McpLogger logger,
-                                             @Mcp.Description("event's name") String name,
-                                             @Mcp.Description("event's date") String date,
-                                             @Mcp.Description("event's attendees") String attendees) {
+    McpPromptResult createEventPrompt(McpLogger logger,
+                                      @Mcp.Description("event's name") String name,
+                                      @Mcp.Description("event's date") String date,
+                                      @Mcp.Description("event's attendees") String attendees) {
         logger.debug("Creating calendar event prompt...");
-        return List.of(McpPromptContents.textContent(
-                """
-                        Create a new calendar event with name %s, on %s with attendees %s. Make
-                        sure all attendees are free to attend the event.
-                        """.formatted(name, date, attendees), McpRole.USER));
+        return McpPromptResult.builder()
+                .addTextContent(t -> t
+                        .text("""
+                                  Create a new calendar event with name %s, on %s with attendees %s. Make
+                                  sure all attendees are free to attend the event.
+                                  """.formatted(name, date, attendees))
+                        .role(McpRole.USER))
+                .build();
     }
 
     /**
@@ -177,10 +176,10 @@ class McpCalendarServer {
      */
     @Mcp.Completion(value = "createEventPrompt",
                     type = McpCompletionType.PROMPT)
-    McpCompletionContent createEventPromptCompletion(McpParameters parameters) {
+    McpCompletionResult createEventPromptCompletion(McpParameters parameters) {
         String promptName = parameters.get("argument").get("name").asString().orElse(null);
         if ("name".equals(promptName)) {
-            return McpCompletionContents.completion("Frank & Friends");
+            return McpCompletionResult.create("Frank & Friends");
         }
         if ("date".equals(promptName)) {
             LocalDate today = LocalDate.now();
@@ -188,12 +187,12 @@ class McpCalendarServer {
             for (int i = 0; i < dates.length; i++) {
                 dates[i] = today.plusDays(i).format(FORMATTER);
             }
-            return McpCompletionContents.completion(dates);
+            return McpCompletionResult.create(dates);
         }
         if ("attendees".equals(promptName)) {
-            return McpCompletionContents.completion(FRIENDS);
+            return McpCompletionResult.create(FRIENDS);
         }
         // no completion
-        return McpCompletionContents.completion();
+        return McpCompletionResult.create();
     }
 }

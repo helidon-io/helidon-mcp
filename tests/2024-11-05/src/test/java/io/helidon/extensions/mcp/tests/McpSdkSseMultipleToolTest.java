@@ -95,20 +95,20 @@ class McpSdkSseMultipleToolTest extends AbstractMcpSdkTest {
         McpSchema.Content first = tool3.content().getFirst();
         McpSchema.Content second = tool3.content().get(1);
         McpSchema.Content third = tool3.content().get(2);
-        assertThat(first.type(), is("image"));
-        assertThat(second.type(), is("resource"));
-        assertThat(third.type(), is("text"));
+        assertThat(first.type(), is("text"));
+        assertThat(second.type(), is("image"));
+        assertThat(third.type(), is("resource"));
 
-        McpSchema.ImageContent image = (McpSchema.ImageContent) first;
+        McpSchema.TextContent text = (McpSchema.TextContent) first;
+        assertThat(text.text(), is("text"));
+
+        McpSchema.ImageContent image = (McpSchema.ImageContent) second;
         assertThat(image.data(), is(McpMedia.base64Media("helidon.png")));
         assertThat(image.mimeType(), is(McpMedia.IMAGE_PNG_VALUE));
 
-        McpSchema.EmbeddedResource resource = (McpSchema.EmbeddedResource) second;
+        McpSchema.EmbeddedResource resource = (McpSchema.EmbeddedResource) third;
         assertThat(resource.resource().uri(), is("http://resource"));
         assertThat(resource.resource().mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
-
-        McpSchema.TextContent text = (McpSchema.TextContent) third;
-        assertThat(text.text(), is("text"));
     }
 
     @Test

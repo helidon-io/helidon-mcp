@@ -58,10 +58,10 @@ class McpSdkSseMultipleResourceTest extends AbstractMcpSdkTest {
     @Test
     void listResources() {
         McpSchema.ListResourcesResult list = client().listResources();
-        assertThat(list.resources().size(), is(3));
+        assertThat(list.resources().size(), is(4));
 
         List<String> names = list.resources().stream().map(McpSchema.Resource::name).toList();
-        assertThat(names, hasItems("resource1", "resource2", "resource3"));
+        assertThat(names, hasItems("resource1", "resource2", "resource3", "resource4"));
     }
 
     @Test
@@ -100,5 +100,16 @@ class McpSdkSseMultipleResourceTest extends AbstractMcpSdkTest {
         assertThat(second.blob(), is(Base64.getEncoder().encodeToString("binary".getBytes(StandardCharsets.UTF_8))));
         assertThat(second.uri(), is("http://resource3"));
         assertThat(second.mimeType(), is(MediaTypes.APPLICATION_JSON_VALUE));
+    }
+
+    @Test
+    void testReadResource4() {
+        McpSchema.ReadResourceResult resource = client().readResource(new McpSchema.ReadResourceRequest("http://resource4"));
+        assertThat(resource.contents().size(), is(1));
+
+        McpSchema.TextResourceContents first = (McpSchema.TextResourceContents) resource.contents().getFirst();
+        assertThat(first.uri(), is("http://resource4"));
+        assertThat(first.text(), is("http://resource4"));
+        assertThat(first.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
     }
 }

@@ -25,14 +25,55 @@ import io.helidon.builder.api.Prototype;
  * MCP tool result.
  */
 @Prototype.Blueprint
+@Prototype.CustomMethods(McpToolSupport.class)
 interface McpToolResultBlueprint {
     /**
-     * Tool result contents.
+     * Text content.
      *
-     * @return contents
+     * @return list of tool text content
      */
     @Option.Singular
-    List<McpToolContent> contents();
+    List<McpToolTextContent> textContents();
+
+    /**
+     * Image content.
+     *
+     * @return list of tool image content
+     */
+    @Option.Singular
+    List<McpToolImageContent> imageContents();
+
+    /**
+     * Audio content.
+     *
+     * @return list of tool audio content
+     */
+    @Option.Singular
+    List<McpToolAudioContent> audioContents();
+
+    /**
+     * Embedded resource text content.
+     *
+     * @return list of tool embedded resource text content
+     */
+    @Option.Singular
+    List<McpToolTextResourceContent> textResourceContents();
+
+    /**
+     * Embedded resource binary content.
+     *
+     * @return list of tool embedded resource binary content
+     */
+    @Option.Singular
+    List<McpToolBinaryResourceContent> binaryResourceContents();
+
+    /**
+     * Resource link content.
+     *
+     * @return list of tool resource link content
+     */
+    @Option.Singular
+    List<McpToolResourceLinkContent> resourceLinkContents();
 
     /**
      * Structured tool result content. If specified, the tool definition
@@ -47,6 +88,6 @@ interface McpToolResultBlueprint {
      *
      * @return error
      */
-    @Option.DefaultBoolean({false})
+    @Option.DefaultBoolean(false)
     boolean error();
 }

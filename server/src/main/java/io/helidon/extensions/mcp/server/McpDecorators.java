@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 package io.helidon.extensions.mcp.server;
 
 import java.net.URI;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import io.helidon.builder.api.Prototype;
 
@@ -90,6 +93,41 @@ final class McpDecorators {
         public void decorate(McpRoot.BuilderBase<?, ?> builder, URI uri) {
             if (!uri.getScheme().equals("file")) {
                 throw new McpRootException("Root URI scheme must be file");
+            }
+        }
+    }
+
+    /**
+     * Number of suggestions must not exceed 100 items.
+     */
+    static class CompletionValuesDecorator implements Prototype.OptionDecorator<McpCompletionResult.BuilderBase<?, ?>, String> {
+        @Override
+        public void decorate(McpCompletionResult.BuilderBase<?, ?> builder, String value) {
+        }
+
+        @Override
+        public void decorateSetList(McpCompletionResult.BuilderBase<?, ?> builder, List<String> values) {
+            lessThan100Items(values);
+        }
+
+        @Override
+        public void decorateAddList(McpCompletionResult.BuilderBase<?, ?> builder, List<String> values) {
+            lessThan100Items(values);
+        }
+
+        @Override
+        public void decorateSetSet(McpCompletionResult.BuilderBase<?, ?> builder, Set<String> values) {
+            lessThan100Items(values);
+        }
+
+        @Override
+        public void decorateAddSet(McpCompletionResult.BuilderBase<?, ?> builder, Set<String> values) {
+            lessThan100Items(values);
+        }
+
+        private void lessThan100Items(Collection<String> values) {
+            if (values.size() > 100) {
+                throw new IllegalArgumentException("Completion values must be less than 100");
             }
         }
     }

@@ -17,16 +17,12 @@ package io.helidon.extensions.mcp.tests.common;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 
 import io.helidon.extensions.mcp.server.McpCancellation;
 import io.helidon.extensions.mcp.server.McpCancellationResult;
-import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
-import io.helidon.extensions.mcp.server.McpToolContent;
-import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpToolRequest;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.webserver.http.HttpRouting;
 
@@ -76,32 +72,30 @@ public class CancelableTools {
         }
 
         @Override
-        public Function<McpRequest, McpToolResult> tool() {
-            return request -> {
-                long now = System.currentTimeMillis();
-                long timeout = now + TimeUnit.SECONDS.toMillis(5);
-                McpToolContent content = McpToolContents.textContent("Failed");
-                McpCancellation cancellation = request.features().cancellation();
-                cancellation.registerCancellationHook(latch::countDown);
+        public McpToolResult tool(McpToolRequest request) {
+            long now = System.currentTimeMillis();
+            long timeout = now + TimeUnit.SECONDS.toMillis(5);
+            String content = "Failed";
+            McpCancellation cancellation = request.features().cancellation();
+            cancellation.registerCancellationHook(latch::countDown);
 
-                while (now < timeout) {
-                    try {
-                        McpCancellationResult result = cancellation.result();
-                        if (result.isRequested()) {
-                            content = McpToolContents.textContent(result.reason());
-                            latch.countDown();
-                            break;
-                        }
-                        TimeUnit.MILLISECONDS.sleep(500);
-                        now = System.currentTimeMillis();
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
+            while (now < timeout) {
+                try {
+                    McpCancellationResult result = cancellation.result();
+                    if (result.isRequested()) {
+                        content = result.reason();
+                        latch.countDown();
+                        break;
                     }
+                    TimeUnit.MILLISECONDS.sleep(500);
+                    now = System.currentTimeMillis();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
                 }
-                return McpToolResult.builder()
-                        .addContent(content)
-                        .build();
-            };
+            }
+            return McpToolResult.builder()
+                    .addTextContent(content)
+                    .build();
         }
     }
 
@@ -128,20 +122,17 @@ public class CancelableTools {
         }
 
         @Override
-        public Function<McpRequest, McpToolResult> tool() {
-            return request -> {
-                AtomicReference<McpToolContent> content = new AtomicReference<>(McpToolContents.textContent("Failed"));
-                McpCancellation cancellation = request.features().cancellation();
-                cancellation.registerCancellationHook(latch::countDown);
-                try {
-                    TimeUnit.SECONDS.sleep(3);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-                return McpToolResult.builder()
-                        .addContent(content.get())
-                        .build();
-            };
+        public McpToolResult tool(McpToolRequest request) {
+            McpCancellation cancellation = request.features().cancellation();
+            cancellation.registerCancellationHook(latch::countDown);
+            try {
+                TimeUnit.SECONDS.sleep(3);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return McpToolResult.builder()
+                    .addTextContent("Failed")
+                    .build();
         }
     }
 }

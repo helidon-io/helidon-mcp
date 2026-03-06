@@ -19,8 +19,8 @@ package io.helidon.extensions.mcp.tests.declarative;
 import java.util.List;
 
 import io.helidon.extensions.mcp.server.Mcp;
-import io.helidon.extensions.mcp.server.McpCompletionContent;
-import io.helidon.extensions.mcp.server.McpCompletionContents;
+import io.helidon.extensions.mcp.server.McpCompletionRequest;
+import io.helidon.extensions.mcp.server.McpCompletionResult;
 import io.helidon.extensions.mcp.server.McpCompletionType;
 import io.helidon.extensions.mcp.server.McpFeatures;
 import io.helidon.extensions.mcp.server.McpParameters;
@@ -30,63 +30,68 @@ import io.helidon.extensions.mcp.server.McpRequest;
 @Mcp.Path("/completions")
 class McpCompletionsServer {
     @Mcp.Completion("prompt1")
-    McpCompletionContent completionPrompt(McpParameters parameters) {
+    McpCompletionResult completionPrompt(McpParameters parameters) {
         String argument = parameters.get("argument").get("value").asString().orElse(null);
-        return McpCompletionContents.completion(argument);
+        return McpCompletionResult.create(argument);
     }
 
     @Mcp.Completion("prompt2")
-    McpCompletionContent completionPromptFeatures(McpFeatures features) {
-        return McpCompletionContents.completion("prompt2");
+    McpCompletionResult completionPromptFeatures(McpFeatures features) {
+        return McpCompletionResult.create("prompt2");
     }
 
     @Mcp.Completion("prompt3")
-    McpCompletionContent completionPromptParametersFeatures(McpParameters parameters, McpFeatures features) {
+    McpCompletionResult completionPromptParametersFeatures(McpParameters parameters, McpFeatures features) {
         String argument = parameters.get("argument").get("value").asString().orElse(null);
-        return McpCompletionContents.completion(argument);
+        return McpCompletionResult.create(argument);
     }
 
     @Mcp.Completion("prompt4")
-    McpCompletionContent completionPromptFeaturesParameters(McpFeatures features, McpParameters parameters) {
+    McpCompletionResult completionPromptFeaturesParameters(McpFeatures features, McpParameters parameters) {
         String argument = parameters.get("argument").get("value").asString().orElse(null);
-        return McpCompletionContents.completion(argument);
+        return McpCompletionResult.create(argument);
     }
 
     @Mcp.Completion("prompt5")
-    McpCompletionContent completionPromptArgument(String argument) {
-        return McpCompletionContents.completion(argument);
+    McpCompletionResult completionPromptArgument(String argument) {
+        return McpCompletionResult.create(argument);
     }
 
     @Mcp.Completion("prompt6")
-    McpCompletionContent completionPromptArgumentFeatures(String argument, McpFeatures features) {
-        return McpCompletionContents.completion(argument);
+    McpCompletionResult completionPromptArgumentFeatures(String argument, McpFeatures features) {
+        return McpCompletionResult.create(argument);
     }
 
     @Mcp.Completion("prompt7")
-    McpCompletionContent completionPromptFeaturesArgument(McpFeatures features, String argument) {
-        return McpCompletionContents.completion(argument);
+    McpCompletionResult completionPromptFeaturesArgument(McpFeatures features, String argument) {
+        return McpCompletionResult.create(argument);
     }
 
     @Mcp.Completion(value = "resource/{path1}", type = McpCompletionType.RESOURCE)
-    McpCompletionContent completionResource(McpParameters parameters) {
+    McpCompletionResult completionResource(McpParameters parameters) {
         String argument = parameters.get("argument").get("value").asString().orElse(null);
-        return McpCompletionContents.completion(argument);
+        return McpCompletionResult.create(argument);
     }
 
     @Mcp.Completion(value = "resource/{path2}", type = McpCompletionType.RESOURCE)
-    McpCompletionContent completionResourceArgument(String path2) {
-        return McpCompletionContents.completion(path2);
+    McpCompletionResult completionResourceArgument(String path2) {
+        return McpCompletionResult.create(path2);
     }
 
     @Mcp.Completion(value = "resource/{path8}", type = McpCompletionType.RESOURCE)
-    McpCompletionContent completionMcpRequest(McpRequest request) {
+    McpCompletionResult completionMcpRequest(McpRequest request) {
         String argument = request.parameters().get("value").asString().orElse(null);
-        return McpCompletionContents.completion(argument);
+        return McpCompletionResult.create(argument);
+    }
+
+    @Mcp.Completion("prompt15")
+    McpCompletionResult completionPromptResult(McpCompletionRequest request) {
+        return McpCompletionResult.create(request.value());
     }
 
     @Mcp.Completion(value = "resource/{path10}", type = McpCompletionType.RESOURCE)
-    McpCompletionContent completion1StringMcpRequest(String argument, McpRequest request) {
-        return McpCompletionContents.completion(argument);
+    McpCompletionResult completion1StringMcpRequest(String argument, McpRequest request) {
+        return McpCompletionResult.create(argument);
     }
 
     @Mcp.Completion("prompt8")

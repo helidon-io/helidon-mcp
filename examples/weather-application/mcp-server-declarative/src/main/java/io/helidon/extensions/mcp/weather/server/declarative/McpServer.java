@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import io.helidon.extensions.mcp.server.Mcp;
-import io.helidon.extensions.mcp.server.McpToolContent;
-import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.webclient.api.HttpClientResponse;
 import io.helidon.webclient.api.WebClient;
 
@@ -39,7 +38,7 @@ class McpServer {
                                                         .build();
 
     @Mcp.Tool("Get weather alert per US state")
-    List<McpToolContent> getWeatherAlertFromState(String state) {
+    McpToolResult getWeatherAlertFromState(String state) {
         try (HttpClientResponse response = WEBCLIENT.get()
                 .path("/alerts/active/area/" + state)
                 .request()) {
@@ -58,9 +57,9 @@ class McpServer {
                     .collect(Collectors.joining("\n"));
 
             if (content.isEmpty()) {
-                return List.of(McpToolContents.textContent("There is no alert for this state"));
+                return McpToolResult.create("There is no alert for this state");
             }
-            return List.of(McpToolContents.textContent(content));
+            return McpToolResult.create(content);
         }
     }
 

@@ -19,7 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import io.helidon.codegen.CodegenContext;
 import io.helidon.codegen.CodegenException;
+import io.helidon.codegen.CodegenLogger;
 import io.helidon.codegen.classmodel.ClassModel;
 import io.helidon.codegen.classmodel.Method;
 import io.helidon.common.types.AccessModifier;
@@ -33,6 +35,7 @@ import io.helidon.common.types.TypedElementInfo;
 
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.addToListMethod;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.createClassName;
+import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.generateSafeMultiLine;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.getDescription;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.getElementsWithAnnotation;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isBoolean;
@@ -41,21 +44,24 @@ import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isList;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isMcpType;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isNumber;
 import static io.helidon.extensions.mcp.codegen.McpJsonSchemaCodegen.addSchemaMethodBody;
-import static io.helidon.extensions.mcp.codegen.McpTypes.FUNCTION_REQUEST_TOOL_RESULT;
-import static io.helidon.extensions.mcp.codegen.McpTypes.LIST_MCP_TOOL_CONTENT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_DESCRIPTION;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_NAME;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_CONTENTS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_INTERFACE;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_OUTPUT_SCHEMA;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_OUTPUT_SCHEMA_TEXT;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_REQUEST;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_RESULT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.OPTIONAL_STRING;
+import static io.helidon.extensions.mcp.codegen.McpTypes.OPTIONAL_TOOL_ANNOTATIONS;
 
 class McpToolCodegen {
     private final McpRecorder recorder;
+    private final CodegenLogger logger;
 
-    McpToolCodegen(McpRecorder recorder) {
+    McpToolCodegen(McpRecorder recorder, CodegenContext context) {
         this.recorder = recorder;
+        this.logger = context.logger();
     }
 
     void generate(ClassModel.Builder classModel, TypeInfo type) {
@@ -74,25 +80,45 @@ class McpToolCodegen {
                     .addMethod(method -> addToolSchemaMethod(method, element))
                     .addMethod(method -> addToolMethod(method, classModel, element))
                     .addMethod(method -> addToolAnnotationsMethod(method, toolAnnotation))
-                    .addMethod(method -> addToolOutputSchema(method, toolAnnotation)));
+                    .addMethod(method -> addToolOutputSchema(method, element)));
         });
     }
 
-    private void addToolOutputSchema(Method.Builder builder, Annotation toolAnnotation) {
-        var outputSchema = toolAnnotation.getValue("outputSchema");
+    private void addToolOutputSchema(Method.Builder builder, TypedElementInfo element) {
+        Optional<Annotation> schema = element.findAnnotation(MCP_TOOL_OUTPUT_SCHEMA);
+        Optional<Annotation> textSchema = element.findAnnotation(MCP_TOOL_OUTPUT_SCHEMA_TEXT);
         builder.name("outputSchema")
                 .returnType(OPTIONAL_STRING)
                 .addAnnotation(Annotations.OVERRIDE);
-        if (outputSchema.isPresent() && !outputSchema.get().isBlank()) {
-            String schema = toolAnnotation.getValue("outputSchema")
-                    .orElse("\"\"")
-                            .replace("\"", "\\\"");
-            builder.addContent("return Optional.of(\"")
-                    .addContent(schema)
-                    .addContent("\");");
+
+        if (schema.isEmpty() && textSchema.isEmpty()) {
+            builder.addContent("return Optional.empty();");
             return;
         }
-        builder.addContent("return Optional.empty();");
+
+        if (schema.isPresent() && textSchema.isPresent()) {
+            String message = String.format("Annotation %s will be ignored.",
+                                           MCP_TOOL_OUTPUT_SCHEMA_TEXT.classNameWithEnclosingNames());
+            logger.log(System.Logger.Level.WARNING, message);
+        }
+
+        if (schema.isPresent()) {
+            String outputSchema = schema.flatMap(Annotation::typeValue)
+                    .map(TypeName::classNameWithTypes)
+                    .map(value -> value + "__JsonSchema")
+                    .orElseThrow(() -> new CodegenException("Cannot parse output schema"));
+            builder.addContent("return Optional.of(Services.get(")
+                    .addContent(outputSchema)
+                    .addContent(".class).jsonSchema());");
+            return;
+        }
+
+        String outputShema = textSchema.flatMap(t -> t.stringValue())
+                .orElseThrow(() -> new CodegenException("Cannot parse output text schema"))
+                .replace("\"", "\\\"");
+        builder.addContent("return Optional.of(");
+        generateSafeMultiLine(builder, outputShema);
+        builder.addContentLine(");");
     }
 
     private void addToolSchemaMethod(Method.Builder builder, TypedElementInfo element) {
@@ -127,19 +153,23 @@ class McpToolCodegen {
         TypeName returnType = element.signature().type();
 
         builder.name("tool")
-                .returnType(returned -> returned.type(FUNCTION_REQUEST_TOOL_RESULT))
-                .addAnnotation(Annotations.OVERRIDE);
-        builder.addContentLine("return request -> {");
+                .addAnnotation(Annotations.OVERRIDE)
+                .returnType(returned -> returned.type(MCP_TOOL_RESULT))
+                .addParameter(parameter -> parameter.type(MCP_TOOL_REQUEST).name("request"));
 
         for (TypedElementInfo param : element.parameterArguments()) {
             if (isMcpType(parameters, param)) {
+                continue;
+            }
+            if (param.typeName().equals(MCP_TOOL_REQUEST)) {
+                parameters.add("request");
                 continue;
             }
             if (TypeNames.STRING.equals(param.typeName())) {
                 parameters.add(param.elementName());
                 builder.addContent("var ")
                         .addContent(param.elementName())
-                        .addContent(" = request.parameters().get(\"")
+                        .addContent(" = request.arguments().get(\"")
                         .addContent(param.elementName())
                         .addContentLine("\").asString().orElse(\"\");");
                 continue;
@@ -148,7 +178,7 @@ class McpToolCodegen {
                 parameters.add(param.elementName());
                 builder.addContent("boolean ")
                         .addContent(param.elementName())
-                        .addContent(" = request.parameters().get(\"")
+                        .addContent(" = request.arguments().get(\"")
                         .addContent(param.elementName())
                         .addContentLine("\").asBoolean().orElse(false);");
                 continue;
@@ -157,7 +187,7 @@ class McpToolCodegen {
                 parameters.add(param.elementName());
                 builder.addContent("var ")
                         .addContent(param.elementName())
-                        .addContent(" = request.parameters().get(\"")
+                        .addContent(" = request.arguments().get(\"")
                         .addContent(param.elementName())
                         .addContent("\").as")
                         .addContent(param.typeName().className())
@@ -170,7 +200,7 @@ class McpToolCodegen {
                 parameters.add(param.elementName());
                 builder.addContent("var ")
                         .addContent(param.elementName())
-                        .addContent(" = toList(request.parameters().get(\"")
+                        .addContent(" = toList(request.arguments().get(\"")
                         .addContent(param.elementName())
                         .addContentLine("\").asList().orElse(null));");
                 continue;
@@ -179,7 +209,7 @@ class McpToolCodegen {
             builder.addContent(param.typeName().classNameWithEnclosingNames())
                     .addContent(" ")
                     .addContent(param.elementName())
-                    .addContent(" = request.parameters().get(\"")
+                    .addContent(" = request.arguments().get(\"")
                     .addContent(param.elementName())
                     .addContent("\").as(")
                     .addContent(param.typeName())
@@ -190,29 +220,14 @@ class McpToolCodegen {
         if (returnType.equals(TypeNames.STRING)) {
             builder.addContent("return ")
                     .addContent(MCP_TOOL_RESULT)
-                    .addContent(".builder().contents(")
-                    .addContent(List.class)
-                    .addContent(".of(")
-                    .addContent(MCP_TOOL_CONTENTS)
-                    .addContent(".textContent(delegate.")
+                    .addContentLine(".builder()")
+                    .increaseContentPadding()
+                    .addContent(".addTextContent(delegate.")
                     .addContent(element.elementName())
                     .addContent("(")
                     .addContent(params)
-                    .addContentLine(")))).build();")
-                    .decreaseContentPadding()
-                    .addContentLine("};");
-            return;
-        }
-        if (returnType.equals(LIST_MCP_TOOL_CONTENT)) {
-            builder.addContent("return ")
-                    .addContent(MCP_TOOL_RESULT)
-                    .addContent(".builder().contents(delegate.")
-                    .addContent(element.elementName())
-                    .addContent("(")
-                    .addContent(params)
-                    .addContentLine(")).build();")
-                    .decreaseContentPadding()
-                    .addContentLine("};");
+                    .addContentLine("))")
+                    .addContentLine(".build();");
             return;
         }
         if (returnType.equals(MCP_TOOL_RESULT)) {
@@ -220,9 +235,7 @@ class McpToolCodegen {
                     .addContent(element.elementName())
                     .addContent("(")
                     .addContent(params)
-                    .addContentLine(");")
-                    .decreaseContentPadding()
-                    .addContentLine("};");
+                    .addContentLine(");");
             return;
         }
         throw new CodegenException(String.format("Method %s must return one the following return type: %s",
@@ -253,7 +266,7 @@ class McpToolCodegen {
     private void addToolAnnotationsMethod(Method.Builder builder, Annotation toolAnnotation) {
         builder.name("annotations")
                 .addAnnotation(Annotations.OVERRIDE)
-                .returnType(McpTypes.MCP_TOOL_ANNOTATIONS)
+                .returnType(OPTIONAL_TOOL_ANNOTATIONS)
                 .addContentLine("var builder = McpToolAnnotations.builder();")
                 .addContent("builder.title(\"")
                 .addContent(toolAnnotation.stringValue("title").orElse(""))
@@ -272,6 +285,8 @@ class McpToolCodegen {
                 .addContent(toolAnnotation.booleanValue("openWorldHint").orElse(true).toString())
                 .addContentLine(");")
                 .decreaseContentPadding()
-                .addContentLine("return builder.build();");
+                .addContent("return ")
+                .addContent(Optional.class)
+                .addContentLine(".of(builder.build());");
     }
 }

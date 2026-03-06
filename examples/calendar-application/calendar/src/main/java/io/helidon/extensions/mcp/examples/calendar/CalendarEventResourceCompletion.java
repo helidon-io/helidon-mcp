@@ -17,12 +17,10 @@
 package io.helidon.extensions.mcp.examples.calendar;
 
 import java.util.List;
-import java.util.function.Function;
 
 import io.helidon.extensions.mcp.server.McpCompletion;
-import io.helidon.extensions.mcp.server.McpCompletionContent;
-import io.helidon.extensions.mcp.server.McpCompletionContents;
 import io.helidon.extensions.mcp.server.McpCompletionRequest;
+import io.helidon.extensions.mcp.server.McpCompletionResult;
 import io.helidon.extensions.mcp.server.McpCompletionType;
 
 /**
@@ -46,15 +44,11 @@ final class CalendarEventResourceCompletion implements McpCompletion {
     }
 
     @Override
-    public Function<McpCompletionRequest, McpCompletionContent> completion() {
-        return this::complete;
-    }
-
-    private McpCompletionContent complete(McpCompletionRequest request) {
+    public McpCompletionResult completion(McpCompletionRequest request) {
         List<String> values = calendar.readEventNames()
                 .stream()
                 .filter(name -> name.contains(request.value()))
                 .toList();
-        return McpCompletionContents.completion(values);
+        return McpCompletionResult.create(values);
     }
 }

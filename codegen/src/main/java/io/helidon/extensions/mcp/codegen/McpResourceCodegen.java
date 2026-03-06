@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,22 +34,23 @@ import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.createClassName;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.getElementsWithAnnotation;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isMcpType;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isResourceTemplate;
-import static io.helidon.extensions.mcp.codegen.McpTypes.CONSUMER_REQUEST;
-import static io.helidon.extensions.mcp.codegen.McpTypes.FUNCTION_REQUEST_LIST_RESOURCE_CONTENT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.HELIDON_MEDIA_TYPE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.HELIDON_MEDIA_TYPES;
-import static io.helidon.extensions.mcp.codegen.McpTypes.LIST_MCP_RESOURCE_CONTENT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_NAME;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE;
-import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_CONTENTS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_INTERFACE;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_REQUEST;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_RESULT;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_SUBSCRIBER;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_SUBSCRIBER_INTERFACE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_UNSUBSCRIBER;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_UNSUBSCRIBER_INTERFACE;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SUBSCRIBE_REQUEST;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_UNSUBSCRIBE_REQUEST;
 import static io.helidon.extensions.mcp.codegen.McpTypes.URI_PATH;
 
 class McpResourceCodegen {
+    private static final List<String> SUPPORTED_TYPES = List.of("String", "McpResourceResult");
     private final McpRecorder recorder;
 
     McpResourceCodegen(McpRecorder recorder) {
@@ -102,7 +103,7 @@ class McpResourceCodegen {
                     .addInterface(MCP_RESOURCE_SUBSCRIBER_INTERFACE)
                     .accessModifier(AccessModifier.PRIVATE)
                     .addMethod(method -> addSubscriberUriMethod(method, uri))
-                    .addMethod(method -> addSubscriberMethod(method, element, "subscribe")));
+                    .addMethod(method -> addSubscriberMethod(method, element)));
         });
     }
 
@@ -118,7 +119,7 @@ class McpResourceCodegen {
                     .addInterface(MCP_RESOURCE_UNSUBSCRIBER_INTERFACE)
                     .accessModifier(AccessModifier.PRIVATE)
                     .addMethod(method -> addSubscriberUriMethod(method, uri))
-                    .addMethod(method -> addSubscriberMethod(method, element, "unsubscribe")));
+                    .addMethod(method -> addUnsubscriberMethod(method, element)));
         });
     }
 
@@ -169,11 +170,15 @@ class McpResourceCodegen {
 
         builder.name("resource")
                 .addAnnotation(Annotations.OVERRIDE)
-                .returnType(returned -> returned.type(FUNCTION_REQUEST_LIST_RESOURCE_CONTENT));
-        builder.addContentLine("return request -> {");
+                .returnType(returned -> returned.type(MCP_RESOURCE_RESULT))
+                .addParameter(parameter -> parameter.type(MCP_RESOURCE_REQUEST).name("request"));
 
         for (TypedElementInfo parameter : element.parameterArguments()) {
             if (isMcpType(parameters, parameter)) {
+                continue;
+            }
+            if (parameter.typeName().equals(MCP_RESOURCE_REQUEST)) {
+                parameters.add("request");
                 continue;
             }
             if (isResourceTemplate(uri)) {
@@ -199,33 +204,30 @@ class McpResourceCodegen {
                                                      String.join(", ", MCP_TYPES)));
         }
         String params = String.join(", ", parameters);
-        if (returnType.equals(TypeNames.STRING)) {
-            builder.addContent("return ")
-                    .addContent(List.class)
-                    .addContent(".of(")
-                    .addContent(MCP_RESOURCE_CONTENTS)
-                    .addContent(".textContent(delegate.")
-                    .addContent(element.elementName())
-                    .addContent("(")
-                    .addContent(params)
-                    .addContentLine(")));")
-                    .decreaseContentPadding()
-                    .addContentLine("};");
-            return;
-        }
-        if (returnType.equals(LIST_MCP_RESOURCE_CONTENT)) {
+        if (returnType.equals(MCP_RESOURCE_RESULT)) {
             builder.addContent("return delegate.")
                     .addContent(element.elementName())
                     .addContent("(")
                     .addContent(params)
-                    .addContentLine(");")
-                    .addContentLine("};");
+                    .addContentLine(");");
+            return;
+        }
+        if (returnType.equals(TypeNames.STRING)) {
+            builder.addContent("return ")
+                    .addContent(MCP_RESOURCE_RESULT)
+                    .addContentLine(".builder()")
+                    .increaseContentPadding()
+                    .addContent(".addTextContent(delegate.")
+                    .addContent(element.elementName())
+                    .addContent("(")
+                    .addContent(params)
+                    .addContentLine("))")
+                    .addContentLine(".build();");
             return;
         }
         throw new CodegenException(String.format("Method %s must return one the following return type: %s",
                                                  element.elementName(),
-                                                 String.join(", ", List.of("String",
-                                                                           LIST_MCP_RESOURCE_CONTENT.classNameWithTypes()))));
+                                                 String.join(", ", SUPPORTED_TYPES)));
     }
 
     private void addSubscriberUriMethod(Method.Builder builder, String uri) {
@@ -237,13 +239,24 @@ class McpResourceCodegen {
                 .addContentLine("\";");
     }
 
-    private void addSubscriberMethod(Method.Builder builder, TypedElementInfo element, String methodName) {
+    private void addSubscriberMethod(Method.Builder builder, TypedElementInfo element) {
+        addSubscriberMethod(builder, element, "subscribe", MCP_SUBSCRIBE_REQUEST);
+    }
+
+    private void addUnsubscriberMethod(Method.Builder builder, TypedElementInfo element) {
+        addSubscriberMethod(builder, element, "unsubscribe", MCP_UNSUBSCRIBE_REQUEST);
+    }
+
+    private void addSubscriberMethod(Method.Builder builder,
+                                     TypedElementInfo element,
+                                     String methodName,
+                                     TypeName parameterType) {
         List<String> parameters = new ArrayList<>();
 
         builder.name(methodName)
                 .addAnnotation(Annotations.OVERRIDE)
-                .returnType(returned -> returned.type(CONSUMER_REQUEST));
-        builder.addContentLine("return request -> {");
+                .returnType(TypeNames.PRIMITIVE_VOID)
+                .addParameter(param -> param.type(parameterType).name("request"));
 
         for (TypedElementInfo parameter : element.parameterArguments()) {
             if (isMcpType(parameters, parameter)) {
@@ -257,9 +270,7 @@ class McpResourceCodegen {
                     .addContent(element.elementName())
                     .addContent("(")
                     .addContent(params)
-                    .addContentLine(");")
-                    .decreaseContentPadding()
-                    .addContentLine("};");
+                    .addContentLine(");");
             return;
         }
         throw new CodegenException("Method " + element.elementName() + " must return void");

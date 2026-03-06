@@ -16,8 +16,6 @@
 
 package io.helidon.extensions.mcp.server;
 
-import java.util.List;
-
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.jsonrpc.core.JsonRpcParams;
 
@@ -28,17 +26,17 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 class McpResourceTemplateParameterTest {
-    private final McpResource.Builder builder = McpResource.builder()
+    private final McpResourceConfig.Builder builder = McpResourceConfig.builder()
             .name("name")
             .description("description")
             .mediaType(MediaTypes.TEXT_PLAIN)
-            .resource(request -> List.of());
+            .resource(request -> McpResourceResult.create());
 
     @Test
     void testSimpleParameter() {
         JsonRpcParams params = JsonRpcParams.create(JsonValue.EMPTY_JSON_OBJECT);
-        var resource = builder.uri("https://{path}").build();
-        McpResourceTemplate template = new McpResourceTemplate(resource);
+        McpResourceConfig resource = builder.uri("https://{path}").build();
+        McpResourceTemplate template = new McpResourceTemplate(new McpResourceImpl(resource));
         McpParameters parameters = template.parameters(params, "https://foo");
 
         assertThat(parameters.get("path").asString().get(), is("foo"));
@@ -48,7 +46,7 @@ class McpResourceTemplateParameterTest {
     void testTwoParameter() {
         JsonRpcParams params = JsonRpcParams.create(JsonValue.EMPTY_JSON_OBJECT);
         var resource = builder.uri("https://{foo}/{bar}").build();
-        McpResourceTemplate template = new McpResourceTemplate(resource);
+        McpResourceTemplate template = new McpResourceTemplate(new McpResourceImpl(resource));
         McpParameters parameters = template.parameters(params, "https://foo/bar");
 
         assertThat(parameters.get("foo").asString().get(), is("foo"));
@@ -59,7 +57,7 @@ class McpResourceTemplateParameterTest {
     void testSpaceParameter() {
         JsonRpcParams params = JsonRpcParams.create(JsonValue.EMPTY_JSON_OBJECT);
         var resource = builder.uri("https://{foo}/{bar}").build();
-        McpResourceTemplate template = new McpResourceTemplate(resource);
+        McpResourceTemplate template = new McpResourceTemplate(new McpResourceImpl(resource));
         McpParameters parameters = template.parameters(params, "https://foo foo/bar bar");
 
         assertThat(parameters.get("foo").asString().get(), is("foo foo"));
@@ -70,7 +68,7 @@ class McpResourceTemplateParameterTest {
     void testMiddleParameter() {
         JsonRpcParams params = JsonRpcParams.create(JsonValue.EMPTY_JSON_OBJECT);
         var resource = builder.uri("https://{foo}/path").build();
-        McpResourceTemplate template = new McpResourceTemplate(resource);
+        McpResourceTemplate template = new McpResourceTemplate(new McpResourceImpl(resource));
         McpParameters parameters = template.parameters(params, "https://foo/path");
 
         assertThat(parameters.get("foo").asString().get(), is("foo"));
@@ -80,7 +78,7 @@ class McpResourceTemplateParameterTest {
     void testProtocolParameter() {
         JsonRpcParams params = JsonRpcParams.create(JsonValue.EMPTY_JSON_OBJECT);
         var resource = builder.uri("{protocol}://{foo}").build();
-        McpResourceTemplate template = new McpResourceTemplate(resource);
+        McpResourceTemplate template = new McpResourceTemplate(new McpResourceImpl(resource));
         McpParameters parameters = template.parameters(params, "https://foo");
 
         assertThat(parameters.get("foo").asString().get(), is("foo"));

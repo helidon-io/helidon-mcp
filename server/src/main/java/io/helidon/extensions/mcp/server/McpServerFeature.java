@@ -178,9 +178,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     }
 
     static McpServerFeature create(Consumer<McpServerConfig.Builder> consumer) {
-        McpServerConfig.Builder builder = McpServerConfig.builder();
-        consumer.accept(builder);
-        return builder.build();
+        return McpServerConfig.builder().update(consumer).build();
     }
 
     /**
@@ -313,7 +311,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 .filter(Boolean::booleanValue)
                 .ifPresent(it -> session.capability(McpCapability.ROOTS));
         session.state(INITIALIZING);
-        var payload = session.serializer().toJson(capabilities, config);
+        var payload = session.serializer().createJsonInitializeResponse(capabilities, config);
         session.onRequest(requestId, req, res);
         res.result(payload.build());
         session.send(requestId, res);
@@ -412,19 +410,18 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
 
         McpFeatures features = session.createFeatures(requestId, req, res);
         session.beforeFeatureRequest(parameters, requestId);
-        McpToolResult result = tool.get()
-                .tool()
-                .apply(McpRequest.builder()
-                               .parameters(parameters.get("arguments"))
-                               .meta(parameters.get("_meta"))
-                               .features(features)
-                               .protocolVersion(session.protocolVersion().text())
-                               .sessionContext(session.context())
-                               .requestContext(req.context())
-                               .build());
+        McpRequest request = McpRequest.builder()
+                .parameters(parameters)
+                .meta(parameters.get("_meta"))
+                .features(features)
+                .protocolVersion(session.protocolVersion().text())
+                .sessionContext(session.context())
+                .requestContext(req.context())
+                .build();
+        McpToolResult result = tool.get().tool(new McpToolRequestImpl(request));
         session.afterFeatureRequest(parameters, requestId);
 
-        var toolCall = session.serializer().toolCall(tool.get(), result).build();
+        var toolCall = session.serializer().toolCall(tool.get(), result);
         res.result(toolCall);
         session.send(requestId, res);
     }
@@ -476,18 +473,17 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
 
         McpFeatures features = session.createFeatures(requestId, req, res);
         session.beforeFeatureRequest(parameters, requestId);
-        List<McpResourceContent> contents = resource.get()
-                .resource()
-                .apply(McpRequest.builder()
-                               .parameters(parameters)
-                               .meta(parameters.get("_meta"))
-                               .features(features)
-                               .protocolVersion(session.protocolVersion().text())
-                               .sessionContext(session.context())
-                               .requestContext(req.context())
-                               .build());
+        McpRequest request = McpRequest.builder()
+                .parameters(parameters)
+                .meta(parameters.get("_meta"))
+                .features(features)
+                .protocolVersion(session.protocolVersion().text())
+                .sessionContext(session.context())
+                .requestContext(req.context())
+                .build();
+        McpResourceResult result = resource.get().resource(new McpResourceRequestImpl(request));
         session.afterFeatureRequest(parameters, requestId);
-        var readResource = session.serializer().readResource(resourceUri, contents);
+        var readResource = session.serializer().resourceRead(resourceUri, result);
         res.result(readResource);
         session.send(requestId, res);
     }
@@ -526,16 +522,14 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         if (subscriber.isPresent()) {
             McpFeatures features = session.createFeatures(requestId, req, res);
             session.beforeFeatureRequest(parameters, requestId);
-            subscriber.get()
-                    .subscribe()
-                    .accept(McpRequest.builder()
-                                    .parameters(parameters)
-                                    .meta(parameters.get("_meta"))
-                                    .features(features)
-                                    .protocolVersion(session.protocolVersion().text())
-                                    .sessionContext(session.context())
-                                    .requestContext(req.context())
-                                    .build());
+            subscriber.get().subscribe(McpSubscribeRequest.builder()
+                                               .parameters(parameters)
+                                               .meta(parameters.get("_meta"))
+                                               .features(features)
+                                               .protocolVersion(session.protocolVersion().text())
+                                               .sessionContext(session.context())
+                                               .requestContext(req.context())
+                                               .build());
             session.afterFeatureRequest(parameters, requestId);
             // send final response using active SSE sink
             res.result(JsonValue.EMPTY_JSON_OBJECT);
@@ -571,16 +565,14 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         if (unsubscriber.isPresent()) {
             McpFeatures features = session.createFeatures(requestId, req, res);
             session.beforeFeatureRequest(parameters, requestId);
-            unsubscriber.get()
-                    .unsubscribe()
-                    .accept(McpRequest.builder()
-                                    .parameters(parameters)
-                                    .meta(parameters.get("_meta"))
-                                    .features(features)
-                                    .protocolVersion(session.protocolVersion().text())
-                                    .sessionContext(session.context())
-                                    .requestContext(req.context())
-                                    .build());
+            unsubscriber.get().unsubscribe(McpUnsubscribeRequest.builder()
+                                                   .parameters(parameters)
+                                                   .meta(parameters.get("_meta"))
+                                                   .features(features)
+                                                   .protocolVersion(session.protocolVersion().text())
+                                                   .sessionContext(session.context())
+                                                   .requestContext(req.context())
+                                                   .build());
             session.afterFeatureRequest(parameters, requestId);
         }
 
@@ -647,18 +639,17 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
 
         McpFeatures features = session.createFeatures(requestId, req, res);
         session.beforeFeatureRequest(parameters, requestId);
-        List<McpPromptContent> contents = prompt.get()
-                .prompt()
-                .apply(McpRequest.builder()
-                               .parameters(parameters.get("arguments"))
-                               .meta(parameters.get("_meta"))
-                               .features(features)
-                               .protocolVersion(session.protocolVersion().text())
-                               .sessionContext(session.context())
-                               .requestContext(req.context())
-                               .build());
+        McpRequest request = McpRequest.builder()
+                .parameters(parameters)
+                .meta(parameters.get("_meta"))
+                .features(features)
+                .protocolVersion(session.protocolVersion().text())
+                .sessionContext(session.context())
+                .requestContext(req.context())
+                .build();
+        McpPromptResult result = prompt.get().prompt(new McpPromptRequestImpl(request));
         session.afterFeatureRequest(parameters, requestId);
-        var payload = session.serializer().toJson(contents, prompt.get().description());
+        var payload = session.serializer().promptGet(result);
         res.result(payload);
         session.send(requestId, res);
     }
@@ -723,9 +714,9 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                     .sessionContext(session.context())
                     .requestContext(req.context())
                     .build();
-            McpCompletionContent result = completion.completion().apply(new McpCompletionRequestImpl(request));
+            McpCompletionResult result = completion.completion(new McpCompletionRequestImpl(request));
             session.afterFeatureRequest(parameters, requestId);
-            var payload = session.serializer().toJson(result);
+            var payload = session.serializer().completionComplete(result);
             res.result(payload);
             session.send(requestId, res);
             return;

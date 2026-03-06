@@ -59,10 +59,10 @@ class McpSdkStreamableMultipleResourceTest extends AbstractMcpSdkTest {
     @Test
     void listResources() {
         McpSchema.ListResourcesResult list = client().listResources();
-        assertThat(list.resources().size(), is(3));
+        assertThat(list.resources().size(), is(4));
 
         List<String> names = list.resources().stream().map(McpSchema.Resource::name).toList();
-        assertThat(names, hasItems("resource1", "resource2", "resource3"));
+        assertThat(names, hasItems("resource1", "resource2", "resource3", "resource4"));
     }
 
     @Test

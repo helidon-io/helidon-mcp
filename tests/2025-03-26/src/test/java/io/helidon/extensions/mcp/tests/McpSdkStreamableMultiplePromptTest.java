@@ -113,12 +113,12 @@ class McpSdkStreamableMultiplePromptTest extends AbstractMcpSdkTest {
         McpSchema.Content first = prompt4.messages().getFirst().content();
         McpSchema.Content second = prompt4.messages().get(1).content();
         McpSchema.Content third = prompt4.messages().get(2).content();
-        assertThat(first.type(), is("image"));
-        assertThat(second.type(), is("text"));
+        assertThat(first.type(), is("text"));
+        assertThat(second.type(), is("image"));
         assertThat(third.type(), is("resource"));
 
-        McpSchema.ImageContent image = (McpSchema.ImageContent) first;
-        McpSchema.TextContent text = (McpSchema.TextContent) second;
+        McpSchema.TextContent text = (McpSchema.TextContent) first;
+        McpSchema.ImageContent image = (McpSchema.ImageContent) second;
         McpSchema.EmbeddedResource resource = (McpSchema.EmbeddedResource) third;
         assertThat(text.text(), is("text"));
         assertThat(image.data(), is(McpMedia.base64Media("helidon.png")));

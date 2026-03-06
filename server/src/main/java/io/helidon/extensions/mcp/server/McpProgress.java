@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.helidon.extensions.mcp.server;
 
 import java.util.Objects;
+
+import io.helidon.common.LazyValue;
 
 /**
  * Progress notification to the client.
@@ -67,7 +68,7 @@ public final class McpProgress extends McpFeature {
             return;
         }
         if (isSending) {
-            var notification = session.serializer().toJson(this, progress, message);
+            var notification = session.serializer().progressNotification(this, progress, message);
             transport().send(notification);
         }
         if (progress >= total) {
@@ -102,7 +103,23 @@ public final class McpProgress extends McpFeature {
         isSending = false;
     }
 
+    /**
+     * The progress listener look for progress token inside request
+     * and set it in the associate progress feature instance.
+     */
     static class McpProgressListener implements McpFeatureLifecycle {
+        /**
+         * The listener being static and used for every session, a singleton
+         * avoid creation of unnecessary instance per session.
+         */
+        private static final LazyValue<McpProgressListener> INSTANCE = LazyValue.create(McpProgressListener::new);
+
+        private McpProgressListener() {
+        }
+
+        static McpProgressListener create() {
+            return INSTANCE.get();
+        }
 
         @Override
         public void beforeRequest(McpParameters parameters, McpFeatures features) {

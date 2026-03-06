@@ -16,21 +16,24 @@
 
 package io.helidon.extensions.mcp.tests.declarative;
 
+import java.util.List;
 import java.util.Map;
 
 import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.McpGetPromptResult;
+import dev.langchain4j.mcp.client.McpPrompt;
 import dev.langchain4j.mcp.client.McpPromptContent;
 import dev.langchain4j.mcp.client.McpRole;
 import dev.langchain4j.mcp.client.McpTextContent;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import static io.helidon.extensions.mcp.tests.declarative.McpPromptsServer.PROMPT_CONTENT;
-import static io.helidon.extensions.mcp.tests.declarative.McpPromptsServer.PROMPT_DESCRIPTION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 abstract class AbstractLangchain4jPromptsServerTest {
     protected static McpClient client;
@@ -40,6 +43,12 @@ abstract class AbstractLangchain4jPromptsServerTest {
         if (client != null) {
             client.close();
         }
+    }
+
+    @Test
+    void listPrompts() {
+        List<McpPrompt> prompts = client.listPrompts();
+        assertThat(prompts.size(), is(13));
     }
 
     @ParameterizedTest
@@ -52,7 +61,7 @@ abstract class AbstractLangchain4jPromptsServerTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-            "prompt4", "prompt5", "prompt6", "prompt7", "promptRoleUser"
+            "prompt4", "prompt5", "prompt6", "prompt7", "prompt9", "promptRoleUser"
     })
     void userTest(String promptName) {
         runTest(promptName, McpRole.USER);
@@ -60,7 +69,7 @@ abstract class AbstractLangchain4jPromptsServerTest {
 
     void runTest(String promptName, McpRole role) {
         McpGetPromptResult result = client.getPrompt(promptName, Map.of("prompt", "prompt"));
-        assertThat(result.description(), is(PROMPT_DESCRIPTION));
+        assertThat(result.description(), is(nullValue()));
 
         var messages = result.messages();
         assertThat(messages.size(), is(1));

@@ -21,9 +21,8 @@ import java.util.stream.Collectors;
 
 import io.helidon.config.Config;
 import io.helidon.extensions.mcp.server.McpParameters;
-import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpServerConfig;
-import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpToolRequest;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.json.schema.Schema;
 import io.helidon.webclient.api.HttpClientResponse;
@@ -74,7 +73,7 @@ public class Main {
                 .generate();
     }
 
-    private static McpToolResult getWeatherAlertFromState(McpRequest request) {
+    private static McpToolResult getWeatherAlertFromState(McpToolRequest request) {
         McpParameters mcpParameters = request.parameters();
         String state = mcpParameters.get("state").asString().orElse("NY");
 
@@ -96,13 +95,9 @@ public class Main {
                     .collect(Collectors.joining("\n"));
 
             if (content.isEmpty()) {
-                return McpToolResult.builder()
-                        .addContent(McpToolContents.textContent("There is no alert for this state"))
-                        .build();
+                return McpToolResult.create("There is no alert for this state");
             }
-            return McpToolResult.builder()
-                    .addContent(McpToolContents.textContent(content))
-                    .build();
+            return McpToolResult.create(content);
         }
     }
 

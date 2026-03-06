@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,7 +148,7 @@ abstract class BaseTest {
         Map<String, Object> arguments = Map.of("name", "Frank-birthday", "date", "2021-04-20", "attendees", "Frank");
         McpSchema.GetPromptRequest request = new McpSchema.GetPromptRequest("create-event", arguments);
         McpSchema.GetPromptResult promptResult = client().getPrompt(request);
-        assertThat(promptResult.description(), is("Create a new event and add it to the calendar"));
+        assertThat(promptResult.description(), is("New event created"));
 
         List<McpSchema.PromptMessage> messages = promptResult.messages();
         assertThat(messages.size(), is(1));

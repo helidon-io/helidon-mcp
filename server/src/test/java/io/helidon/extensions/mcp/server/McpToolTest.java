@@ -15,9 +15,6 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.util.List;
-import java.util.function.Function;
-
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -26,14 +23,15 @@ import static org.hamcrest.Matchers.is;
 class McpToolTest {
     @Test
     void testMcpToolCustom() {
-        McpTool tool = McpTool.builder()
+        McpToolConfig config = McpToolConfig.builder()
                 .name("name")
                 .title("title")
                 .schema("schema")
                 .description("description")
                 .outputSchema("outputSchema")
-                .tool((request) -> null)
+                .tool(request -> McpToolResult.create())
                 .build();
+        McpTool tool = new McpToolImpl(config);
         assertThat(tool.name(), is("name"));
         assertThat(tool.schema(), is("schema"));
         assertThat(tool.title().orElse(""), is("title"));
@@ -43,12 +41,13 @@ class McpToolTest {
 
     @Test
     void testMcpToolDefault() {
-        McpTool tool = McpTool.builder()
+        McpToolConfig config = McpToolConfig.builder()
                 .name("name")
                 .schema("schema")
                 .description("description")
-                .tool((request) -> null)
+                .tool(request -> McpToolResult.create())
                 .build();
+        McpTool tool = new McpToolImpl(config);
         assertThat(tool.name(), is("name"));
         assertThat(tool.schema(), is("schema"));
         assertThat(tool.title().isEmpty(), is(true));
@@ -67,22 +66,24 @@ class McpToolTest {
     }
 
     static class Foo implements McpTool {
+        @Override
         public String name() {
             return "name";
         }
 
+        @Override
         public String description() {
             return "description";
         }
 
+        @Override
         public String schema() {
             return "schema";
         }
 
-        public Function<McpRequest, McpToolResult> tool() {
-            return request -> McpToolResult.builder()
-                    .contents(List.of())
-                    .build();
+        @Override
+        public McpToolResult tool(McpToolRequest request) {
+            return McpToolResult.create();
         }
     }
 }

@@ -16,13 +16,10 @@
 
 package io.helidon.extensions.mcp.tests.declarative;
 
-import java.util.List;
-
 import io.helidon.extensions.mcp.server.Mcp;
 import io.helidon.extensions.mcp.server.McpFeatures;
 import io.helidon.extensions.mcp.server.McpRequest;
-import io.helidon.extensions.mcp.server.McpToolContent;
-import io.helidon.extensions.mcp.server.McpToolContents;
+import io.helidon.extensions.mcp.server.McpToolRequest;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.json.schema.JsonSchema;
 
@@ -32,6 +29,12 @@ class McpToolsServer {
     public static final String TOOL_CONTENT = "Tool Content";
     public static final String TOOL_DESCRIPTION = "Tool description";
     public static final String OUTPUT_SCHEMA = "{\"type\":\"object\",\"properties\": {}}";
+    public static final String OUTPUT_SCHEMA_MULTI_LINE = """
+    {
+        "type":"object",
+        "properties": {
+        }
+    }""";
 
     @Mcp.Tool(TOOL_DESCRIPTION)
     String tool(String value, Foo foo) {
@@ -48,47 +51,47 @@ class McpToolsServer {
     }
 
     @Mcp.Tool(TOOL_DESCRIPTION)
-    List<McpToolContent> tool2(String value, Foo foo) {
-        return List.of(McpToolContents.textContent("""
-                                                           value=%s
-                                                           foo=%s
-                                                           bar=%d
-                                                           """.formatted(value, foo.foo, foo.bar)));
+    McpToolResult tool2(String value, Foo foo) {
+        return McpToolResult.builder()
+                .addTextContent("value=" + value)
+                .addTextContent("foo=" + foo.foo)
+                .addTextContent("bar=" + foo.bar)
+                .build();
     }
 
     @Mcp.Tool(TOOL_DESCRIPTION)
-    List<McpToolContent> tool3(McpFeatures features) {
-        return List.of(McpToolContents.textContent(TOOL_CONTENT));
+    McpToolResult tool3(McpFeatures features) {
+        return McpToolResult.builder().addTextContent(TOOL_CONTENT).build();
     }
 
     @Mcp.Tool(TOOL_DESCRIPTION)
-    List<McpToolContent> tool4(Byte aByte) {
-        return List.of(McpToolContents.textContent(aByte.toString()));
+    McpToolResult tool4(Byte aByte) {
+        return McpToolResult.builder().addTextContent(aByte.toString()).build();
     }
 
     @Mcp.Tool(TOOL_DESCRIPTION)
-    List<McpToolContent> tool5(Short aShort) {
-        return List.of(McpToolContents.textContent(aShort.toString()));
+    McpToolResult tool5(Short aShort) {
+        return McpToolResult.builder().addTextContent(aShort.toString()).build();
     }
 
     @Mcp.Tool(TOOL_DESCRIPTION)
-    List<McpToolContent> tool6(Integer aInteger) {
-        return List.of(McpToolContents.textContent(aInteger.toString()));
+    McpToolResult tool6(Integer aInteger) {
+        return McpToolResult.builder().addTextContent(aInteger.toString()).build();
     }
 
     @Mcp.Tool(TOOL_DESCRIPTION)
-    List<McpToolContent> tool7(Long aLong) {
-        return List.of(McpToolContents.textContent(aLong.toString()));
+    McpToolResult tool7(Long aLong) {
+        return McpToolResult.builder().addTextContent(aLong.toString()).build();
     }
 
     @Mcp.Tool(TOOL_DESCRIPTION)
-    List<McpToolContent> tool8(Double aDouble) {
-        return List.of(McpToolContents.textContent(aDouble.toString()));
+    McpToolResult tool8(Double aDouble) {
+        return McpToolResult.builder().addTextContent(aDouble.toString()).build();
     }
 
     @Mcp.Tool(TOOL_DESCRIPTION)
-    List<McpToolContent> tool9(Float aFloat) {
-        return List.of(McpToolContents.textContent(aFloat.toString()));
+    McpToolResult tool9(Float aFloat) {
+        return McpToolResult.builder().addTextContent(aFloat.toString()).build();
     }
 
     @Mcp.Tool(TOOL_DESCRIPTION)
@@ -97,21 +100,64 @@ class McpToolsServer {
     }
 
     @Mcp.Tool(TOOL_DESCRIPTION)
-    List<McpToolContent> tool11(McpRequest request) {
-        return List.of(McpToolContents.textContent(TOOL_CONTENT));
+    McpToolResult tool11(McpRequest request) {
+        return McpToolResult.builder()
+                .addTextContent(TOOL_CONTENT)
+                .build();
     }
 
     @Mcp.Tool(TOOL_DESCRIPTION)
     McpToolResult tool12(McpRequest request) {
         return McpToolResult.builder()
-                .addContent(McpToolContents.textContent(TOOL_CONTENT))
+                .addTextContent(TOOL_CONTENT)
                 .build();
     }
 
-    @Mcp.Tool(value = TOOL_DESCRIPTION, outputSchema = OUTPUT_SCHEMA)
+    @Mcp.Tool(value = TOOL_DESCRIPTION)
+    @Mcp.ToolOutputSchemaText(OUTPUT_SCHEMA)
     McpToolResult tool13(McpRequest request) {
         return McpToolResult.builder()
-                .addContent(McpToolContents.textContent(TOOL_CONTENT))
+                .addTextContent(TOOL_CONTENT)
+                .build();
+    }
+
+    @Mcp.Tool(value = TOOL_DESCRIPTION)
+    McpToolResult tool14(McpToolRequest request) {
+        return McpToolResult.builder()
+                .addTextContent(TOOL_CONTENT)
+                .build();
+    }
+
+    @Mcp.Tool(value = TOOL_DESCRIPTION)
+    @Mcp.ToolOutputSchema(OutputSchema.class)
+    McpToolResult tool15(McpToolRequest request) {
+        return McpToolResult.builder()
+                .addTextContent(TOOL_CONTENT)
+                .build();
+    }
+
+    @Mcp.Tool(value = TOOL_DESCRIPTION)
+    @Mcp.ToolOutputSchemaText(OUTPUT_SCHEMA_MULTI_LINE)
+    McpToolResult tool16(McpToolRequest request) {
+        return McpToolResult.builder()
+                .addTextContent(TOOL_CONTENT)
+                .build();
+    }
+
+    @Mcp.Tool(value = TOOL_DESCRIPTION)
+    @Mcp.ToolOutputSchema(OutputSchema.class)
+    @Mcp.ToolOutputSchemaText(OUTPUT_SCHEMA)
+    McpToolResult tool17(McpToolRequest request) {
+        return McpToolResult.builder()
+                .addTextContent(TOOL_CONTENT)
+                .build();
+    }
+
+    @Mcp.Tool(value = TOOL_DESCRIPTION)
+    @Mcp.ToolOutputSchema(Bar.class)
+    McpToolResult tool18(McpToolRequest request) {
+        return McpToolResult.builder()
+                .addTextContent(TOOL_CONTENT)
                 .build();
     }
 
@@ -119,5 +165,13 @@ class McpToolsServer {
     public static class Foo {
         public String foo;
         public int bar;
+    }
+
+    @JsonSchema.Schema
+    public static class OutputSchema {
+    }
+
+    @JsonSchema.Schema
+    public record Bar(String bar) {
     }
 }
