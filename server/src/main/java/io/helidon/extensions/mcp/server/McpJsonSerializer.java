@@ -140,6 +140,11 @@ interface McpJsonSerializer {
      */
     String METHOD_SESSION_DISCONNECT = "session/disconnect";
 
+    /**
+     * JSON-RPC {@code elicitation/create} method.
+     */
+    String METHOD_ELICITATION_CREATE = "elicitation/create";
+
     static McpJsonSerializer create(McpProtocolVersion version) {
         return switch (version) {
             case VERSION_2025_06_18 -> new McpJsonSerializerV3();
@@ -260,7 +265,7 @@ interface McpJsonSerializer {
 
     JsonObject createJsonRpcRequest(long id, String method, JsonObjectBuilder params);
 
-    JsonObject createJsonRpcRequest(long id, String method);
+    JsonObjectBuilder createJsonRpcRequest(long id, String method);
 
     JsonObject createJsonRpcErrorResponse(long id, JsonObjectBuilder params);
 
@@ -271,4 +276,8 @@ interface McpJsonSerializer {
     // ---------- ROOTS ----------
 
     List<McpRoot> parseRoots(JsonObject response);
+
+    McpElicitationResponse createElicitationResponse(JsonObject object) throws McpElicitationException;
+
+    JsonObject createElicitationRequest(long id, McpElicitationRequest request);
 }

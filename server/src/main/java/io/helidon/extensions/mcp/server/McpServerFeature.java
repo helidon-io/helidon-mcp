@@ -310,6 +310,8 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 .asBoolean()
                 .filter(Boolean::booleanValue)
                 .ifPresent(it -> session.capability(McpCapability.ROOTS));
+        clientCapabilities.get(McpCapability.ELICITATION.text())
+                        .ifPresent(it -> session.capability(McpCapability.ELICITATION));
         session.state(INITIALIZING);
         var payload = session.serializer().createJsonInitializeResponse(capabilities, config);
         session.onRequest(requestId, req, res);

@@ -37,6 +37,7 @@ import static io.helidon.common.types.TypeNames.LIST;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_CANCELLATION;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_COMPLETION_REQUEST;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_DESCRIPTION;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ELICITATION;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_FEATURES;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_LOGGER;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PARAMETERS;
@@ -65,6 +66,7 @@ class McpCodegenUtil {
                                                   MCP_PROGRESS.classNameWithEnclosingNames(),
                                                   MCP_CANCELLATION.classNameWithEnclosingNames(),
                                                   MCP_SAMPLING.classNameWithEnclosingNames(),
+                                                  MCP_ELICITATION.classNameWithEnclosingNames(),
                                                   MCP_PARAMETERS.classNameWithEnclosingNames());
 
     private McpCodegenUtil() {
@@ -130,6 +132,7 @@ class McpCodegenUtil {
                 || MCP_PROGRESS.equals(typeName)
                 || MCP_SAMPLING.equals(typeName)
                 || MCP_PARAMETERS.equals(typeName)
+                || MCP_ELICITATION.equals(typeName)
                 || MCP_CANCELLATION.equals(typeName)
                 || MCP_TOOL_REQUEST.equals(typeName)
                 || MCP_PROMPT_REQUEST.equals(typeName)
@@ -233,6 +236,10 @@ class McpCodegenUtil {
         }
         if (MCP_SUBSCRIBE_REQUEST.equals(type.typeName())) {
             parameters.add("request");
+            return true;
+        }
+        if (MCP_ELICITATION.equals(type.typeName())) {
+            parameters.add("request.features().elicitation()");
             return true;
         }
         return false;
