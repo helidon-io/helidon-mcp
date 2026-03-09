@@ -35,7 +35,6 @@ import io.helidon.common.types.TypeInfo;
 import io.helidon.common.types.TypeName;
 
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.generatedTypeName;
-import static io.helidon.extensions.mcp.codegen.McpTypes.GLOBAL_SERVICE_REGISTRY;
 import static io.helidon.extensions.mcp.codegen.McpTypes.HTTP_FEATURE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.HTTP_ROUTING_BUILDER;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PATH;
@@ -46,6 +45,7 @@ import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SERVER;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SERVER_CONFIG;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOLS_PAGE_SIZE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_VERSION;
+import static io.helidon.extensions.mcp.codegen.McpTypes.SERVICES;
 import static io.helidon.service.codegen.ServiceCodegenTypes.SERVICE_ANNOTATION_SINGLETON;
 
 final class McpCodegen implements CodegenExtension {
@@ -106,19 +106,12 @@ final class McpCodegen implements CodegenExtension {
                 .name("delegate"));
 
         serverClassModel.addConstructor(constructor -> {
-            constructor.accessModifier(AccessModifier.PUBLIC);
-            constructor.addContentLine("try {")
-                    .addContent("delegate = ")
-                    .addContent(GLOBAL_SERVICE_REGISTRY)
-                    .addContent(".registry().get(")
+            constructor.accessModifier(AccessModifier.PACKAGE_PRIVATE);
+            constructor.addContent("delegate = ")
+                    .addContent(SERVICES)
+                    .addContent(".get(")
                     .addContent(type.typeName())
-                    .addContentLine(".class);")
-                    .decreaseContentPadding()
-                    .addContentLine("} catch (Exception e) {")
-                    .addContent("delegate = new ")
-                    .addContent(type.typeName())
-                    .addContentLine("();")
-                    .addContentLine("}");
+                    .addContentLine(".class);");
         });
 
         toolCodegen.generate(serverClassModel, type);

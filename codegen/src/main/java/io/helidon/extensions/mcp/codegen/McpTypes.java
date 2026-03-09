@@ -92,8 +92,10 @@ final class McpTypes {
     static final TypeName HTTP_FEATURE = TypeName.create("io.helidon.webserver.http.HttpFeature");
     static final TypeName HELIDON_MEDIA_TYPE = TypeName.create("io.helidon.common.media.type.MediaType");
     static final TypeName HELIDON_MEDIA_TYPES = TypeName.create("io.helidon.common.media.type.MediaTypes");
+    static final TypeName SERVICE_SINGLETON = TypeName.create("io.helidon.service.registry.Service.Singleton");
+    static final TypeName SERVICE_PER_LOOKUP = TypeName.create("io.helidon.service.registry.Service.PerLookup");
+    static final TypeName SERVICE_PER_REQUEST = TypeName.create("io.helidon.service.registry.Service.PerRequest");
     static final TypeName HTTP_ROUTING_BUILDER = TypeName.create("io.helidon.webserver.http.HttpRouting.Builder");
-    static final TypeName GLOBAL_SERVICE_REGISTRY = TypeName.create("io.helidon.service.registry.GlobalServiceRegistry");
     static final TypeName LIST_STRING = TypeName.builder(LIST).addTypeArgument(TypeNames.STRING).build();
     static final TypeName CONSUMER_REQUEST = TypeName.builder(CONSUMER).addTypeArgument(MCP_REQUEST).build();
     static final TypeName OPTIONAL_STRING = TypeName.builder(OPTIONAL).addTypeArgument(TypeNames.STRING).build();
