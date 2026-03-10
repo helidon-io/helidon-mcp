@@ -1,14 +1,13 @@
 # Helidon MCP Extension
 
-Helidon support for the Model Context Protocol (MCP).
+Server-side Helidon support for the Model Context Protocol (MCP).
 
 ## Overview
 
-The Model Context Protocol (MCP) defines a standard communication method that enables LLMs (Large Language Models) to interact
-with both internal and external data sources. More than just a protocol, MCP establishes a connected environment of AI agents
-capable of accessing real-time information. MCP follows a client-server architecture: clients, typically used by AI agents,
-initiate communication, while servers manage access to data sources and provide data retrieval capabilities. Helidon offers
-server-side support and can be accessed by any client that implements the MCP specification.
+The Model Context Protocol (MCP) defines a standardized way for LLMs (Large Language Models) to interact with internal and
+external data sources. MCP uses a client-server architecture in which clients (typically AI agents) initiate communication and
+servers expose capabilities for data access, retrieval, and interaction. Helidon provides MCP server-side support that can be
+consumed by any client implementing the MCP specification.
 
 ## Maven Coordinates
 
@@ -40,16 +39,16 @@ Also include the following annotation processor setup:
 
 ## Usage
 
-This section walks you through creating and configuring various MCP components.
+This section describes how to create and configure core MCP components in Helidon.
 
 ### MCP Server
 
-Servers provide the fundamental building blocks for adding context to language models via MCP. Clients discover a server via a 
-configurable `HTTP` endpoint. Servers manage connections and support features detailed later in this guide. Helidon represents an 
-MCP server as an `HttpFeature`, which is registered as part of your web server’s routing. You can create multiple MCP servers by 
-defining multiple classes annotated with `@Mcp.Server`, each using a distinct `@Mcp.Path`. Each path must be unique and serves as 
-the client’s entry point. Helidon imposes no restrictions on naming or versioning; those values are simply shared with the client 
-upon connection.
+Servers provide the primary integration point for adding context to language models through MCP. Clients discover a server via a
+configurable HTTP endpoint. Servers manage client connections and expose the capabilities described later in this guide. Helidon
+represents an MCP server as an `HttpFeature`, registered as part of web server routing. You can host multiple MCP servers by
+defining multiple classes annotated with `@Mcp.Server`, each using a distinct `@Mcp.Path`. Each path must be unique and serves as
+an independent entry point for MCP clients. Helidon does not enforce naming or versioning conventions; these values are shared
+with the client during connection initialization.
 
 ```java
 @Mcp.Server
@@ -73,18 +72,19 @@ class McpServer {
 
 ### Tool
 
-`Tools` enable models to interact with external systems, such as querying databases, calling APIs, or performing computations. 
-Define a tool by annotating a method with `@Mcp.Tool`. Method names become tool names unless overridden with`@Mcp.Name`. Input 
-schemas are generated using [JSON Schema Specification](https://json-schema.org/specification); Helidon auto-generates schemas 
-when inputs are primitive types (non-POJO). `Tools` are automatically registered when defined within a server class.
+`Tools` enable models to interact with external systems, such as querying databases, calling APIs, or performing computations.
+Define a tool by annotating a method with `@Mcp.Tool`. Method names become tool names unless overridden with `@Mcp.Name`. Input
+schemas are generated using the [JSON Schema Specification](https://json-schema.org/specification); Helidon auto generates schemas when inputs are primitive types
+(non-POJO). `Tools` are automatically registered when defined within a server class. You can inject `McpToolRequest` as a 
+parameter to your tool method. It extends `McpRequest` and provides access to the `McpTool` instance via the `tool()` method.
 
 ```java
 @Mcp.Server
 class Server {
 
     @Mcp.Tool("Tool description")
-    List<McpToolContent> myToolMethod(String input) {
-        return List.of(McpToolContents.textContent("Input: " + input));
+    McpToolResult myToolMethod(String input) {
+        return McpToolResult.create("Input: " + input);
     }
 }
 ```
@@ -100,11 +100,11 @@ class Server {
 
     @Mcp.Tool("Tool description")
     @Mcp.Name("MyTool")
-    List<McpToolContent> myToolMethod(Coordinate coordinate) {
+    McpToolResult myToolMethod(Coordinate coordinate) {
         String result = String.format("latitude: %s, longitude: %s", 
                                       coordinate.latitude(), 
-                                      coordinate.latitude());
-        return List.of(McpToolContents.textContent(result));
+                                      coordinate.longitude());
+        return McpToolResult.builder().addTextContent(result).build();
     }
 
     @JsonSchema.Schema
@@ -113,25 +113,67 @@ class Server {
 }
 ```
 
+#### Structured content and output schema
+
+Structured content is returned as a JSON object in the `structuredContent` field of a result. For backwards compatibility,
+a tool that returns structured content SHOULD also return the serialized JSON in a text content block. If there is no content 
+added to the `McpToolResult` builder, Helidon will serialize the structured content and add it by itself.
+Tools have to provide an output schema for validation of structured results if it is using structured content.
+
+To add an output schema to the tool, use the `@Mcp.ToolOutputSchema` or `@Mcp.ToolOutputSchemaText` annotations:
+
+- **`@Mcp.ToolOutputSchema`**: Defines the output schema using a class (POJO). Helidon will generate the JSON schema from the class.
+- **`@Mcp.ToolOutputSchemaText`**: Defines the output schema using a literal JSON schema string.
+
+```java
+@Mcp.Tool("Tool returns a structured content")
+@Mcp.ToolOutputSchema(Foo.class)
+McpToolResult toolWithSchema(McpToolRequest request) {
+    return McpToolResult.builder()
+            .structuredContent(new Foo("bar"))
+            .build();
+}
+
+@Mcp.Tool("Tool returns a structured content with text schema")
+@Mcp.ToolOutputSchemaText("{\"type\": \"object\", \"properties\": {\"value\": {\"type\": \"string\"}}}")
+McpToolResult toolWithTextSchema(McpToolRequest request) {
+    return McpToolResult.builder()
+                .structuredContent(new Foo("bar"))
+            .build();
+}
+
+@JsonSchema.Schema
+public record Foo(String bar) {
+}
+```
+
 #### JSON Schema
 
 Use JSON Schema to validate and describe input parameters and their structure. You can define schemas via the `@JsonSchema.Schema`
 annotation. The complete documentation is available on [Helidon documentation](https://helidon.io/docs/v4/se/json/schema).
 
-#### Tool Content Types
+#### Tool Result
 
-Helidon supports three types of tool output:
+Helidon supports six types of tool result content:
 
 - **Text**: Text content with the default `text/plain` media type.
 - **Image**: Image content with a custom media type.
-- **Resource**: A reference to an `McpResource` via a URI (must be registered on the server).
+- **Audio**: Audio content with a custom media type.
+- **Resource links**: A reference to a resource.
+- **Text Resource**: Text resource content with the default `text/plain` media type.
+- **Binary Resource**: Binary resource content with a custom media type.
 
-Use the `McpToolContents` factory to create tool contents:
+Use the `McpToolResult` builder to create tool contents:
 
 ```java
-McpToolContent text = McpToolContents.textContent("text");
-McpToolContent resource = McpToolContents.resourceContent("http://path");
-McpToolContent image = McpToolContents.imageContent("base64", MediaTypes.create("image/png"));
+McpToolResult result = McpToolResult.builder()
+        .addTextContent("text")
+        .addImageContent(pngImageBytes(), MediaTypes.create("image/png"))
+        .addAudioContent(wavAudioBytes(), MediaTypes.create("audio/wav"))
+        .addResourceLinkContent("name", "https://foo")
+        .addTextResourceContent("text")
+        .addBinaryResourceContent(gzipBytes(), MediaTypes.create("application/gzip"))
+        .build();
 ```
 
 ### Prompt
@@ -144,9 +186,9 @@ the method’s name and `@Mcp.Role` to specify the speaker for text-only prompts
 @Mcp.Server
 class Server {
 
-    @Mcp.Prompt("Prompt description")
-    List<McpPromptContent> myPromptMethod(String argument) {
-        return List.of(McpPromptContents.textContent(argument + ".", McpRole.USER));
+    @Mcp.Prompt("Echo Prompt")
+    McpPromptResult echoPrompt(String argument) {
+        return McpPromptResult.create(argument);
     }
 }
 ```
@@ -164,33 +206,39 @@ class Server {
     @Mcp.Prompt("Prompt description")
     @Mcp.Name("MyPrompt")
     @Mcp.Role(McpRole.USER)
-    String myPromptMethod(@Mcp.Description("Argument description") String argument) {
-        return argument + ".";
+    String echoPrompt(@Mcp.Description("Argument description") String argument) {
+        return argument;
     }
 }
 ```
 
-#### Prompt Content Types
+#### Prompt Result
 
-Helidon supports three prompt content types:
+Five prompt result content types can be created:
 
 - **Text**: Text content with a default `text/plain` media type.
 - **Image**: Image content with a custom media type.
-- **Resource**: URI references to `McpResource` instances.
+- **Audio**: Audio content with a custom media type.
+- **Text Resource**: Text resource content with a default `text/plain` media type.
+- **Binary Resource**: Binary resource content with a custom media type.
 
-`Prompt` content can be created using `McpPromptContents` factory, and used as result of the `Prompt` execution.
+Create prompt content with the `McpPromptResult` builder:
 
 ```java
-McpPromptContent text = McpPromptContents.textContent("text", Role.USER);
-McpPromptContent resource = McpPromptContents.resourceContent("http://path", Role.USER);
-McpPromptContent image = McpPromptContents.imageContent("base64", MediaTypes.create("image/png"), Role.USER);
+McpPromptResult result = McpPromptResult.builder()
+        .addTextContent("text")
+        .addImageContent(pngImageBytes(), MediaTypes.create("image/png"))
+        .addAudioContent(wavAudioBytes(), MediaTypes.create("audio/wav"))
+        .addTextResourceContent("text")
+        .addBinaryResourceContent(gzipBytes(), MediaTypes.create("application/gzip"))
+        .build();
 ```
 
 ### Resource
 
 `Resources` allow servers to share data that provides context to language models, such as files, database schemas, or 
 application-specific information. Clients can list and read them. Resources are identified by name, description, and media type.
-Define resources using `@Mcp.Resource`:
+Define resources using `@Mcp.Resource`.
 
 ```java
 @Mcp.Server
@@ -200,8 +248,8 @@ class Server {
             uri = "file://path",
             description = "Resource description",
             mediaType = MediaTypes.TEXT_PLAIN_VALUE)
-    List<McpResourceContent> resource() {
-        return List.of(McpResourceContents.textContent("text"));
+    McpResourceResult resource() {
+        return McpResourceResult.create("text");
     }
 }
 ```
@@ -209,6 +257,7 @@ class Server {
 #### Configuration
 
 Use `String` return types for text-only resources. The `@Mcp.Name` annotation lets you override the default resource name.
+You can inject `McpResourceRequest` as a parameter to your resource method.
 
 ```java
 @Mcp.Server
@@ -219,7 +268,7 @@ class Server {
             description = "Resource description",
             mediaType = MediaTypes.TEXT_PLAIN_VALUE)
     @Mcp.Name("MyResource")
-    String resource(McpRequest request) {
+    String resource(McpResourceRequest request) {
         return "text";
     }
 }
@@ -251,18 +300,20 @@ class Server {
 }
 ```
 
-#### Resource Content Types
+#### Resource Result
 
-Helidon supports two resource content types:
+Helidon supports two resource result content types:
 
 - **Text**: Text content with a default `text/plain` media type.
 - **Binary**: Binary content with a custom media type.
 
-`Resource` content can be created using `McpResourceContents` factory:
+Create resource content with the `McpResourceResult` builder:
 
 ```java
-McpResourceContent text = McpResourceContents.textContent("data");
-McpResourceContent binary = McpResourceContents.binaryContent("{\"foo\":\"bar\"}", MediaTypes.APPLICATION_JSON);
+McpResourceResult text = McpResourceResult.create("data");
+McpResourceResult binary = McpResourceResult.builder()
+        .addBinaryContent(data, MediaTypes.APPLICATION_JSON)
+        .build();
 ```
 
 ### Resource Subscribers
@@ -274,13 +325,13 @@ longer interested in receiving update notifications, it can issue an unsubscribe
 request.
 
 Generally, the MCP server processes subscribe and unsubscribe requests without
-any user-provided code executed on the server side. Clients simply subscribe 
-and unsubscribe (within the same session) using the resource URI and updates 
-are propagated to all active subscribers in all sessions. 
-Helidon MCP supports server-side subscribers and unsubscribers in case logic needs 
-to be executed server side to handle those events --for example, a subscription 
-may start a thread to monitor database updates and stop it when the unsubscription 
-arrives.
+any user-provided code executed on the server side. Clients subscribe 
+and unsubscribe (within the same session) using the resource URI, and updates 
+are propagated to all active subscribers in all sessions.
+Helidon MCP supports server-side subscribers and unsubscribers when custom logic must
+be executed on the server to handle those events (for example, a subscription may
+start a thread to monitor database updates and stop it when the unsubscription
+arrives).
 
 The following example shows our resource example together with a server-side
 subscriber and unsubscriber:
@@ -299,45 +350,46 @@ class McpSubscribersServer {
     }
 
     @Mcp.ResourceSubscriber("http://dbtable")
-    void subscribe(McpRequest request) {
+    void subscribe(McpSubscribeRequest request) {
         startDbTableMonitor();
     }
 
     @Mcp.ResourceUnsubscriber("http://dbtable")
-    void unsubscribe(McpRequest request) {
+    void unsubscribe(McpUnsubscribeRequest request) {
         stopDbTableMonitor();
     }
 }
 ```
 
 MCP subscriptions are available via the injectable _features_ instance and can 
-send notifications manually as follows:
+send notifications manually:
 
 ```java
 @Mcp.ResourceSubscriber("http://dbtable")
-void subscribe(McpRequest request, McpFeatures features) {
+void subscribe(McpSubscribeRequest request, McpFeatures features) {
     if (wasUpdated()) {
         features.subscriptions().sendUpdate("http://dbtable");
     }
 }
 ```
 
-MCP clients will automatically issue a resource read everytime an update notification
+MCP clients automatically issue a resource read every time an update notification
 arrives.
 
 ### Completion
 
 The `Completion` feature offers auto-suggestions for prompt arguments or resource template parameters, making the server easier
-to use and explore. Bind completions to prompts (by name) or resource templates (by URI) using `@Mcp.Completion`:
+to use and explore. Bind completions to prompts (by name) or resource templates (by URI) using `@Mcp.Completion`. You can inject 
+`McpCompletionRequest` as a parameter to your completion method. It extends `McpRequest` and provides `name()` and `value()` 
+methods to get the argument name and its current value.
 
 ```java
 @Mcp.Server
 class Server {
 
     @Mcp.Completion("create")
-    McpCompletionContent completionPromptArgument(McpRequest request) {
-        String value = request.parameters().get("value").asString().orElse(null);
-        return McpCompletionContents.completion(value + ".");
+    McpCompletionResult completionPromptArgument(McpCompletionRequest request) {
+        return McpCompletionResult.create(request.value() + ".");
     }
 }
 ```
@@ -350,9 +402,8 @@ The default type of completion is prompt. When creating a completion for a resou
 class Server {
 
     @Mcp.Completion(value = "resource/{path1}", type = McpCompletionType.RESOURCE)
-    McpCompletionContent completionPromptArgument(McpRequest request) {
-        String value = request.parameters().get("value").asString().orElse(null);
-        return McpCompletionContents.completion(value + ".");
+    McpCompletionResult completionPromptArgument(McpCompletionRequest request) {
+        return McpCompletionResult.create(request.value() + ".");
     }
 }
 ```
@@ -372,27 +423,105 @@ class Server {
 }
 ```
 
-#### Completion Content Type
+#### Completion Result
 
 Completion content results in a list of suggestions:
 
 ```java
-McpCompletionContent content = McpCompletionContents.completion("suggestion");
+McpCompletionResult result = McpCompletionResult.create("suggestion1", "suggestion2");
 ```
 
 ## MCP Parameters
 
-Client parameters are available in `McpTool`, `McpPrompt`, and `McpCompletion` business logic via the `McpParameters` API:
+Client parameters are available in `McpTool`, `McpPrompt`, and `McpCompletion` business logic via the `McpParameters` API.
+This class provides a flexible way to access and convert parameters from the client request.
+
+### Basic Usage
+
+You can access parameters by their key and convert them to various types.
 
 ```java
-void process(McpRequest request) {
+void process(McpToolRequest request) {
     McpParameters parameters = request.parameters();
 
-    parameters.get("list").asList().get();
-    parameters.get("age").asInteger().orElse(18);
-    parameters.get("authorized").asBoolean().orElse(false);
-    parameters.get("name").asString().orElse("defaultName");
-    parameters.get("address").as(Address.class).orElseThrow();
+    // Access nested parameters
+    McpParameters address = parameters.get("address");
+
+    // Convert to primitive types
+    String name = parameters.get("name").asString().orElse("defaultName");
+    int age = parameters.get("age").asInteger().orElse(18);
+    boolean authorized = parameters.get("authorized").asBoolean().orElse(false);
+
+    // Convert to a list of strings
+    List<String> roles = parameters.get("roles").asList(String.class).orElse(List.of());
+
+    // Convert to a custom POJO
+    Address homeAddress = address.as(Address.class).orElseThrow();
+}
+```
+
+### Checking for Presence
+
+You can check if a parameter is present or empty.
+
+```java
+void parameters(McpRequest request) {
+    McpParameters param = request.parameters().get("optionalParam");
+    if (param.isPresent()) {
+        // ...
+    }
+    if (param.isEmpty()) {
+        // ...
+    }
+}
+```
+
+### Advanced Conversions
+
+The `McpParameters` API also supports more advanced conversions.
+
+```java
+void convert(McpToolRequest request) {
+    // Convert to a list of McpParameters to iterate over a JSON array
+    List<McpParameters> items = request.parameters().get("items").asList().get();
+    for (McpParameters item : items) {
+        String itemName = item.get("name").asString().get();
+        double itemPrice = item.get("price").asDouble().get();
+    }
+
+    // Convert to a map
+    Map<String, McpParameters> metadata = request.parameters().get("metadata").asMap().get();
+}
+```
+
+## McpRequest
+
+The `McpRequest` object is the base interface for every request, providing access to client-side data and features.
+
+- **`parameters()`**: Returns `McpParameters` for accessing client-provided parameters.
+- **`meta()`**: Returns `McpParameters` for accessing client-provided metadata.
+- **`features()`**: Returns `McpFeatures` for accessing advanced features such as logging, progress, cancellation, elicitation, sampling, and roots.
+- **`protocolVersion()`**: Returns the negotiated protocol version between the server and the client.
+- **`sessionContext()`**: Returns a `Context` for session-scoped data.
+- **`requestContext()`**: Returns a `Context` for request-scoped data.
+
+## Context Management
+
+The `McpRequest` provides access to two types of context:
+
+- **Session Context**: Used to store data that persists throughout the duration of the client's session.
+- **Request Context**: Used to store data specific to the current request.
+
+You can access these by adding `McpRequest` as a parameter to your tool or prompt method.
+
+```java
+@Mcp.Tool("Tool with state")
+McpToolResult toolWithState(McpRequest request) {
+    Context sessionContext = request.sessionContext();
+    int callCount = sessionContext.get("callCount", Integer.class).orElse(0);
+    sessionContext.register("callCount", ++callCount);
+    
+    return McpToolResult.create("This tool has been called " + callCount + " times in this session.");
 }
 ```
 
@@ -410,7 +539,7 @@ directly to clients:
 class Server {
 
     @Mcp.Tool("Tool description")
-    List<McpToolContent> getLocationCoordinates(McpFeatures features) {
+    McpToolResult getLocationCoordinates(McpFeatures features) {
         McpLogger logger = features.logger();
 
         logger.info("Logging info");
@@ -421,7 +550,7 @@ class Server {
         logger.critical("Critical issue");
         logger.alert("Alert message");
 
-        return List.of(McpToolContents.textContent("Text"));
+        return McpToolResult.create();
     }
 }
 ```
@@ -435,14 +564,14 @@ For long-running tasks, clients can request progress updates. Use `McpProgress` 
 class Server {
 
     @Mcp.Tool("Tool description")
-    List<McpToolContent> getLocationCoordinates(McpFeatures features) {
+    McpToolResult getLocationCoordinates(McpFeatures features) {
         McpProgress progress = features.progress();
         progress.total(100);
         for (int i = 1; i <= 10; i++) {
             longRunningTask();
             progress.send(i * 10);
         }
-        return List.of(McpToolContents.textContent("text"));
+        return McpToolResult.create();
     }
 }
 ```
@@ -475,20 +604,60 @@ Example of a Tool checking for cancellation request.
 
 ```java
 @Mcp.Tool("Cancellation Tool")
-List<McpToolContent> cancellationTool(McpCancellation cancellation) {
+McpToolResult cancellationTool(McpCancellation cancellation) {
     long now = System.currentTimeMillis();
     long timeout = now + TimeUnit.SECONDS.toMillis(5);
-    McpCancellation cancellation = request.features().cancellation();
 
     while (now < timeout) {
         if (cancellation.verify().isRequested()) {
             String reason = cancellation.verify().reason();
-            return List.of(McpToolContents.textContent(reason));
+            return McpToolResult.create(reason);
         }
         longRunningOperation();
         now = System.currentTimeMillis();
     }
-    return List.of(McpToolContents.textContent("text"));
+    return McpToolResult.create();
+}
+```
+
+### Elicitation
+
+See the full [elicitation documentation details](../mcp/README.md#elicitation)
+
+#### Example
+
+```java
+@Mcp.Tool("Collect additional user input from the connected client.")
+McpToolResult elicitationTool(McpElicitation elicitation) {
+    if (!elicitation.enabled()) {
+        return McpToolResult.builder()
+                .error(true)
+                .addTextContent("Elicitation is not supported by the connected client")
+                .build();
+    }
+
+    String schema = "{\"type\":\"object\",\"properties\":{\"email\":{\"type\":\"string\"}}}";
+
+    try {
+        McpElicitationResponse response = elicitation.request(req -> req
+                .message("Please provide your email address.")
+                .schema(schema)
+                .timeout(Duration.ofSeconds(30)));
+
+        if (response.action() != McpElicitationAction.ACCEPT) {
+            return McpToolResult.create("User did not provide the requested input.");
+        }
+
+        String email = response.content()
+                .map(content -> content.get("email").asString().orElse("unknown"))
+                .orElse("unknown");
+        return McpToolResult.create("Captured email: " + email);
+    } catch (McpElicitationException e) {
+        return McpToolResult.builder()
+                .error(true)
+                .addTextContent(e.getMessage())
+                .build();
+    }
 }
 ```
 
@@ -502,20 +671,27 @@ Below is an example of a tool that uses the Sampling feature. `McpSampling` obje
 
 ```java
 @Mcp.Tool("Uses MCP Sampling to ask the connected client model.")
-List<McpToolContent> samplingTool(McpSampling sampling) {
+McpToolResult samplingTool(McpSampling sampling) {
     if (!sampling.enabled()) {
-        throw new McpToolErrorException("This tool requires sampling feature");
+        return McpToolResult.builder()
+                .error(true)
+                .addTextContent("This tool requires sampling feature")
+                .build();
     }
 
     try {
-        var message = McpSamplingMessages.textContent("Write a 3-line summary of Helidon MCP Sampling.", McpRole.USER);
         McpSamplingResponse response = sampling.request(req -> req
                 .timeout(Duration.ofSeconds(10))
                 .systemPrompt("You are a concise, helpful assistant.")
-                .addMessage(message));
-        return List.of(McpToolContents.textContent(response.asTextMessage()));
+                .addTextMessage(McpSamplingTextMessage.builder().text("Write a 3-line summary of Helidon MCP Sampling.").role(McpRole.USER).build()));
+        return McpToolResult.builder()
+                .addTextContent(response.asTextMessage().text())
+                .build();
     } catch (McpSamplingException e) {
-        throw new McpToolErrorException(e.getMessage());
+        return McpToolResult.builder()
+                .error(true)
+                .addTextContent(e.getMessage())
+                .build();
     }
 }
 ```
@@ -530,15 +706,18 @@ Below is an example of a tool that uses the Roots feature. `McpRoots` object can
 
 ```java
 @Mcp.Tool("Request MCP Roots to the connected client.")
-List<McpToolContent> rootsTool(McpRoots mcpRoots) {
+McpToolResult rootsTool(McpRoots mcpRoots) {
     if (!mcpRoots.enabled()) {
-        throw new McpToolErrorException("Roots are not supported by the client");
+        return McpToolResult.builder()
+                .error(true)
+                .addTextContent("Roots are not supported by the client")
+                .build();
     }
     List<McpRoot> roots = mcpRoots.listRoots();
     McpRoot root = roots.getFirst();
     URI uri = root.uri();
     String name = root.name().orElse("Unknown");
-    return List.of(McpToolContents.textContent("Server updated roots"));
+    return McpToolResult.create("Server updated roots");
 }
 ```
 
