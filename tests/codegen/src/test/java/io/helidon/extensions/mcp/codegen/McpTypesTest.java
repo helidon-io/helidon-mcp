@@ -62,7 +62,7 @@ import io.helidon.extensions.mcp.server.McpToolAnnotations;
 import io.helidon.extensions.mcp.server.McpToolRequest;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.extensions.mcp.server.McpUnsubscribeRequest;
-import io.helidon.service.registry.GlobalServiceRegistry;
+import io.helidon.service.registry.Service;
 import io.helidon.service.registry.Services;
 import io.helidon.webserver.http.HttpFeature;
 import io.helidon.webserver.http.HttpRouting;
@@ -161,7 +161,8 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "OPTIONAL_STRING", Optional.class);
         checkField(toCheck, checked, fields, "OPTIONAL_TOOL_ANNOTATIONS", Optional.class);
         checkField(toCheck, checked, fields, "CONSUMER_REQUEST", Consumer.class);
-        checkField(toCheck, checked, fields, "GLOBAL_SERVICE_REGISTRY", GlobalServiceRegistry.class);
+        checkField(toCheck, checked, fields, "SCOPE_ANNOTATION", Service.Scope.class);
+        checkField(toCheck, checked, fields, "SERVICE_SINGLETON", Service.Singleton.class);
         checkField(toCheck, checked, fields, "LIST_STRING", List.class);
         checkField(toCheck, checked, fields, "LIST_MCP_PROMPT_ARGUMENT", List.class);
         checkField(toCheck, checked, fields, "MCP_COMPLETION_RESULT", McpCompletionResult.class);
