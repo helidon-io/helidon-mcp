@@ -1,14 +1,13 @@
 # Helidon MCP Extension
 
-Helidon support for the Model Context Protocol (MCP).
+Server-side Helidon support for the Model Context Protocol (MCP).
 
 ## Overview
 
-The Model Context Protocol (MCP) defines a standard communication method that enables LLMs (Large Language Models) to interact
-with both internal and external data sources. More than just a protocol, MCP establishes a connected environment of AI agents
-capable of accessing real-time information. MCP follows a client-server architecture: clients, typically used by AI agents,
-initiate communication, while servers manage access to data sources and provide data retrieval capabilities. Helidon offers
-server-side support and can be accessed by any client that implements the MCP specification.
+The Model Context Protocol (MCP) defines a standardized way for LLMs (Large Language Models) to interact with internal and
+external data sources. MCP uses a client-server architecture in which clients (typically AI agents) initiate communication and
+servers expose capabilities for data access, retrieval, and interaction. Helidon provides MCP server-side support that can be
+consumed by any client implementing the MCP specification.
 
 ## Maven Coordinates
 
@@ -40,16 +39,16 @@ Also include the following annotation processor setup:
 
 ## Usage
 
-This section walks you through creating and configuring various MCP components.
+This section describes how to create and configure core MCP components in Helidon.
 
 ### MCP Server
 
-Servers provide the fundamental building blocks for adding context to language models via MCP. Clients discover a server via a 
-configurable `HTTP` endpoint. Servers manage connections and support features detailed later in this guide. Helidon represents an 
-MCP server as an `HttpFeature`, which is registered as part of your web server’s routing. You can create multiple MCP servers by 
-defining multiple classes annotated with `@Mcp.Server`, each using a distinct `@Mcp.Path`. Each path must be unique and serves as 
-the client’s entry point. Helidon imposes no restrictions on naming or versioning; those values are simply shared with the client 
-upon connection.
+Servers provide the primary integration point for adding context to language models through MCP. Clients discover a server via a
+configurable HTTP endpoint. Servers manage client connections and expose the capabilities described later in this guide. Helidon
+represents an MCP server as an `HttpFeature`, registered as part of web server routing. You can host multiple MCP servers by
+defining multiple classes annotated with `@Mcp.Server`, each using a distinct `@Mcp.Path`. Each path must be unique and serves as
+an independent entry point for MCP clients. Helidon does not enforce naming or versioning conventions; these values are shared
+with the client during connection initialization.
 
 ```java
 @Mcp.Server
@@ -73,9 +72,9 @@ class McpServer {
 
 ### Tool
 
-`Tools` enable models to interact with external systems, such as querying databases, calling APIs, or performing computations. 
-Define a tool by annotating a method with `@Mcp.Tool`. Method names become tool names unless overridden with`@Mcp.Name`. Input 
-schemas are generated using [JSON Schema Specification](https://json-schema.org/specification); Helidon auto-generates schemas when inputs are primitive types 
+`Tools` enable models to interact with external systems, such as querying databases, calling APIs, or performing computations.
+Define a tool by annotating a method with `@Mcp.Tool`. Method names become tool names unless overridden with `@Mcp.Name`. Input
+schemas are generated using [JSON Schema Specification](https://json-schema.org/specification); Helidon auto-generates schemas when inputs are primitive types
 (non-POJO). `Tools` are automatically registered when defined within a server class. You can inject `McpToolRequest` as a 
 parameter to your tool method. It extends `McpRequest` and provides access to the `McpTool` instance via the `tool()` method.
 
@@ -329,8 +328,8 @@ Generally, the MCP server processes subscribe and unsubscribe requests without
 any user-provided code executed on the server side. Clients simply subscribe 
 and unsubscribe (within the same session) using the resource URI and updates 
 are propagated to all active subscribers in all sessions. 
-Helidon MCP supports server-side subscribers and unsubscribers in case logic needs 
-to be executed server side to handle those events --for example, a subscription 
+Helidon MCP supports server-side subscribers and unsubscribers when custom logic must 
+be executed on the server to handle those events --for example, a subscription 
 may start a thread to monitor database updates and stop it when the unsubscription 
 arrives.
 
@@ -374,7 +373,7 @@ void subscribe(McpSubscribeRequest request, McpFeatures features) {
 }
 ```
 
-MCP clients will automatically issue a resource read everytime an update notification
+MCP clients automatically issue a resource read every time an update notification
 arrives.
 
 ### Completion
@@ -501,7 +500,7 @@ The `McpRequest` object is the base interface for every request, providing acces
 
 - **`parameters()`**: Returns `McpParameters` for accessing client-provided parameters.
 - **`meta()`**: Returns `McpParameters` for accessing client-provided metadata.
-- **`features()`**: Returns `McpFeatures` for accessing advanced features like logging, sampling, and progress.
+- **`features()`**: Returns `McpFeatures` for accessing advanced features such as logging, progress, cancellation, elicitation, sampling, and roots.
 - **`protocolVersion()`**: Returns the negotiated protocol version between the server and the client.
 - **`sessionContext()`**: Returns a `Context` for session-scoped data.
 - **`requestContext()`**: Returns a `Context` for request-scoped data.
@@ -618,6 +617,47 @@ McpToolResult cancellationTool(McpCancellation cancellation) {
         now = System.currentTimeMillis();
     }
     return McpToolResult.create();
+}
+```
+
+### Elicitation
+
+See the full [elicitation documentation details](../mcp/README.md#elicitation)
+
+#### Example
+
+```java
+@Mcp.Tool("Collect additional user input from the connected client.")
+McpToolResult elicitationTool(McpElicitation elicitation) {
+    if (!elicitation.enabled()) {
+        return McpToolResult.builder()
+                .error(true)
+                .addTextContent("Elicitation is not supported by the connected client")
+                .build();
+    }
+
+    String schema = "{\"type\":\"object\",\"properties\":{\"email\":{\"type\":\"string\"}}}";
+
+    try {
+        McpElicitationResponse response = elicitation.request(req -> req
+                .message("Please provide your email address.")
+                .schema(schema)
+                .timeout(Duration.ofSeconds(30)));
+
+        if (response.action() != McpElicitationAction.ACCEPT) {
+            return McpToolResult.create("User did not provide the requested input.");
+        }
+
+        String email = response.content()
+                .map(content -> content.get("email").asString().orElse("unknown"))
+                .orElse("unknown");
+        return McpToolResult.create("Captured email: " + email);
+    } catch (McpElicitationException e) {
+        return McpToolResult.builder()
+                .error(true)
+                .addTextContent(e.getMessage())
+                .build();
+    }
 }
 ```
 

@@ -1,14 +1,13 @@
 # Helidon MCP Extension
 
-Helidon support for the Model Context Protocol (MCP).
+Server-side Helidon support for the Model Context Protocol (MCP).
 
 ## Overview
 
-The Model Context Protocol (MCP) defines a standard communication method that enables LLMs (Large Language Models) to interact 
-with both internal and external data sources. More than just a protocol, MCP establishes a connected environment of AI agents 
-capable of accessing real-time information. MCP follows a client-server architecture: clients, typically used by AI agents, 
-initiate communication, while servers manage access to data sources and provide data retrieval capabilities. Helidon offers 
-server-side support and can be accessed by any client that implements the MCP specification.
+The Model Context Protocol (MCP) defines a standardized way for LLMs (Large Language Models) to interact with internal and 
+external data sources. MCP uses a client-server architecture in which clients (typically AI agents) initiate communication and 
+servers expose capabilities for data access, retrieval, and interaction. Helidon provides MCP server-side support that can be 
+consumed by any client implementing the MCP specification.
 
 ## Maven Coordinates
 
@@ -23,16 +22,16 @@ To create your first MCP server using Helidon, add the following dependency to y
 
 ## Usage
 
-This section walks you through creating and configuring various MCP components.
+This section describes how to create and configure core MCP components in Helidon.
 
 ### MCP Server
 
-Servers provide the fundamental building blocks for adding context to language models via MCP. It is accessible through a 
-configurable HTTP endpoint. The server manages client connections and provides features described in the following sections. 
-The MCP server is implemented as a Helidon `HttpFeature` and registered with the web server's routing. To host multiple servers, 
-simply register additional `McpServerFeature` instances with unique paths. Each path acts as a unique entry point for MCP clients. 
-Use the `McpServerFeature` builder to register MCP components. The server's name and version are shared with clients during 
-connection initialization, but Helidon imposes no constraints on how you manage them.
+Servers provide the primary integration point for adding context to language models through MCP. A server is exposed through a 
+configurable HTTP endpoint, manages client connections, and provides the capabilities described in later sections. In Helidon, 
+an MCP server is implemented as an `HttpFeature` and registered in web server routing. To host multiple MCP servers, register 
+multiple `McpServerFeature` instances with distinct paths. Each path serves as a separate entry point for MCP clients. Use the 
+`McpServerFeature` builder to register tools, prompts, resources, and other MCP components. Server name and version are shared 
+with clients during initialization, and Helidon does not enforce naming or versioning conventions.
 
 **Example: Creating an MCP server**
 
@@ -704,7 +703,7 @@ The `McpRequest` object is the base interface for every request, providing acces
 
 - **`parameters()`**: Returns `McpParameters` for accessing client-provided parameters.
 - **`meta()`**: Returns `McpParameters` for accessing client-provided metadata.
-- **`features()`**: Returns `McpFeatures` for accessing advanced features like logging, sampling, and progress.
+- **`features()`**: Returns `McpFeatures` for accessing advanced features such as logging, progress, cancellation, elicitation, sampling, and roots.
 - **`protocolVersion()`**: Returns the negotiated protocol version between the server and the client.
 - **`sessionContext()`**: Returns a `Context` for session-scoped data.
 - **`requestContext()`**: Returns a `Context` for request-scoped data.
@@ -954,6 +953,93 @@ private class CancellationTool implements McpTool {
             now = System.currentTimeMillis();
         }
         return McpToolResult.create("text");
+    }
+}
+```
+
+### Elicitation
+
+The `Elicitation` feature allows a server to request additional structured user input through the connected MCP client during 
+request processing. This is useful when execution requires runtime information that is not available in the initial tool or prompt 
+arguments (for example, confirmation data, credentials, or user-selected options).
+
+Elicitation support is optional on the client side. Always verify support before sending a request:
+
+```java
+McpElicitation elicitation = request.features().elicitation();
+if (!elicitation.enabled()) {
+}
+```
+
+An elicitation request includes:
+
+- `message` – prompt shown to the user by the client
+- `schema` – JSON Schema describing the expected response payload
+- `timeout` – optional timeout (defaults to 5 minutes)
+
+Client responses include:
+
+- `action()` – `ACCEPT`, `DECLINE`, or `CANCEL`
+- `content()` – response payload as `McpParameters` (present when accepted)
+
+#### Example
+
+```java
+class ElicitationTool implements McpTool {
+    @Override
+    public String name() {
+        return "elicitation-tool";
+    }
+
+    @Override
+    public String description() {
+        return "Collects additional user input using MCP elicitation.";
+    }
+
+    @Override
+    public String schema() {
+        return "";
+    }
+
+    @Override
+    public McpToolResult tool(McpToolRequest request) {
+        McpElicitation elicitation = request.features().elicitation();
+        if (!elicitation.enabled()) {
+            return McpToolResult.builder()
+                    .error(true)
+                    .addTextContent("Elicitation is not supported by the connected client")
+                    .build();
+        }
+
+        String userSchema = """
+                {
+                  "type": "object",
+                  "properties": {
+                    "email": {"type": "string"}
+                  }
+                }
+                """;
+
+        try {
+            McpElicitationResponse response = elicitation.request(req -> req
+                    .message("Please provide your email address.")
+                    .schema(userSchema)
+                    .timeout(Duration.ofSeconds(30)));
+
+            if (response.action() != McpElicitationAction.ACCEPT) {
+                return McpToolResult.create("User did not provide the requested input.");
+            }
+
+            String email = response.content()
+                    .map(content -> content.get("email").asString().orElse("unknown"))
+                    .orElse("unknown");
+            return McpToolResult.create("Captured email: " + email);
+        } catch (McpElicitationException e) {
+            return McpToolResult.builder()
+                    .error(true)
+                    .addTextContent(e.getMessage())
+                    .build();
+        }
     }
 }
 ```
