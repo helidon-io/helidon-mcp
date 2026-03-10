@@ -161,6 +161,18 @@ class McpToolsServer {
                 .build();
     }
 
+    @Mcp.Tool("""
+            Tool description block
+            """)
+    McpToolResult tool19(McpRequest request) {
+        return McpToolResult.create(TOOL_CONTENT);
+    }
+
+    @Mcp.Tool("first line\n" + "second line\n")
+    McpToolResult tool20(McpRequest request) {
+        return McpToolResult.create(TOOL_CONTENT);
+    }
+
     @JsonSchema.Schema
     public static class Foo {
         public String foo;

@@ -46,9 +46,12 @@ abstract class AbstractLangchain4jPromptsServerTest {
     }
 
     @Test
-    void listPrompts() {
+    void testListPrompt() {
         List<McpPrompt> prompts = client.listPrompts();
-        assertThat(prompts.size(), is(13));
+        assertThat(prompts.size(), is(15));
+
+        assertThat(prompts.get(13).description(), is("Description code block\n"));
+        assertThat(prompts.get(14).description(), is("first line\n second line\n"));
     }
 
     @ParameterizedTest

@@ -44,8 +44,14 @@ abstract class AbstractLangchain4jResourcesServerTest {
 
     @Test
     void listResources() {
-        List<McpResource> resources = client.listResources();
-        assertThat(resources.size(), is(7));
+        List<McpResource> list = client.listResources();
+        assertThat(list.size(), is(9));
+
+        McpResource resource = list.get(7);
+        assertThat(resource.description(), is("Description code block\n"));
+
+        McpResource resource2 = list.get(8);
+        assertThat(resource2.description(), is("first line\nsecond line"));
     }
 
     @ParameterizedTest

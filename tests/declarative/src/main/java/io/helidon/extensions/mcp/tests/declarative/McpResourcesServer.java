@@ -85,4 +85,23 @@ class McpResourcesServer {
     McpResourceResult resource6(McpResourceRequest request) {
         return McpResourceResult.builder().addTextContent(RESOURCE_CONTENT).build();
     }
+
+    @Mcp.Resource(
+            uri = "resource5",
+            mediaType = RESOURCE_MEDIA_TYPE,
+            description = """
+                    Description code block
+                    """)
+    McpResourceResult resource7(McpResourceRequest request) {
+        return McpResourceResult.create(RESOURCE_CONTENT);
+    }
+
+    @Mcp.Resource(
+            uri = "resource5",
+            mediaType = RESOURCE_MEDIA_TYPE,
+            description = "first line\n"
+                    + "second line")
+    McpResourceResult resource8(McpResourceRequest request) {
+        return McpResourceResult.create(RESOURCE_CONTENT);
+    }
 }

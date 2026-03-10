@@ -70,9 +70,9 @@ class McpCompletionCodegen {
         builder.name("reference")
                 .addAnnotation(Annotations.OVERRIDE)
                 .returnType(TypeNames.STRING)
-                .addContent("return \"")
-                .addContent(reference)
-                .addContentLine("\";");
+                .addContent("return ")
+                .addContentLiteral(reference)
+                .addContentLine(";");
     }
 
     private void addCompletionReferenceTypeMethod(Method.Builder builder, EnumValue referenceType) {

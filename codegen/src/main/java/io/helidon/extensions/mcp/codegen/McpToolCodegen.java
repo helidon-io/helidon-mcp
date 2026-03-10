@@ -167,27 +167,27 @@ class McpToolCodegen {
                 parameters.add(param.elementName());
                 builder.addContent("var ")
                         .addContent(param.elementName())
-                        .addContent(" = request.arguments().get(\"")
-                        .addContent(param.elementName())
-                        .addContentLine("\").asString().orElse(\"\");");
+                        .addContent(" = request.arguments().get(")
+                        .addContentLiteral(param.elementName())
+                        .addContentLine(").asString().orElse(\"\");");
                 continue;
             }
             if (isBoolean(param.typeName())) {
                 parameters.add(param.elementName());
                 builder.addContent("boolean ")
                         .addContent(param.elementName())
-                        .addContent(" = request.arguments().get(\"")
-                        .addContent(param.elementName())
-                        .addContentLine("\").asBoolean().orElse(false);");
+                        .addContent(" = request.arguments().get(")
+                        .addContentLiteral(param.elementName())
+                        .addContentLine(").asBoolean().orElse(false);");
                 continue;
             }
             if (isNumber(param.typeName())) {
                 parameters.add(param.elementName());
                 builder.addContent("var ")
                         .addContent(param.elementName())
-                        .addContent(" = request.arguments().get(\"")
-                        .addContent(param.elementName())
-                        .addContent("\").as")
+                        .addContent(" = request.arguments().get(")
+                        .addContentLiteral(param.elementName())
+                        .addContent(").as")
                         .addContent(param.typeName().className())
                         .addContentLine("().orElse(null);");
                 continue;
@@ -198,18 +198,18 @@ class McpToolCodegen {
                 parameters.add(param.elementName());
                 builder.addContent("var ")
                         .addContent(param.elementName())
-                        .addContent(" = toList(request.arguments().get(\"")
-                        .addContent(param.elementName())
-                        .addContentLine("\").asList().orElse(null));");
+                        .addContent(" = toList(request.arguments().get(")
+                        .addContentLiteral(param.elementName())
+                        .addContentLine(").asList().orElse(null));");
                 continue;
             }
             parameters.add(param.elementName());
             builder.addContent(param.typeName().classNameWithEnclosingNames())
                     .addContent(" ")
                     .addContent(param.elementName())
-                    .addContent(" = request.arguments().get(\"")
-                    .addContent(param.elementName())
-                    .addContent("\").as(")
+                    .addContent(" = request.arguments().get(")
+                    .addContentLiteral(param.elementName())
+                    .addContent(").as(")
                     .addContent(param.typeName())
                     .addContentLine(".class).orElse(null);");
         }
@@ -247,18 +247,18 @@ class McpToolCodegen {
         builder.name("name")
                 .addAnnotation(Annotations.OVERRIDE)
                 .returnType(TypeNames.STRING)
-                .addContent("return \"")
-                .addContent(name)
-                .addContentLine("\";");
+                .addContent("return ")
+                .addContentLiteral(name)
+                .addContentLine(";");
     }
 
     private void addToolDescriptionMethod(Method.Builder builder, String description) {
         builder.name("description")
                 .addAnnotation(Annotations.OVERRIDE)
                 .returnType(TypeNames.STRING)
-                .addContent("return \"")
-                .addContent(description)
-                .addContentLine("\";");
+                .addContent("return ")
+                .addContentLiteral(description)
+                .addContentLine(";");
     }
 
     private void addToolAnnotationsMethod(Method.Builder builder, Annotation toolAnnotation) {
@@ -266,9 +266,9 @@ class McpToolCodegen {
                 .addAnnotation(Annotations.OVERRIDE)
                 .returnType(OPTIONAL_TOOL_ANNOTATIONS)
                 .addContentLine("var builder = McpToolAnnotations.builder();")
-                .addContent("builder.title(\"")
-                .addContent(toolAnnotation.stringValue("title").orElse(""))
-                .addContentLine("\")")
+                .addContent("builder.title(")
+                .addContentLiteral(toolAnnotation.stringValue("title").orElse(""))
+                .addContentLine(")")
                 .increaseContentPadding()
                 .addContent(".readOnlyHint(")
                 .addContent(toolAnnotation.booleanValue("readOnlyHint").orElse(false).toString())
