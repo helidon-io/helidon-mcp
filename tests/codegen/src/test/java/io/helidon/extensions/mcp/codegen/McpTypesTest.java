@@ -161,9 +161,8 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "OPTIONAL_STRING", Optional.class);
         checkField(toCheck, checked, fields, "OPTIONAL_TOOL_ANNOTATIONS", Optional.class);
         checkField(toCheck, checked, fields, "CONSUMER_REQUEST", Consumer.class);
+        checkField(toCheck, checked, fields, "SCOPE_ANNOTATION", Service.Scope.class);
         checkField(toCheck, checked, fields, "SERVICE_SINGLETON", Service.Singleton.class);
-        checkField(toCheck, checked, fields, "SERVICE_PER_LOOKUP", Service.PerLookup.class);
-        checkField(toCheck, checked, fields, "SERVICE_PER_REQUEST", Service.PerRequest.class);
         checkField(toCheck, checked, fields, "LIST_STRING", List.class);
         checkField(toCheck, checked, fields, "LIST_MCP_PROMPT_ARGUMENT", List.class);
         checkField(toCheck, checked, fields, "MCP_COMPLETION_RESULT", McpCompletionResult.class);

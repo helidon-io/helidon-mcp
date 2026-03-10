@@ -28,8 +28,7 @@ import io.helidon.common.types.TypeInfo;
 import io.helidon.common.types.TypeName;
 
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SERVER;
-import static io.helidon.extensions.mcp.codegen.McpTypes.SERVICE_PER_LOOKUP;
-import static io.helidon.extensions.mcp.codegen.McpTypes.SERVICE_PER_REQUEST;
+import static io.helidon.extensions.mcp.codegen.McpTypes.SCOPE_ANNOTATION;
 import static io.helidon.extensions.mcp.codegen.McpTypes.SERVICE_SINGLETON;
 
 /**
@@ -70,9 +69,9 @@ public final class McpServerTypeMapperProvider implements TypeMapperProvider {
         }
 
         private boolean hasNoScopeAnnotation(TypeInfo typeInfo) {
-            return !typeInfo.hasAnnotation(SERVICE_SINGLETON)
-                    && !typeInfo.hasAnnotation(SERVICE_PER_REQUEST)
-                    && !typeInfo.hasAnnotation(SERVICE_PER_LOOKUP);
+            return typeInfo.annotations()
+                    .stream()
+                    .noneMatch(it -> it.hasMetaAnnotation(SCOPE_ANNOTATION));
         }
     }
 }
