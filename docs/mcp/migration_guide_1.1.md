@@ -1,23 +1,23 @@
-# Migration guide to version 1.1
+# Migration Guide for Version 1.1.0
 
 Helidon MCP `1.1.0` provides support for MCP specification `2025-06-18`. This document 
-presents the noticeable changes and a way to upgrade your post `1.1.0` code.
+summarizes the key changes and explains how to migrate existing code to `1.1.0`.
 
-# Overview of changes
+## Overview of Changes
 
 - When MCP components used to return a `List<Mcp*Content>`, they now return `Mcp*Result`.
-- End of MCP components `Function<McpRequest, List<Mcp*Content>>` in favor of `Mcp*Result method(Mcp*Request request)`.
-- Contents are now created directly on the result builder and do not require the factory classes anymore.
-- Having typed requests allows easier access to specific request data without the need of parsing them through the `McpParameters`.
-- The same applies to results and provides higher result customization.
+- MCP component signatures based on `Function<McpRequest, List<Mcp*Content>>` are replaced with typed methods such as `Mcp*Result method(Mcp*Request request)`.
+- Content is now created directly on result builders and no longer requires factory classes.
+- Typed request objects provide direct access to request-specific data, without parsing all values through `McpParameters`.
+- Result types follow the same pattern and provide more customization options.
 
-The following chapters describe in detail how to migrate your MCP components to `1.1.0` version.
+The sections below describe how to migrate MCP components to version `1.1.0`.
 
 ## Tools
 
 ### Migrate McpTool interface
 
-Old code:
+Previous API:
 ```java
 @Override
 public Function<McpRequest, List<McpToolContent>> tool() {
@@ -25,7 +25,7 @@ public Function<McpRequest, List<McpToolContent>> tool() {
 }
 ```
 
-New code:
+Updated API:
 ```java
 @Override
 public McpToolResult tool(McpToolRequest request) {
@@ -33,14 +33,14 @@ public McpToolResult tool(McpToolRequest request) {
 }
 ```
 
-For more details about the McpToolResult builder, refer to [this section](README.md#tool-result-builder-and-content-types) of the documentation.
+For details about the `McpToolResult` builder, see [Tool Result](README.md#tool-result-builder-and-content-types).
 
 ### Migrate McpRequest to McpToolRequest
 
-The `McpToolRequest` extends `McpRequest` and this makes the migration easier. To access tool arguments provided by the client, 
-use now the `McpToolRequest#arguments()` method.
+The `McpToolRequest` type extends `McpRequest`. To access tool arguments provided by the client,
+use `McpToolRequest#arguments()`.
 
-Old code:
+Previous API:
 ```java
 @Override
 public Function<McpRequest, List<McpToolContent>> tool() {
@@ -51,7 +51,7 @@ public Function<McpRequest, List<McpToolContent>> tool() {
 }
 ```
 
-New code:
+Updated API:
 ```java
 @Override
 public McpToolResult tool(McpToolRequest request) {
@@ -60,25 +60,25 @@ public McpToolResult tool(McpToolRequest request) {
 }
 ```
 
-The method `parameters` is still available on the request but provide all the JSON-RPC parameters provided by the client.
+The `parameters()` method remains available and exposes the full JSON-RPC parameter payload from the client.
 
 ### Migrate from McpToolContents
 
-The `McpToolContents` factory is removed in favor of builders. The `McpToolContent` types can be created using their builders.
+The `McpToolContents` factory is removed in favor of builders. `McpToolContent` types are now created with dedicated builders.
 
 - McpToolTextContent
 
-Old code:
+Previous API:
 ```java
 McpToolContent text = McpToolContents.textContent("text");
 ```
 
-New code:
+Updated API:
 ```java
 McpToolTextContent content = McpToolTextContent.builder().text("text").build();
 ```
 
-The other way is to create it on the result builder directly:
+Alternatively, create it directly in the result builder:
 ```java
 McpToolResult result = McpToolResult.builder()
         .addTextContent("text")
@@ -89,12 +89,12 @@ McpToolResult result = McpToolResult.create("text");
 
 - McpToolImageContent
 
-Old code:
+Previous API:
 ```java
 McpToolContent image = McpToolContents.imageContent("text".getBytes(), MediaTypes.TEXT_PLAIN);
 ```
 
-New code:
+Updated API:
 ```java
 McpToolImageContent content = McpToolImageContent.builder()
         .data("text".getBytes())
@@ -102,7 +102,7 @@ McpToolImageContent content = McpToolImageContent.builder()
         .build();
 ```
 
-The other way is to create it on the result builder directly:
+Alternatively, create it directly in the result builder:
 ```java
 McpToolResult result = McpToolResult.builder()
         .addImageContent("text".getBytes(), MediaTypes.TEXT_PLAIN)
@@ -118,12 +118,12 @@ McpToolResult result = McpToolResult.builder()
 
 - McpToolAudioContent
 
-Old code:
+Previous API:
 ```java
 McpToolContent audio = McpToolContents.audioContent("audio".getBytes(), MediaTypes.TEXT_PLAIN);
 ```
 
-New code:
+Updated API:
 ```java
 McpToolAudioContent content = McpToolAudioContent.builder()
         .data("text".getBytes())
@@ -131,7 +131,7 @@ McpToolAudioContent content = McpToolAudioContent.builder()
         .build();
 ```
 
-Create an instance of McpToolAudioContent in the result builder:
+Alternatively, create `McpToolAudioContent` directly in the result builder:
 ```java
 McpToolResult result = McpToolResult.builder()
         .addAudioContent("audio".getBytes(), MediaTypes.TEXT_PLAIN)
@@ -147,13 +147,13 @@ McpToolResult result = McpToolResult.builder()
 
 - McpToolTextResourceContent
 
-Old code:
+Previous API:
 ```java
 McpResourceContent content = McpResourceContents.textContent("text");
 McpToolContent resource = McpToolContents.resourceContent(URI.create("https://foo"), content);
 ```
 
-New code:
+Updated API:
 ```java
 McpToolTextResourceContent content = McpToolTextResourceContent.builder()
         .uri(URI.create("http://resource"))
@@ -165,7 +165,7 @@ McpToolResult result = McpToolResult.builder()
         .build();
 ```
 
-Create an instance of McpToolTextResourceContent in the result builder:
+Alternatively, create `McpToolTextResourceContent` directly in the result builder:
 ```java
 McpToolResult result = McpToolResult.builder()
         .addTextResourceContent(resource -> resource
@@ -177,13 +177,13 @@ McpToolResult result = McpToolResult.builder()
 
 - McpToolBinaryResourceContent
 
-Old code:
+Previous API:
 ```java
 McpResourceContent content = McpResourceContents.binaryContent("binary".getBytes(), MediaTypes.APPLICATION_JSON);
 McpToolContent resource = McpToolContents.resourceContent(URI.create("https://foo"), content);
 ```
 
-New code:
+Updated API:
 ```java
 McpToolBinaryResourceContent content = McpToolBinaryResourceContent.builder()
         .data("binary".getBytes())
@@ -195,7 +195,7 @@ McpToolResult result = McpToolResult.builder()
         .build();
 ```
 
-Create an instance of McpToolTextResourceContent in the result builder:
+Alternatively, create `McpToolTextResourceContent` directly in the result builder:
 ```java
 McpToolResult result = McpToolResult.builder()
         .addBinaryResourceContent(resource -> resource
@@ -205,19 +205,19 @@ McpToolResult result = McpToolResult.builder()
         .build();
 ```
 
-We believe this approach provides more flexibility and fits more use cases.
+This approach is more flexible and supports a wider range of use cases.
 
 ### Migrate from McpToolErrorException
 
-The purpose of this exception is to return a tool error. This is not required anymore, the tool 
-error flag can be used on the result builder instead.
+This exception was previously used to indicate tool errors. This is no longer required;
+set the tool error flag on the result builder instead.
 
-Old code:
+Previous API:
 ```java
 throw new McpToolErrorException("exception text");
 ```
 
-New code:
+Updated API:
 ```java
 return McpToolResult.builder()
                     .error(true)
@@ -229,7 +229,7 @@ return McpToolResult.builder()
 
 ### Migrate McpPrompt interface
 
-Old code:
+Previous API:
 ```java
 @Override
 public Function<McpRequest, List<McpPromptContent>> prompt() {
@@ -237,7 +237,7 @@ public Function<McpRequest, List<McpPromptContent>> prompt() {
 }
 ```
 
-New code:
+Updated API:
 ```java
 @Override
 public McpPromptResult prompt(McpPromptRequest request) {
@@ -245,14 +245,14 @@ public McpPromptResult prompt(McpPromptRequest request) {
 }
 ```
 
-For more details about the McpPromptResult builder, refer to [this section](README.md#prompt-result-builder-and-content-types) of the documentation.
+For details about the `McpPromptResult` builder, see [Prompt Result](README.md#prompt-result-builder-and-content-types).
 
 ### Migrate McpRequest to McpPromptRequest
 
 The `McpPromptRequest` extends `McpRequest`. To access prompt arguments provided by the client,
-use now the `McpPromptRequest#arguments()` method.
+use `McpPromptRequest#arguments()`.
 
-Old code:
+Previous API:
 ```java
 @Override
 public Function<McpRequest, List<McpPromptContent>> prompt() {
@@ -263,7 +263,7 @@ public Function<McpRequest, List<McpPromptContent>> prompt() {
 }
 ```
 
-New code:
+Updated API:
 ```java
 @Override
 public McpPromptResult prompt(McpPromptRequest request) {
@@ -274,16 +274,16 @@ public McpPromptResult prompt(McpPromptRequest request) {
 
 ### Migrate from McpPromptContents
 
-The `McpPromptContents` factory is removed in favor of builders. The `McpPromptContent` types can be created using their builders.
+The `McpPromptContents` factory is removed in favor of builders. `McpPromptContent` types are now created with dedicated builders.
 
 - McpPromptTextContent
 
-Old code:
+Previous API:
 ```java
 McpPromptContent text = McpPromptContents.textContent("text");
 ```
 
-New code:
+Updated API:
 ```java
 McpPromptTextContent content = McpPromptTextContent.builder()
         .text("text")
@@ -291,7 +291,7 @@ McpPromptTextContent content = McpPromptTextContent.builder()
         .build();
 ```
 
-The other way is to create it on the result builder directly:
+Alternatively, create it directly in the result builder:
 ```java
 McpPromptResult result = McpPromptResult.builder()
         .addTextContent("text")
@@ -302,12 +302,12 @@ McpPromptResult result = McpPromptResult.create("text");
 
 - McpPromptImageContent
 
-Old code:
+Previous API:
 ```java
 McpPromptContent image = McpPromptContents.imageContent("binary".getBytes(), MediaTypes.TEXT_PLAIN);
 ```
 
-New code:
+Updated API:
 ```java
 McpPromptImageContent content = McpPromptImageContent.builder()
         .data("binary".getBytes())
@@ -316,7 +316,7 @@ McpPromptImageContent content = McpPromptImageContent.builder()
         .build();
 ```
 
-The other way is to create it on the result builder directly:
+Alternatively, create it directly in the result builder:
 ```java
 McpPromptResult result = McpPromptResult.builder()
         .addImageContent("binary".getBytes(), MediaTypes.TEXT_PLAIN)
@@ -325,12 +325,12 @@ McpPromptResult result = McpPromptResult.builder()
 
 - McpPromptAudioContent
 
-Old code:
+Previous API:
 ```java
 McpPromptContent audio = McpPromptContents.audioContent("audio".getBytes(), MediaTypes.TEXT_PLAIN);
 ```
 
-New code:
+Updated API:
 ```java
 McpPromptAudioContent content = McpPromptAudioContent.builder()
         .data("audio".getBytes())
@@ -339,7 +339,7 @@ McpPromptAudioContent content = McpPromptAudioContent.builder()
         .build();
 ```
 
-The other way is to create it on the result builder directly:
+Alternatively, create it directly in the result builder:
 ```java
 McpPromptResult result = McpPromptResult.builder()
         .addAudioContent("audio".getBytes(), MediaTypes.TEXT_PLAIN)
@@ -348,13 +348,13 @@ McpPromptResult result = McpPromptResult.builder()
 
 - McpPromptTextResourceContent
 
-Old code:
+Previous API:
 ```java
 McpResourceContent content = McpResourceContents.textContent("text");
 McpPromptContent resource = McpPromptContents.resourceContent(URI.create("https://foo"), content);
 ```
 
-New code:
+Updated API:
 ```java
 McpPromptTextResourceContent content = McpPromptTextResourceContent.builder()
         .uri(URI.create("https://resource"))
@@ -366,7 +366,7 @@ McpPromptResult result = McpPromptResult.builder()
         .build();
 ```
 
-The other way is to create it on the result builder directly:
+Alternatively, create it directly in the result builder:
 ```java
 McpPromptResult result = McpPromptResult.builder()
         .addTextResourceContent(resource -> resource
@@ -378,13 +378,13 @@ McpPromptResult result = McpPromptResult.builder()
 
 - McpPromptBinaryResourceContent
 
-Old code:
+Previous API:
 ```java
 McpResourceContent content = McpResourceContents.binaryContent("binary".getBytes(), MediaTypes.APPLICATION_JSON);
 McpPromptContent resource = McpPromptContents.resourceContent(URI.create("https://foo"), content);
 ```
 
-New code:
+Updated API:
 ```java
 McpPromptBinaryResourceContent content = McpPromptBinaryResourceContent.builder()
         .data("binary".getBytes())
@@ -396,7 +396,7 @@ McpPromptResult result = McpPromptResult.builder()
         .build();
 ```
 
-The other way is to create it on the result builder directly:
+Alternatively, create it directly in the result builder:
 ```java
 McpPromptResult result = McpPromptResult.builder()
         .addBinaryResourceContent(resource -> resource
@@ -410,7 +410,7 @@ McpPromptResult result = McpPromptResult.builder()
 
 ### Migrate McpResource interface
 
-Old code:
+Previous API:
 ```java
 @Override
 public Function<McpRequest, List<McpResourceContent>> resource() {
@@ -418,7 +418,7 @@ public Function<McpRequest, List<McpResourceContent>> resource() {
 }
 ```
 
-New code:
+Updated API:
 ```java
 @Override
 public McpResourceResult resource(McpResourceRequest request) {
@@ -426,13 +426,13 @@ public McpResourceResult resource(McpResourceRequest request) {
 }
 ```
 
-For more details about the McpResourceResult builder, refer to [this section](README.md#resource-result-builder-and-content-types) of the documentation.
+For details about the `McpResourceResult` builder, see [Resource Result](README.md#resource-result-builder-and-content-types).
 
 ### Migrate McpRequest to McpResourceRequest
 
 The `McpResourceRequest` extends `McpRequest`. To access the URI being read, use the `McpResourceRequest#uri()` method.
 
-Old code:
+Previous API:
 ```java
 @Override
 public Function<McpRequest, List<McpResourceContent>> resource() {
@@ -443,7 +443,7 @@ public Function<McpRequest, List<McpResourceContent>> resource() {
 }
 ```
 
-New code:
+Updated API:
 ```java
 @Override
 public McpResourceResult resource(McpResourceRequest request) {
@@ -459,12 +459,12 @@ created using their builders.
 
 - McpResourceTextContent
 
-Old code:
+Previous API:
 ```java
 McpResourceContent text = McpResourceContents.textContent("text");
 ```
 
-New code:
+Updated API:
 ```java
 McpResourceTextContent content = McpResourceTextContent.builder()
         .text("text")
@@ -472,7 +472,7 @@ McpResourceTextContent content = McpResourceTextContent.builder()
         .build();
 ```
 
-The other way is to create it on the result builder directly:
+Alternatively, create it directly in the result builder:
 ```java
 McpResourceResult result = McpResourceResult.builder()
         .addTextContent("text")
@@ -483,12 +483,12 @@ McpResourceResult result = McpResourceResult.create("text");
 
 - McpResourceBinaryContent
 
-Old code:
+Previous API:
 ```java
 McpResourceContent binary = McpResourceContents.binaryContent("binary".getBytes(), MediaTypes.APPLICATION_JSON);
 ```
 
-New code:
+Updated API:
 ```java
 McpResourceBinaryContent content = McpResourceBinaryContent.builder()
         .data("binary".getBytes())
@@ -496,7 +496,7 @@ McpResourceBinaryContent content = McpResourceBinaryContent.builder()
         .build();
 ```
 
-The other way is to create it on the result builder directly:
+Alternatively, create it directly in the result builder:
 ```java
 McpResourceResult result = McpResourceResult.builder()
         .addBinaryContent("binary".getBytes(), MediaTypes.APPLICATION_JSON)
@@ -507,7 +507,7 @@ McpResourceResult result = McpResourceResult.builder()
 
 ### Migrate McpCompletion interface
 
-Old code:
+Previous API:
 ```java
 @Override
 public Function<McpRequest, McpCompletionContent> completion() {
@@ -515,7 +515,7 @@ public Function<McpRequest, McpCompletionContent> completion() {
 }
 ```
 
-New code:
+Updated API:
 ```java
 @Override
 public McpCompletionResult completion(McpCompletionRequest request) {
@@ -523,7 +523,7 @@ public McpCompletionResult completion(McpCompletionRequest request) {
 }
 ```
 
-For more details about the McpCompletionResult builder, refer to [this section](README.md#completion-result-builder) of the documentation.
+For details about the `McpCompletionResult` builder, see [Completion Result](README.md#completion-result-builder).
 
 ### Migrate McpRequest to McpCompletionRequest
 
@@ -532,7 +532,7 @@ The `McpCompletionRequest` extends `McpRequest`. To access completion details, u
 - `McpCompletionRequest#value()`: current value of the field being completed
 - `McpCompletionRequest#context()`: additional context (e.g., other arguments already filled)
 
-Old code:
+Previous API:
 ```java
 @Override
 public Function<McpRequest, McpCompletionContent> completion() {
@@ -544,7 +544,7 @@ public Function<McpRequest, McpCompletionContent> completion() {
 }
 ```
 
-New code:
+Updated API:
 ```java
 @Override
 public McpCompletionResult completion(McpCompletionRequest request) {

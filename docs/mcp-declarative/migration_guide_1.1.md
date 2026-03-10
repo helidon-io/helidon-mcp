@@ -1,18 +1,18 @@
-# Migration guide to version 1.1
+# Migration Guide for Version 1.1.0
 
 Helidon MCP `1.1.0` provides support for MCP specification `2025-06-18`. This document
-presents the noticeable changes and a way to upgrade your post `1.1.0` code.
+summarizes the key changes and explains how to migrate existing code to `1.1.0`.
 
-# Overview of changes
+## Overview of Changes
 
-Helidon MCP Declarative API was not impacted and stays the same. Nevertheless, the supported method signature has
-changed. The following chapters describe in detail how to migrate your MCP components to `1.1.0` version.
+The Helidon MCP Declarative API remains largely unchanged; however, supported method signatures have changed.
+The sections below describe how to migrate MCP components to version `1.1.0`.
 
 ## Tools
 
 The `McpToolContent` class is removed, along with the `McpToolContents` factory class.
 
-Old code:
+Previous API:
 ```java
 @Mcp.Tool("description")
 List<McpToolContent> tool() {
@@ -20,7 +20,7 @@ List<McpToolContent> tool() {
 }
 ```
 
-New code:
+Updated API:
 ```java
 @Mcp.Tool("description")
 McpToolResult tool() {
@@ -28,14 +28,14 @@ McpToolResult tool() {
 }
 ```
 
-For more detail about the `McpToolResult` class, see [README.md](README.md#tool-result) and 
-[migration guide](../mcp/migration_guide_1.1.md#migrate-from-mcptoolcontents).
+For details about the `McpToolResult` class, see [README.md](README.md#tool-result) and
+[Migration Guide](../mcp/migration_guide_1.1.md#migrate-from-mcptoolcontents).
 
 ## Prompts
 
 The `McpPromptContent` class is removed, along with the `McpPromptContents` factory class.
 
-Old code:
+Previous API:
 ```java
 @Mcp.Prompt("description")
 List<McpPromptContent> prompt() {
@@ -43,7 +43,7 @@ List<McpPromptContent> prompt() {
 }
 ```
 
-New code:
+Updated API:
 ```java
 @Mcp.Prompt("description")
 McpPromptResult prompt() {
@@ -51,14 +51,14 @@ McpPromptResult prompt() {
 }
 ```
 
-For more detail about the `McpPromptResult` class, see [README.md](README.md#prompt-content-types) and
-[migration guide](../mcp/migration_guide_1.1.md#migrate-from-mcppromptcontents).
+For details about the `McpPromptResult` class, see [README.md](README.md#prompt-content-types) and
+[Migration Guide](../mcp/migration_guide_1.1.md#migrate-from-mcppromptcontents).
 
 ## Resources
 
 The `McpResourceContent` class is removed, along with the `McpResourceContents` factory class.
 
-Old code:
+Previous API:
 ```java
 @Mcp.Resource(uri = "http://resource", description = "description")
 List<McpResourceContent> resource() {
@@ -66,7 +66,7 @@ List<McpResourceContent> resource() {
 }
 ```
 
-New code:
+Updated API:
 ```java
 @Mcp.Resource(uri = "http://resource", description = "description")
 McpResourceResult resource() {
@@ -74,14 +74,14 @@ McpResourceResult resource() {
 }
 ```
 
-For more detail about the `McpResourceResult` class, see [README.md](README.md#resource-content-types) and
-[migration guide](../mcp/migration_guide_1.1.md#migrate-from-mcpresourcecontents).
+For details about the `McpResourceResult` class, see [README.md](README.md#resource-content-types) and
+[Migration Guide](../mcp/migration_guide_1.1.md#migrate-from-mcpresourcecontents).
 
 ## Completions
 
 The `McpCompletionContent` class is removed, along with the `McpCompletionContents` factory class.
 
-Old code:
+Previous API:
 ```java
 @Mcp.Completion("prompt")
 McpCompletionContent completion() {
@@ -89,7 +89,7 @@ McpCompletionContent completion() {
 }
 ```
 
-New code:
+Updated API:
 ```java
 @Mcp.Completion("prompt")
 McpCompletionResult completion() {
@@ -97,5 +97,5 @@ McpCompletionResult completion() {
 }
 ```
 
-For more detail about the `McpCompletionResult` class, see [README.md](README.md#completion-content-type) and
-[migration guide](../mcp/migration_guide_1.1.md#migrate-mcpcompletion-interface).
+For details about the `McpCompletionResult` class, see [README.md](README.md#completion-content-type) and
+[Migration Guide](../mcp/migration_guide_1.1.md#migrate-mcpcompletion-interface).

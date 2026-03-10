@@ -116,7 +116,7 @@ class Server {
 #### Structured content and output schema
 
 Structured content is returned as a JSON object in the `structuredContent` field of a result. For backwards compatibility,
-a tool that returns structured content SHOULD also return the serialized JSON in a TextContent block. If there is no content 
+a tool that returns structured content SHOULD also return the serialized JSON in a text content block. If there is no content 
 added to the `McpToolResult` builder, Helidon will serialize the structured content and add it by itself.
 Tools have to provide an output schema for validation of structured results if it is using structured content.
 
@@ -222,7 +222,7 @@ Five prompt result content types can be created:
 - **Text Resource**: Text resource content with a default `text/plain` media type.
 - **Binary Resource**: Binary resource content with a custom media type.
 
-`Prompt` content can be created using `McpPromptResult` builder:
+Create prompt content with the `McpPromptResult` builder:
 
 ```java
 McpPromptResult result = McpPromptResult.builder()
@@ -307,7 +307,7 @@ Helidon supports two resource result content types:
 - **Text**: Text content with a default `text/plain` media type.
 - **Binary**: Binary content with a custom media type.
 
-`Resource` content can be created using `McpResourceResult` builder:
+Create resource content with the `McpResourceResult` builder:
 
 ```java
 McpResourceResult text = McpResourceResult.create("data");
@@ -325,13 +325,13 @@ longer interested in receiving update notifications, it can issue an unsubscribe
 request.
 
 Generally, the MCP server processes subscribe and unsubscribe requests without
-any user-provided code executed on the server side. Clients simply subscribe 
-and unsubscribe (within the same session) using the resource URI and updates 
-are propagated to all active subscribers in all sessions. 
-Helidon MCP supports server-side subscribers and unsubscribers when custom logic must 
-be executed on the server to handle those events --for example, a subscription 
-may start a thread to monitor database updates and stop it when the unsubscription 
-arrives.
+any user-provided code executed on the server side. Clients subscribe 
+and unsubscribe (within the same session) using the resource URI, and updates 
+are propagated to all active subscribers in all sessions.
+Helidon MCP supports server-side subscribers and unsubscribers when custom logic must
+be executed on the server to handle those events (for example, a subscription may
+start a thread to monitor database updates and stop it when the unsubscription
+arrives).
 
 The following example shows our resource example together with a server-side
 subscriber and unsubscriber:
@@ -362,7 +362,7 @@ class McpSubscribersServer {
 ```
 
 MCP subscriptions are available via the injectable _features_ instance and can 
-send notifications manually as follows:
+send notifications manually:
 
 ```java
 @Mcp.ResourceSubscriber("http://dbtable")

@@ -213,7 +213,7 @@ McpToolResult create() {
 }
 ```
 
-Or you can use shortcut methods with required parameters:
+You can also use shortcut methods that accept only required parameters:
 
 ```java
 McpToolResult result = McpToolResult.builder()
@@ -327,7 +327,7 @@ Five prompt content types can be created:
 - **Text Resource**: Text resource content with a default `text/plain` media type.
 - **Binary Resource**: Binary resource content with a custom media type.
 
-`Prompt` content can be created using `McpPromptResult` builder:
+Create prompt content with the `McpPromptResult` builder:
 
 ```java
 McpPromptResult create() {
@@ -352,7 +352,7 @@ McpPromptResult create() {
 }
 ```
 
-Or you can use shortcut methods with required parameters:
+You can also use shortcut methods that accept only required parameters:
 
 ```java
 McpPromptResult result = McpPromptResult.builder()
@@ -519,7 +519,7 @@ Two resource content types can be created:
 - **Text**: Text content with `text/plain` media type.
 - **Binary**: Binary content with custom media type content.
 
-`Resource` content can be created using `McpResourceResult` builder:
+Create resource content with the `McpResourceResult` builder:
 
 ```java
 McpResourceResult create() {
@@ -532,7 +532,7 @@ McpResourceResult create() {
 }
 ```
 
-Or you can use shortcut methods:
+You can also use shortcut methods:
 
 ```java
 McpResourceResult text = McpResourceResult.create("text");
@@ -548,11 +548,11 @@ If a client is no longer interested in receiving update notifications, it can is
 unsubscribe request.
 
 Generally, the MCP server processes subscribe and unsubscribe requests without
-any user-provided code executed on the server side. Clients simply subscribe
-and unsubscribe (within the same session) using the resource URI and updates
+any user-provided code executed on the server side. Clients subscribe
+and unsubscribe (within the same session) using the resource URI, and updates
 are propagated to all active subscribers in all sessions.
-Helidon MCP supports server-side subscribers and unsubscribers in case logic needs
-to be executed server side to handle those events. 
+Helidon MCP supports server-side subscribers and unsubscribers when custom logic must
+be executed on the server to handle those events.
 
 #### Interface
 
@@ -562,7 +562,7 @@ subscribers and unsubscribers are similar:
 - `McpResourceSubscriber` – server-side hook invoked when a client subscribes. The `subscribe` method receives an `McpSubscribeRequest`.
 - `McpResourceUnsubscriber` – server-side hook invoked when a client unsubscribes. The `unsubscribe` method receives an `McpUnsubscribeRequest`.
 
-We focus on subscribers in the next section.
+The following section focuses on subscribers.
 
 ```java
 class MyResourceSubscriber implements McpResourceSubscriber {
@@ -586,7 +586,7 @@ class MyResourceSubscriber implements McpResourceSubscriber {
 ```
 
 MCP subscriptions are available via the features instance and can
-send notifications manually as follows:
+send notifications manually:
 
 The API surface for this feature is `McpSubscriptions`.
 
@@ -724,7 +724,7 @@ The `McpRequest` provides access to two types of context:
 - **Session Context**: Used to store data that persists throughout the duration of the client's session.
 - **Request Context**: Used to store data specific to the current request.
 
-This is useful for maintaining state between multiple tool calls or prompts within the same session.
+This capability is useful for maintaining state between multiple tool calls or prompts within the same session.
 
 ```java
 @Override
@@ -959,8 +959,8 @@ private class CancellationTool implements McpTool {
 
 ### Elicitation
 
-The `Elicitation` feature allows a server to request additional structured user input through the connected MCP client during 
-request processing. This is useful when execution requires runtime information that is not available in the initial tool or prompt 
+The `Elicitation` feature allows a server to request additional structured user input through the connected MCP client during
+request processing. This capability is useful when execution requires runtime information that is not available in the initial tool or prompt
 arguments (for example, confirmation data, credentials, or user-selected options).
 
 Elicitation support is optional on the client side. Always verify support before sending a request:
@@ -1090,7 +1090,7 @@ Three types of sampling request messages can be created:
 - **Image**: Image message content with a custom media type.
 - **Audio**: Audio message content with a custom media type.
 
-Sampling request messages can be created using `McpSamplingRequest` builder:
+Create sampling request messages with the `McpSamplingRequest` builder:
 
 ```java
 McpSamplingRequest request = McpSamplingRequest.builder()
@@ -1115,7 +1115,7 @@ Sampling responses may include a `McpStopReason` (for example `END_TURN`, `STOP_
 try {
     McpSamplingResponse response = sampling.request(req -> req.addTextMessage("text"));
 } catch (McpSamplingException exception) {
-    // Manage error
+    // Handle error
 }
 ```
 #### Example
@@ -1185,7 +1185,7 @@ class RootNameTool implements McpTool {
 
     @Override
     public String description() {
-        return "Get the list of roots available";
+        return "Retrieve the list of available roots";
     }
 
     @Override
