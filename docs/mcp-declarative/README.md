@@ -74,7 +74,7 @@ class McpServer {
 
 `Tools` enable models to interact with external systems, such as querying databases, calling APIs, or performing computations.
 Define a tool by annotating a method with `@Mcp.Tool`. Method names become tool names unless overridden with `@Mcp.Name`. Input
-schemas are generated using [JSON Schema Specification](https://json-schema.org/specification); Helidon auto-generates schemas when inputs are primitive types
+schemas are generated using the [JSON Schema Specification](https://json-schema.org/specification); Helidon auto generates schemas when inputs are primitive types
 (non-POJO). `Tools` are automatically registered when defined within a server class. You can inject `McpToolRequest` as a 
 parameter to your tool method. It extends `McpRequest` and provides access to the `McpTool` instance via the `tool()` method.
 
