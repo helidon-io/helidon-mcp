@@ -35,7 +35,6 @@ import io.helidon.common.types.TypedElementInfo;
 
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.addToListMethod;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.createClassName;
-import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.generateSafeMultiLine;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.getDescription;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.getElementsWithAnnotation;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isBoolean;
@@ -114,11 +113,10 @@ class McpToolCodegen {
         }
 
         String outputShema = textSchema.flatMap(t -> t.stringValue())
-                .orElseThrow(() -> new CodegenException("Cannot parse output text schema"))
-                .replace("\"", "\\\"");
-        builder.addContent("return Optional.of(");
-        generateSafeMultiLine(builder, outputShema);
-        builder.addContentLine(");");
+                .orElseThrow(() -> new CodegenException("Cannot parse output text schema"));
+        builder.addContent("return Optional.of(")
+                .addContentLiteral(outputShema)
+                .addContentLine(");");
     }
 
     private void addToolSchemaMethod(Method.Builder builder, TypedElementInfo element) {
