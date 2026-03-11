@@ -21,7 +21,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import io.helidon.codegen.classmodel.ClassModel;
-import io.helidon.codegen.classmodel.Executable;
 import io.helidon.codegen.classmodel.Method;
 import io.helidon.codegen.classmodel.Parameter;
 import io.helidon.common.types.AccessModifier;
@@ -170,23 +169,6 @@ class McpCodegenUtil {
                 .increaseContentPadding()
                 .addContentLine(".map(p -> p.get()).toList();");
         classModel.addMethod(method.build());
-    }
-
-    /**
-     * Add text content to the builder as literal. The text can be multi line.
-     *
-     * @param builder executable builder
-     * @param text text content
-     */
-    static void generateSafeMultiLine(Executable.Builder<?, ?> builder, String text) {
-        if (text.contains("\n")) {
-            builder.addContentLine("\"\"\"")
-                    .increaseContentPadding()
-                    .addContent(text.replace("\\\"", "\""))
-                    .addContent("\"\"\"");
-        } else {
-            builder.addContentLiteral(text);
-        }
     }
 
     /**

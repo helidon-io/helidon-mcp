@@ -36,6 +36,10 @@
             <artifactId>helidon-webserver-cors</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.helidon.config</groupId>
+            <artifactId>helidon-config-metadata</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.helidon.cors</groupId>
             <artifactId>helidon-cors</artifactId>
         </dependency>

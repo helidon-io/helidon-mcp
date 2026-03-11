@@ -34,6 +34,7 @@ module io.helidon.extensions.mcp.server {
     requires io.helidon.webserver.jsonrpc;
     requires io.helidon.cors;
     requires io.helidon.webserver.cors;
+    requires io.helidon.config.metadata;
 
     requires static io.helidon.common.features.api;
 
