@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import io.helidon.codegen.classmodel.ClassModel;
 import io.helidon.codegen.classmodel.Executable;
@@ -70,6 +71,12 @@ class McpCodegenUtil {
                                                   MCP_PARAMETERS.classNameWithEnclosingNames());
 
     private McpCodegenUtil() {
+    }
+
+    static boolean isNullable(TypedElementInfo param) {
+        return Stream.of(param.annotations(), param.elementTypeAnnotations(), param.typeName().annotations())
+                .flatMap(List::stream)
+                .anyMatch(a -> a.typeName().className().equals("Nullable"));
     }
 
     static boolean isBoolean(TypeName type) {
