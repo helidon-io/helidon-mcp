@@ -1,4 +1,4 @@
-# Migration Guide for Version 1.1.0
+# Upgrade Guide for Version 1.1.0
 
 Helidon MCP `1.1.0` provides support for MCP specification `2025-06-18`. This document 
 summarizes the key changes and explains how to migrate existing code to `1.1.0`.

@@ -15,7 +15,7 @@ This release of Helidon MCP adds support for the `2025-06-18` MCP specification.
 ### BREAKING CHANGES
 
 Helidon MCP 1.1.0 introduces API changes that are not backward compatible. To upgrade, refer to 
-the [upgrade guide](docs/mcp/migration_guide_1.1.md), which documents each API change and provides upgrade guidance.
+the [upgrade guide](docs/mcp/upgrade_guide_1.1.md), which documents each API change and provides upgrade guidance.
 
 ### CHANGES
 
