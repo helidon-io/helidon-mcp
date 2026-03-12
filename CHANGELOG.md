@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0]
+
+This release of Helidon MCP adds support for the `2025-06-18` MCP specification.
+
+### NOTABLE CHANGES
+
+- Elicitation feature support
+- Resource Link support
+- Structured tool output support
+
+### BREAKING CHANGES
+
+Helidon MCP 1.1.0 introduces API changes that are not backward compatible. To upgrade, refer to 
+the [upgrade guide](docs/mcp/migration_guide_1.1.md), which documents each API change and provides upgrade guidance.
+
+### CHANGES
+
+- Add support for multi line block in description [144](https://github.com/helidon-io/helidon-mcp/pull/144)
+- Upgrade Helidon version to 4.4.0 [161](https://github.com/helidon-io/helidon-mcp/pull/161)
+- Update documentation to reflect API change [159](https://github.com/helidon-io/helidon-mcp/pull/159)
+- Make declarative MCP server a Helidon Service [160](https://github.com/helidon-io/helidon-mcp/pull/160)
+- Add Elicitation feature [138](https://github.com/helidon-io/helidon-mcp/pull/138)
+- Introduce new API design [150](https://github.com/helidon-io/helidon-mcp/pull/150)
+- Refactor tests layout [145](https://github.com/helidon-io/helidon-mcp/pull/145)
+- Update title to Optional field and add convenient method to McpParameters [143](https://github.com/helidon-io/helidon-mcp/pull/143)
+- Add support for `_meta` field in request [139](https://github.com/helidon-io/helidon-mcp/pull/139)
+- Add Configurable Instructions Field to MCP Server Initialization Response [136](https://github.com/helidon-io/helidon-mcp/pull/136)
+- Update negotiated version control [137](https://github.com/helidon-io/helidon-mcp/pull/137)
+- Add support for resource links content [133](https://github.com/helidon-io/helidon-mcp/pull/133)
+- Add context field to CompletionRequest [134](https://github.com/helidon-io/helidon-mcp/pull/134)
+- Introduces structured output tool result [132](https://github.com/helidon-io/helidon-mcp/pull/132)
+- Add tool annotations to Tool builder [130](https://github.com/helidon-io/helidon-mcp/pull/130)
+- Add title field to required MCP components [127](https://github.com/helidon-io/helidon-mcp/pull/127)
+- Add backward compatibility tests [126](https://github.com/helidon-io/helidon-mcp/pull/126)
+- Add Json schema annotation to calendar declarative example [124](https://github.com/helidon-io/helidon-mcp/pull/124)
+
 ## [1.0.3]
 
 This release of Helidon MCP contains bugfixes, dependency upgrades and is recommended for all users.
@@ -116,6 +152,7 @@ Requirements:
 
 Initial release.
 
+[1.1.0]: https://github.com/helidon-io/helidon-mcp/compare/1.0.3...1.1.0
 [1.0.3]: https://github.com/helidon-io/helidon-mcp/compare/1.0.2...1.0.3
 [1.0.2]: https://github.com/helidon-io/helidon-mcp/compare/1.0.1...1.0.2
 [1.0.1]: https://github.com/helidon-io/helidon-mcp/compare/1.0.0...1.0.1
