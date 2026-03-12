@@ -96,4 +96,16 @@ class McpPromptsServer {
     McpPromptResult prompt9(McpPromptRequest request) {
         return McpPromptResult.builder().addTextContent(PROMPT_CONTENT).build();
     }
+
+    @Mcp.Prompt("""
+            Description code block
+            """)
+    String prompt10(McpRequest request) {
+        return PROMPT_CONTENT;
+    }
+
+    @Mcp.Prompt("first line\n second line\n")
+    String prompt11(McpRequest request) {
+        return PROMPT_CONTENT;
+    }
 }

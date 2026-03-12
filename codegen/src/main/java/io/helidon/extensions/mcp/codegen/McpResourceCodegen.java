@@ -130,27 +130,27 @@ class McpResourceCodegen {
         builder.name("name")
                 .addAnnotation(Annotations.OVERRIDE)
                 .returnType(TypeNames.STRING)
-                .addContent("return \"")
-                .addContent(name)
-                .addContentLine("\";");
+                .addContent("return ")
+                .addContentLiteral(name)
+                .addContentLine(";");
     }
 
     private void addResourceDescriptionMethod(Method.Builder builder, String description) {
         builder.name("description")
                 .addAnnotation(Annotations.OVERRIDE)
                 .returnType(TypeNames.STRING)
-                .addContent("return \"")
-                .addContent(description)
-                .addContentLine("\";");
+                .addContent("return ")
+                .addContentLiteral(description)
+                .addContentLine(";");
     }
 
     private void addResourceUriMethod(Method.Builder builder, String uri) {
         builder.name("uri")
                 .addAnnotation(Annotations.OVERRIDE)
                 .returnType(TypeNames.STRING)
-                .addContent("return \"")
-                .addContent(uri)
-                .addContentLine("\";");
+                .addContent("return ")
+                .addContentLiteral(uri)
+                .addContentLine(";");
     }
 
     private void addResourceMediaTypeMethod(Method.Builder builder, String mediaTypeContent) {
@@ -159,9 +159,9 @@ class McpResourceCodegen {
                 .returnType(HELIDON_MEDIA_TYPE)
                 .addContent("return ")
                 .addContent(HELIDON_MEDIA_TYPES)
-                .addContent(".create(\"")
-                .addContent(mediaTypeContent)
-                .addContentLine("\");");
+                .addContent(".create(")
+                .addContentLiteral(mediaTypeContent)
+                .addContentLine(");");
     }
 
     private void addResourceMethod(Method.Builder builder, String uri, ClassModel.Builder classModel, TypedElementInfo element) {
@@ -186,9 +186,9 @@ class McpResourceCodegen {
                     parameters.add(parameter.elementName());
                     builder.addContent("String encoded_")
                             .addContent(parameter.elementName())
-                            .addContent(" = request.parameters().get(\"")
-                            .addContent(parameter.elementName())
-                            .addContentLine("\").asString().orElse(\"\");");
+                            .addContent(" = request.parameters().get(")
+                            .addContentLiteral(parameter.elementName())
+                            .addContentLine(").asString().orElse(\"\");");
                     builder.addContent("String ")
                             .addContent(parameter.elementName())
                             .addContent(" = ")
@@ -234,9 +234,9 @@ class McpResourceCodegen {
         builder.name("uri")
                 .addAnnotation(Annotations.OVERRIDE)
                 .returnType(TypeNames.STRING)
-                .addContent("return \"")
-                .addContent(uri)
-                .addContentLine("\";");
+                .addContent("return ")
+                .addContentLiteral(uri)
+                .addContentLine(";");
     }
 
     private void addSubscriberMethod(Method.Builder builder, TypedElementInfo element) {

@@ -76,25 +76,25 @@ class McpPromptCodegen {
         builder.name("name")
                 .addAnnotation(Annotations.OVERRIDE)
                 .returnType(TypeNames.STRING)
-                .addContent("return \"")
-                .addContent(name)
-                .addContentLine("\";");
+                .addContent("return ")
+                .addContentLiteral(name)
+                .addContentLine(";");
     }
 
     private void addPromptDescriptionMethod(Method.Builder builder, String description) {
         builder.name("description")
                 .addAnnotation(Annotations.OVERRIDE)
                 .returnType(TypeNames.STRING)
-                .addContent("return \"")
-                .addContent(description)
-                .addContentLine("\";");
+                .addContent("return ")
+                .addContentLiteral(description)
+                .addContentLine(";");
     }
 
     private void addPromptMethod(Method.Builder builder, ClassModel.Builder classModel, TypedElementInfo element) {
         List<String> parameters = new ArrayList<>();
         TypeName returnType = element.signature().type();
         String role = element.findAnnotation(MCP_ROLE)
-                .flatMap(annotation -> annotation.value())
+                .flatMap(Annotation::value)
                 .orElse("ASSISTANT");
 
         builder.name("prompt")
@@ -115,9 +115,9 @@ class McpPromptCodegen {
                 builder.addContent(param.typeName().classNameWithEnclosingNames())
                         .addContent(" ")
                         .addContent(param.elementName())
-                        .addContent(" = request.arguments().get(\"")
-                        .addContent(param.elementName())
-                        .addContentLine("\").asString().orElse(\"\");");
+                        .addContent(" = request.arguments().get(")
+                        .addContentLiteral(param.elementName())
+                        .addContentLine(").asString().orElse(\"\");");
                 continue;
             }
             throw new CodegenException(String.format("Wrong parameter type for method: %s. Supported types are: %s, or String.",
@@ -181,9 +181,9 @@ class McpPromptCodegen {
                     .addContent(MCP_PROMPT_ARGUMENT)
                     .addContentLine(".builder();")
                     .addContent(builderName)
-                    .addContent(".name(\"")
-                    .addContent(param.elementName())
-                    .addContentLine("\");")
+                    .addContent(".name(")
+                    .addContentLiteral(param.elementName())
+                    .addContentLine(");")
                     .addContent(builderName)
                     .addContentLine(".required(true);");
 
@@ -192,15 +192,15 @@ class McpPromptCodegen {
             if (param.hasAnnotation(MCP_DESCRIPTION)) {
                 String description = param.annotation(MCP_DESCRIPTION).value().orElse("");
                 builder.addContent(builderName)
-                        .addContent(".description(\"")
-                        .addContent(description)
-                        .addContentLine("\");");
+                        .addContent(".description(")
+                        .addContentLiteral(description)
+                        .addContentLine(");");
                 continue;
             }
             builder.addContent(builderName)
-                    .addContent(".description(\"")
-                    .addContent(param.elementName())
-                    .addContentLine("\");");
+                    .addContent(".description(")
+                    .addContentLiteral(param.elementName())
+                    .addContentLine(");");
         }
         builder.addContent("return ")
                 .addContent(List.class)
