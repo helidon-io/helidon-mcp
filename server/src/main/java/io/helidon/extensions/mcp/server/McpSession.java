@@ -51,11 +51,11 @@ class McpSession {
     private final Context context = Context.create();
     private final Set<McpCapability> clientCapabilities;
     private final AtomicLong jsonRpcId = new AtomicLong(0);
+    private final LruCache<JsonValue, McpFeatures> features;
     private final List<McpFeatureLifecycle> featureListeners;
+    private final LruCache<JsonValue, McpTransport> transports;
     private final LazyValue<McpSessionFeatures> sessionFeatures;
     private final AtomicBoolean active = new AtomicBoolean(true);
-    private final LruCache<JsonValue, McpFeatures> features = LruCache.create();
-    private final LruCache<JsonValue, McpTransport> transports = LruCache.create();
     private final BlockingQueue<JsonObject> responses = new LinkedBlockingQueue<>();
 
     private McpJsonSerializer serializer;
@@ -68,6 +68,8 @@ class McpSession {
         this.sessions = sessions;
         this.clientCapabilities = new HashSet<>();
         this.featureListeners = new CopyOnWriteArrayList<>();
+        this.features = LruCache.create(config.maxRequestsPerSession());
+        this.transports = LruCache.create(config.maxRequestsPerSession());
         this.featureListeners.add(McpProgress.McpProgressListener.create());
         this.sessionFeatures = LazyValue.create(() -> new McpSessionFeatures(this));
         this.context.register(McpServerConfigBlueprint.class, config);

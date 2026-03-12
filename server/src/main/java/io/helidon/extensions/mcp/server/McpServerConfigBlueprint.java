@@ -175,4 +175,24 @@ interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
      */
     @Option.Configured
     Optional<String> instructions();
+
+    /**
+     * Maximum number of concurrent request handled by sessions. Default is {@code 1000}.
+     *
+     * @return pool size
+     */
+    @Option.Configured
+    @Option.DefaultInt(1000)
+    @Option.Decorator(McpDecorators.PositiveValueDecorator.class)
+    int maxRequestsPerSession();
+
+    /**
+     * Maximum number of concurrent session handled by the server. Default is {@code 1000}.
+     *
+     * @return pool size
+     */
+    @Option.Configured
+    @Option.DefaultInt(1000)
+    @Option.Decorator(McpDecorators.PositiveValueDecorator.class)
+    int maxSessionCount();
 }
