@@ -854,7 +854,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         var session = findSession(req);
         if (session.isEmpty()) {
             res.status(Status.NOT_FOUND_404)
-                    .error(INTERNAL_ERROR, "Session not found");
+                    .error(INVALID_REQUEST, "Session not found");
         }
         return session;
     }
