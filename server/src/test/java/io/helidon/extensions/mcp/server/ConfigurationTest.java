@@ -48,6 +48,8 @@ class ConfigurationTest {
         assertThat(config.rootListTimeout(), is(Duration.ofSeconds(1)));
         assertThat(config.instructions().orElse(""), is("instructions"));
         assertThat(config.subscriptionTimeout(), is(Duration.ofSeconds(1)));
+        assertThat(config.maxSessionCount(), is(1));
+        assertThat(config.maxRequestsPerSession(), is(1));
     }
 
     @Test
@@ -65,6 +67,8 @@ class ConfigurationTest {
         assertThat(config.resourceTemplatesPageSize(), is(DEFAULT_PAGE_SIZE));
         assertThat(config.rootListTimeout(), is(Duration.ofSeconds(5)));
         assertThat(config.subscriptionTimeout(), is(Duration.ofMinutes(2)));
+        assertThat(config.maxSessionCount(), is(1000));
+        assertThat(config.maxRequestsPerSession(), is(1000));
     }
 
     @ParameterizedTest
@@ -72,7 +76,7 @@ class ConfigurationTest {
             "tools-page-size",
             "prompts-page-size",
             "resources-page-size",
-            "resource-templates-page-size",
+            "resource-templates-page-size"
     })
     void testConfigurationNegativePageSizeValues(String key) {
         try {
@@ -81,6 +85,18 @@ class ConfigurationTest {
             fail("Page size with negative value are not allowed and must be checked.");
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), is("Page size must be greater than zero"));
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"max-session-count", "max-requests-per-session"})
+    void testConfigurationNegativeSessionPoolSize(String key) {
+        try {
+            var configSource = ConfigSources.create(Map.of(key, "-1"));
+            var config = McpServerConfig.create(Config.just(configSource));
+            fail("negative value are not allowed and must be checked.");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), is("value must be greater than zero"));
         }
     }
 }

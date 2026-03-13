@@ -81,14 +81,13 @@ import static io.helidon.jsonrpc.core.JsonRpcError.INVALID_REQUEST;
 /**
  * Actual MCP server implemented as a Helidon {@link io.helidon.webserver.http.HttpFeature}.
  */
-@RuntimeType.PrototypedBy(McpServerConfig.class)
 public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpServerConfig> {
-    private static final int SESSION_CACHE_SIZE = 1000;
     private static final int RESOURCE_NOT_FOUND_CODE = -32002;
     private static final String DEFAULT_OIDC_METADATA_URI = "/.well-known/openid-configuration";
     private static final System.Logger LOGGER = System.getLogger(McpServerFeature.class.getName());
 
     private final String endpoint;
+    private final McpSessions sessions;
     private final McpServerConfig config;
     private final JsonRpcHandlers jsonRpcHandlers;
     private final McpPagination<McpTool> tools;
@@ -96,7 +95,6 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     private final McpPagination<McpResource> resources;
     private final McpPagination<McpResourceTemplate> resourceTemplates;
     private final Set<McpCapability> capabilities = new HashSet<>();
-    private final McpSessions sessions = new McpSessions(SESSION_CACHE_SIZE);
     private final Map<String, McpCompletion> promptCompletions = new ConcurrentHashMap<>();
     private final Map<String, McpCompletion> resourceCompletions = new ConcurrentHashMap<>();
 
@@ -109,6 +107,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
 
         this.config = config;
         this.endpoint = removeTrailingSlash(config.path());
+        this.sessions = new McpSessions(config.maxSessionCount());
         for (McpResource resource : config.resources()) {
             if (isTemplate(resource)) {
                 templates.add(new McpResourceTemplate(resource));
