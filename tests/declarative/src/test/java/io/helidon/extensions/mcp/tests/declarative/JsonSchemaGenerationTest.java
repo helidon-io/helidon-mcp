@@ -15,18 +15,13 @@
  */
 package io.helidon.extensions.mcp.tests.declarative;
 
-import java.io.StringReader;
-
+import io.helidon.json.JsonObject;
+import io.helidon.json.JsonParser;
 import io.helidon.service.registry.Services;
 
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonValue;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 class JsonSchemaGenerationTest {
@@ -34,43 +29,46 @@ class JsonSchemaGenerationTest {
     @Test
     void testFooSchema() {
         String s = Services.get(Foo__JsonSchema.class).jsonSchema();
-        JsonObject json = Json.createReader(new StringReader(s)).readObject();
-        assertThat(json.getString("type"), is("object"));
-        JsonValue properties = json.get("properties");
-        assertThat(properties, notNullValue());
-        assertThat(properties, instanceOf(JsonObject.class));
-        JsonObject propertiesJson = (JsonObject) properties;
+        JsonObject json = JsonParser.create(s).readJsonObject();
+        assertThat(json.stringValue("type").orElseThrow(), is("object"));
+        JsonObject propertiesJson = json.objectValue("properties").orElseThrow();
         assertThat(propertiesJson.size(), is(2));
-        assertThat(propertiesJson.getJsonObject("foo").getString("type"), is("string"));
-        assertThat(propertiesJson.getJsonObject("bar").getString("type"), is("integer"));
+        assertThat(propertiesJson.objectValue("foo")
+                           .flatMap(property -> property.stringValue("type"))
+                           .orElseThrow(), is("string"));
+        assertThat(propertiesJson.objectValue("bar")
+                           .flatMap(property -> property.stringValue("type"))
+                           .orElseThrow(), is("integer"));
     }
 
     @Test
     void testAlertSchema() {
         String s = Services.get(Alert__JsonSchema.class).jsonSchema();
-        JsonObject json = Json.createReader(new StringReader(s)).readObject();
-        assertThat(json.getString("type"), is("object"));
-        JsonValue properties = json.get("properties");
-        assertThat(properties, notNullValue());
-        assertThat(properties, instanceOf(JsonObject.class));
-        JsonObject propertiesJson = (JsonObject) properties;
+        JsonObject json = JsonParser.create(s).readJsonObject();
+        assertThat(json.stringValue("type").orElseThrow(), is("object"));
+        JsonObject propertiesJson = json.objectValue("properties").orElseThrow();
         assertThat(propertiesJson.size(), is(3));
-        assertThat(propertiesJson.getJsonObject("name").getString("type"), is("string"));
-        assertThat(propertiesJson.getJsonObject("priority").getString("type"), is("integer"));
-        assertThat(((JsonObject) properties).containsKey("location"), is(true));
+        assertThat(propertiesJson.objectValue("name")
+                           .flatMap(property -> property.stringValue("type"))
+                           .orElseThrow(), is("string"));
+        assertThat(propertiesJson.objectValue("priority")
+                           .flatMap(property -> property.stringValue("type"))
+                           .orElseThrow(), is("integer"));
+        assertThat(propertiesJson.containsKey("location"), is(true));
     }
 
     @Test
     void testLocationSchema() {
         String s = Services.get(Location__JsonSchema.class).jsonSchema();
-        JsonObject json = Json.createReader(new StringReader(s)).readObject();
-        assertThat(json.getString("type"), is("object"));
-        JsonValue properties = json.get("properties");
-        assertThat(properties, notNullValue());
-        assertThat(properties, instanceOf(JsonObject.class));
-        JsonObject propertiesJson = (JsonObject) properties;
+        JsonObject json = JsonParser.create(s).readJsonObject();
+        assertThat(json.stringValue("type").orElseThrow(), is("object"));
+        JsonObject propertiesJson = json.objectValue("properties").orElseThrow();
         assertThat(propertiesJson.size(), is(2));
-        assertThat(propertiesJson.getJsonObject("latitude").getString("type"), is("integer"));
-        assertThat(propertiesJson.getJsonObject("longitude").getString("type"), is("integer"));
+        assertThat(propertiesJson.objectValue("latitude")
+                           .flatMap(property -> property.stringValue("type"))
+                           .orElseThrow(), is("integer"));
+        assertThat(propertiesJson.objectValue("longitude")
+                           .flatMap(property -> property.stringValue("type"))
+                           .orElseThrow(), is("integer"));
     }
 }

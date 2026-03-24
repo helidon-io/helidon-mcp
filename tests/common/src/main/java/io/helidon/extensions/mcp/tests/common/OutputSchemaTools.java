@@ -21,6 +21,7 @@ import io.helidon.extensions.mcp.server.McpServerConfig;
 import io.helidon.extensions.mcp.server.McpTool;
 import io.helidon.extensions.mcp.server.McpToolRequest;
 import io.helidon.extensions.mcp.server.McpToolResult;
+import io.helidon.json.binding.Json;
 import io.helidon.json.schema.Schema;
 import io.helidon.json.schema.SchemaObject;
 import io.helidon.json.schema.SchemaString;
@@ -190,6 +191,7 @@ public class OutputSchemaTools {
      *
      * @param foo foo
      */
+    @Json.Entity
     public record StructuredContentPojo(String foo) {
     }
 }

@@ -33,7 +33,7 @@ class McpResourceSupport {
      * @param text text content
      * @return a resource result instance
      */
-    @Prototype.FactoryMethod
+    @Prototype.PrototypeFactoryMethod
     static McpResourceResult create(String text) {
         return McpResourceResult.builder().addTextContent(text).build();
     }

@@ -15,39 +15,26 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.locks.ReentrantLock;
 
+import io.helidon.json.JsonArray;
+import io.helidon.json.JsonObject;
+import io.helidon.json.JsonValue;
 import io.helidon.jsonrpc.core.JsonRpcError;
-
-import jakarta.json.Json;
-import jakarta.json.JsonBuilderFactory;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-import jakarta.json.JsonReaderFactory;
-import jakarta.json.JsonValue;
-import jakarta.json.bind.Jsonb;
-import jakarta.json.bind.JsonbBuilder;
 
 /**
  * JSON serializer for {@code 2025-06-18} MCP specification.
  */
 class McpJsonSerializerV3 extends McpJsonSerializerV2 {
-    private static final Jsonb JSON_B = JsonbBuilder.create();
-    private static final Map<String, JsonObject> OUTPUT_SCHEMA = new McpSchemaHashMap();
-    private static final Map<String, JsonObject> ELICITATION_SCHEMA = new McpSchemaHashMap();
-    private static final JsonReaderFactory JSON_READER_FACTORY = Json.createReaderFactory(Map.of());
+    private static final McpSchemaHashMap OUTPUT_SCHEMA = new McpSchemaHashMap();
+    private static final McpSchemaHashMap ELICITATION_SCHEMA = new McpSchemaHashMap();
     private static final System.Logger LOGGER = System.getLogger(McpJsonSerializerV3.class.getName());
-    private static final JsonBuilderFactory JSON_BUILDER_FACTORY = Json.createBuilderFactory(Map.of());
-
-    private final ReentrantLock lock = new ReentrantLock();
 
     @Override
-    public JsonObjectBuilder createJsonInitializeResponse(Set<McpCapability> capabilities, McpServerConfig config) {
+    public JsonObject.Builder createJsonInitializeResponse(Set<McpCapability> capabilities, McpServerConfig config) {
         return super.createJsonInitializeResponse(capabilities, config)
-                .add("protocolVersion", McpProtocolVersion.VERSION_2025_06_18.text());
+                .set("protocolVersion", McpProtocolVersion.VERSION_2025_06_18.text());
     }
 
     @Override
@@ -59,21 +46,21 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
             }
         }
 
-        JsonObjectBuilder builder = JSON_BUILDER_FACTORY.createObjectBuilder(super.toolCall(tool, result));
+        JsonObject.Builder builder = JsonObject.builder().from(super.toolCall(tool, result));
         result.structuredContent().ifPresent((content) -> {
-            String json = JSON_B.toJson(content);
-            JsonObject sc = JSON_B.fromJson(json, JsonObject.class);
-            builder.add("structuredContent", sc);
+            JsonObject sc = McpJsonBinding.serializeObject(content);
+            String json = sc.toString();
+            builder.set("structuredContent", sc);
             if (result.textContents().isEmpty()) {
                 McpToolContent text = McpToolTextContent.builder().text(json).build();
-                toJson(text).ifPresent(it -> builder.add("content", JSON_BUILDER_FACTORY.createArrayBuilder().add(it)));
+                toJson(text).ifPresent(it -> builder.set("content", JsonArray.create(it.build())));
             }
         });
         return builder.build();
     }
 
     @Override
-    public Optional<JsonObjectBuilder> toJson(McpContent content) {
+    public Optional<JsonObject.Builder> toJson(McpContent content) {
         if (content instanceof McpResourceLinkContent link) {
             return Optional.of(toJson(link));
         }
@@ -81,45 +68,45 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
     }
 
     @Override
-    public JsonObjectBuilder toJson(McpTool tool) {
+    public JsonObject.Builder toJson(McpTool tool) {
         var builder = super.toJson(tool);
-        tool.title().ifPresent(title -> builder.add("title", title));
+        tool.title().ifPresent(title -> builder.set("title", title));
         tool.outputSchema()
                 .map(OUTPUT_SCHEMA::get)
-                .ifPresent(outputSchema -> builder.add("outputSchema", outputSchema));
+                .ifPresent(outputSchema -> builder.set("outputSchema", outputSchema));
         return builder;
     }
 
     @Override
-    public JsonObjectBuilder toJson(McpResource resource) {
+    public JsonObject.Builder toJson(McpResource resource) {
         var builder = super.toJson(resource);
-        resource.title().ifPresent(title -> builder.add("title", title));
+        resource.title().ifPresent(title -> builder.set("title", title));
         return builder;
     }
 
     @Override
-    public JsonObjectBuilder toJson(McpPrompt prompt) {
+    public JsonObject.Builder toJson(McpPrompt prompt) {
         var builder = super.toJson(prompt);
-        prompt.title().ifPresent(title -> builder.add("title", title));
+        prompt.title().ifPresent(title -> builder.set("title", title));
         return builder;
     }
 
     @Override
-    public JsonObjectBuilder toJson(McpPromptArgument argument) {
+    public JsonObject.Builder toJson(McpPromptArgument argument) {
         var builder = super.toJson(argument);
-        argument.title().ifPresent(title -> builder.add("title", title));
+        argument.title().ifPresent(title -> builder.set("title", title));
         return builder;
     }
 
-    private JsonObjectBuilder toJson(McpResourceLinkContent content) {
-        var builder = JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("type", content.type().text())
-                .add("uri", content.uri())
-                .add("name", content.name());
-        content.size().ifPresent(size -> builder.add("size", size));
-        content.title().ifPresent(title -> builder.add("title", title));
-        content.mediaType().ifPresent(mediaType -> builder.add("mimeType", mediaType.text()));
-        content.description().ifPresent(description -> builder.add("description", description));
+    private JsonObject.Builder toJson(McpResourceLinkContent content) {
+        var builder = JsonObject.builder()
+                .set("type", content.type().text())
+                .set("uri", content.uri())
+                .set("name", content.name());
+        content.size().ifPresent(size -> builder.set("size", size));
+        content.title().ifPresent(title -> builder.set("title", title));
+        content.mediaType().ifPresent(mediaType -> builder.set("mimeType", mediaType.text()));
+        content.description().ifPresent(description -> builder.set("description", description));
         return builder;
     }
 
@@ -127,7 +114,7 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
     public McpElicitationResponse createElicitationResponse(JsonObject object) throws McpElicitationException {
         find(object, "error")
                 .filter(this::isJsonObject)
-                .map(JsonValue::asJsonObject)
+                .map(JsonValue::asObject)
                 .map(JsonRpcError::create)
                 .ifPresent(error -> {
                     throw new McpElicitationException(error.message());
@@ -135,13 +122,16 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
         try {
             var result = find(object, "result")
                     .filter(this::isJsonObject)
-                    .map(JsonValue::asJsonObject)
+                    .map(JsonValue::asObject)
                     .orElseThrow(() -> new McpElicitationException(String.format("Elicitation result not found: %s", object)));
 
-            McpElicitationAction action = McpElicitationAction.valueOf(result.getString("action").toUpperCase());
+            McpElicitationAction action = result.stringValue("action")
+                    .map(String::toUpperCase)
+                    .map(McpElicitationAction::valueOf)
+                    .orElseThrow();
             JsonObject content = find(result, "content")
                     .filter(this::isJsonObject)
-                    .map(JsonObject.class::cast)
+                    .map(JsonValue::asObject)
                     .orElse(null);
             return new McpElicitationResponseImpl(action, content);
         } catch (Exception e) {
@@ -152,11 +142,11 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
     @Override
     public JsonObject createElicitationRequest(long id, McpElicitationRequest request) {
         var builder = createJsonRpcRequest(id, METHOD_ELICITATION_CREATE);
-        var params = JSON_BUILDER_FACTORY.createObjectBuilder();
+        var params = JsonObject.builder();
         JsonObject jsonSchema = ELICITATION_SCHEMA.get(request.schema());
-        params.add("message", request.message());
-        params.add("requestedSchema", jsonSchema);
-        builder.add("params", params);
+        params.set("message", request.message());
+        params.set("requestedSchema", jsonSchema);
+        builder.set("params", params.build());
         return builder.build();
     }
 }

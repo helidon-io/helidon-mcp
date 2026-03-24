@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package io.helidon.extensions.mcp.server;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import jakarta.json.JsonValue;
+import io.helidon.json.JsonNull;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -38,7 +38,7 @@ class McpCancellationTest {
     void testCancellationRequested() {
         String reason = "Process is taking too long";
         McpCancellation cancellation = new McpCancellation();
-        cancellation.cancel(reason, JsonValue.NULL);
+        cancellation.cancel(reason, JsonNull.instance());
 
         assertThat(cancellation.result().isRequested(), is(true));
         assertThat(cancellation.result().reason(), is(reason));
@@ -51,8 +51,8 @@ class McpCancellationTest {
         McpCancellation cancellation = new McpCancellation();
 
         cancellation.registerCancellationHook(counter::getAndIncrement);
-        cancellation.cancel(reason, JsonValue.NULL);
-        cancellation.cancel(reason, JsonValue.NULL);
+        cancellation.cancel(reason, JsonNull.instance());
+        cancellation.cancel(reason, JsonNull.instance());
 
         McpCancellationResult result = cancellation.result();
         assertThat(result.isRequested(), is(true));

@@ -17,10 +17,11 @@ package io.helidon.extensions.mcp.server;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 import io.helidon.common.media.type.MediaTypes;
+import io.helidon.json.JsonObject;
 
-import jakarta.json.JsonValue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -52,13 +53,14 @@ class McpSamplingRequestTest {
 
     @Test
     void testCustomValues() {
+        Map<String, Object> metadata = Map.of("enabled", true);
         McpSamplingRequest request = McpSamplingRequest.builder()
                 .maxTokens(1)
                 .temperature(0.1)
                 .costPriority(0.1)
                 .speedPriority(0.1)
                 .hints(List.of("hint1"))
-                .metadata(JsonValue.TRUE)
+                .metadata(metadata)
                 .intelligencePriority(0.1)
                 .systemPrompt("system prompt")
                 .timeout(Duration.ofSeconds(10))
@@ -99,7 +101,11 @@ class McpSamplingRequestTest {
         assertThat(audio.mediaType(), is(MediaTypes.TEXT_PLAIN));
 
         assertThat(request.metadata().isEmpty(), is(false));
-        assertThat(request.metadata().get(), is(JsonValue.TRUE));
+        assertThat(request.metadata().get(), is(metadata));
+
+        JsonObject serialized = new McpJsonSerializerV1().toJson(request).build();
+        JsonObject serializedMetadata = serialized.objectValue("metadata").orElseThrow();
+        assertThat(serializedMetadata.booleanValue("enabled").orElseThrow(), is(true));
 
         assertThat(request.includeContext().isEmpty(), is(false));
         assertThat(request.includeContext().get(), is(McpIncludeContext.NONE));

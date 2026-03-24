@@ -15,28 +15,23 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.json.Json;
-import jakarta.json.JsonBuilderFactory;
-import jakarta.json.JsonObjectBuilder;
+import io.helidon.json.JsonObject;
 
 /**
  * JSON serializer for {@code 2025-03-26} MCP specification.
  */
 class McpJsonSerializerV2 extends McpJsonSerializerV1 {
-    private static final JsonBuilderFactory JSON_BUILDER_FACTORY = Json.createBuilderFactory(Map.of());
-
     @Override
-    public JsonObjectBuilder createJsonInitializeResponse(Set<McpCapability> capabilities, McpServerConfig config) {
+    public JsonObject.Builder createJsonInitializeResponse(Set<McpCapability> capabilities, McpServerConfig config) {
         return super.createJsonInitializeResponse(capabilities, config)
-                .add("protocolVersion", McpProtocolVersion.VERSION_2025_03_26.text());
+                .set("protocolVersion", McpProtocolVersion.VERSION_2025_03_26.text());
     }
 
     @Override
-    public Optional<JsonObjectBuilder> toJson(McpContent content) {
+    public Optional<JsonObject.Builder> toJson(McpContent content) {
         if (content instanceof McpAudioContent audio) {
             return toJson(audio);
         }
@@ -44,7 +39,7 @@ class McpJsonSerializerV2 extends McpJsonSerializerV1 {
     }
 
     @Override
-    public Optional<JsonObjectBuilder> toJson(McpPromptContent content) {
+    public Optional<JsonObject.Builder> toJson(McpPromptContent content) {
         if (content instanceof McpPromptAudioContent resource) {
             return toJson(resource);
         }
@@ -52,32 +47,32 @@ class McpJsonSerializerV2 extends McpJsonSerializerV1 {
     }
 
     @Override
-    public Optional<JsonObjectBuilder> toJson(McpAudioContent content) {
-        return Optional.of(JSON_BUILDER_FACTORY.createObjectBuilder()
-                                   .add("type", content.type().text())
-                                   .add("data", content.base64Data())
-                                   .add("mimeType", content.mediaType().text()));
+    public Optional<JsonObject.Builder> toJson(McpAudioContent content) {
+        return Optional.of(JsonObject.builder()
+                                   .set("type", content.type().text())
+                                   .set("data", content.base64Data())
+                                   .set("mimeType", content.mediaType().text()));
     }
 
     @Override
-    public Optional<JsonObjectBuilder> toJson(McpPromptAudioContent audio) {
+    public Optional<JsonObject.Builder> toJson(McpPromptAudioContent audio) {
         return toJson((McpAudioContent) audio)
-                .map(content -> JSON_BUILDER_FACTORY.createObjectBuilder()
-                        .add("role", audio.role().text())
-                        .add("content", content));
+                .map(content -> JsonObject.builder()
+                        .set("role", audio.role().text())
+                        .set("content", content.build()));
     }
 
     @Override
-    public JsonObjectBuilder toJson(McpTool tool) {
+    public JsonObject.Builder toJson(McpTool tool) {
         var builder = super.toJson(tool);
         tool.annotations().ifPresent(annotations -> {
-            JsonObjectBuilder annotBuilder = JSON_BUILDER_FACTORY.createObjectBuilder();
-            annotBuilder.add("title", annotations.title());
-            annotBuilder.add("destructiveHint", annotations.destructiveHint());
-            annotBuilder.add("idempotentHint", annotations.idempotentHint());
-            annotBuilder.add("openWorldHint", annotations.openWorldHint());
-            annotBuilder.add("readOnlyHint", annotations.readOnlyHint());
-            builder.add("annotations", annotBuilder.build());
+            JsonObject.Builder annotBuilder = JsonObject.builder();
+            annotBuilder.set("title", annotations.title());
+            annotBuilder.set("destructiveHint", annotations.destructiveHint());
+            annotBuilder.set("idempotentHint", annotations.idempotentHint());
+            annotBuilder.set("openWorldHint", annotations.openWorldHint());
+            annotBuilder.set("readOnlyHint", annotations.readOnlyHint());
+            builder.set("annotations", annotBuilder.build());
         });
         return builder;
     }

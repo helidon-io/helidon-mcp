@@ -32,12 +32,12 @@ import io.helidon.common.LazyValue;
 import io.helidon.common.LruCache;
 import io.helidon.common.UncheckedException;
 import io.helidon.common.context.Context;
+import io.helidon.json.JsonException;
+import io.helidon.json.JsonObject;
+import io.helidon.json.JsonValue;
 import io.helidon.webserver.http.ServerResponse;
 import io.helidon.webserver.jsonrpc.JsonRpcRequest;
 import io.helidon.webserver.jsonrpc.JsonRpcResponse;
-
-import jakarta.json.JsonObject;
-import jakarta.json.JsonValue;
 
 import static io.helidon.extensions.mcp.server.McpJsonSerializer.prettyPrint;
 import static io.helidon.extensions.mcp.server.McpSession.State.UNINITIALIZED;
@@ -51,9 +51,9 @@ class McpSession {
     private final Context context = Context.create();
     private final Set<McpCapability> clientCapabilities;
     private final AtomicLong jsonRpcId = new AtomicLong(0);
-    private final LruCache<JsonValue, McpFeatures> features;
+    private final LruCache<String, McpFeatures> features;
     private final List<McpFeatureLifecycle> featureListeners;
-    private final LruCache<JsonValue, McpTransport> transports;
+    private final LruCache<String, McpTransport> transports;
     private final LazyValue<McpSessionFeatures> sessionFeatures;
     private final AtomicBoolean active = new AtomicBoolean(true);
     private final BlockingQueue<JsonObject> responses = new LinkedBlockingQueue<>();
@@ -76,10 +76,11 @@ class McpSession {
     }
 
     void send(JsonValue id, JsonRpcResponse response) {
-        transports.get(id)
-                .orElseThrow(() -> new McpInternalException("No transport for id " + id))
-                .send(response);
-        transports.remove(id);
+        String key = id.toString();
+        McpTransport transport = transports.get(key)
+                .orElseThrow(() -> new McpInternalException("No transport for id " + id));
+        transport.send(response);
+        transports.remove(key);
     }
 
     void onConnect(ServerResponse response) {
@@ -94,11 +95,17 @@ class McpSession {
     }
 
     McpSession onRequest(JsonValue id, JsonRpcRequest req, JsonRpcResponse res) {
-        if (transports.get(id).isEmpty()) {
-            McpTransport transport = this.manager.create(req, res);
-            transports.put(id, transport);
-        }
+        createTransport(id, req, res);
         manager.onRequest(req, res);
+        return this;
+    }
+
+    McpSession createTransport(JsonValue id, JsonRpcRequest req, JsonRpcResponse res) {
+        String key = id.toString();
+        if (transports.get(key).isEmpty()) {
+            McpTransport transport = this.manager.create(req, res);
+            transports.put(key, transport);
+        }
         return this;
     }
 
@@ -108,7 +115,7 @@ class McpSession {
     }
 
     void beforeFeatureRequest(McpParameters parameters, JsonValue requestId) {
-        features.get(requestId).ifPresent(feature -> {
+        features.get(requestId.toString()).ifPresent(feature -> {
             for (McpFeatureLifecycle listener : featureListeners) {
                 listener.beforeRequest(parameters, feature);
             }
@@ -116,7 +123,7 @@ class McpSession {
     }
 
     void afterFeatureRequest(McpParameters parameters, JsonValue requestId) {
-        features.get(requestId).ifPresent(feature -> {
+        features.get(requestId.toString()).ifPresent(feature -> {
             for (McpFeatureLifecycle listener : featureListeners) {
                 listener.afterRequest(parameters, feature);
             }
@@ -132,10 +139,11 @@ class McpSession {
     }
 
     McpFeatures createFeatures(JsonValue requestId, JsonRpcRequest request, JsonRpcResponse response) {
-        var transport = transports.get(requestId)
+        String key = requestId.toString();
+        var transport = transports.get(key)
                 .orElseThrow(() -> new McpInternalException("No transport for request id " + requestId));
         McpFeatures feat = new McpFeatures(this, transport);
-        features.put(requestId, feat);
+        features.put(key, feat);
         return feat;
     }
 
@@ -147,14 +155,14 @@ class McpSession {
                     if (LOGGER.isLoggable(System.Logger.Level.DEBUG)) {
                         LOGGER.log(System.Logger.Level.DEBUG, "Response:\n" + prettyPrint(response));
                     }
-                    long id = response.getJsonNumber("id").longValue();
+                    long id = response.longValue("id").orElseThrow();
                     if (id == requestId) {
                         return response;
                     }
                 } else {
                     return serializer.jsonrpcErrorTimeoutResponse(requestId);
                 }
-            } catch (ClassCastException e) {
+            } catch (JsonException e) {
                 if (LOGGER.isLoggable(Level.TRACE)) {
                     LOGGER.log(Level.TRACE, "Received a response with wrong request id type", e);
                 }
@@ -176,12 +184,13 @@ class McpSession {
     }
 
     void clearRequest(JsonValue requestId) {
-        features.remove(requestId);
-        transports.remove(requestId);
+        String key = requestId.toString();
+        features.remove(key);
+        transports.remove(key);
     }
 
     Optional<McpFeatures> findFeatures(JsonValue requestId) {
-        return features.get(requestId);
+        return features.get(requestId.toString());
     }
 
     McpSessionFeatures features() {
@@ -218,7 +227,7 @@ class McpSession {
     }
 
     Optional<McpTransport> transport(JsonValue id) {
-        return transports.get(id);
+        return transports.get(id.toString());
     }
 
     void state(State state) {

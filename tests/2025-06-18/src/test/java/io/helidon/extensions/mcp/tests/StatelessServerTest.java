@@ -22,6 +22,8 @@ import io.helidon.extensions.mcp.tests.common.StatelessServer;
 import io.helidon.http.HeaderName;
 import io.helidon.http.HeaderNames;
 import io.helidon.http.Status;
+import io.helidon.json.JsonObject;
+import io.helidon.json.JsonValue;
 import io.helidon.webclient.jsonrpc.JsonRpcClient;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
@@ -35,8 +37,6 @@ import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.McpException;
 import dev.langchain4j.mcp.client.transport.McpTransport;
 import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
-import jakarta.json.JsonObject;
-import jakarta.json.spi.JsonProvider;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -46,7 +46,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ServerTest
 class StatelessServerTest {
-    private static final JsonProvider JSON_PROVIDER = JsonProvider.provider();
     private static final String SUCCESS_TEXT = "Success";
     private static final String TOOL_NAME = "stateless-tool";
     private static final String PROMPT_NAME = "stateless-prompt";
@@ -90,9 +89,15 @@ class StatelessServerTest {
                 .submit()) {
             assertThat(response.error().isEmpty(), is(true));
             assertThat(response.result().isEmpty(), is(false));
-            var tools = response.result().orElseThrow().asJsonObject().getJsonArray("tools");
+            var tools = response.result()
+                    .map(result -> result.asJsonObject())
+                    .flatMap(result -> result.arrayValue("tools"))
+                    .orElseThrow();
             assertThat(tools.size(), is(1));
-            assertThat(tools.getJsonObject(0).getString("name"), is(TOOL_NAME));
+            assertThat(tools.get(0)
+                    .map(JsonValue::asObject)
+                    .flatMap(object -> object.stringValue("name"))
+                    .orElseThrow(), is(TOOL_NAME));
         }
     }
 
@@ -110,9 +115,15 @@ class StatelessServerTest {
                 .submit()) {
             assertThat(response.error().isEmpty(), is(true));
             assertThat(response.result().isEmpty(), is(false));
-            var prompts = response.result().orElseThrow().asJsonObject().getJsonArray("prompts");
+            var prompts = response.result()
+                    .map(result -> result.asJsonObject())
+                    .flatMap(result -> result.arrayValue("prompts"))
+                    .orElseThrow();
             assertThat(prompts.size(), is(1));
-            assertThat(prompts.getJsonObject(0).getString("name"), is(PROMPT_NAME));
+            assertThat(prompts.get(0)
+                    .map(JsonValue::asObject)
+                    .flatMap(object -> object.stringValue("name"))
+                    .orElseThrow(), is(PROMPT_NAME));
         }
     }
 
@@ -131,19 +142,29 @@ class StatelessServerTest {
                 .submit()) {
             assertThat(response.error().isEmpty(), is(true));
             assertThat(response.result().isEmpty(), is(false));
-            var resources = response.result().orElseThrow().asJsonObject().getJsonArray("resources");
+            var resources = response.result()
+                    .map(result -> result.asJsonObject())
+                    .flatMap(result -> result.arrayValue("resources"))
+                    .orElseThrow();
             assertThat(resources.size(), is(1));
-            assertThat(resources.getJsonObject(0).getString("name"), is(RESOURCE_NAME));
-            assertThat(resources.getJsonObject(0).getString("uri"), is(RESOURCE_URI));
+            assertThat(resources.get(0)
+                    .map(JsonValue::asObject)
+                    .flatMap(object -> object.stringValue("name"))
+                    .orElseThrow(), is(RESOURCE_NAME));
+            assertThat(resources.get(0)
+                    .map(JsonValue::asObject)
+                    .flatMap(object -> object.stringValue("uri"))
+                    .orElseThrow(), is(RESOURCE_URI));
         }
     }
 
     @Test
     void statefulToolCall() {
-        var exception = assertThrows(ToolExecutionException.class, () -> statefulClient.executeTool(ToolExecutionRequest.builder()
-                                                                                                             .name(TOOL_NAME)
-                                                                                                             .arguments("{}")
-                                                                                                             .build()));
+        ToolExecutionRequest request = ToolExecutionRequest.builder()
+                .name(TOOL_NAME)
+                .arguments("{}")
+                .build();
+        var exception = assertThrows(ToolExecutionException.class, () -> statefulClient.executeTool(request));
         assertThat(exception.getMessage(), containsString("Roots is enabled"));
     }
 
@@ -152,12 +173,19 @@ class StatelessServerTest {
         try (var response = statelessClient.rpcMethod("tools/call")
                 .rpcId(4)
                 .param("name", TOOL_NAME)
-                .param("arguments", JSON_PROVIDER.createObjectBuilder().build())
+                .param("arguments", JsonObject.empty())
                 .submit()) {
             assertThat(response.error().isEmpty(), is(true));
             assertThat(response.result().isEmpty(), is(false));
-            var result = response.result().orElseThrow().asJsonObject();
-            assertThat(result.getJsonArray("content").getJsonObject(0).getString("text"), is(SUCCESS_TEXT));
+            var result = response.result()
+                    .map(value -> value.asJsonObject())
+                    .orElseThrow();
+            String text = result.arrayValue("content")
+                    .flatMap(content -> content.get(0))
+                    .map(JsonValue::asObject)
+                    .flatMap(content -> content.stringValue("text"))
+                    .orElseThrow();
+            assertThat(text, is(SUCCESS_TEXT));
         }
     }
 
@@ -172,13 +200,20 @@ class StatelessServerTest {
         try (var response = statelessClient.rpcMethod("prompts/get")
                 .rpcId(5)
                 .param("name", PROMPT_NAME)
-                .param("arguments", JSON_PROVIDER.createObjectBuilder().build())
+                .param("arguments", JsonObject.empty())
                 .submit()) {
             assertThat(response.error().isEmpty(), is(true));
             assertThat(response.result().isEmpty(), is(false));
-            var prompt = response.result().orElseThrow().asJsonObject();
-            assertThat(prompt.getJsonArray("messages").getJsonObject(0).getJsonObject("content").getString("text"),
-                       is(SUCCESS_TEXT));
+            var prompt = response.result()
+                    .map(result -> result.asJsonObject())
+                    .orElseThrow();
+            String text = prompt.arrayValue("messages")
+                    .flatMap(messages -> messages.get(0))
+                    .map(JsonValue::asObject)
+                    .flatMap(message -> message.objectValue("content"))
+                    .flatMap(content -> content.stringValue("text"))
+                    .orElseThrow();
+            assertThat(text, is(SUCCESS_TEXT));
         }
     }
 
@@ -196,20 +231,27 @@ class StatelessServerTest {
                 .submit()) {
             assertThat(response.error().isEmpty(), is(true));
             assertThat(response.result().isEmpty(), is(false));
-            var resource = response.result().orElseThrow().asJsonObject();
-            assertThat(resource.getJsonArray("contents").getJsonObject(0).getString("text"), is(SUCCESS_TEXT));
+            var resource = response.result()
+                    .map(result -> result.asJsonObject())
+                    .orElseThrow();
+            String text = resource.arrayValue("contents")
+                    .flatMap(contents -> contents.get(0))
+                    .map(JsonValue::asObject)
+                    .flatMap(content -> content.stringValue("text"))
+                    .orElseThrow();
+            assertThat(text, is(SUCCESS_TEXT));
         }
     }
 
     @Test
     void statelessCompletion() {
-        JsonObject ref = JSON_PROVIDER.createObjectBuilder()
-                .add("type", "ref/prompt")
-                .add("name", COMPLETION_NAME)
+        JsonObject ref = JsonObject.builder()
+                .set("type", "ref/prompt")
+                .set("name", COMPLETION_NAME)
                 .build();
-        JsonObject argument = JSON_PROVIDER.createObjectBuilder()
-                .add("name", "arg")
-                .add("value", "suc")
+        JsonObject argument = JsonObject.builder()
+                .set("name", "arg")
+                .set("value", "suc")
                 .build();
         try (var response = statelessClient.rpcMethod("completion/complete")
                 .rpcId(7)

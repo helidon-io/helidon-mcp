@@ -23,6 +23,7 @@ import io.helidon.extensions.mcp.server.McpFeatures;
 import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpToolRequest;
 import io.helidon.extensions.mcp.server.McpToolResult;
+import io.helidon.json.binding.Json;
 import io.helidon.json.schema.JsonSchema;
 
 @Mcp.Server
@@ -200,6 +201,7 @@ class McpToolsServer {
         return "values=" + String.join(",", values);
     }
 
+    @Json.Entity
     @JsonSchema.Schema
     public static class Foo {
         public String foo;

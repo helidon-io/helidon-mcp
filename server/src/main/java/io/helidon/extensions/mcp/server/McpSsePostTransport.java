@@ -24,13 +24,11 @@ import java.util.function.Consumer;
 import io.helidon.common.UncheckedException;
 import io.helidon.http.HeaderValues;
 import io.helidon.http.sse.SseEvent;
+import io.helidon.json.JsonObject;
 import io.helidon.webserver.http.ServerResponse;
 import io.helidon.webserver.jsonrpc.JsonRpcResponse;
 import io.helidon.webserver.sse.SseSink;
 
-import jakarta.json.JsonObject;
-
-import static io.helidon.extensions.mcp.server.McpJsonSerializer.JSON_BUILDER_FACTORY;
 import static io.helidon.extensions.mcp.server.McpJsonSerializer.prettyPrint;
 
 /**
@@ -90,15 +88,15 @@ final class McpSsePostTransport implements McpTransport {
                               .build());
             poll(message -> sink.emit(SseEvent.builder()
                                               .name("message")
-                                              .data(message)
+                                              .data(message.toString())
                                               .build()));
         }
     }
 
     void onDisconnect() {
         if (active.compareAndSet(true, false)) {
-            var disconnect = JSON_BUILDER_FACTORY.createObjectBuilder()
-                    .add("disconnect", true)
+            var disconnect = JsonObject.builder()
+                    .set("disconnect", true)
                     .build();
             messages.add(disconnect);
         }
@@ -108,7 +106,7 @@ final class McpSsePostTransport implements McpTransport {
         while (active.get()) {
             try {
                 JsonObject message = messages.take();
-                if (message.getBoolean("disconnect", false)) {
+                if (message.booleanValue("disconnect", false)) {
                     if (LOGGER.isLoggable(System.Logger.Level.TRACE)) {
                         LOGGER.log(System.Logger.Level.TRACE, "Session disconnected.");
                     }

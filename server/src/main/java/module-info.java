@@ -25,14 +25,13 @@ import io.helidon.common.features.api.HelidonFlavor;
 @Features.Description("Support for Model Context Protocol Server.")
 @Features.Flavor({HelidonFlavor.SE, HelidonFlavor.MP})
 module io.helidon.extensions.mcp.server {
-    requires jakarta.json;
-    requires jakarta.json.bind;
     requires io.helidon.common;
+    requires io.helidon.json;
+    requires io.helidon.json.binding;
     requires io.helidon.webserver.sse;
     requires io.helidon.service.registry;
     requires io.helidon.jsonrpc.core;
     requires io.helidon.webserver.jsonrpc;
-    requires io.helidon.cors;
     requires io.helidon.webserver.cors;
     requires io.helidon.config.metadata;
 

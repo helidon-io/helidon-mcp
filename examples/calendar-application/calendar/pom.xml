@@ -23,7 +23,7 @@
     <parent>
         <groupId>io.helidon.applications</groupId>
         <artifactId>helidon-se</artifactId>
-        <version>4.4.0</version>
+        <version>4.5.0</version>
         <relativePath/>
     </parent>
 
@@ -34,7 +34,7 @@
 
     <properties>
         <mainClass>io.helidon.extensions.mcp.examples.calendar.Main</mainClass>
-        <version.lib.mcp-sdk>0.11.3</version.lib.mcp-sdk>
+        <version.lib.mcp-sdk>1.0.0</version.lib.mcp-sdk>
     </properties>
 
     <dependencies>
@@ -48,16 +48,8 @@
             <artifactId>helidon-webclient</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.helidon.http.media</groupId>
-            <artifactId>helidon-http-media-jsonb</artifactId>
-        </dependency>
-        <dependency>
             <groupId>io.helidon.config</groupId>
             <artifactId>helidon-config-yaml</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse</groupId>
-            <artifactId>yasson</artifactId>
         </dependency>
         <dependency>
             <groupId>io.helidon.logging</groupId>

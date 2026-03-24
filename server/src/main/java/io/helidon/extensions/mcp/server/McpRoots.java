@@ -19,7 +19,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import jakarta.json.JsonObject;
+import io.helidon.json.JsonObject;
 
 import static io.helidon.extensions.mcp.server.McpJsonSerializer.METHOD_ROOTS_LIST;
 
@@ -35,8 +35,8 @@ public final class McpRoots extends McpFeature {
         super(session, transport);
         this.timeout = session.context()
                 .get(McpServerConfigBlueprint.class, McpServerConfig.class)
-                .orElseThrow(() -> new McpInternalException("Server configuration is not set"))
-                .rootListTimeout();
+                .map(McpServerConfigBlueprint::rootListTimeout)
+                .orElseThrow(() -> new McpInternalException("Server configuration is not set"));
         this.enabled = session.capabilities().contains(McpCapability.ROOTS);
     }
 

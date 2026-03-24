@@ -21,16 +21,14 @@ import java.util.stream.Collectors;
 
 import io.helidon.extensions.mcp.server.Mcp;
 import io.helidon.extensions.mcp.server.McpToolResult;
+import io.helidon.json.binding.Json;
+import io.helidon.json.binding.JsonBinding;
 import io.helidon.webclient.api.HttpClientResponse;
 import io.helidon.webclient.api.WebClient;
 
-import jakarta.json.bind.Jsonb;
-import jakarta.json.bind.annotation.JsonbProperty;
-import jakarta.json.bind.spi.JsonbProvider;
-
 @Mcp.Server("helidon-mcp-weather-server")
 class McpServer {
-    private static final Jsonb JSON = JsonbProvider.provider().create().build();
+    private static final JsonBinding JSON = JsonBinding.create();
     private static final WebClient WEBCLIENT = WebClient.builder()
                                                         .baseUri("https://api.weather.gov")
                                                         .addHeader("Accept", "application/geo+json")
@@ -43,7 +41,7 @@ class McpServer {
                 .path("/alerts/active/area/" + state)
                 .request()) {
 
-            Alert alert = JSON.fromJson(response.as(String.class), Alert.class);
+            Alert alert = JSON.deserialize(response.as(String.class), Alert.class);
             String content = alert.features()
                     .stream()
                     .map(f -> String.format("""
@@ -63,17 +61,20 @@ class McpServer {
         }
     }
 
-    public record Alert(@JsonbProperty("features") List<Feature> features) {
+    @Json.Entity
+    public record Alert(List<Feature> features) {
 
-        public record Feature(@JsonbProperty("properties") Properties properties) {
+        @Json.Entity
+        public record Feature(Properties properties) {
         }
 
-        public record Properties(@JsonbProperty("event") String event,
-                                 @JsonbProperty("id") String id,
-                                 @JsonbProperty("areaDesc") String areaDesc,
-                                 @JsonbProperty("severity") String severity,
-                                 @JsonbProperty("description") String description,
-                                 @JsonbProperty("instruction") String instruction) {
+        @Json.Entity
+        public record Properties(String event,
+                                 String id,
+                                 String areaDesc,
+                                 String severity,
+                                 String description,
+                                 String instruction) {
         }
     }
 }

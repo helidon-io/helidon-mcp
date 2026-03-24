@@ -158,6 +158,9 @@ a tool that returns structured content SHOULD also return the serialized JSON in
 added to the `McpToolResult` builder, Helidon will serialize the structured content and add it by itself.
 Tools have to provide an output schema for validation of structured results if it is using structured content.
 
+Structured content is serialized using Helidon JSON binding. Custom classes must be annotated with `@Json.Entity` and
+compiled with the Helidon JSON annotation processor. JSON-B annotations and unregistered POJOs are not supported.
+
 To add an output schema to the tool, use the `@Mcp.ToolOutputSchema` or `@Mcp.ToolOutputSchemaText` annotations:
 
 - **`@Mcp.ToolOutputSchema`**: Defines the output schema using a class (POJO). Helidon will generate the JSON schema from the class.
@@ -180,6 +183,7 @@ McpToolResult toolWithTextSchema(McpToolRequest request) {
             .build();
 }
 
+@Json.Entity
 @JsonSchema.Schema
 public record Foo(String bar) {
 }
@@ -495,6 +499,15 @@ void process(McpToolRequest request) {
 
     // Convert to a custom POJO
     Address homeAddress = address.as(Address.class).orElseThrow();
+}
+```
+
+Custom parameter types are deserialized using Helidon JSON binding. Annotate them with `@Json.Entity` and enable the
+Helidon JSON annotation processor so a converter is generated:
+
+```java
+@Json.Entity
+record Address(String street, String city) {
 }
 ```
 

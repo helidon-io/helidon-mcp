@@ -19,7 +19,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import jakarta.json.JsonValue;
+import io.helidon.json.JsonValue;
 
 /**
  * Subscriptions feature used to send resource update notifications
@@ -35,8 +35,8 @@ public final class McpSubscriptions extends McpFeature {
         this.subscriptions = new ConcurrentHashMap<>();
         this.timeout = session.context()
                 .get(McpServerConfigBlueprint.class, McpServerConfig.class)
-                .orElseThrow(() -> new McpInternalException("MCP server configuration not found"))
-                .subscriptionTimeout();
+                .map(McpServerConfigBlueprint::subscriptionTimeout)
+                .orElseThrow(() -> new McpInternalException("MCP server configuration not found"));
     }
 
     /**

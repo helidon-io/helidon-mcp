@@ -23,12 +23,8 @@ import java.util.regex.Pattern;
 
 import io.helidon.common.LazyValue;
 import io.helidon.common.media.type.MediaType;
+import io.helidon.json.JsonObject;
 import io.helidon.jsonrpc.core.JsonRpcParams;
-
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-
-import static io.helidon.extensions.mcp.server.McpJsonSerializer.JSON_BUILDER_FACTORY;
 
 class McpResourceTemplate implements McpResource {
     private final McpResource delegate;
@@ -76,15 +72,15 @@ class McpResourceTemplate implements McpResource {
     }
 
     McpParameters parameters(JsonRpcParams params, String uri) {
-        JsonObjectBuilder builder = JSON_BUILDER_FACTORY.createObjectBuilder();
+        JsonObject.Builder builder = JsonObject.builder();
         Matcher matcher = pattern.get().matcher(uri);
         if (matcher.matches()) {
             for (int i = 0; i < matcher.groupCount(); i++) {
-                builder.add(variables.get(i), matcher.group(i + 1));
+                builder.set(variables.get(i), matcher.group(i + 1));
             }
         }
         JsonObject parameters = builder.build();
-        return new McpParameters(JsonRpcParams.create(parameters), parameters);
+        return new McpParameters(JsonRpcParams.create(parameters));
     }
 
     private Pattern createPattern(String uri) {

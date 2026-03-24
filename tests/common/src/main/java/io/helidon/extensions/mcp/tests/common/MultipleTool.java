@@ -24,6 +24,7 @@ import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
 import io.helidon.extensions.mcp.server.McpToolRequest;
 import io.helidon.extensions.mcp.server.McpToolResult;
+import io.helidon.json.binding.Json;
 import io.helidon.json.schema.Schema;
 import io.helidon.json.schema.SchemaNumber;
 import io.helidon.json.schema.SchemaString;
@@ -134,19 +135,7 @@ public class MultipleTool {
         }
     }
 
-    public static class StructuredContent {
-        private String foo;
-
-        StructuredContent(String foo) {
-            this.foo = foo;
-        }
-
-        public String getFoo() {
-            return foo;
-        }
-
-        public void setFoo(String foo) {
-            this.foo = foo;
-        }
+    @Json.Entity
+    public record StructuredContent(String foo) {
     }
 }

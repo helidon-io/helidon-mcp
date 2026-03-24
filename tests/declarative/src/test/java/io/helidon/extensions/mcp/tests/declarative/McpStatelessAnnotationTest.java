@@ -45,7 +45,12 @@ class McpStatelessAnnotationTest {
                 .submit()) {
             assertThat(response.error().isEmpty(), is(true));
             assertThat(response.result().isEmpty(), is(false));
-            assertThat(response.result().orElseThrow().asJsonObject().getJsonArray("tools").size(), is(1));
+            int toolCount = response.result()
+                    .map(result -> result.asJsonObject())
+                    .flatMap(result -> result.arrayValue("tools"))
+                    .map(tools -> tools.size())
+                    .orElseThrow();
+            assertThat(toolCount, is(1));
         }
     }
 
@@ -55,7 +60,7 @@ class McpStatelessAnnotationTest {
                 .rpcId(2)
                 .submit()) {
             assertThat(response.error().isEmpty(), is(false));
-            assertThat(response.error().orElseThrow().message(), is("Session not found"));
+            assertThat(response.error().map(error -> error.message()).orElseThrow(), is("Session not found"));
         }
     }
 }

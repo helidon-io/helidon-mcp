@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,7 @@ package io.helidon.extensions.mcp.server;
 import java.lang.System.Logger.Level;
 
 import io.helidon.common.LazyValue;
-
-import jakarta.json.JsonValue;
+import io.helidon.json.JsonValue;
 
 /**
  * The MCP Cancellation feature enables verification of whether a client

@@ -15,8 +15,8 @@
  */
 
 module helidon.extensions.mcp.tests.common {
-    requires jakarta.json;
     requires io.helidon.extensions.mcp.server;
+    requires io.helidon.json.binding;
     requires io.helidon.webserver;
     requires io.helidon.service.registry;
     requires io.helidon.json.schema;

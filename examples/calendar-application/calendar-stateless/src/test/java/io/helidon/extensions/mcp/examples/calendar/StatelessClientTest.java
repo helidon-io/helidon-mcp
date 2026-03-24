@@ -19,6 +19,10 @@ package io.helidon.extensions.mcp.examples.calendar;
 import java.util.List;
 
 import io.helidon.common.media.type.MediaTypes;
+import io.helidon.json.JsonArray;
+import io.helidon.json.JsonObject;
+import io.helidon.json.JsonValue;
+import io.helidon.jsonrpc.core.JsonRpcResult;
 import io.helidon.webclient.jsonrpc.JsonRpcClient;
 import io.helidon.webclient.jsonrpc.JsonRpcClientResponse;
 import io.helidon.webserver.WebServer;
@@ -26,9 +30,6 @@ import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.testing.junit5.ServerTest;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
 
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.json.spi.JsonProvider;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -43,11 +44,13 @@ import static org.hamcrest.Matchers.startsWith;
 @ServerTest
 @TestMethodOrder(OrderAnnotation.class)
 class StatelessClientTest {
-    private static final JsonProvider JSON_PROVIDER = JsonProvider.provider();
     private final JsonRpcClient client;
 
     StatelessClientTest(WebServer server) {
-        this.client = JsonRpcClient.create(builder -> builder.baseUri("http://localhost:" + server.port() + "/calendar"));
+        this.client = JsonRpcClient.create(builder ->
+                                                   builder.baseUri("http://localhost:"
+                                                                           + server.port()
+                                                                           + "/calendar"));
     }
 
     @SetUpRoute
@@ -61,32 +64,42 @@ class StatelessClientTest {
         try (var response = client.rpcMethod("tools/list")
                 .rpcId(1)
                 .submit()) {
-            JsonArray tools = result(response).getJsonArray("tools");
+            JsonArray tools = result(response).arrayValue("tools").orElseThrow();
             assertThat(tools.size(), is(2));
 
-            JsonObject addTool = tools.getJsonObject(0);
-            assertThat(addTool.getString("name"), is("add-calendar-event"));
-            assertThat(addTool.getString("description"), is("Adds a new event to the calendar"));
-            JsonObject addSchema = addTool.getJsonObject("inputSchema");
-            assertThat(addSchema.getString("type"), is("object"));
-            assertThat(addSchema.getJsonObject("properties").keySet(), hasItems("name", "date", "attendees"));
+            JsonObject addTool = tools.get(0)
+                    .map(JsonValue::asObject)
+                    .orElseThrow();
+            assertThat(addTool.stringValue("name").orElseThrow(), is("add-calendar-event"));
+            assertThat(addTool.stringValue("description").orElseThrow(), is("Adds a new event to the calendar"));
+            JsonObject addSchema = addTool.objectValue("inputSchema").orElseThrow();
+            assertThat(addSchema.stringValue("type").orElseThrow(), is("object"));
+            var addProperties = addSchema.objectValue("properties")
+                    .map(JsonObject::keysAsStrings)
+                    .orElseThrow();
+            assertThat(addProperties, hasItems("name", "date", "attendees"));
 
-            JsonObject listTool = tools.getJsonObject(1);
-            assertThat(listTool.getString("name"), is("list-calendar-events"));
-            assertThat(listTool.getString("description"), is("List calendar events"));
-            JsonObject listSchema = listTool.getJsonObject("inputSchema");
-            assertThat(listSchema.getString("type"), is("object"));
-            assertThat(listSchema.getJsonObject("properties").keySet(), hasItems("date"));
+            JsonObject listTool = tools.get(1)
+                    .map(JsonValue::asObject)
+                    .orElseThrow();
+            assertThat(listTool.stringValue("name").orElseThrow(), is("list-calendar-events"));
+            assertThat(listTool.stringValue("description").orElseThrow(), is("List calendar events"));
+            JsonObject listSchema = listTool.objectValue("inputSchema").orElseThrow();
+            assertThat(listSchema.stringValue("type").orElseThrow(), is("object"));
+            var listProperties = listSchema.objectValue("properties")
+                    .map(JsonObject::keysAsStrings)
+                    .orElseThrow();
+            assertThat(listProperties, hasItems("date"));
         }
     }
 
     @Test
     @Order(2)
     void testAddToolCall() {
-        JsonObject arguments = JSON_PROVIDER.createObjectBuilder()
-                .add("name", "Frank-birthday")
-                .add("date", "2021-04-20")
-                .add("attendees", JSON_PROVIDER.createArrayBuilder(List.of("Frank")))
+        JsonObject arguments = JsonObject.builder()
+                .set("name", "Frank-birthday")
+                .set("date", "2021-04-20")
+                .setStrings("attendees", List.of("Frank"))
                 .build();
 
         try (var response = client.rpcMethod("tools/call")
@@ -95,18 +108,21 @@ class StatelessClientTest {
                 .param("arguments", arguments)
                 .submit()) {
             JsonObject result = result(response);
-            assertThat(result.getBoolean("isError"), is(false));
-            JsonObject content = result.getJsonArray("content").getJsonObject(0);
-            assertThat(content.getString("type"), is("text"));
-            assertThat(content.getString("text"), is("New event added to the calendar"));
+            assertThat(result.booleanValue("isError").orElseThrow(), is(false));
+            JsonObject content = result.arrayValue("content")
+                    .flatMap(array -> array.get(0))
+                    .map(JsonValue::asObject)
+                    .orElseThrow();
+            assertThat(content.stringValue("type").orElseThrow(), is("text"));
+            assertThat(content.stringValue("text").orElseThrow(), is("New event added to the calendar"));
         }
     }
 
     @Test
     @Order(3)
     void testListToolCall() {
-        JsonObject arguments = JSON_PROVIDER.createObjectBuilder()
-                .add("date", "2021-04-20")
+        JsonObject arguments = JsonObject.builder()
+                .set("date", "2021-04-20")
                 .build();
 
         try (var response = client.rpcMethod("tools/call")
@@ -115,10 +131,13 @@ class StatelessClientTest {
                 .param("arguments", arguments)
                 .submit()) {
             JsonObject result = result(response);
-            assertThat(result.getBoolean("isError"), is(false));
-            JsonObject content = result.getJsonArray("content").getJsonObject(0);
-            assertThat(content.getString("type"), is("text"));
-            assertThat(content.getString("text"), containsString("Frank-birthday"));
+            assertThat(result.booleanValue("isError").orElseThrow(), is(false));
+            JsonObject content = result.arrayValue("content")
+                    .flatMap(array -> array.get(0))
+                    .map(JsonValue::asObject)
+                    .orElseThrow();
+            assertThat(content.stringValue("type").orElseThrow(), is("text"));
+            assertThat(content.stringValue("text").orElseThrow(), containsString("Frank-birthday"));
         }
     }
 
@@ -128,28 +147,50 @@ class StatelessClientTest {
         try (var response = client.rpcMethod("prompts/list")
                 .rpcId(4)
                 .submit()) {
-            JsonArray prompts = result(response).getJsonArray("prompts");
+            JsonArray prompts = result(response).arrayValue("prompts").orElseThrow();
             assertThat(prompts.size(), is(1));
 
-            JsonObject prompt = prompts.getJsonObject(0);
-            assertThat(prompt.getString("name"), is("create-event"));
-            assertThat(prompt.getString("description"), is("Create a new event and add it to the calendar"));
+            JsonObject prompt = prompts.get(0)
+                    .map(JsonValue::asObject)
+                    .orElseThrow();
+            assertThat(prompt.stringValue("name").orElseThrow(), is("create-event"));
+            assertThat(prompt.stringValue("description").orElseThrow(),
+                       is("Create a new event and add it to the calendar"));
 
-            JsonArray arguments = prompt.getJsonArray("arguments");
+            JsonArray arguments = prompt.arrayValue("arguments").orElseThrow();
             assertThat(arguments.size(), is(3));
-            assertPromptArgument(arguments.getJsonObject(0), "name", "Event name");
-            assertPromptArgument(arguments.getJsonObject(1), "date", "Event date in the following format YYYY-MM-DD");
-            assertPromptArgument(arguments.getJsonObject(2), "attendees", "Event attendees names separated by commas");
+            JsonObject nameArgument = arguments.get(0)
+                    .map(JsonValue::asObject)
+                    .orElseThrow();
+            assertThat(nameArgument.stringValue("name").orElseThrow(), is("name"));
+            assertThat(nameArgument.stringValue("description").orElseThrow(), is("Event name"));
+            assertThat(nameArgument.booleanValue("required").orElseThrow(), is(true));
+
+            JsonObject dateArgument = arguments.get(1)
+                    .map(JsonValue::asObject)
+                    .orElseThrow();
+            assertThat(dateArgument.stringValue("name").orElseThrow(), is("date"));
+            assertThat(dateArgument.stringValue("description").orElseThrow(),
+                       is("Event date in the following format YYYY-MM-DD"));
+            assertThat(dateArgument.booleanValue("required").orElseThrow(), is(true));
+
+            JsonObject attendeesArgument = arguments.get(2)
+                    .map(JsonValue::asObject)
+                    .orElseThrow();
+            assertThat(attendeesArgument.stringValue("name").orElseThrow(), is("attendees"));
+            assertThat(attendeesArgument.stringValue("description").orElseThrow(),
+                       is("Event attendees names separated by commas"));
+            assertThat(attendeesArgument.booleanValue("required").orElseThrow(), is(true));
         }
     }
 
     @Test
     @Order(5)
     void testPromptCall() {
-        JsonObject arguments = JSON_PROVIDER.createObjectBuilder()
-                .add("name", "Frank-birthday")
-                .add("date", "2021-04-20")
-                .add("attendees", "Frank")
+        JsonObject arguments = JsonObject.builder()
+                .set("name", "Frank-birthday")
+                .set("date", "2021-04-20")
+                .set("attendees", "Frank")
                 .build();
 
         try (var response = client.rpcMethod("prompts/get")
@@ -158,10 +199,16 @@ class StatelessClientTest {
                 .param("arguments", arguments)
                 .submit()) {
             JsonObject prompt = result(response);
-            assertThat(prompt.getString("description"), is("New event created"));
-            JsonObject message = prompt.getJsonArray("messages").getJsonObject(0);
-            assertThat(message.getString("role"), is("user"));
-            assertThat(message.getJsonObject("content").getString("text"), is("""
+            assertThat(prompt.stringValue("description").orElseThrow(), is("New event created"));
+            JsonObject message = prompt.arrayValue("messages")
+                    .flatMap(messages -> messages.get(0))
+                    .map(JsonValue::asObject)
+                    .orElseThrow();
+            assertThat(message.stringValue("role").orElseThrow(), is("user"));
+            String text = message.objectValue("content")
+                    .flatMap(content -> content.stringValue("text"))
+                    .orElseThrow();
+            assertThat(text, is("""
                     Create a new calendar event with name Frank-birthday, on 2021-04-20 with attendees Frank. Make
                     sure all attendees are free to attend the event.
                     """));
@@ -174,14 +221,16 @@ class StatelessClientTest {
         try (var response = client.rpcMethod("resources/list")
                 .rpcId(6)
                 .submit()) {
-            JsonArray resources = result(response).getJsonArray("resources");
+            JsonArray resources = result(response).arrayValue("resources").orElseThrow();
             assertThat(resources.size(), is(1));
 
-            JsonObject resource = resources.getJsonObject(0);
-            assertThat(resource.getString("name"), is("calendar-events"));
-            assertThat(resource.getString("uri"), startsWith("file://"));
-            assertThat(resource.getString("mimeType"), is(MediaTypes.TEXT_PLAIN_VALUE));
-            assertThat(resource.getString("description"), is("List of calendar events created"));
+            JsonObject resource = resources.get(0)
+                    .map(JsonValue::asObject)
+                    .orElseThrow();
+            assertThat(resource.stringValue("name").orElseThrow(), is("calendar-events"));
+            assertThat(resource.stringValue("uri").orElseThrow(), startsWith("file://"));
+            assertThat(resource.stringValue("mimeType").orElseThrow(), is(MediaTypes.TEXT_PLAIN_VALUE));
+            assertThat(resource.stringValue("description").orElseThrow(), is("List of calendar events created"));
         }
     }
 
@@ -193,10 +242,14 @@ class StatelessClientTest {
                 .rpcId(7)
                 .param("uri", uri)
                 .submit()) {
-            JsonObject content = result(response).getJsonArray("contents").getJsonObject(0);
-            assertThat(content.getString("uri"), is(uri));
-            assertThat(content.getString("mimeType"), is(MediaTypes.TEXT_PLAIN_VALUE));
-            assertThat(content.getString("text"), is("Event: { name: Frank-birthday, date: 2021-04-20, attendees: [Frank] }\n"));
+            JsonObject content = result(response).arrayValue("contents")
+                    .flatMap(contents -> contents.get(0))
+                    .map(JsonValue::asObject)
+                    .orElseThrow();
+            assertThat(content.stringValue("uri").orElseThrow(), is(uri));
+            assertThat(content.stringValue("mimeType").orElseThrow(), is(MediaTypes.TEXT_PLAIN_VALUE));
+            assertThat(content.stringValue("text").orElseThrow(),
+                       is("Event: { name: Frank-birthday, date: 2021-04-20, attendees: [Frank] }\n"));
         }
     }
 
@@ -206,14 +259,17 @@ class StatelessClientTest {
         try (var response = client.rpcMethod("resources/templates/list")
                 .rpcId(8)
                 .submit()) {
-            JsonArray templates = result(response).getJsonArray("resourceTemplates");
+            JsonArray templates = result(response).arrayValue("resourceTemplates").orElseThrow();
             assertThat(templates.size(), is(1));
 
-            JsonObject template = templates.getJsonObject(0);
-            assertThat(template.getString("uriTemplate"), containsString("{name}"));
-            assertThat(template.getString("mimeType"), is(MediaTypes.TEXT_PLAIN_VALUE));
-            assertThat(template.getString("name"), is("calendar-events-resource-template"));
-            assertThat(template.getString("description"), is("Resource Template to find calendar events with name"));
+            JsonObject template = templates.get(0)
+                    .map(JsonValue::asObject)
+                    .orElseThrow();
+            assertThat(template.stringValue("uriTemplate").orElseThrow(), containsString("{name}"));
+            assertThat(template.stringValue("mimeType").orElseThrow(), is(MediaTypes.TEXT_PLAIN_VALUE));
+            assertThat(template.stringValue("name").orElseThrow(), is("calendar-events-resource-template"));
+            assertThat(template.stringValue("description").orElseThrow(),
+                       is("Resource Template to find calendar events with name"));
         }
     }
 
@@ -224,49 +280,62 @@ class StatelessClientTest {
                 .rpcId(9)
                 .param("uri", "file://events/Frank-birthday")
                 .submit()) {
-            JsonObject content = result(response).getJsonArray("contents").getJsonObject(0);
-            assertThat(content.getString("uri"), is("file://events/Frank-birthday"));
-            assertThat(content.getString("mimeType"), is(MediaTypes.TEXT_PLAIN_VALUE));
-            assertThat(content.getString("text"), is("Event: { name: Frank-birthday, date: 2021-04-20, attendees: [Frank] }"));
+            JsonObject content = result(response).arrayValue("contents")
+                    .flatMap(contents -> contents.get(0))
+                    .map(JsonValue::asObject)
+                    .orElseThrow();
+            assertThat(content.stringValue("uri").orElseThrow(), is("file://events/Frank-birthday"));
+            assertThat(content.stringValue("mimeType").orElseThrow(), is(MediaTypes.TEXT_PLAIN_VALUE));
+            assertThat(content.stringValue("text").orElseThrow(),
+                       is("Event: { name: Frank-birthday, date: 2021-04-20, attendees: [Frank] }"));
         }
     }
 
     @Test
     @Order(10)
     void testCalendarEventPromptCompletion() {
-        JsonObject ref = JSON_PROVIDER.createObjectBuilder()
-                .add("type", "ref/prompt")
-                .add("name", "create-event")
+        JsonObject ref = JsonObject.builder()
+                .set("type", "ref/prompt")
+                .set("name", "create-event")
                 .build();
-        assertCompletion(10, ref, "name", 1);
-        assertCompletion(11, ref, "date", 3);
-        assertCompletion(12, ref, "attendees", 3);
+        JsonObject nameCompletion = complete(10, ref, "name").objectValue("completion").orElseThrow();
+        assertThat(nameCompletion.booleanValue("hasMore").orElseThrow(), is(false));
+        assertThat(nameCompletion.intValue("total").orElseThrow(), is(1));
+        assertThat(nameCompletion.arrayValue("values").map(JsonArray::size).orElseThrow(), is(1));
+
+        JsonObject dateCompletion = complete(11, ref, "date").objectValue("completion").orElseThrow();
+        assertThat(dateCompletion.booleanValue("hasMore").orElseThrow(), is(false));
+        assertThat(dateCompletion.intValue("total").orElseThrow(), is(3));
+        assertThat(dateCompletion.arrayValue("values").map(JsonArray::size).orElseThrow(), is(3));
+
+        JsonObject attendeesCompletion = complete(12, ref, "attendees").objectValue("completion").orElseThrow();
+        assertThat(attendeesCompletion.booleanValue("hasMore").orElseThrow(), is(false));
+        assertThat(attendeesCompletion.intValue("total").orElseThrow(), is(3));
+        assertThat(attendeesCompletion.arrayValue("values").map(JsonArray::size).orElseThrow(), is(3));
     }
 
     @Test
     @Order(11)
     void testCalendarEventResourceCompletion() {
-        JsonObject ref = JSON_PROVIDER.createObjectBuilder()
-                .add("type", "ref/resource")
-                .add("uri", Calendar.EVENTS_URI_TEMPLATE)
+        JsonObject ref = JsonObject.builder()
+                .set("type", "ref/resource")
+                .set("uri", Calendar.EVENTS_URI_TEMPLATE)
                 .build();
-        JsonObject completion = complete(13, ref, "name").getJsonObject("completion");
-        assertThat(completion.getBoolean("hasMore"), is(false));
-        assertThat(completion.getInt("total"), is(1));
-        assertThat(completion.getJsonArray("values").getString(0), is("Frank-birthday"));
-    }
-
-    private void assertCompletion(int rpcId, JsonObject ref, String argument, int total) {
-        JsonObject completion = complete(rpcId, ref, argument).getJsonObject("completion");
-        assertThat(completion.getBoolean("hasMore"), is(false));
-        assertThat(completion.getInt("total"), is(total));
-        assertThat(completion.getJsonArray("values").size(), is(total));
+        JsonObject completion = complete(13, ref, "name").objectValue("completion").orElseThrow();
+        assertThat(completion.booleanValue("hasMore").orElseThrow(), is(false));
+        assertThat(completion.intValue("total").orElseThrow(), is(1));
+        String value = completion.arrayValue("values")
+                .flatMap(values -> values.get(0))
+                .map(JsonValue::asString)
+                .map(jsonString -> jsonString.value())
+                .orElseThrow();
+        assertThat(value, is("Frank-birthday"));
     }
 
     private JsonObject complete(int rpcId, JsonObject ref, String argument) {
-        JsonObject completionArgument = JSON_PROVIDER.createObjectBuilder()
-                .add("name", argument)
-                .add("value", "")
+        JsonObject completionArgument = JsonObject.builder()
+                .set("name", argument)
+                .set("value", "")
                 .build();
 
         try (var response = client.rpcMethod("completion/complete")
@@ -282,19 +351,19 @@ class StatelessClientTest {
         try (var response = client.rpcMethod("resources/list")
                 .rpcId(20)
                 .submit()) {
-            return result(response).getJsonArray("resources").getJsonObject(0).getString("uri");
+            return result(response).arrayValue("resources")
+                    .flatMap(resources -> resources.get(0))
+                    .map(JsonValue::asObject)
+                    .flatMap(resource -> resource.stringValue("uri"))
+                    .orElseThrow();
         }
-    }
-
-    private void assertPromptArgument(JsonObject argument, String name, String description) {
-        assertThat(argument.getString("name"), is(name));
-        assertThat(argument.getString("description"), is(description));
-        assertThat(argument.getBoolean("required"), is(true));
     }
 
     private JsonObject result(JsonRpcClientResponse response) {
         assertThat(response.error().isEmpty(), is(true));
         assertThat(response.result().isEmpty(), is(false));
-        return response.result().orElseThrow().asJsonObject();
+        return response.result()
+                .map(JsonRpcResult::asJsonObject)
+                .orElseThrow();
     }
 }

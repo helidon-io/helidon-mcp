@@ -17,9 +17,8 @@ package io.helidon.extensions.mcp.server;
 
 import java.util.Optional;
 
+import io.helidon.json.JsonObject;
 import io.helidon.jsonrpc.core.JsonRpcParams;
-
-import jakarta.json.JsonObject;
 
 final class McpElicitationResponseImpl implements McpElicitationResponse {
     private final McpParameters content;
@@ -28,7 +27,7 @@ final class McpElicitationResponseImpl implements McpElicitationResponse {
     McpElicitationResponseImpl(McpElicitationAction action, JsonObject content) {
         this.action = action;
         this.content = content != null
-                ? new McpParameters(JsonRpcParams.create(content), content)
+                ? new McpParameters(JsonRpcParams.create(content))
                 : null;
     }
 

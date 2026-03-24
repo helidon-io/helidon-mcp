@@ -89,11 +89,11 @@ final class AddCalendarEventTool implements McpTool {
                 .orElseThrow(() -> requiredArgument("date"));
         List<String> attendees = mcpParameters.get("attendees")
                 .asList()
-                .orElseThrow(() -> requiredArgument("attendees"))
-                .stream()
-                .map(McpParameters::asString)
-                .map(OptionalValue::get)
-                .toList();
+                .map(values -> values.stream()
+                        .map(McpParameters::asString)
+                        .map(OptionalValue::get)
+                        .toList())
+                .orElseThrow(() -> requiredArgument("attendees"));
 
         calendar.createNewEvent(name, date, attendees);
 

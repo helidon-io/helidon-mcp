@@ -23,9 +23,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+import io.helidon.json.JsonString;
 import io.helidon.jsonrpc.core.JsonRpcParams;
-
-import jakarta.json.JsonString;
 
 /**
  * Support for MCP pagination feature.
@@ -105,7 +104,7 @@ class McpPagination<T> {
     McpPage<T> page(JsonRpcParams params) {
         return params.find("cursor")
                 .map(JsonString.class::cast)
-                .map(JsonString::getString)
+                .map(JsonString::value)
                 .map(this::page)
                 .orElse(this.firstPage());
     }

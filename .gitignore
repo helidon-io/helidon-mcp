@@ -70,6 +70,9 @@ node/
 # Helidon CLI
 .helidon
 
+# Codex workspace
+.ai/
+
 # Helidon examples repository
 helidon-examples
 
