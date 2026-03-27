@@ -326,6 +326,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             return;
         }
         session.get().state(McpSession.State.INITIALIZED);
+        res.status(Status.ACCEPTED_202);
     }
 
     private void notificationCancelRpc(JsonRpcRequest req, JsonRpcResponse res) {
@@ -350,6 +351,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         session.findFeatures(requestId.get())
                 .map(McpFeatures::cancellation)
                 .ifPresent(cancellation -> cancellation.cancel(cancelReason, requestId.get()));
+        res.status(Status.ACCEPTED_202);
     }
 
     private void notificationRootsListRpc(JsonRpcRequest req, JsonRpcResponse res) {
@@ -361,6 +363,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         session.get()
                 .context()
                 .register(McpRoots.McpRootClassifier.class, true);
+        res.status(Status.ACCEPTED_202);
     }
 
     private void pingRpc(JsonRpcRequest req, JsonRpcResponse res) {
