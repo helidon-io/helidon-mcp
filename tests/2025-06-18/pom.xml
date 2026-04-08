@@ -52,8 +52,18 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>io.helidon.webserver.testing.junit5</groupId>
+            <artifactId>helidon-webserver-testing-junit5-jsonrpc</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>io.helidon.fault-tolerance</groupId>
             <artifactId>helidon-fault-tolerance</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.helidon.webclient</groupId>
+            <artifactId>helidon-webclient-jsonrpc</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

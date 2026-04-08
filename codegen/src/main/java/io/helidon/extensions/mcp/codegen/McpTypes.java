@@ -38,6 +38,7 @@ final class McpTypes {
     static final TypeName MCP_PROMPT = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Prompt");
     static final TypeName MCP_VERSION = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Version");
     static final TypeName MCP_RESOURCE = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Resource");
+    static final TypeName MCP_STATELESS = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Stateless");
     static final TypeName MCP_COMPLETION = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Completion");
     static final TypeName MCP_DESCRIPTION = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Description");
     static final TypeName MCP_TOOLS_PAGE_SIZE = TypeName.create("io.helidon.extensions.mcp.server.Mcp.ToolsPageSize");

@@ -62,6 +62,16 @@ interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
     String version();
 
     /**
+     * Enable stateless mode. MCP client are not required to go
+     * through the initialization process and no sessions are created.
+     *
+     * @return stateless mode
+     */
+    @Option.Configured
+    @Option.DefaultBoolean(false)
+    boolean stateless();
+
+    /**
      * Server tools page size configuration.
      *
      * @return page size

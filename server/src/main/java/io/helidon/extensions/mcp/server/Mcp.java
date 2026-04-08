@@ -115,6 +115,20 @@ public final class Mcp {
     }
 
     /**
+     * Annotation to set the {@link io.helidon.extensions.mcp.server.Mcp.Server} stateless mode.
+     */
+    @Target(TYPE)
+    @Retention(RUNTIME)
+    public @interface Stateless {
+        /**
+         * Activate the stateless mode.
+         *
+         * @return whether the server is stateless
+         */
+        boolean value() default true;
+    }
+
+    /**
      * Annotation to define the {@link io.helidon.extensions.mcp.server.Mcp.Server} path.
      */
     @Target(TYPE)

@@ -29,12 +29,14 @@ final class McpStreamableHttpTransportManager implements McpTransportManager {
     static final HeaderName SESSION_ID_HEADER = HeaderNames.create("Mcp-Session-Id");
     private static final HeaderName MCP_PROTOCOL_VERSION = HeaderNames.create("Mcp-Protocol-Version");
     private static final System.Logger LOGGER = System.getLogger(McpStreamableHttpTransportManager.class.getName());
-    private final McpSessions sessions;
     private final String sessionId;
+    private final boolean stateless;
+    private final McpSessions sessions;
 
-    McpStreamableHttpTransportManager(McpSessions sessions, String sessionId) {
+    McpStreamableHttpTransportManager(McpServerConfig config, McpSessions sessions, String sessionId) {
         this.sessions = sessions;
         this.sessionId = sessionId;
+        this.stateless = config.stateless();
     }
 
     @Override
@@ -56,6 +58,9 @@ final class McpStreamableHttpTransportManager implements McpTransportManager {
     public void onRequest(JsonRpcRequest request, JsonRpcResponse response) {
         if (LOGGER.isLoggable(System.Logger.Level.DEBUG)) {
             LOGGER.log(System.Logger.Level.DEBUG, "Streamable HTTP Request:\n" + prettyPrint(request.asJsonObject()));
+        }
+        if (stateless) {
+            return;
         }
         McpSession session = sessions.get(sessionId)
                 .orElseThrow(() -> new McpInternalException("No session with id " + sessionId));

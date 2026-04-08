@@ -48,6 +48,7 @@ class ConfigurationTest {
         assertThat(config.rootListTimeout(), is(Duration.ofSeconds(1)));
         assertThat(config.instructions().orElse(""), is("instructions"));
         assertThat(config.subscriptionTimeout(), is(Duration.ofSeconds(1)));
+        assertThat(config.stateless(), is(true));
     }
 
     @Test
@@ -65,6 +66,7 @@ class ConfigurationTest {
         assertThat(config.resourceTemplatesPageSize(), is(DEFAULT_PAGE_SIZE));
         assertThat(config.rootListTimeout(), is(Duration.ofSeconds(5)));
         assertThat(config.subscriptionTimeout(), is(Duration.ofMinutes(2)));
+        assertThat(config.stateless(), is(false));
     }
 
     @ParameterizedTest

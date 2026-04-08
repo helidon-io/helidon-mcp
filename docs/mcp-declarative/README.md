@@ -61,6 +61,7 @@ class McpServer {
 - **`@Mcp.Server`**: Defines the class as an MCP server and can override the default server name.
 - **`@Mcp.Path`**: Sets the HTTP endpoint path for the server.
 - **`@Mcp.Version`**: Establishes the server version.
+- **`@Mcp.Stateless`**: Enables or disables stateless mode for this declarative server.
 
 ```java
 @Mcp.Path("/mcp")
@@ -69,6 +70,27 @@ class McpServer {
 class McpServer {
 }
 ```
+
+#### Stateless mode
+
+Stateless behavior is configured with `@Mcp.Stateless` annotation.
+
+```java
+@Mcp.Server("MyServer")
+@Mcp.Path("/mcp")
+@Mcp.Stateless
+class StatelessMcpServer {
+}
+```
+
+To explicitly keep stateful behavior, do not use this annotation.
+
+With stateless mode enabled, `initialize` is optional and clients can invoke methods such as `tools/list` without first creating
+or reusing a server session. Because request-to-request session state is not kept:
+
+- Data in `sessionContext()` is not preserved across independent requests.
+- Client capabilities are normally negotiated during initialization; if a client skips this phase, capability-dependent
+  features will be unavailable.
 
 ### Tool
 

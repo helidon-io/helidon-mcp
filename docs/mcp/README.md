@@ -49,6 +49,36 @@ class McpServer {
 }
 ```
 
+#### Stateless mode
+
+By default, MCP servers run in stateful mode (`stateless = false`). In this mode, clients initialize first and then continue
+using the established server session.
+
+When stateless mode is enabled, initialization is optional and clients can call MCP methods directly (for example, `tools/list`).
+The server does not keep request-to-request MCP session state.
+
+This has two important consequences:
+
+- Data stored in the session's context does not persist across independent requests.
+- Client capabilities are normally negotiated during initialization; if a client skips this phase, capability-dependent
+  features will be unavailable.
+
+Enable stateless mode with configuration:
+
+```yaml
+mcp:
+  server:
+    stateless: true
+```
+
+Or with the server builder:
+
+```java
+McpServerFeature.builder()
+        .stateless(true)
+        .build();
+```
+
 ### Tool
 
 `Tools` enable models to interact with external systems: for example, by querying databases, calling APIs, or performing 
@@ -1221,6 +1251,7 @@ mcp:
     name: "MyServer"
     version: "0.0.1"
     path: "/mcp"
+    stateless: true
 ```
 
 Register the configuration in code:

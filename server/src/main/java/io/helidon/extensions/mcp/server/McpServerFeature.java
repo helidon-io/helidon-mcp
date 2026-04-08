@@ -89,6 +89,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     private static final System.Logger LOGGER = System.getLogger(McpServerFeature.class.getName());
 
     private final String endpoint;
+    private final boolean stateless;
     private final McpServerConfig config;
     private final JsonRpcHandlers jsonRpcHandlers;
     private final McpPagination<McpTool> tools;
@@ -108,6 +109,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         JsonRpcHandlers.Builder builder = JsonRpcHandlers.builder();
 
         this.config = config;
+        this.stateless = config.stateless();
         this.endpoint = removeTrailingSlash(config.path());
         for (McpResource resource : config.resources()) {
             if (isTemplate(resource)) {
@@ -288,7 +290,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         if (foundSession.isEmpty()) {
             // create a new session
             String sessionId = UUID.randomUUID().toString();
-            McpTransportManager transportManager = new McpStreamableHttpTransportManager(sessions, sessionId);
+            McpTransportManager transportManager = new McpStreamableHttpTransportManager(config, sessions, sessionId);
             session = new McpSession(sessions, transportManager, config, sessionId);
             sessions.put(sessionId, session);
             session.onConnect(res);
@@ -794,6 +796,9 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         var session = findSession(request);
         if (session.isEmpty()) {
             response.header(HeaderValues.CONTENT_TYPE_JSON);
+            if (stateless) {
+                return Optional.of(JsonRpcError.create(errorCode, throwable.getMessage()));
+            }
             return Optional.of(JsonRpcError.create(INTERNAL_ERROR, "Session not found"));
         }
         response.error(errorCode, throwable.getMessage());
@@ -847,8 +852,16 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     }
 
     private Optional<McpSession> findSession(JsonRpcRequest req, JsonRpcResponse res) {
-        var session = findSession(req);
+        Optional<McpSession> session = findSession(req);
         if (session.isEmpty()) {
+            if (stateless) {
+                String sessionId = UUID.randomUUID().toString();
+                McpTransportManager transportManager = new McpStreamableHttpTransportManager(config, sessions, sessionId);
+                McpSession statelessSession = new McpSession(sessions, transportManager, config, sessionId);
+                statelessSession.protocolVersion(McpProtocolVersion.lastest());
+                statelessSession.onConnect(res);
+                return Optional.of(statelessSession);
+            }
             res.status(Status.NOT_FOUND_404)
                     .error(INVALID_REQUEST, "Session not found");
         }
