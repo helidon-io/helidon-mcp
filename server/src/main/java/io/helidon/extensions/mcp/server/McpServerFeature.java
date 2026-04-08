@@ -859,7 +859,6 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 McpTransportManager transportManager = new McpStreamableHttpTransportManager(config, sessions, sessionId);
                 McpSession statelessSession = new McpSession(sessions, transportManager, config, sessionId);
                 statelessSession.protocolVersion(McpProtocolVersion.lastest());
-                statelessSession.onConnect(res);
                 return Optional.of(statelessSession);
             }
             res.status(Status.NOT_FOUND_404)

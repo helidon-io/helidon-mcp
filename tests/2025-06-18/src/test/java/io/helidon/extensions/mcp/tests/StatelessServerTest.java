@@ -19,6 +19,9 @@ import java.time.Duration;
 import java.util.Map;
 
 import io.helidon.extensions.mcp.tests.common.StatelessServer;
+import io.helidon.http.HeaderName;
+import io.helidon.http.HeaderNames;
+import io.helidon.http.Status;
 import io.helidon.webclient.jsonrpc.JsonRpcClient;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
@@ -50,6 +53,7 @@ class StatelessServerTest {
     private static final String RESOURCE_URI = "https://foo";
     private static final String RESOURCE_NAME = "stateless-resource";
     private static final String COMPLETION_NAME = "stateless-completion";
+    private static final HeaderName MCP_PROTOCOL_VERSION = HeaderNames.create("Mcp-Protocol-Version");
     private final McpClient statefulClient;
     private final JsonRpcClient statelessClient;
 
@@ -214,6 +218,33 @@ class StatelessServerTest {
                 .submit()) {
             assertThat(response.error().isEmpty(), is(true));
             assertThat(response.result().isEmpty(), is(false));
+        }
+    }
+
+    @Test
+    void statelessInitializedNotificationWithoutSession() {
+        try (var response = statelessClient.rpcMethod("notifications/initialized")
+                .header(MCP_PROTOCOL_VERSION, "2025-12-34")
+                .submit()) {
+            assertThat(response.status(), is(Status.ACCEPTED_202));
+        }
+    }
+
+    @Test
+    void statelessCancelledNotificationWithoutSession() {
+        try (var response = statelessClient.rpcMethod("notifications/cancelled")
+                .param("requestId", 42)
+                .param("reason", "test")
+                .submit()) {
+            assertThat(response.status(), is(Status.ACCEPTED_202));
+        }
+    }
+
+    @Test
+    void statelessRootsChangedNotificationWithoutSession() {
+        try (var response = statelessClient.rpcMethod("notifications/roots/list_changed")
+                .submit()) {
+            assertThat(response.status(), is(Status.ACCEPTED_202));
         }
     }
 }
