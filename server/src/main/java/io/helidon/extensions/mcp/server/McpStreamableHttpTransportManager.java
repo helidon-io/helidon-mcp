@@ -15,6 +15,8 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.util.Optional;
+
 import io.helidon.http.HeaderName;
 import io.helidon.http.HeaderNames;
 import io.helidon.http.Status;
@@ -29,12 +31,14 @@ final class McpStreamableHttpTransportManager implements McpTransportManager {
     static final HeaderName SESSION_ID_HEADER = HeaderNames.create("Mcp-Session-Id");
     private static final HeaderName MCP_PROTOCOL_VERSION = HeaderNames.create("Mcp-Protocol-Version");
     private static final System.Logger LOGGER = System.getLogger(McpStreamableHttpTransportManager.class.getName());
-    private final McpSessions sessions;
     private final String sessionId;
+    private final boolean stateless;
+    private final McpSessions sessions;
 
-    McpStreamableHttpTransportManager(McpSessions sessions, String sessionId) {
+    McpStreamableHttpTransportManager(McpServerConfig config, McpSessions sessions, String sessionId) {
         this.sessions = sessions;
         this.sessionId = sessionId;
+        this.stateless = config.stateless();
     }
 
     @Override
@@ -57,21 +61,27 @@ final class McpStreamableHttpTransportManager implements McpTransportManager {
         if (LOGGER.isLoggable(System.Logger.Level.DEBUG)) {
             LOGGER.log(System.Logger.Level.DEBUG, "Streamable HTTP Request:\n" + prettyPrint(request.asJsonObject()));
         }
-        McpSession session = sessions.get(sessionId)
-                .orElseThrow(() -> new McpInternalException("No session with id " + sessionId));
-        if (isNotValidNegotiatedVersion(request, session)) {
-            response.status(Status.BAD_REQUEST_400)
-                    .error(INTERNAL_ERROR, "Wrong MCP protocol version");
-        }
+        validate(request, response);
     }
 
     @Override
     public void onNotification(JsonRpcRequest request, JsonRpcResponse response) {
-        McpSession session = sessions.get(sessionId)
-                .orElseThrow(() -> new McpInternalException("No session with id " + sessionId));
-        if (isNotValidNegotiatedVersion(request, session)) {
-            response.status(Status.BAD_REQUEST_400);
-            throw new McpInternalException("Wrong MCP protocol version");
+        if (LOGGER.isLoggable(System.Logger.Level.DEBUG)) {
+            LOGGER.log(System.Logger.Level.DEBUG, "Streamable HTTP Notification:\n" + prettyPrint(request.asJsonObject()));
+        }
+        validate(request, response);
+    }
+
+    private void validate(JsonRpcRequest request, JsonRpcResponse response) {
+        Optional<McpSession> session = sessions.get(sessionId);
+        if (session.isEmpty() && stateless) {
+            //Skip the negotiation version if no session found and stateless mode
+            return;
+        }
+        McpSession foundSession = session.orElseThrow(() -> new McpInternalException("No session with id " + sessionId));
+        if (isNotValidNegotiatedVersion(request, foundSession)) {
+            response.status(Status.BAD_REQUEST_400)
+                    .error(INTERNAL_ERROR, "Wrong MCP protocol version");
         }
     }
 

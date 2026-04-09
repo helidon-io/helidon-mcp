@@ -43,6 +43,7 @@ import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCES_PAGE_SIZE
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_TEMPLATES_PAGE_SIZE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SERVER;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SERVER_CONFIG;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_STATELESS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOLS_PAGE_SIZE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_VERSION;
 import static io.helidon.extensions.mcp.codegen.McpTypes.SERVICES;
@@ -152,6 +153,12 @@ final class McpCodegen implements CodegenExtension {
                 .flatMap(Annotation::value)
                 .ifPresent(path -> method.addContent("builder.path(")
                         .addContentLiteral(path)
+                        .addContentLine(");"));
+
+        type.findAnnotation(MCP_STATELESS)
+                .flatMap(Annotation::booleanValue)
+                .ifPresent(stateless -> method.addContent("builder.stateless(")
+                        .addContent(Boolean.toString(stateless))
                         .addContentLine(");"));
 
         addPagination(type, method, MCP_TOOLS_PAGE_SIZE, "toolsPageSize");
