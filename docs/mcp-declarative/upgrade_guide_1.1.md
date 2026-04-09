@@ -1,4 +1,4 @@
-# Migration Guide for Version 1.1.0
+# Upgrade Guide for Version 1.1.0
 
 Helidon MCP `1.1.0` provides support for MCP specification `2025-06-18`. This document
 summarizes the key changes and explains how to migrate existing code to `1.1.0`.
@@ -29,7 +29,7 @@ McpToolResult tool() {
 ```
 
 For details about the `McpToolResult` class, see [README.md](README.md#tool-result) and
-[Migration Guide](../mcp/migration_guide_1.1.md#migrate-from-mcptoolcontents).
+[Upgrade Guide](../mcp/upgrade_guide_1.1.md#migrate-from-mcptoolcontents).
 
 ## Prompts
 
@@ -52,7 +52,7 @@ McpPromptResult prompt() {
 ```
 
 For details about the `McpPromptResult` class, see [README.md](README.md#prompt-content-types) and
-[Migration Guide](../mcp/migration_guide_1.1.md#migrate-from-mcppromptcontents).
+[Upgrade Guide](../mcp/upgrade_guide_1.1.md#migrate-from-mcppromptcontents).
 
 ## Resources
 
@@ -75,7 +75,7 @@ McpResourceResult resource() {
 ```
 
 For details about the `McpResourceResult` class, see [README.md](README.md#resource-content-types) and
-[Migration Guide](../mcp/migration_guide_1.1.md#migrate-from-mcpresourcecontents).
+[Upgrade Guide](../mcp/upgrade_guide_1.1.md#migrate-from-mcpresourcecontents).
 
 ## Completions
 
@@ -98,4 +98,4 @@ McpCompletionResult completion() {
 ```
 
 For details about the `McpCompletionResult` class, see [README.md](README.md#completion-content-type) and
-[Migration Guide](../mcp/migration_guide_1.1.md#migrate-mcpcompletion-interface).
+[Upgrade Guide](../mcp/upgrade_guide_1.1.md#migrate-mcpcompletion-interface).
