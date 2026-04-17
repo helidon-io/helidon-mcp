@@ -27,3 +27,5 @@ mcp:
     subscription-timeout: "PT1S"
     root-list-timeout: "PT1S"
     instructions: "instructions"
+    max-requests-per-session: 1
+    max-session-count: 1

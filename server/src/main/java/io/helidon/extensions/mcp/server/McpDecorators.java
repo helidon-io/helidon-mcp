@@ -132,6 +132,15 @@ final class McpDecorators {
         }
     }
 
+    static class PositiveValueDecorator implements Prototype.OptionDecorator<McpServerConfig.BuilderBase<?, ?>, Integer> {
+        @Override
+        public void decorate(McpServerConfig.BuilderBase<?, ?> builder, Integer value) {
+            if (value < 0) {
+                throw new IllegalArgumentException("value must be greater than zero");
+            }
+        }
+    }
+
     static boolean isPositiveAndLessThanOne(Double value) {
         return 0 <= value && value <= 1.0;
     }
