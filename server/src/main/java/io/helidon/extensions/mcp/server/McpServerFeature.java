@@ -264,7 +264,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
 
     private void sse(ServerRequest request, ServerResponse response) {
         // check if using streamable http
-        if (response.headers().contains(SESSION_ID_HEADER)) {
+        if (request.headers().contains(SESSION_ID_HEADER)) {
             Optional<McpSession> session = findSession(request);
             if (session.isEmpty()) {
                 response.status(Status.NOT_FOUND_404).send();
@@ -341,9 +341,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         Optional<JsonValue> reason = req.params().find("reason");
         Optional<JsonValue> requestId = req.params().find("requestId");
         // Ignore malformed request
-        if (requestId.isEmpty()
-                || reason.isEmpty()
-                || !JsonValue.ValueType.STRING.equals(reason.get().getValueType())) {
+        if (requestId.isEmpty()) {
             if (LOGGER.isLoggable(Level.TRACE)) {
                 LOGGER.log(Level.TRACE, "Malformed cancellation request: %s".formatted(req.asJsonObject()));
             }
@@ -844,14 +842,14 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     }
 
     private Optional<McpSession> findSessionOnRequest(JsonValue id, JsonRpcRequest request, JsonRpcResponse response) {
-        return findSession(request, response).map(session -> session.onRequest(id, request, response));
+        return findSession(request, response, Status.NOT_FOUND_404).map(session -> session.onRequest(id, request, response));
     }
 
     private Optional<McpSession> findSessionOnNotification(JsonRpcRequest request, JsonRpcResponse response) {
-        return findSession(request, response).map(session -> session.onNotification(request, response));
+        return findSession(request, response, Status.BAD_REQUEST_400).map(session -> session.onNotification(request, response));
     }
 
-    private Optional<McpSession> findSession(JsonRpcRequest req, JsonRpcResponse res) {
+    private Optional<McpSession> findSession(JsonRpcRequest req, JsonRpcResponse res, Status status) {
         Optional<McpSession> session = findSession(req);
         if (session.isEmpty()) {
             if (stateless) {
@@ -861,7 +859,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 statelessSession.protocolVersion(McpProtocolVersion.lastest());
                 return Optional.of(statelessSession);
             }
-            res.status(Status.NOT_FOUND_404)
+            res.status(status)
                     .error(INVALID_REQUEST, "Session not found");
         }
         return session;
