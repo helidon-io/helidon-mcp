@@ -19,6 +19,7 @@ the [upgrade guide](docs/mcp/upgrade_guide_1.1.md), which documents each API cha
 
 ### CHANGES
 
+- Add `@Mcp.Required` annotation for tool parameters [153](https://github.com/helidon-io/helidon-mcp/issues/153)
 - Add support for multi line block in description [144](https://github.com/helidon-io/helidon-mcp/pull/144)
 - Upgrade Helidon version to 4.4.0 [161](https://github.com/helidon-io/helidon-mcp/pull/161)
 - Update documentation to reflect API change [159](https://github.com/helidon-io/helidon-mcp/pull/159)
