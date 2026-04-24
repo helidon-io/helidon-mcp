@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,10 @@ class McpJsonSchemaCodegen {
     }
 
     static void addSchemaMethodBody(Method.Builder method, List<TypedElementInfo> fields) {
+        addSchemaMethodBody(method, fields, List.of());
+    }
+
+    static void addSchemaMethodBody(Method.Builder method, List<TypedElementInfo> fields, List<String> required) {
         method.addContentLine("var builder = new StringBuilder();");
         method.addContentLine("builder.append(\"{\");");
         method.addContentLine("builder.append(\"\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\");");
@@ -53,7 +57,21 @@ class McpJsonSchemaCodegen {
                 method.addContentLine("builder.append(\", \");");
             }
         }
-        method.addContentLine("builder.append(\"}}\");");
+        if (required.isEmpty()) {
+            method.addContentLine("builder.append(\"}}\");");
+        } else {
+            method.addContentLine("builder.append(\"}, \\\"required\\\": [\");");
+            int m = required.size();
+            for (int i = 0; i < m; i++) {
+                method.addContent("builder.append(\"\\\"")
+                        .addContent(required.get(i))
+                        .addContentLine("\\\"\");");
+                if (i < m - 1) {
+                    method.addContentLine("builder.append(\", \");");
+                }
+            }
+            method.addContentLine("builder.append(\"]}\");");
+        }
         method.addContentLine("return builder.toString();");
     }
 

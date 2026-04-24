@@ -173,6 +173,16 @@ class McpToolsServer {
         return McpToolResult.create(TOOL_CONTENT);
     }
 
+    @Mcp.Tool(TOOL_DESCRIPTION)
+    String tool21(@Mcp.Required String mandatory, String optional) {
+        return "mandatory=" + mandatory + "|optional=" + optional;
+    }
+
+    @Mcp.Tool(TOOL_DESCRIPTION)
+    String tool22(@Mcp.Required String a, @Mcp.Required Integer b) {
+        return "a=" + a + "|b=" + b;
+    }
+
     @JsonSchema.Schema
     public static class Foo {
         public String foo;
