@@ -115,6 +115,7 @@ class Server {
 
 - **`@Mcp.Name`**: Overrides tool method name.
 - **`@JsonSchema.Schema`**: Explicitly defines POJO input structures.
+- **`@Mcp.Required`**: Marks a tool parameter as required.
 
 ```java
 @Mcp.Server
@@ -134,6 +135,22 @@ class Server {
     }
 }
 ```
+
+#### Required parameters
+
+Annotate a tool parameter with `@Mcp.Required` to mark it as required. The parameter name is added to the
+generated `inputSchema.required` JSON array, and any `tools/call` invocation that omits the argument is
+rejected with a tool-execution error (`isError: true`) whose text content names the missing parameter(s).
+
+```java
+@Mcp.Tool("Greet a user by name")
+McpToolResult greet(@Mcp.Required String name) {
+    return McpToolResult.create("Hello, " + name);
+}
+```
+
+`@Mcp.Required` on a framework-injected parameter (such as `McpFeatures` or `McpRequest`) is silently
+ignored and produces a codegen warning.
 
 #### Structured content and output schema
 
