@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.1]
+
+This release of Helidon MCP contains bugfixes, dependency upgrades and is recommended for all users.
+
+### NOTABLE CHANGES
+
+- Helidon MCP server can be used with more MCP client including Codex
+- Stateless server support 
+
+### CHANGES
+
+- Add support for a stateless mode [172](https://github.com/helidon-io/helidon-mcp/pull/172)
+- Set 202 status on notifications response [167](https://github.com/helidon-io/helidon-mcp/pull/167)
+- Return proper JSON-RPC error for invalid session ID [152](https://github.com/helidon-io/helidon-mcp/pull/152)
+
 ## [1.1.0]
 
 This release of Helidon MCP adds support for the `2025-06-18` MCP specification.
@@ -152,6 +167,7 @@ Requirements:
 
 Initial release.
 
+[1.1.1]: https://github.com/helidon-io/helidon-mcp/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/helidon-io/helidon-mcp/compare/1.0.3...1.1.0
 [1.0.3]: https://github.com/helidon-io/helidon-mcp/compare/1.0.2...1.0.3
 [1.0.2]: https://github.com/helidon-io/helidon-mcp/compare/1.0.1...1.0.2
