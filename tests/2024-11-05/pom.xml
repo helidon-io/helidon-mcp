@@ -30,6 +30,12 @@
     <artifactId>helidon4-extensions-mcp-2024-11-05-tests</artifactId>
     <name>Helidon 4 Extensions MCP 2024-11-05 Tests</name>
 
+    <properties>
+        <version.lib.langchain4j.mcp>1.10.0-beta18</version.lib.langchain4j.mcp>
+        <version.lib.langchain4j>1.10.0</version.lib.langchain4j>
+        <version.lib.mcp-sdk>0.17.0</version.lib.mcp-sdk>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>io.helidon.extensions.mcp</groupId>
