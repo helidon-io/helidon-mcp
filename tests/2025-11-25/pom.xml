@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2025, 2026 Oracle and/or its affiliates.
+    Copyright (c) 2026 Oracle and/or its affiliates.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -27,14 +27,8 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>helidon4-extensions-mcp-2025-06-18-tests</artifactId>
-    <name>Helidon 4 Extensions MCP 2025-06-18 Tests</name>
-
-    <properties>
-        <version.lib.langchain4j.mcp>1.10.0-beta18</version.lib.langchain4j.mcp>
-        <version.lib.langchain4j>1.10.0</version.lib.langchain4j>
-        <version.lib.mcp-sdk>0.17.0</version.lib.mcp-sdk>
-    </properties>
+    <artifactId>helidon4-extensions-mcp-2025-11-25-tests</artifactId>
+    <name>Helidon 4 Extensions MCP 2025-11-25 Tests</name>
 
     <dependencies>
         <dependency>
@@ -73,8 +67,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.helidon.json</groupId>
-            <artifactId>helidon-json</artifactId>
+            <groupId>org.eclipse</groupId>
+            <artifactId>yasson</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

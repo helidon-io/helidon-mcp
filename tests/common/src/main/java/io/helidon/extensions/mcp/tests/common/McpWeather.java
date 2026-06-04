@@ -34,7 +34,7 @@ public class McpWeather {
     /**
      * Protocol versions.
      */
-    public static final String[] PROTOCOL_VERSION = {"2024-11-05", "2025-03-26", "2025-06-18"};
+    public static final String[] PROTOCOL_VERSION = {"2024-11-05", "2025-03-26", "2025-06-18", "2025-11-25"};
     /**
      * Server version.
      */

@@ -20,6 +20,10 @@ package io.helidon.extensions.mcp.server;
  */
 enum McpProtocolVersion {
     /**
+     * 2025-11-25 protocol version.
+     */
+    VERSION_2025_11_25,
+    /**
      * 2025-06-18 protocol version.
      */
     VERSION_2025_06_18,
@@ -67,6 +71,6 @@ enum McpProtocolVersion {
      * @return the lastest supported protocol version
      */
     static McpProtocolVersion lastest() {
-        return VERSION_2025_06_18;
+        return VERSION_2025_11_25;
     }
 }
