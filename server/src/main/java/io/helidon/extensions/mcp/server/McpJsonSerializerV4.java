@@ -17,7 +17,7 @@ package io.helidon.extensions.mcp.server;
 
 import java.util.Set;
 
-import jakarta.json.JsonObjectBuilder;
+import io.helidon.json.JsonObject;
 
 /**
  * JSON serializer for {@code 2025-11-25} MCP specification.
@@ -25,8 +25,8 @@ import jakarta.json.JsonObjectBuilder;
 class McpJsonSerializerV4 extends McpJsonSerializerV3 {
 
     @Override
-    public JsonObjectBuilder createJsonInitializeResponse(Set<McpCapability> capabilities, McpServerConfig config) {
+    public JsonObject.Builder createJsonInitializeResponse(Set<McpCapability> capabilities, McpServerConfig config) {
         return super.createJsonInitializeResponse(capabilities, config)
-                .add("protocolVersion", McpProtocolVersion.VERSION_2025_11_25.text());
+                .set("protocolVersion", McpProtocolVersion.VERSION_2025_11_25.text());
     }
 }

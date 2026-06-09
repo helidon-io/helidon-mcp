@@ -20,6 +20,7 @@ import java.util.Map;
 import io.helidon.extensions.mcp.tests.common.ProtocolVersion;
 import io.helidon.http.HeaderName;
 import io.helidon.http.HeaderNames;
+import io.helidon.http.HeaderValues;
 import io.helidon.http.Status;
 import io.helidon.webclient.http1.Http1Client;
 import io.helidon.webserver.WebServer;
@@ -29,28 +30,27 @@ import io.helidon.webserver.testing.junit5.SetUpRoute;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.mcp.client.DefaultMcpClient;
+import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.transport.McpTransport;
 import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
 import io.modelcontextprotocol.spec.McpSchema;
-import jakarta.json.JsonObject;
-import jakarta.json.spi.JsonProvider;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
 @ServerTest
-class Mcp20251125NegotiatedVersionTest {
-    private static final JsonProvider JSON_PROVIDER = JsonProvider.provider();
+class McpNegotiatedVersionTest {
     private static final HeaderName SESSION_ID_HEADER = HeaderNames.create("Mcp-Session-Id");
     private static final HeaderName MCP_PROTOCOL_VERSION = HeaderNames.create("Mcp-Protocol-Version");
 
-    private final Http1Client client;
     private final int port;
+    private final Http1Client client;
 
-    Mcp20251125NegotiatedVersionTest(WebServer server) {
+    McpNegotiatedVersionTest(WebServer server) {
         this.port = server.port();
         this.client = Http1Client.builder()
                 .baseUri("http://localhost:" + port)
@@ -63,42 +63,46 @@ class Mcp20251125NegotiatedVersionTest {
     }
 
     @Test
-    void testMcp20251125Version() {
-        JsonObject initRequest = JSON_PROVIDER.createObjectBuilder()
-                .add("jsonrpc", "2.0")
-                .add("id", 1)
-                .add("method", "initialize")
-                .add("params", JSON_PROVIDER.createObjectBuilder()
-                        .add("protocolVersion", "2025-11-25")
-                        .add("capabilities", JSON_PROVIDER.createObjectBuilder()
-                                .add("roots", JSON_PROVIDER.createObjectBuilder()
-                                        .add("listChanged", true)))
-                        .add("clientInfo", JSON_PROVIDER.createObjectBuilder()
-                                .add("name", "Example Client Display Name")
-                                .add("version", "1.0.0")))
-                .build();
+    void testMcpVersion() {
+        String initRequest = """
+                {
+                  "jsonrpc": "2.0",
+                  "id": 1,
+                  "method": "initialize",
+                  "params": {
+                    "protocolVersion": "2025-11-25",
+                    "capabilities": {"roots": {"listChanged": true}},
+                    "clientInfo": {"name": "Example Client Display Name", "version": "1.0.0"}
+                  }
+                }
+                """;
         String sessionId;
-        try (var response = client.post().submit(initRequest)) {
+        try (var response = client.post()
+                .header(HeaderValues.CONTENT_TYPE_JSON)
+                .submit(initRequest)) {
             sessionId = response.headers().get(SESSION_ID_HEADER).get();
-            JsonObject result = response.entity().as(JsonObject.class).getJsonObject("result");
-            assertThat(result.getString("protocolVersion"), is("2025-11-25"));
+            String result = response.entity().as(String.class);
+            assertThat(result, containsString("\"protocolVersion\":\"2025-11-25\""));
         }
 
-        JsonObject listTools = JSON_PROVIDER.createObjectBuilder()
-                .add("jsonrpc", "2.0")
-                .add("id", 2)
-                .add("method", "tools/list")
-                .build();
+        String listTools = """
+                {
+                  "jsonrpc": "2.0",
+                  "id": 2,
+                  "method": "tools/list"
+                }
+                """;
         try (var response = client.post()
                 .header(SESSION_ID_HEADER, sessionId)
                 .header(MCP_PROTOCOL_VERSION, "2025-11-25")
+                .header(HeaderValues.CONTENT_TYPE_JSON)
                 .submit(listTools)) {
             assertThat(response.status(), is(Status.OK_200));
         }
     }
 
     @Test
-    void testMcpSdk20251125Version() {
+    void testMcpSdkVersion() {
         try (McpSyncClient mcpClient = io.modelcontextprotocol.client.McpClient
                 .sync(HttpClientStreamableHttpTransport.builder("http://localhost:" + port)
                               .endpoint("/")
@@ -115,12 +119,12 @@ class Mcp20251125NegotiatedVersionTest {
     }
 
     @Test
-    void testLangchain4j20251125Version() throws Exception {
+    void testLangchain4jVersion() throws Exception {
         McpTransport transport = new StreamableHttpMcpTransport.Builder()
                 .url("http://localhost:" + port)
                 .build();
 
-        try (dev.langchain4j.mcp.client.McpClient mcpClient = new DefaultMcpClient.Builder()
+        try (McpClient mcpClient = new DefaultMcpClient.Builder()
                 .autoHealthCheck(false)
                 .transport(transport)
                 .build()) {
