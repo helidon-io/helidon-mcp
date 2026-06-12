@@ -222,6 +222,10 @@ public final class Mcp {
          * The string must be compliant with
          * <a href="https://json-schema.org/draft/2020-12">JSON Schema Version 2020-12</a>.
          * If the output schema is defined, the tool must set {@link McpToolResult.Builder#structuredContent(Object)}.
+         * <p>
+         * Structured content for tool results, including output schemas, was introduced by the
+         * <a href="https://modelcontextprotocol.io/specification/2025-06-18/server/tools">MCP 2025-06-18
+         * specification</a>.
          *
          * @return the tool output schema
          */
@@ -237,6 +241,10 @@ public final class Mcp {
          * The string must be compliant with
          * <a href="https://json-schema.org/draft/2020-12">JSON Schema Version 2020-12</a>.
          * If the output schema is defined, the tool must set {@link McpToolResult.Builder#structuredContent(Object)}.
+         * <p>
+         * Structured content for tool results, including output schemas, was introduced by the
+         * <a href="https://modelcontextprotocol.io/specification/2025-06-18/server/tools">MCP 2025-06-18
+         * specification</a>.
          *
          * @return the tool output schema
          */

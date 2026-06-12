@@ -71,7 +71,11 @@ public interface McpTool {
     }
 
     /**
-     * Tool output schema. Describes this tool response format.
+     * Tool output schema. Describes this tool's response format.
+     * <p>
+     * Structured content for tool results, including output schemas, was introduced by the
+     * <a href="https://modelcontextprotocol.io/specification/2025-06-18/server/tools">MCP 2025-06-18
+     * specification</a>.
      *
      * @return the tool output schema
      */
