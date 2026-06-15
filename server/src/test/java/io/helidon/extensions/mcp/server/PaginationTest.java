@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,5 +121,16 @@ class PaginationTest {
         assertThat(page.isLast(), is(true));
         assertThat(page.cursor().isBlank(), is(true));
         assertThat(page.components(), contains("a", "b", "c", "d"));
+    }
+
+    @Test
+    void testPaginationEmptyContent() {
+        McpPagination<String> pagination = new McpPagination<>(List.of(), 2);
+        assertThat(pagination.content(), is(List.of()));
+
+        McpPage<String> page = pagination.firstPage();
+        assertThat(page.isLast(), is(true));
+        assertThat(page.cursor().isBlank(), is(true));
+        assertThat(page.components(), is(List.of()));
     }
 }
