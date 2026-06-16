@@ -44,8 +44,9 @@ sealed interface McpTransport permits McpSsePostTransport, McpStreamableHttpTran
      * Block the current request for the provided duration.
      *
      * @param timeout the timeout
+     * @return whether the request was unblocked before the timeout
      */
-    void block(Duration timeout);
+    boolean block(Duration timeout);
 
     /**
      * Unblock the current request.

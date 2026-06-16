@@ -76,6 +76,7 @@
         <version.lib.langchain4j.mcp>1.10.0-beta18</version.lib.langchain4j.mcp>
         <version.lib.langchain4j>1.10.0</version.lib.langchain4j>
         <version.lib.mcp-sdk>0.17.0</version.lib.mcp-sdk>
+        <version.lib.mockito>5.22.0</version.lib.mockito>
 
         <version.plugin.buildnumber>3.1.0</version.plugin.buildnumber>
         <version.plugin.checkstyle>3.6.0</version.plugin.checkstyle>
@@ -132,6 +133,12 @@
                 <groupId>io.modelcontextprotocol.sdk</groupId>
                 <artifactId>mcp</artifactId>
                 <version>${version.lib.mcp-sdk}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${version.lib.mockito}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>

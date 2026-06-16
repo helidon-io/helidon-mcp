@@ -69,7 +69,7 @@ final class McpStreamableHttpTransport implements McpTransport {
     }
 
     @Override
-    public void block(Duration timeout) {
+    public boolean block(Duration timeout) {
         try {
             boolean completed = latch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
             if (!completed) {
@@ -77,10 +77,12 @@ final class McpStreamableHttpTransport implements McpTransport {
                     LOGGER.log(System.Logger.Level.TRACE, "Blocking timeout reached");
                 }
             }
+            return completed;
         } catch (InterruptedException e) {
             if (LOGGER.isLoggable(System.Logger.Level.TRACE)) {
                 LOGGER.log(System.Logger.Level.TRACE, "Interrupted while blocking", e);
             }
+            return false;
         }
     }
 
