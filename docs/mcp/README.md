@@ -957,7 +957,7 @@ the operation. Cancellation status can be accessed from the `McpFeatures` class.
 The API returns a `McpCancellationResult` which contains:
 
 - `isRequested()` – whether cancellation was requested
-- `reason()` – cancellation reason provided by the client
+- `reason()` – optional cancellation reason provided by the client
 
 #### Example
 
@@ -987,8 +987,9 @@ private class CancellationTool implements McpTool {
         McpCancellation cancellation = request.features().cancellation();
 
         while (now < timeout) {
-            if (cancellation.verify().isRequested()) {
-                String reason = cancellation.verify().reason();
+            McpCancellationResult result = cancellation.result();
+            if (result.isRequested()) {
+                String reason = result.reason().orElse("Cancellation requested");
                 return McpToolResult.create(reason);
             }
             longRunningOperation();

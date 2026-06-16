@@ -283,6 +283,25 @@ class StatelessServerTest {
     }
 
     @Test
+    void statelessCancelledNotificationWithoutReason() {
+        try (var response = statelessClient.rpcMethod("notifications/cancelled")
+                .param("requestId", 42)
+                .submit()) {
+            assertThat(response.status(), is(Status.ACCEPTED_202));
+        }
+    }
+
+    @Test
+    void statelessCancelledNotificationWithMalformedReason() {
+        try (var response = statelessClient.rpcMethod("notifications/cancelled")
+                .param("requestId", 42)
+                .param("reason", 42)
+                .submit()) {
+            assertThat(response.status(), is(Status.OK_200));
+        }
+    }
+
+    @Test
     void statelessRootsChangedNotificationWithoutSession() {
         try (var response = statelessClient.rpcMethod("notifications/roots/list_changed")
                 .submit()) {

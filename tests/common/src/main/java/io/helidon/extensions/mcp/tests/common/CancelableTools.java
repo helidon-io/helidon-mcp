@@ -83,7 +83,7 @@ public class CancelableTools {
                 try {
                     McpCancellationResult result = cancellation.result();
                     if (result.isRequested()) {
-                        content = result.reason();
+                        content = result.reason().orElse("Cancellation requested");
                         latch.countDown();
                         break;
                     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,34 +16,24 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.util.Optional;
+
 /**
  * The cancellation result includes an indication of whether
- * a cancellation request was made, along with the reason for request cancellation.
+ * a cancellation request was made, along with the optional reason for request cancellation.
  */
-public final class McpCancellationResult {
-    private final String reason;
-    private final boolean cancelled;
-
-    McpCancellationResult(boolean cancelled, String reason) {
-        this.reason = reason;
-        this.cancelled = cancelled;
-    }
-
+public sealed interface McpCancellationResult permits McpCancellationResultImpl {
     /**
      * Check if cancellation was requested.
      *
      * @return {@code true} if cancellation was requested, {@code false} otherwise
      */
-    public boolean isRequested() {
-        return cancelled;
-    }
+    boolean isRequested();
 
     /**
-     * Cancellation reason provided by the client.
+     * Cancellation reason provided by the client, when available.
      *
-     * @return cancellation reason
+     * @return optional cancellation reason
      */
-    public String reason() {
-        return reason;
-    }
+    Optional<String> reason();
 }

@@ -350,19 +350,34 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         Optional<JsonValue> reason = req.params().find("reason");
         Optional<JsonValue> requestId = req.params().find("requestId");
         // Ignore malformed request
-        if (requestId.isEmpty()
-                || reason.isEmpty()
-                || !(reason.get() instanceof JsonString)) {
+        if (requestId.isEmpty()) {
             if (LOGGER.isLoggable(Level.TRACE)) {
                 LOGGER.log(Level.TRACE,
                            "Malformed cancellation request: %s".formatted(req.asJsonObject()));
             }
             return;
         }
-        String cancelReason = ((JsonString) reason.get()).value();
-        session.findFeatures(requestId.get())
+        JsonValue cancellationRequestId = requestId.get();
+        if (reason.isEmpty()) {
+            session.findFeatures(cancellationRequestId)
+                    .map(McpFeatures::cancellation)
+                    .ifPresent(cancellation -> cancellation.cancel(cancellationRequestId));
+            res.status(Status.ACCEPTED_202);
+            return;
+        }
+
+        JsonValue reasonValue = reason.get();
+        if (!(reasonValue instanceof JsonString jsonReason)) {
+            if (LOGGER.isLoggable(Level.TRACE)) {
+                LOGGER.log(Level.TRACE, "Malformed cancellation request: %s".formatted(req.asJsonObject()));
+            }
+            return;
+        }
+
+        String cancelReason = jsonReason.value();
+        session.findFeatures(cancellationRequestId)
                 .map(McpFeatures::cancellation)
-                .ifPresent(cancellation -> cancellation.cancel(cancelReason, requestId.get()));
+                .ifPresent(cancellation -> cancellation.cancel(cancelReason, cancellationRequestId));
         res.status(Status.ACCEPTED_202);
     }
 
