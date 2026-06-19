@@ -73,7 +73,8 @@ final class McpSsePostTransport implements McpTransport {
     }
 
     @Override
-    public void block(Duration timeout) {
+    public boolean block(Duration timeout) {
+        return true;
     }
 
     @Override

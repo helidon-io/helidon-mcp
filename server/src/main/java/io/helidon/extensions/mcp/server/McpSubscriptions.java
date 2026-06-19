@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,9 +58,10 @@ public final class McpSubscriptions extends McpFeature {
      * @param uri the resource URI
      */
     public void sendSessionUpdate(String uri) {
-        if (subscriptions.containsKey(uri)) {
+        McpTransport transport = subscriptions.get(uri);
+        if (transport != null) {
             var notification = session().serializer().createUpdateNotification(uri);
-            subscriptions.get(uri).send(notification);
+            transport.send(notification);
         }
     }
 
@@ -93,11 +94,9 @@ public final class McpSubscriptions extends McpFeature {
     }
 
     void blockSubscribe(String uri) {
-        if (subscriptions.containsKey(uri)) {
-            subscriptions.get(uri).block(timeout);
+        McpTransport transport = subscriptions.get(uri);
+        if (transport != null && !transport.block(timeout)) {
+            subscriptions.remove(uri, transport);
         }
-    }
-
-    static final class McpSubscriptionsQualifier {
     }
 }
