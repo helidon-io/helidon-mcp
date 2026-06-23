@@ -18,16 +18,13 @@ package io.helidon.extensions.mcp.tests.declarative;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.exception.ToolExecutionException;
 import dev.langchain4j.mcp.client.McpClient;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 abstract class AbstractLangchain4jRequiredParamTest {
     protected static McpClient client;
@@ -53,26 +50,6 @@ abstract class AbstractLangchain4jRequiredParamTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(tool22.parameters().required(), contains("a", "b"));
-    }
-
-    @Test
-    void testMissingSingleRequiredParam() {
-        ToolExecutionException exception = assertThrows(ToolExecutionException.class,
-                () -> client.executeTool(ToolExecutionRequest.builder()
-                                                 .name("tool21")
-                                                 .arguments("{}")
-                                                 .build()));
-        assertThat(exception.getMessage(), containsString("Missing required parameter: mandatory"));
-    }
-
-    @Test
-    void testMissingMultipleRequiredParams() {
-        ToolExecutionException exception = assertThrows(ToolExecutionException.class,
-                () -> client.executeTool(ToolExecutionRequest.builder()
-                                                 .name("tool22")
-                                                 .arguments("{}")
-                                                 .build()));
-        assertThat(exception.getMessage(), containsString("Missing required parameters: a, b"));
     }
 
     @Test

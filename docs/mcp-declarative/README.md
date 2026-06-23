@@ -139,8 +139,7 @@ class Server {
 #### Required parameters
 
 Annotate a tool parameter with `@Mcp.Required` to mark it as required. The parameter name is added to the
-generated `inputSchema.required` JSON array, and any `tools/call` invocation that omits the argument is
-rejected with a tool-execution error (`isError: true`) whose text content names the missing parameter(s).
+generated `inputSchema.required` JSON array, advertising to clients that the argument must be supplied.
 
 ```java
 @Mcp.Tool("Greet a user by name")

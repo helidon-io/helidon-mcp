@@ -166,29 +166,6 @@ class McpToolCodegen {
                 .returnType(returned -> returned.type(MCP_TOOL_RESULT))
                 .addParameter(parameter -> parameter.type(MCP_TOOL_REQUEST).name("request"));
 
-        List<String> requiredNames = new ArrayList<>();
-        for (TypedElementInfo param : element.parameterArguments()) {
-            if (!isIgnoredSchemaElement(param.typeName()) && param.hasAnnotation(MCP_REQUIRED)) {
-                requiredNames.add(param.elementName());
-            }
-        }
-        if (!requiredNames.isEmpty()) {
-            builder.addContentLine("java.util.List<String> missing = new java.util.ArrayList<>();");
-            for (String name : requiredNames) {
-                builder.addContent("if (!request.arguments().get(")
-                        .addContentLiteral(name)
-                        .addContent(").isPresent()) { missing.add(")
-                        .addContentLiteral(name)
-                        .addContentLine("); }");
-            }
-            builder.addContent("if (!missing.isEmpty()) { return ")
-                    .addContent(MCP_TOOL_RESULT)
-                    .addContentLine(".builder().error(true).addTextContent(missing.size() == 1 "
-                                    + "? \"Missing required parameter: \" + missing.get(0) "
-                                    + ": \"Missing required parameters: \" + String.join(\", \", missing))"
-                                    + ".build(); }");
-        }
-
         for (TypedElementInfo param : element.parameterArguments()) {
             if (isMcpType(parameters, param)) {
                 continue;
