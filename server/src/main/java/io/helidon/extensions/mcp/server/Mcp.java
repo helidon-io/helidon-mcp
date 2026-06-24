@@ -101,6 +101,17 @@ public final class Mcp {
     }
 
     /**
+     * Annotation to mark a tool method parameter as required.
+     * <p>
+     * The parameter name is emitted in the tool's {@code inputSchema.required} array,
+     * advertising to clients that the argument must be supplied in {@code tools/call} requests.
+     */
+    @Target(PARAMETER)
+    @Retention(RUNTIME)
+    public @interface Required {
+    }
+
+    /**
      * Annotation to define the {@link io.helidon.extensions.mcp.server.Mcp.Server} version.
      */
     @Target(TYPE)

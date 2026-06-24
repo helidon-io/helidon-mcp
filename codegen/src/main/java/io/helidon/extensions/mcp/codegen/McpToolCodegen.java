@@ -45,6 +45,7 @@ import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isNumber;
 import static io.helidon.extensions.mcp.codegen.McpJsonSchemaCodegen.addSchemaMethodBody;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_DESCRIPTION;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_NAME;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_REQUIRED;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_INTERFACE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOL_OUTPUT_SCHEMA;
@@ -125,8 +126,15 @@ class McpToolCodegen {
                 .addAnnotation(Annotations.OVERRIDE);
 
         List<TypedElementInfo> fields = new ArrayList<>();
+        List<String> required = new ArrayList<>();
         for (TypedElementInfo param : element.parameterArguments()) {
             if (isIgnoredSchemaElement(param.typeName())) {
+                if (param.hasAnnotation(MCP_REQUIRED)) {
+                    String message = String.format("Annotation %s on parameter '%s' will be ignored.",
+                                                   MCP_REQUIRED.classNameWithEnclosingNames(),
+                                                   param.elementName());
+                    logger.log(System.Logger.Level.WARNING, message);
+                }
                 continue;
             }
             Optional<String> description = getDescription(param);
@@ -137,10 +145,13 @@ class McpToolCodegen {
                     .accessModifier(AccessModifier.PUBLIC);
             description.ifPresent(desc -> field.addAnnotation(Annotation.create(MCP_DESCRIPTION, desc)));
             fields.add(field.build());
+            if (param.hasAnnotation(MCP_REQUIRED)) {
+                required.add(param.elementName());
+            }
         }
 
         if (!fields.isEmpty()) {
-            addSchemaMethodBody(method, fields);
+            addSchemaMethodBody(method, fields, required);
         } else {
             method.addContentLine("return \"\";");
         }

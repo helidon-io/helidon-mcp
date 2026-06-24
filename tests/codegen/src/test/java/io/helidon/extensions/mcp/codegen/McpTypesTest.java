@@ -127,6 +127,7 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "MCP_RESOURCE_TEMPLATES_PAGE_SIZE", Mcp.ResourceTemplatesPageSize.class);
         checkField(toCheck, checked, fields, "MCP_COMPLETION", Mcp.Completion.class);
         checkField(toCheck, checked, fields, "MCP_DESCRIPTION", Mcp.Description.class);
+        checkField(toCheck, checked, fields, "MCP_REQUIRED", Mcp.Required.class);
         checkField(toCheck, checked, fields, "MCP_ROOTS", McpRoots.class);
         checkField(toCheck, checked, fields, "MCP_LOGGER", McpLogger.class);
         checkField(toCheck, checked, fields, "MCP_ROLE_ENUM", McpRole.class);

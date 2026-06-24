@@ -42,7 +42,7 @@ abstract class AbstractLangchain4jToolsServerTest {
     @Test
     void testListTools() {
         var list = client.listTools();
-        assertThat(list.size(), is(21));
+        assertThat(list.size(), is(23));
 
         ToolSpecification tool1 = list.get(19);
         assertThat(tool1.description(), is("Tool description block\n"));
