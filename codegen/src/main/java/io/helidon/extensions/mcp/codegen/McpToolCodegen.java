@@ -199,7 +199,7 @@ class McpToolCodegen {
                         .addContent(" = request.arguments().get(")
                         .addContentLiteral(param.elementName())
                         .addContent(").as")
-                        .addContent(param.typeName().className())
+                        .addContent(numberAccessor(param.typeName()))
                         .addContentLine("().orElse(null);");
                 continue;
             }
@@ -249,6 +249,28 @@ class McpToolCodegen {
         }
         throw new CodegenException(String.format("Method %s must return one the following return type: %s",
                                                  element.elementName(), MCP_TOOL_RESULT));
+    }
+
+    private static String numberAccessor(TypeName typeName) {
+        if (TypeNames.PRIMITIVE_INT.equals(typeName)) {
+            return TypeNames.BOXED_INT.className();
+        }
+        if (TypeNames.PRIMITIVE_BYTE.equals(typeName)) {
+            return TypeNames.BOXED_BYTE.className();
+        }
+        if (TypeNames.PRIMITIVE_SHORT.equals(typeName)) {
+            return TypeNames.BOXED_SHORT.className();
+        }
+        if (TypeNames.PRIMITIVE_LONG.equals(typeName)) {
+            return TypeNames.BOXED_LONG.className();
+        }
+        if (TypeNames.PRIMITIVE_FLOAT.equals(typeName)) {
+            return TypeNames.BOXED_FLOAT.className();
+        }
+        if (TypeNames.PRIMITIVE_DOUBLE.equals(typeName)) {
+            return TypeNames.BOXED_DOUBLE.className();
+        }
+        return typeName.className();
     }
 
     private void addToolNameMethod(Method.Builder builder, TypedElementInfo element) {
