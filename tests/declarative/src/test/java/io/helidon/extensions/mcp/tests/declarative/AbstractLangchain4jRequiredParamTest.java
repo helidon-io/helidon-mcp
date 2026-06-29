@@ -50,14 +50,68 @@ abstract class AbstractLangchain4jRequiredParamTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(tool22.parameters().required(), contains("a", "b"));
+
+        ToolSpecification tool23 = tools.stream()
+                .filter(tool -> "tool23".equals(tool.name()))
+                .findFirst()
+                .orElseThrow();
+        assertThat(tool23.parameters().required(), contains("foo"));
+
+        ToolSpecification tool24 = tools.stream()
+                .filter(tool -> "tool24".equals(tool.name()))
+                .findFirst()
+                .orElseThrow();
+        assertThat(tool24.parameters().required(), contains("count"));
+
+        ToolSpecification tool25 = tools.stream()
+                .filter(tool -> "tool25".equals(tool.name()))
+                .findFirst()
+                .orElseThrow();
+        assertThat(tool25.parameters().required(), contains("values"));
     }
 
     @Test
-    void testRequiredParamProvided() {
+    void testRequiredStringParamProvided() {
         var result = client.executeTool(ToolExecutionRequest.builder()
                                                 .name("tool21")
                                                 .arguments("{\"mandatory\": \"x\"}")
                                                 .build());
         assertThat(result.resultText(), is("mandatory=x|optional="));
+    }
+
+    @Test
+    void testRequiredStringAndIntegerParamsProvided() {
+        var result = client.executeTool(ToolExecutionRequest.builder()
+                                                .name("tool22")
+                                                .arguments("{\"a\": \"x\", \"b\": 42}")
+                                                .build());
+        assertThat(result.resultText(), is("a=x|b=42"));
+    }
+
+    @Test
+    void testRequiredClassParamProvided() {
+        var result = client.executeTool(ToolExecutionRequest.builder()
+                                                .name("tool23")
+                                                .arguments("{\"foo\": {\"foo\": \"hello\", \"bar\": 42}}")
+                                                .build());
+        assertThat(result.resultText(), is("foo=hello|bar=42"));
+    }
+
+    @Test
+    void testRequiredIntParamProvided() {
+        var result = client.executeTool(ToolExecutionRequest.builder()
+                                                .name("tool24")
+                                                .arguments("{\"count\": 42}")
+                                                .build());
+        assertThat(result.resultText(), is("count=42"));
+    }
+
+    @Test
+    void testRequiredListParamProvided() {
+        var result = client.executeTool(ToolExecutionRequest.builder()
+                                                .name("tool25")
+                                                .arguments("{\"values\": [\"a\", \"b\", \"c\"]}")
+                                                .build());
+        assertThat(result.resultText(), is("values=a,b,c"));
     }
 }

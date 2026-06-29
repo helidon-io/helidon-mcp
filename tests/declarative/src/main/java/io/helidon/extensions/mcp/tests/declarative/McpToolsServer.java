@@ -16,6 +16,8 @@
 
 package io.helidon.extensions.mcp.tests.declarative;
 
+import java.util.List;
+
 import io.helidon.extensions.mcp.server.Mcp;
 import io.helidon.extensions.mcp.server.McpFeatures;
 import io.helidon.extensions.mcp.server.McpRequest;
@@ -181,6 +183,21 @@ class McpToolsServer {
     @Mcp.Tool(TOOL_DESCRIPTION)
     String tool22(@Mcp.Required String a, @Mcp.Required Integer b) {
         return "a=" + a + "|b=" + b;
+    }
+
+    @Mcp.Tool(TOOL_DESCRIPTION)
+    String tool23(@Mcp.Required Foo foo) {
+        return "foo=" + foo.foo + "|bar=" + foo.bar;
+    }
+
+    @Mcp.Tool(TOOL_DESCRIPTION)
+    String tool24(@Mcp.Required int count) {
+        return "count=" + count;
+    }
+
+    @Mcp.Tool(TOOL_DESCRIPTION)
+    String tool25(@Mcp.Required List<String> values) {
+        return "values=" + String.join(",", values);
     }
 
     @JsonSchema.Schema
