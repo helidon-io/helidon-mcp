@@ -103,8 +103,9 @@ public final class Mcp {
     /**
      * Annotation to mark a tool method parameter as required.
      * <p>
-     * The parameter name is emitted in the tool's {@code inputSchema.required} array,
-     * advertising to clients that the argument must be supplied in {@code tools/call} requests.
+     * The parameter name is emitted in the tool's {@code inputSchema.required} array. The server
+     * rejects {@code tools/call} requests omitting the argument with a tool execution result with
+     * {@code isError: true} naming the missing parameter(s).
      */
     @Target(PARAMETER)
     @Retention(RUNTIME)

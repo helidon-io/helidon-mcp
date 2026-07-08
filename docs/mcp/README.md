@@ -85,7 +85,9 @@ McpServerFeature.builder()
 computations. To define a tool, provide a name, description, input schema, and business logic. Use the `addTool` method 
 from the `McpServerFeature` builder to register it with the server. The name and description help LLMs understand its purpose. 
 The schema, written according to [JSON Schema Specification](https://json-schema.org/specification), defines the expected input 
-format. The business logic is implemented in the `tool` method and uses `McpToolRequest` to access inputs. The `McpToolRequest` 
+format. Properties listed in the schema `required` array are enforced by the server: a `tools/call` request omitting any of 
+them is rejected with a tool execution error (`isError: true`) whose text content names the missing parameter(s). 
+The business logic is implemented in the `tool` method and uses `McpToolRequest` to access inputs. The `McpToolRequest` 
 extends `McpRequest` and provides access to the `McpTool` instance via the `tool()` method.
 
 #### Tool Interface

@@ -39,6 +39,10 @@ public interface McpTool {
      * JSON schema describing tool inputs. String must be compliant with
      * <a href="https://json-schema.org/draft/2020-12">JSON Schema Version 2020-12</a>.
      * An empty string is mapped to a schema of type object without any properties.
+     * <p>
+     * Properties listed in the schema {@code required} array are enforced by the server:
+     * a {@code tools/call} request omitting any of them is rejected with a tool execution
+     * result with {@code isError: true} naming the missing parameter(s).
      *
      * @return JSON schema as a string
      */
