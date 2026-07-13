@@ -21,10 +21,9 @@ import java.util.concurrent.TimeUnit;
 
 import io.helidon.http.HeaderValues;
 import io.helidon.http.sse.SseEvent;
+import io.helidon.json.JsonObject;
 import io.helidon.webserver.jsonrpc.JsonRpcResponse;
 import io.helidon.webserver.sse.SseSink;
-
-import jakarta.json.JsonObject;
 
 import static io.helidon.extensions.mcp.server.McpJsonSerializer.prettyPrint;
 
@@ -47,7 +46,7 @@ final class McpStreamableHttpTransport implements McpTransport {
         }
         sink().emit(SseEvent.builder()
                             .name("message")
-                            .data(object)
+                            .data(object.toString())
                             .build());
     }
 
@@ -59,7 +58,7 @@ final class McpStreamableHttpTransport implements McpTransport {
         if (sseSink != null) {
             sseSink.emit(SseEvent.builder()
                                  .name("message")
-                                 .data(response.asJsonObject())
+                                 .data(response.asJsonObject().toString())
                                  .build());
             sseSink.close();
             return;

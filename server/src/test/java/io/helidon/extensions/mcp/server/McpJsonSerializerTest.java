@@ -15,11 +15,7 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.util.Map;
-
-import jakarta.json.Json;
-import jakarta.json.JsonBuilderFactory;
-import jakarta.json.JsonObject;
+import io.helidon.json.JsonObject;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -27,8 +23,6 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 
 class McpJsonSerializerTest {
-    private final JsonBuilderFactory JSON_BUILDER_FACTORY = Json.createBuilderFactory(Map.of());
-
     @Test
     void testMcpJsonSerializerV1() {
         McpJsonSerializer mjs = McpJsonSerializer.create(McpProtocolVersion.VERSION_2024_11_05);
@@ -49,10 +43,10 @@ class McpJsonSerializerTest {
 
     @Test
     void testIsResponse() {
-        JsonObject payload = JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("jsonrpc", 2.0)
-                .add("id", 1)
-                .add("result", 2)
+        JsonObject payload = JsonObject.builder()
+                .set("jsonrpc", 2.0)
+                .set("id", 1)
+                .set("result", 2)
                 .build();
 
         boolean response = McpJsonSerializer.isResponse(payload);
@@ -61,10 +55,10 @@ class McpJsonSerializerTest {
 
     @Test
     void testIsNotResponse() {
-        JsonObject payload = JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("jsonrpc", 2.0)
-                .add("id", 1)
-                .add("method", "foo/bar")
+        JsonObject payload = JsonObject.builder()
+                .set("jsonrpc", 2.0)
+                .set("id", 1)
+                .set("method", "foo/bar")
                 .build();
 
         boolean response = McpJsonSerializer.isResponse(payload);

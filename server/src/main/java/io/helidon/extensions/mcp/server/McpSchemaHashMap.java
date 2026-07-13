@@ -15,26 +15,21 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.io.StringReader;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonReaderFactory;
+import io.helidon.json.JsonObject;
+import io.helidon.json.JsonParser;
 
 /**
  * Cache for JSON schema using a traditional lock instead of {@code sync} block to avoid
  * thread pinning for some version of jdk. Keys are schema as string and value are schema
- * as {@link jakarta.json.JsonObject}.
+ * as {@link io.helidon.json.JsonObject}.
  */
 class McpSchemaHashMap extends HashMap<String, JsonObject> {
-    private static final JsonReaderFactory JSON_READER_FACTORY = Json.createReaderFactory(Map.of());
-    private static final JsonObject EMPTY_OBJECT_SCHEMA = Json.createBuilderFactory(Map.of())
-            .createObjectBuilder()
-            .add("type", "object")
-            .add("properties", JsonObject.EMPTY_JSON_OBJECT)
+    private static final JsonObject EMPTY_OBJECT_SCHEMA = JsonObject.builder()
+            .set("type", "object")
+            .set("properties", JsonObject.empty())
             .build();
 
     private final ReentrantLock lock = new ReentrantLock();
@@ -50,9 +45,7 @@ class McpSchemaHashMap extends HashMap<String, JsonObject> {
                 if (stringSchema.isEmpty()) {
                     parsed = EMPTY_OBJECT_SCHEMA;
                 } else {
-                    try (var r = JSON_READER_FACTORY.createReader(new StringReader(stringSchema))) {
-                        parsed = r.readObject();
-                    }
+                    parsed = JsonParser.create(stringSchema).readJsonObject();
                 }
                 // store the parsed schema
                 this.put(stringSchema, parsed);

@@ -33,7 +33,7 @@ class McpToolSupport {
      * @param text text content
      * @return tool result instance
      */
-    @Prototype.FactoryMethod
+    @Prototype.PrototypeFactoryMethod
     static McpToolResult create(String text) {
         return McpToolResult.builder().addTextContent(text).build();
     }

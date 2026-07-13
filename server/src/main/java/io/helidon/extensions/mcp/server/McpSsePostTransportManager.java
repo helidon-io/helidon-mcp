@@ -47,14 +47,16 @@ final class McpSsePostTransportManager implements McpTransportManager {
     @Override
     public void onRequest(JsonRpcRequest request, JsonRpcResponse response) {
         if (LOGGER.isLoggable(System.Logger.Level.DEBUG)) {
-            LOGGER.log(System.Logger.Level.DEBUG, "SSE Request:\n" + prettyPrint(request.asJsonObject()));
+            LOGGER.log(System.Logger.Level.DEBUG,
+                       "SSE Request:\n" + prettyPrint(request.asJsonObject()));
         }
     }
 
     @Override
     public void onNotification(JsonRpcRequest request, JsonRpcResponse response) {
         if (LOGGER.isLoggable(System.Logger.Level.DEBUG)) {
-            LOGGER.log(System.Logger.Level.DEBUG, "SSE Notification:\n" + prettyPrint(request.asJsonObject()));
+            LOGGER.log(System.Logger.Level.DEBUG,
+                       "SSE Notification:\n" + prettyPrint(request.asJsonObject()));
         }
     }
 }

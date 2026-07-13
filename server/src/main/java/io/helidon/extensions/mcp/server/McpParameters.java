@@ -30,13 +30,15 @@ import io.helidon.common.GenericType;
 import io.helidon.common.mapper.MapperException;
 import io.helidon.common.mapper.Mappers;
 import io.helidon.common.mapper.OptionalValue;
+import io.helidon.json.JsonArray;
+import io.helidon.json.JsonBoolean;
+import io.helidon.json.JsonNull;
+import io.helidon.json.JsonNumber;
+import io.helidon.json.JsonObject;
+import io.helidon.json.JsonString;
+import io.helidon.json.JsonValue;
+import io.helidon.json.binding.Json;
 import io.helidon.jsonrpc.core.JsonRpcParams;
-
-import jakarta.json.JsonArray;
-import jakarta.json.JsonNumber;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonString;
-import jakarta.json.JsonValue;
 
 /**
  * MCP client parameters provided to {@link McpTool} and {@link McpPrompt}.
@@ -44,26 +46,18 @@ import jakarta.json.JsonValue;
 public final class McpParameters {
     private static final Mappers MAPPERS = Mappers.create();
     private static final EmptyValue EMPTY_VALUE = new EmptyValue();
-    private static final McpParameters EMPTY = new McpParameters(JsonValue.NULL, "null");
+    private static final McpParameters EMPTY = new McpParameters(JsonNull.instance(), "null");
 
     private final String key;
     private final JsonValue value;
-    private final JsonRpcParams params;
 
-    McpParameters(JsonRpcParams params, JsonValue root) {
-        this.params = params;
-        this.value = root;
-        this.key = "key";
-    }
-
-    private McpParameters(JsonRpcParams params, JsonValue root, String key) {
-        this.params = params;
-        this.value = root;
-        this.key = key;
+    McpParameters(JsonRpcParams params) {
+        this(params.asJsonValue(), "key");
     }
 
     private McpParameters(JsonValue root, String key) {
-        this(JsonRpcParams.create(JsonObject.EMPTY_JSON_OBJECT), root, key);
+        this.value = root;
+        this.key = key;
     }
 
     /**
@@ -74,24 +68,14 @@ public final class McpParameters {
      */
     public McpParameters get(String key) {
         if (value instanceof JsonObject jsonObject) {
-            JsonValue v = jsonObject.get(key);
-            if (v != null) {
-                if (params.get(key) instanceof JsonObject rpcObject) {
-                    JsonRpcParams rpcParams = JsonRpcParams.create(rpcObject);
-                    return new McpParameters(rpcParams, v, key);
-                }
-                if (params.get(key) instanceof JsonArray jsonArray) {
-                    JsonRpcParams rpcParams = JsonRpcParams.create(jsonArray);
-                    return new McpParameters(rpcParams, v, key);
-                }
-                return new McpParameters(params, v, key);
-            }
+            return jsonObject.value(key)
+                    .map(it -> new McpParameters(it, key))
+                    .orElse(EMPTY);
+        }
+        if (value instanceof JsonNull) {
             return EMPTY;
         }
-        if (value == JsonValue.NULL) {
-            return EMPTY;
-        }
-        throw new IllegalStateException("Cannot get " + value.getValueType() + " as an object");
+        throw new IllegalStateException("Cannot get " + value.type() + " as an object");
     }
 
     /**
@@ -101,12 +85,12 @@ public final class McpParameters {
      */
     public OptionalValue<String> asString() {
         if (value instanceof JsonString jsonString) {
-            return OptionalValue.create(MAPPERS, key, jsonString.getString());
+            return OptionalValue.create(MAPPERS, key, jsonString.value());
         }
-        if (value == JsonValue.NULL) {
+        if (value instanceof JsonNull) {
             return empty();
         }
-        throw new IllegalStateException("Cannot get " + value.getValueType() + " as a string");
+        throw new IllegalStateException("Cannot get " + value.type() + " as a string");
     }
 
     /**
@@ -115,7 +99,7 @@ public final class McpParameters {
      * @return {@code true} if a value is not present, otherwise {@code false}
      */
     public boolean isEmpty() {
-        return value == JsonValue.NULL;
+        return value instanceof JsonNull;
     }
 
     /**
@@ -124,7 +108,7 @@ public final class McpParameters {
      * @return {@code true} if a value is present, otherwise {@code false}
      */
     public boolean isPresent() {
-        return value != JsonValue.NULL;
+        return !(value instanceof JsonNull);
     }
 
     /**
@@ -166,12 +150,12 @@ public final class McpParameters {
      */
     public OptionalValue<Byte> asByte() {
         if (value instanceof JsonNumber number) {
-            return OptionalValue.create(MAPPERS, key, number.numberValue().byteValue());
+            return OptionalValue.create(MAPPERS, key, number.byteValue());
         }
-        if (value == JsonValue.NULL) {
+        if (value instanceof JsonNull) {
             return empty();
         }
-        throw new IllegalStateException("Cannot get " + value.getValueType() + "as a byte");
+        throw new IllegalStateException("Cannot get " + value.type() + "as a byte");
     }
 
     /**
@@ -181,12 +165,12 @@ public final class McpParameters {
      */
     public OptionalValue<Short> asShort() {
         if (value instanceof JsonNumber number) {
-            return OptionalValue.create(MAPPERS, key, number.bigDecimalValue().shortValue());
+            return OptionalValue.create(MAPPERS, key, number.shortValue());
         }
-        if (value == JsonValue.NULL) {
+        if (value instanceof JsonNull) {
             return empty();
         }
-        throw new IllegalStateException("Cannot get " + value.getValueType() + "as a short");
+        throw new IllegalStateException("Cannot get " + value.type() + "as a short");
     }
 
     /**
@@ -198,10 +182,10 @@ public final class McpParameters {
         if (value instanceof JsonNumber number) {
             return OptionalValue.create(MAPPERS, key, number.intValue());
         }
-        if (value == JsonValue.NULL) {
+        if (value instanceof JsonNull) {
             return empty();
         }
-        throw new IllegalStateException("Cannot get " + value.getValueType() + "as an integer");
+        throw new IllegalStateException("Cannot get " + value.type() + "as an integer");
     }
 
     /**
@@ -213,10 +197,10 @@ public final class McpParameters {
         if (value instanceof JsonNumber number) {
             return OptionalValue.create(MAPPERS, key, number.longValue());
         }
-        if (value == JsonValue.NULL) {
+        if (value instanceof JsonNull) {
             return empty();
         }
-        throw new IllegalStateException("Cannot get " + value.getValueType() + "as a long");
+        throw new IllegalStateException("Cannot get " + value.type() + "as a long");
     }
 
     /**
@@ -228,10 +212,10 @@ public final class McpParameters {
         if (value instanceof JsonNumber number) {
             return OptionalValue.create(MAPPERS, key, number.doubleValue());
         }
-        if (value == JsonValue.NULL) {
+        if (value instanceof JsonNull) {
             return empty();
         }
-        throw new IllegalStateException("Cannot get " + value.getValueType() + "as a double");
+        throw new IllegalStateException("Cannot get " + value.type() + "as a double");
     }
 
     /**
@@ -241,12 +225,12 @@ public final class McpParameters {
      */
     public OptionalValue<Float> asFloat() {
         if (value instanceof JsonNumber number) {
-            return OptionalValue.create(MAPPERS, key, number.bigDecimalValue().floatValue());
+            return OptionalValue.create(MAPPERS, key, number.floatValue());
         }
-        if (value == JsonValue.NULL) {
+        if (value instanceof JsonNull) {
             return empty();
         }
-        throw new IllegalStateException("Cannot get " + value.getValueType() + "as a float");
+        throw new IllegalStateException("Cannot get " + value.type() + "as a float");
     }
 
     /**
@@ -255,16 +239,13 @@ public final class McpParameters {
      * @return optional boolean value
      */
     public OptionalValue<Boolean> asBoolean() {
-        if (value == JsonValue.TRUE) {
-            return OptionalValue.create(MAPPERS, key, true);
+        if (value instanceof JsonBoolean jsonBoolean) {
+            return OptionalValue.create(MAPPERS, key, jsonBoolean.value());
         }
-        if (value == JsonValue.FALSE) {
-            return OptionalValue.create(MAPPERS, key, false);
-        }
-        if (value == JsonValue.NULL) {
+        if (value instanceof JsonNull) {
             return empty();
         }
-        throw new IllegalStateException("Cannot get " + value.getValueType() + "as a boolean");
+        throw new IllegalStateException("Cannot get " + value.type() + "as a boolean");
     }
 
     /**
@@ -273,26 +254,18 @@ public final class McpParameters {
      * @return optional list value
      */
     public OptionalValue<List<McpParameters>> asList() {
-        if (value == JsonValue.NULL) {
+        if (value instanceof JsonNull) {
             return empty();
         }
         if (value instanceof JsonArray array) {
             List<McpParameters> list = new ArrayList<>();
             int i = 0;
-            for (JsonValue value : array) {
-                if (value instanceof JsonObject object) {
-                    list.add(new McpParameters(JsonRpcParams.create(object), value, key + "-" + i++));
-                    continue;
-                }
-                if (value instanceof JsonArray jsonArray) {
-                    list.add(new McpParameters(JsonRpcParams.create(jsonArray), value, key + "-" + i++));
-                    continue;
-                }
-                list.add(new McpParameters(params, value, key + "-" + i++));
+            for (JsonValue value : array.values()) {
+                list.add(new McpParameters(value, key + "-" + i++));
             }
             return OptionalValue.create(MAPPERS, key, list);
         }
-        throw new IllegalStateException("Cannot get " + value.getValueType() + "as a list");
+        throw new IllegalStateException("Cannot get " + value.type() + "as a list");
     }
 
     /**
@@ -321,25 +294,16 @@ public final class McpParameters {
         if (value instanceof JsonObject object) {
             int i = 0;
             Map<String, McpParameters> map = new HashMap<>();
-            for (Map.Entry<String, JsonValue> entry : object.entrySet()) {
-                McpParameters parameter;
-                if (entry.getValue() instanceof JsonObject jsonObject) {
-                    JsonRpcParams rpcParams = JsonRpcParams.create(jsonObject);
-                    parameter = new McpParameters(rpcParams, jsonObject, entry.getKey() + "-" + i++);
-                } else if (entry.getValue() instanceof JsonArray array) {
-                    JsonRpcParams rpcParams = JsonRpcParams.create(array);
-                    parameter = new McpParameters(rpcParams, array, entry.getKey() + "-" + i++);
-                } else {
-                    parameter = new McpParameters(params, entry.getValue(), entry.getKey() + "-" + i++);
-                }
-                map.put(entry.getKey(), parameter);
+            for (String name : object.keysAsStrings()) {
+                JsonValue child = object.value(name).orElseThrow();
+                map.put(name, new McpParameters(child, name + "-" + i++));
             }
             return OptionalValue.create(MAPPERS, key, map);
         }
-        if (value == JsonValue.NULL) {
+        if (value instanceof JsonNull) {
             return empty();
         }
-        throw new IllegalStateException("Cannot get " + value.getValueType() + "as a map");
+        throw new IllegalStateException("Cannot get " + value.type() + "as a map");
     }
 
     /**
@@ -350,14 +314,16 @@ public final class McpParameters {
      * @return optional value
      */
     public <T> OptionalValue<T> as(Function<McpParameters, T> function) {
-        if (value == JsonValue.NULL) {
+        if (value instanceof JsonNull) {
             return empty();
         }
         return OptionalValue.create(MAPPERS, key, function.apply(this));
     }
 
     /**
-     * Get optional value of the parameter as the mapping class.
+     * Get optional value of the parameter as the mapping class using Helidon JSON binding.
+     * Custom types must have a Helidon JSON converter, for example by annotating
+     * the type with {@link Json.Entity} and enabling Helidon JSON code generation.
      *
      * @param clazz mapping class
      * @param <T>   class type
@@ -365,7 +331,7 @@ public final class McpParameters {
      */
     @SuppressWarnings("unchecked")
     public <T> OptionalValue<T> as(Class<T> clazz) {
-        if (value == JsonValue.NULL) {
+        if (value instanceof JsonNull) {
             return empty();
         }
         return switch (clazz.getName()) {
@@ -377,22 +343,25 @@ public final class McpParameters {
             case "java.lang.String" -> (OptionalValue<T>) asString();
             case "java.lang.Boolean" -> (OptionalValue<T>) asBoolean();
             case "java.lang.Integer" -> (OptionalValue<T>) asInteger();
-            default -> OptionalValue.create(MAPPERS, key, params.as(clazz));
+            default -> OptionalValue.create(MAPPERS, key, McpJsonBinding.deserialize(value, clazz));
         };
     }
 
     /**
-     * Get optional value of the parameter as the mapping type.
+     * Get optional value of the parameter as the mapping type using Helidon JSON binding.
+     * Custom types referenced by the generic type must have a Helidon JSON converter,
+     * for example by annotating them with {@link Json.Entity} and enabling Helidon JSON
+     * code generation.
      *
      * @param type mapping type
      * @param <T>  type
      * @return optional value
      */
     public <T> OptionalValue<T> as(GenericType<T> type) {
-        if (value == JsonValue.NULL) {
+        if (value instanceof JsonNull) {
             return empty();
         }
-        return OptionalValue.create(MAPPERS, key, type);
+        return OptionalValue.create(MAPPERS, key, McpJsonBinding.deserialize(value, type), type);
     }
 
     @SuppressWarnings("unchecked")

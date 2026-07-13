@@ -22,7 +22,6 @@ import io.helidon.builder.api.RuntimeType;
 /**
  * Resource subscriber.
  */
-@RuntimeType.PrototypedBy(McpResourceSubscriberConfig.class)
 public interface McpResourceSubscriber extends RuntimeType.Api<McpResourceSubscriberConfig> {
     /**
      * Create a resource subscriber configuration builder.

@@ -22,6 +22,7 @@ import io.helidon.extensions.mcp.server.McpCompletionResult;
 import io.helidon.extensions.mcp.server.McpPromptResult;
 import io.helidon.extensions.mcp.server.McpResourceResult;
 import io.helidon.extensions.mcp.server.McpToolResult;
+import io.helidon.json.binding.Json;
 import io.helidon.json.schema.JsonSchema;
 
 @Mcp.Server("mcp-weather-server")
@@ -51,6 +52,7 @@ class McpMixedComponentServer {
         return McpCompletionResult.create();
     }
 
+    @Json.Entity
     @JsonSchema.Schema
     public static class Alert {
         public String name;
@@ -58,6 +60,7 @@ class McpMixedComponentServer {
         public Location location;
     }
 
+    @Json.Entity
     @JsonSchema.Schema
     public static class Location {
         public int latitude;

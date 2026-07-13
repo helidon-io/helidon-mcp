@@ -22,7 +22,6 @@ import io.helidon.builder.api.RuntimeType;
 /**
  * MCP Resource Unsubscriber.
  */
-@RuntimeType.PrototypedBy(McpResourceUnsubscriberConfig.class)
 public interface McpResourceUnsubscriber extends RuntimeType.Api<McpResourceUnsubscriberConfig> {
     /**
      * Create a resource unsubscriber configuration builder.

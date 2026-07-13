@@ -27,7 +27,7 @@ class McpSamplingTextMessageSupport {
      * @param text text message
      * @return sampling text message instance
      */
-    @Prototype.FactoryMethod
+    @Prototype.PrototypeFactoryMethod
     static McpSamplingTextMessage create(String text) {
         return McpSamplingTextMessage.builder().text(text).role(McpRole.ASSISTANT).build();
     }

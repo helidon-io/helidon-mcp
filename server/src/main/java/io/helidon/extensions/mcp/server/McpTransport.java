@@ -17,9 +17,8 @@ package io.helidon.extensions.mcp.server;
 
 import java.time.Duration;
 
+import io.helidon.json.JsonObject;
 import io.helidon.webserver.jsonrpc.JsonRpcResponse;
-
-import jakarta.json.JsonObject;
 
 /**
  * MCP transport provides a way to send data to the connected client.

@@ -60,7 +60,7 @@
 
     <properties>
         <version.java>21</version.java>
-        <helidon.version>4.4.0</helidon.version>
+        <helidon.version>4.5.0</helidon.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -75,7 +75,7 @@
         <version.lib.checkstyle>10.12.5</version.lib.checkstyle>
         <version.lib.langchain4j.mcp>1.10.0-beta18</version.lib.langchain4j.mcp>
         <version.lib.langchain4j>1.10.0</version.lib.langchain4j>
-        <version.lib.mcp-sdk>0.17.0</version.lib.mcp-sdk>
+        <version.lib.mcp-sdk>0.18.0</version.lib.mcp-sdk>
         <version.lib.mockito>5.22.0</version.lib.mockito>
 
         <version.plugin.buildnumber>3.1.0</version.plugin.buildnumber>

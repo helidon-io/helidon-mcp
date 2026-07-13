@@ -15,7 +15,7 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import jakarta.json.JsonValue;
+import io.helidon.json.JsonObject;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -34,7 +34,7 @@ class McpElicitationResponseTest {
     @Test
     void testCustomResponse() {
         McpElicitationResponse response = new McpElicitationResponseImpl(McpElicitationAction.ACCEPT,
-                                                                         JsonValue.EMPTY_JSON_OBJECT);
+                                                                         JsonObject.empty());
 
         assertThat(response.content().isEmpty(), is(false));
         assertThat(response.content().map(McpParameters::isPresent).orElse(false), is(true));

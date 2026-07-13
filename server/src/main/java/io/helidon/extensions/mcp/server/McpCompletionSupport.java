@@ -31,7 +31,7 @@ final class McpCompletionSupport {
      * @param values suggestions
      * @return completion result
      */
-    @Prototype.FactoryMethod
+    @Prototype.PrototypeFactoryMethod
     static McpCompletionResult create(List<String> values) {
         return McpCompletionResult.builder()
                 .values(values)
@@ -47,7 +47,7 @@ final class McpCompletionSupport {
      * @param values suggestions
      * @return completion result
      */
-    @Prototype.FactoryMethod
+    @Prototype.PrototypeFactoryMethod
     static McpCompletionResult create(String... values) {
         return McpCompletionResult.builder()
                 .values(Arrays.asList(values))

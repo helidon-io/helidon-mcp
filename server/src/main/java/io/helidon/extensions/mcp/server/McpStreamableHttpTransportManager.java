@@ -59,7 +59,8 @@ final class McpStreamableHttpTransportManager implements McpTransportManager {
     @Override
     public void onRequest(JsonRpcRequest request, JsonRpcResponse response) {
         if (LOGGER.isLoggable(System.Logger.Level.DEBUG)) {
-            LOGGER.log(System.Logger.Level.DEBUG, "Streamable HTTP Request:\n" + prettyPrint(request.asJsonObject()));
+            LOGGER.log(System.Logger.Level.DEBUG,
+                       "Streamable HTTP Request:\n" + prettyPrint(request.asJsonObject()));
         }
         validate(request, response);
     }
@@ -80,6 +81,10 @@ final class McpStreamableHttpTransportManager implements McpTransportManager {
         }
         McpSession foundSession = session.orElseThrow(() -> new McpInternalException("No session with id " + sessionId));
         if (isNotValidNegotiatedVersion(request, foundSession)) {
+            if (LOGGER.isLoggable(System.Logger.Level.DEBUG)) {
+                LOGGER.log(System.Logger.Level.DEBUG,
+                           "The provided MCP protocol version was not the one negotiated during initialization.");
+            }
             response.status(Status.BAD_REQUEST_400)
                     .error(INTERNAL_ERROR, "Wrong MCP protocol version");
         }

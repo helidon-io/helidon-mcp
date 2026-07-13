@@ -18,12 +18,12 @@ package io.helidon.extensions.mcp.server;
 
 import java.time.Duration;
 
+import io.helidon.json.JsonParser;
+import io.helidon.json.JsonValue;
 import io.helidon.webserver.http.ServerResponse;
 import io.helidon.webserver.jsonrpc.JsonRpcRequest;
 import io.helidon.webserver.jsonrpc.JsonRpcResponse;
 
-import jakarta.json.Json;
-import jakarta.json.JsonValue;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -36,7 +36,7 @@ class McpSubscriptionsTest {
 
     @Test
     void testStreamableSubscriptionIsRemovedOnTimeout() {
-        JsonValue requestId = Json.createValue(1);
+        JsonValue requestId = JsonParser.create("1").readJsonValue();
         McpStreamableHttpTransport transport = new McpStreamableHttpTransport(mock(JsonRpcResponse.class));
         McpSession session = session(transport);
         McpSubscriptions subscriptions = session.features().subscriptions();

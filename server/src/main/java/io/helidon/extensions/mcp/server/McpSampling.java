@@ -17,7 +17,7 @@ package io.helidon.extensions.mcp.server;
 
 import java.util.function.Consumer;
 
-import jakarta.json.JsonObject;
+import io.helidon.json.JsonObject;
 
 /**
  * MCP Sampling feature.

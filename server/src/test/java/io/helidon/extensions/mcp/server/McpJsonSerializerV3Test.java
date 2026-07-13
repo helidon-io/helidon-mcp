@@ -15,18 +15,15 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.util.Map;
-
 import io.helidon.common.media.type.MediaTypes;
+import io.helidon.json.JsonArray;
+import io.helidon.json.JsonObject;
+import io.helidon.json.JsonValue;
+import io.helidon.json.JsonValueType;
+import io.helidon.json.binding.Json;
 import io.helidon.json.schema.Schema;
 import io.helidon.json.schema.SchemaString;
 
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonBuilderFactory;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonValue;
-import jakarta.json.spi.JsonProvider;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -34,9 +31,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
 class McpJsonSerializerV3Test {
-    private static final JsonBuilderFactory JSON_BUILDER_FACTORY = Json.createBuilderFactory(Map.of());
     private static final McpJsonSerializer MJS = McpJsonSerializer.create(McpProtocolVersion.VERSION_2025_06_18);
-    private static final JsonProvider JSON_PROVIDER = JsonProvider.provider();
 
     @Test
     void testSerializeTool() {
@@ -51,15 +46,15 @@ class McpJsonSerializerV3Test {
         McpTool tool = new McpToolImpl(config);
 
         JsonObject payload = MJS.toJson(tool).build();
-        assertThat(payload.getString("name"), is("name"));
-        assertThat(payload.getString("title"), is("title"));
-        assertThat(payload.getString("description"), is("description"));
-        assertThat(payload.getJsonObject("inputSchema"), notNullValue());
+        assertThat(payload.stringValue("name").orElseThrow(), is("name"));
+        assertThat(payload.stringValue("title").orElseThrow(), is("title"));
+        assertThat(payload.stringValue("description").orElseThrow(), is("description"));
+        assertThat(payload.objectValue("inputSchema").orElseThrow(), notNullValue());
 
-        JsonObject outputSchema = payload.getJsonObject("outputSchema");
+        JsonObject outputSchema = payload.objectValue("outputSchema").orElseThrow();
         assertThat(outputSchema, notNullValue());
-        assertThat(outputSchema.getString("type"), is("object"));
-        assertThat(outputSchema.getJsonObject("properties"), is(JsonObject.EMPTY_JSON_OBJECT));
+        assertThat(outputSchema.stringValue("type").orElseThrow(), is("object"));
+        assertThat(outputSchema.objectValue("properties").orElseThrow(), is(JsonObject.empty()));
     }
 
     @Test
@@ -78,16 +73,19 @@ class McpJsonSerializerV3Test {
         McpTool tool = new McpToolImpl(config);
 
         JsonObject payload = MJS.toJson(tool).build();
-        assertThat(payload.getString("name"), is("name"));
-        assertThat(payload.getString("title"), is("title"));
-        assertThat(payload.getString("description"), is("description"));
-        assertThat(payload.getJsonObject("inputSchema"), notNullValue());
+        assertThat(payload.stringValue("name").orElseThrow(), is("name"));
+        assertThat(payload.stringValue("title").orElseThrow(), is("title"));
+        assertThat(payload.stringValue("description").orElseThrow(), is("description"));
+        assertThat(payload.objectValue("inputSchema").orElseThrow(), notNullValue());
 
-        JsonObject outputSchema = payload.getJsonObject("outputSchema");
+        JsonObject outputSchema = payload.objectValue("outputSchema").orElseThrow();
         assertThat(outputSchema, notNullValue());
-        assertThat(outputSchema.getString("type"), is("object"));
+        assertThat(outputSchema.stringValue("type").orElseThrow(), is("object"));
 
-        String foo = outputSchema.getJsonObject("properties").getJsonObject("foo").getString("type");
+        String foo = outputSchema.objectValue("properties")
+                .flatMap(properties -> properties.objectValue("foo"))
+                .flatMap(property -> property.stringValue("type"))
+                .orElseThrow();
         assertThat(foo, is("string"));
     }
 
@@ -104,11 +102,11 @@ class McpJsonSerializerV3Test {
         McpResource resource = new McpResourceImpl(config);
 
         JsonObject payload = MJS.toJson(resource).build();
-        assertThat(payload.getString("name"), is("name"));
-        assertThat(payload.getString("title"), is("title"));
-        assertThat(payload.getString("uri"), is("https://foo"));
-        assertThat(payload.getString("description"), is("description"));
-        assertThat(payload.getString("mimeType"), is(MediaTypes.APPLICATION_JSON.text()));
+        assertThat(payload.stringValue("name").orElseThrow(), is("name"));
+        assertThat(payload.stringValue("title").orElseThrow(), is("title"));
+        assertThat(payload.stringValue("uri").orElseThrow(), is("https://foo"));
+        assertThat(payload.stringValue("description").orElseThrow(), is("description"));
+        assertThat(payload.stringValue("mimeType").orElseThrow(), is(MediaTypes.APPLICATION_JSON.text()));
     }
 
     @Test
@@ -125,15 +123,18 @@ class McpJsonSerializerV3Test {
                 .build();
         McpPrompt prompt = new McpPromptImpl(config);
         JsonObject payload = MJS.toJson(prompt).build();
-        assertThat(payload.getString("name"), is("name"));
-        assertThat(payload.getString("title"), is("title"));
-        assertThat(payload.getString("description"), is("description"));
+        assertThat(payload.stringValue("name").orElseThrow(), is("name"));
+        assertThat(payload.stringValue("title").orElseThrow(), is("title"));
+        assertThat(payload.stringValue("description").orElseThrow(), is("description"));
 
-        JsonObject argument = payload.getJsonArray("arguments").getJsonObject(0);
-        assertThat(argument.getString("name"), is("name"));
-        assertThat(argument.getString("title"), is("title"));
-        assertThat(argument.getBoolean("required"), is(true));
-        assertThat(argument.getString("description"), is("description"));
+        JsonObject argument = payload.arrayValue("arguments")
+                .flatMap(arguments -> arguments.get(0))
+                .map(JsonValue::asObject)
+                .orElseThrow();
+        assertThat(argument.stringValue("name").orElseThrow(), is("name"));
+        assertThat(argument.stringValue("title").orElseThrow(), is("title"));
+        assertThat(argument.booleanValue("required").orElseThrow(), is(true));
+        assertThat(argument.stringValue("description").orElseThrow(), is("description"));
     }
 
     @Test
@@ -146,10 +147,10 @@ class McpJsonSerializerV3Test {
                 .build();
 
         JsonObject payload = MJS.toJson(argument).build();
-        assertThat(payload.getString("name"), is("name"));
-        assertThat(payload.getString("title"), is("title"));
-        assertThat(payload.getBoolean("required"), is(true));
-        assertThat(payload.getString("description"), is("description"));
+        assertThat(payload.stringValue("name").orElseThrow(), is("name"));
+        assertThat(payload.stringValue("title").orElseThrow(), is("title"));
+        assertThat(payload.booleanValue("required").orElseThrow(), is(true));
+        assertThat(payload.stringValue("description").orElseThrow(), is("description"));
     }
 
     @Test
@@ -164,21 +165,21 @@ class McpJsonSerializerV3Test {
                 .build();
 
         JsonObject request = MJS.createElicitationRequest(id, elicitationRequest);
-        assertThat(request.getInt("id"), is((int) id));
+        assertThat(request.intValue("id").orElseThrow(), is((int) id));
         assertThat(request.containsKey("params"), is(true));
 
-        JsonObject params = request.getJsonObject("params");
-        assertThat(params.getString("message"), is("message"));
+        JsonObject params = request.objectValue("params").orElseThrow();
+        assertThat(params.stringValue("message").orElseThrow(), is("message"));
 
-        JsonValue schema = params.get("requestedSchema");
-        assertThat(schema.getValueType(), is(JsonValue.ValueType.OBJECT));
+        JsonValue schema = params.value("requestedSchema").orElseThrow();
+        assertThat(schema.type(), is(JsonValueType.OBJECT));
     }
 
     @Test
     void testSerializeElicitationResponse() {
-        JsonObject params = JSON_BUILDER_FACTORY.createObjectBuilder()
-                .add("action", "accept")
-                .add("content", JsonValue.EMPTY_JSON_OBJECT)
+        JsonObject params = JsonObject.builder()
+                .set("action", "accept")
+                .set("content", JsonObject.empty())
                 .build();
         JsonObject elicitation = MJS.createJsonRpcResultResponse(1, params);
 
@@ -203,18 +204,21 @@ class McpJsonSerializerV3Test {
 
         JsonObject object = MJS.toolCall(tool, result);
         assertThat(object, is(notNullValue()));
-        assertThat(object.get("content"), is(notNullValue()));
-        assertThat(object.get("structuredContent"), is(notNullValue()));
+        assertThat(object.value("content").orElse(null), is(notNullValue()));
+        assertThat(object.value("structuredContent").orElse(null), is(notNullValue()));
 
-        JsonArray array = object.getJsonArray("content");
+        JsonArray array = object.arrayValue("content").orElseThrow();
         assertThat(array, is(notNullValue()));
         assertThat(array.size(), is(1));
 
-        String content = array.getJsonObject(0).getString("text");
+        String content = array.get(0)
+                .map(JsonValue::asObject)
+                .flatMap(value -> value.stringValue("text"))
+                .orElseThrow();
         assertThat(content, is("{\"foo\":\"bar\"}"));
 
-        JsonObject structuredContent = object.getJsonObject("structuredContent");
-        assertThat(structuredContent.getString("foo"), is("bar"));
+        JsonObject structuredContent = object.objectValue("structuredContent").orElseThrow();
+        assertThat(structuredContent.stringValue("foo").orElseThrow(), is("bar"));
     }
 
     @Test
@@ -233,18 +237,21 @@ class McpJsonSerializerV3Test {
 
         JsonObject object = MJS.toolCall(tool, result);
         assertThat(object, is(notNullValue()));
-        assertThat(object.get("content"), is(notNullValue()));
-        assertThat(object.get("structuredContent"), is(notNullValue()));
+        assertThat(object.value("content").orElse(null), is(notNullValue()));
+        assertThat(object.value("structuredContent").orElse(null), is(notNullValue()));
 
-        JsonArray array = object.getJsonArray("content");
+        JsonArray array = object.arrayValue("content").orElseThrow();
         assertThat(array, is(notNullValue()));
         assertThat(array.size(), is(1));
 
-        String content = array.getJsonObject(0).getString("text");
+        String content = array.get(0)
+                .map(JsonValue::asObject)
+                .flatMap(value -> value.stringValue("text"))
+                .orElseThrow();
         assertThat(content, is("foo"));
 
-        JsonObject structuredContent = object.getJsonObject("structuredContent");
-        assertThat(structuredContent.getString("foo"), is("bar"));
+        JsonObject structuredContent = object.objectValue("structuredContent").orElseThrow();
+        assertThat(structuredContent.stringValue("foo").orElseThrow(), is("bar"));
     }
 
     @Test
@@ -253,10 +260,10 @@ class McpJsonSerializerV3Test {
                 .name("name")
                 .uri("https://foo").build();
 
-        JsonObject payload = MJS.toJson(link).orElseGet(JSON_PROVIDER::createObjectBuilder).build();
-        assertThat(payload.getString("type"), is(McpContentType.RESOURCE_LINK.text()));
-        assertThat(payload.getString("uri"), is("https://foo"));
-        assertThat(payload.getString("name"), is("name"));
+        JsonObject payload = MJS.toJson(link).orElseGet(JsonObject::builder).build();
+        assertThat(payload.stringValue("type").orElseThrow(), is(McpContentType.RESOURCE_LINK.text()));
+        assertThat(payload.stringValue("uri").orElseThrow(), is("https://foo"));
+        assertThat(payload.stringValue("name").orElseThrow(), is("name"));
     }
 
     @Test
@@ -270,14 +277,14 @@ class McpJsonSerializerV3Test {
                 .mediaType(MediaTypes.APPLICATION_JSON)
                 .build();
 
-        JsonObject payload = MJS.toJson(link).orElseGet(JSON_PROVIDER::createObjectBuilder).build();
-        assertThat(payload.getJsonNumber("size").longValue(), is(10L));
-        assertThat(payload.getString("type"), is(McpContentType.RESOURCE_LINK.text()));
-        assertThat(payload.getString("name"), is("name"));
-        assertThat(payload.getString("title"), is("title"));
-        assertThat(payload.getString("uri"), is("https://foo"));
-        assertThat(payload.getString("description"), is("description"));
-        assertThat(payload.getString("mimeType"), is(MediaTypes.APPLICATION_JSON_VALUE));
+        JsonObject payload = MJS.toJson(link).orElseGet(JsonObject::builder).build();
+        assertThat(payload.longValue("size").orElseThrow(), is(10L));
+        assertThat(payload.stringValue("type").orElseThrow(), is(McpContentType.RESOURCE_LINK.text()));
+        assertThat(payload.stringValue("name").orElseThrow(), is("name"));
+        assertThat(payload.stringValue("title").orElseThrow(), is("title"));
+        assertThat(payload.stringValue("uri").orElseThrow(), is("https://foo"));
+        assertThat(payload.stringValue("description").orElseThrow(), is("description"));
+        assertThat(payload.stringValue("mimeType").orElseThrow(), is(MediaTypes.APPLICATION_JSON_VALUE));
     }
 
     @Test
@@ -294,27 +301,18 @@ class McpJsonSerializerV3Test {
         McpTool tool = new McpToolImpl(config);
         JsonObject payload = MJS.toolCall(tool, result);
 
-        JsonArray content = payload.getJsonArray("content");
+        JsonArray content = payload.arrayValue("content").orElseThrow();
         assertThat(content.size(), is(1));
 
-        JsonObject resourceLink = content.getJsonObject(0);
-        assertThat(resourceLink.getString("name"), is("name"));
-        assertThat(resourceLink.getString("uri"), is("https://foo"));
-        assertThat(resourceLink.getString("type"), is("resource_link"));
+        JsonObject resourceLink = content.get(0)
+                .map(JsonValue::asObject)
+                .orElseThrow();
+        assertThat(resourceLink.stringValue("name").orElseThrow(), is("name"));
+        assertThat(resourceLink.stringValue("uri").orElseThrow(), is("https://foo"));
+        assertThat(resourceLink.stringValue("type").orElseThrow(), is("resource_link"));
     }
 
-    public static class StructuredContent {
-        private String foo;
-
-        public StructuredContent(String foo) {
-            this.foo = foo;
-        }
-
-        public String getFoo() {
-            return foo;
-        }
-        public void setFoo(String foo) {
-            this.foo = foo;
-        }
+    @Json.Entity
+    public record StructuredContent(String foo) {
     }
 }

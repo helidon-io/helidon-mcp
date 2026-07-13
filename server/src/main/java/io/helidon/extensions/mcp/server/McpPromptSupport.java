@@ -33,7 +33,7 @@ class McpPromptSupport {
      * @param text text content
      * @return a prompt result instance
      */
-    @Prototype.FactoryMethod
+    @Prototype.PrototypeFactoryMethod
     static McpPromptResult create(String text) {
         return McpPromptResult.builder().addTextContent(text).build();
     }

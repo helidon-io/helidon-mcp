@@ -7,7 +7,7 @@ Helidon support for [Model Context Protocol](https://modelcontextprotocol.io/).
 
 To get started, read the documentation that explains what is Helidon MCP support related to. Then the
 examples are a good starting point to run your first Helidon MCP server whether you use SE or Declarative.
-Helidon MCP supports MCP version 2024-11-05, and planning to support latest version.
+Helidon MCP supports MCP version 2025-06-18 and earlier, and planning to support latest version.
 
 ## Documentation
 

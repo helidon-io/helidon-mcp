@@ -120,7 +120,7 @@ mvn clean package
 ### Run
 
 ```bash
-java -jar target/helidon-mcp-secured-server.java
+java -jar target/helidon-mcp-secured-server.jar
 ```
 
 ---

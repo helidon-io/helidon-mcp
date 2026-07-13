@@ -18,6 +18,7 @@ package io.helidon.extensions.mcp.tests;
 import io.helidon.extensions.mcp.tests.common.MultipleTool;
 import io.helidon.http.HeaderName;
 import io.helidon.http.HeaderNames;
+import io.helidon.http.HeaderValues;
 import io.helidon.http.Status;
 import io.helidon.webclient.http1.Http1Client;
 import io.helidon.webserver.WebServer;
@@ -25,8 +26,6 @@ import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.testing.junit5.ServerTest;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
 
-import jakarta.json.JsonObject;
-import jakarta.json.spi.JsonProvider;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -35,7 +34,6 @@ import static org.hamcrest.Matchers.is;
 
 @ServerTest
 class NegotiatedVersionTest {
-    private static final JsonProvider JSON_PROVIDER = JsonProvider.provider();
     private static final HeaderName SESSION_ID_HEADER = HeaderNames.create("Mcp-Session-Id");
     private static final HeaderName MCP_PROTOCOL_VERSION = HeaderNames.create("Mcp-Protocol-Version");
 
@@ -54,32 +52,36 @@ class NegotiatedVersionTest {
 
     @Test
     void testInvalidMcpVersion() {
-        JsonObject initRequest = JSON_PROVIDER.createObjectBuilder()
-                .add("jsonrpc", "2.0")
-                .add("id", 1)
-                .add("method", "initialize")
-                .add("params", JSON_PROVIDER.createObjectBuilder()
-                        .add("protocolVersion", "2025-06-15")
-                        .add("capabilities", JSON_PROVIDER.createObjectBuilder()
-                                .add("roots", JSON_PROVIDER.createObjectBuilder()
-                                        .add("listChanged", true)))
-                        .add("clientInfo", JSON_PROVIDER.createObjectBuilder()
-                                .add("name", "Example Client Display Name")
-                                .add("version", "1.0.0")))
-                .build();
+        String initRequest = """
+                {
+                  "jsonrpc": "2.0",
+                  "id": 1,
+                  "method": "initialize",
+                  "params": {
+                    "protocolVersion": "2025-06-15",
+                    "capabilities": {"roots": {"listChanged": true}},
+                    "clientInfo": {"name": "Example Client Display Name", "version": "1.0.0"}
+                  }
+                }
+                """;
         String sessionId;
-        try (var response = client.post().submit(initRequest)) {
+        try (var response = client.post()
+                .header(HeaderValues.CONTENT_TYPE_JSON)
+                .submit(initRequest)) {
             sessionId = response.headers().get(SESSION_ID_HEADER).get();
         }
 
-        JsonObject listTools = JSON_PROVIDER.createObjectBuilder()
-                .add("jsonrpc", "2.0")
-                .add("id", 2)
-                .add("method", "tools/list")
-                .build();
+        String listTools = """
+                {
+                  "jsonrpc": "2.0",
+                  "id": 2,
+                  "method": "tools/list"
+                }
+                """;
         try (var response = client.post()
                 .header(SESSION_ID_HEADER, sessionId)
                 .header(MCP_PROTOCOL_VERSION, "2025-12-34")
+                .header(HeaderValues.CONTENT_TYPE_JSON)
                 .submit(listTools)) {
             String res = response.entity().as(String.class);
             assertThat(response.status(), is(Status.BAD_REQUEST_400));

@@ -18,27 +18,17 @@ package io.helidon.extensions.mcp.server;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.json.Json;
-import jakarta.json.JsonBuilderFactory;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-import jakarta.json.JsonStructure;
-import jakarta.json.JsonValue;
-import jakarta.json.JsonWriter;
-import jakarta.json.JsonWriterFactory;
-import jakarta.json.stream.JsonGenerator;
+import io.helidon.json.JsonGenerator;
+import io.helidon.json.JsonObject;
+import io.helidon.json.JsonValue;
 
 /**
  * Serialize MCP classes to JSON.
  */
 interface McpJsonSerializer {
-    JsonBuilderFactory JSON_BUILDER_FACTORY = Json.createBuilderFactory(Map.of());
-    JsonWriterFactory JSON_PP_WRITER_FACTORY = Json.createWriterFactory(Map.of(JsonGenerator.PRETTY_PRINTING, true));
-
     /**
      * JSON-RPC {@code initialize} method.
      */
@@ -139,7 +129,6 @@ interface McpJsonSerializer {
      * JSON-RPC {@code session/disconnect} method.
      */
     String METHOD_SESSION_DISCONNECT = "session/disconnect";
-
     /**
      * JSON-RPC {@code elicitation/create} method.
      */
@@ -153,10 +142,10 @@ interface McpJsonSerializer {
         };
     }
 
-    static String prettyPrint(JsonStructure json) {
+    static String prettyPrint(JsonValue json) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (JsonWriter writer = JSON_PP_WRITER_FACTORY.createWriter(baos)) {
-            writer.write(json);
+        try (JsonGenerator generator = JsonGenerator.create(baos, true)) {
+            generator.write(json);
         }
         return baos.toString(StandardCharsets.UTF_8);
     }
@@ -165,7 +154,7 @@ interface McpJsonSerializer {
         return !payload.containsKey("method") && payload.containsKey("id");
     }
 
-    JsonObjectBuilder createJsonInitializeResponse(Set<McpCapability> capabilities, McpServerConfig config);
+    JsonObject.Builder createJsonInitializeResponse(Set<McpCapability> capabilities, McpServerConfig config);
 
     // ---------- LIST RESPONSE ----------
 
@@ -179,15 +168,15 @@ interface McpJsonSerializer {
 
     // ---------- LIST RESPONSE COMPONENT MAPPING ----------
 
-    JsonObjectBuilder toJson(McpTool tool);
+    JsonObject.Builder toJson(McpTool tool);
 
-    JsonObjectBuilder toJson(McpPrompt prompt);
+    JsonObject.Builder toJson(McpPrompt prompt);
 
-    JsonObjectBuilder toJson(McpPromptArgument argument);
+    JsonObject.Builder toJson(McpPromptArgument argument);
 
-    JsonObjectBuilder toJson(McpResource resource);
+    JsonObject.Builder toJson(McpResource resource);
 
-    JsonObjectBuilder resourceTemplates(McpResource resource);
+    JsonObject.Builder resourceTemplates(McpResource resource);
 
     // ---------- COMPONENT EXECUTION RESULT ----------
 
@@ -201,51 +190,51 @@ interface McpJsonSerializer {
 
     // ---------- CONTENTS ----------
 
-    Optional<JsonObjectBuilder> toJson(McpContent content);
+    Optional<JsonObject.Builder> toJson(McpContent content);
 
-    JsonObjectBuilder toJson(McpTextContent content);
+    JsonObject.Builder toJson(McpTextContent content);
 
-    JsonObjectBuilder toJson(McpImageContent content);
+    JsonObject.Builder toJson(McpImageContent content);
 
-    JsonObjectBuilder toJson(McpEmbeddedTextResourceContent content);
+    JsonObject.Builder toJson(McpEmbeddedTextResourceContent content);
 
-    JsonObjectBuilder toJson(McpEmbeddedBinaryResourceContent content);
+    JsonObject.Builder toJson(McpEmbeddedBinaryResourceContent content);
 
-    Optional<JsonObjectBuilder> toJson(McpAudioContent content);
+    Optional<JsonObject.Builder> toJson(McpAudioContent content);
 
     // ---------- PROMPT CONTENTS ----------
 
-    Optional<JsonObjectBuilder> toJson(McpPromptContent content);
+    Optional<JsonObject.Builder> toJson(McpPromptContent content);
 
-    JsonObjectBuilder toJson(McpPromptImageContent image);
+    JsonObject.Builder toJson(McpPromptImageContent image);
 
-    JsonObjectBuilder toJson(McpPromptTextResourceContent text);
+    JsonObject.Builder toJson(McpPromptTextResourceContent text);
 
-    JsonObjectBuilder toJson(McpPromptBinaryResourceContent binary);
+    JsonObject.Builder toJson(McpPromptBinaryResourceContent binary);
 
-    Optional<JsonObjectBuilder> toJson(McpPromptAudioContent audio);
+    Optional<JsonObject.Builder> toJson(McpPromptAudioContent audio);
 
-    JsonObjectBuilder toJson(McpPromptTextContent content);
+    JsonObject.Builder toJson(McpPromptTextContent content);
 
     // ---------- RESOURCE CONTENTS ----------
 
-    Optional<JsonObjectBuilder> toJson(McpResourceContent content);
+    Optional<JsonObject.Builder> toJson(McpResourceContent content);
 
-    JsonObjectBuilder toJson(McpResourceBinaryContent content);
+    JsonObject.Builder toJson(McpResourceBinaryContent content);
 
-    JsonObjectBuilder toJson(McpResourceTextContent content);
+    JsonObject.Builder toJson(McpResourceTextContent content);
 
     // ---------- SAMPLING ----------
 
-    JsonObjectBuilder toJson(McpSamplingRequest request);
+    JsonObject.Builder toJson(McpSamplingRequest request);
 
-    JsonObjectBuilder toJson(McpSamplingMessage message);
+    JsonObject.Builder toJson(McpSamplingMessage message);
 
-    JsonObjectBuilder toJson(McpSamplingImageMessage image);
+    JsonObject.Builder toJson(McpSamplingImageMessage image);
 
-    JsonObjectBuilder toJson(McpSamplingTextMessage text);
+    JsonObject.Builder toJson(McpSamplingTextMessage text);
 
-    JsonObjectBuilder toJson(McpSamplingAudioMessage audio);
+    JsonObject.Builder toJson(McpSamplingAudioMessage audio);
 
     JsonObject createSamplingRequest(long id, McpSamplingRequest request);
 
@@ -261,13 +250,13 @@ interface McpJsonSerializer {
 
     // ---------- JSON-RPC ----------
 
-    JsonObject createJsonRpcNotification(String method, JsonObjectBuilder params);
+    JsonObject createJsonRpcNotification(String method, JsonObject.Builder params);
 
-    JsonObject createJsonRpcRequest(long id, String method, JsonObjectBuilder params);
+    JsonObject createJsonRpcRequest(long id, String method, JsonObject.Builder params);
 
-    JsonObjectBuilder createJsonRpcRequest(long id, String method);
+    JsonObject.Builder createJsonRpcRequest(long id, String method);
 
-    JsonObject createJsonRpcErrorResponse(long id, JsonObjectBuilder params);
+    JsonObject createJsonRpcErrorResponse(long id, JsonObject.Builder params);
 
     JsonObject createJsonRpcResultResponse(long id, JsonValue params);
 

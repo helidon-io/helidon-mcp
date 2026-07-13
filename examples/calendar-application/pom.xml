@@ -36,5 +36,6 @@
         <module>calendar</module>
         <module>calendar-stateless</module>
         <module>calendar-declarative</module>
+        <module>calendar-microprofile</module>
     </modules>
 </project>

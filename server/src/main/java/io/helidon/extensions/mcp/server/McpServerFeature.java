@@ -32,13 +32,15 @@ import java.util.function.Function;
 import io.helidon.builder.api.RuntimeType;
 import io.helidon.common.mapper.OptionalValue;
 import io.helidon.config.Config;
-import io.helidon.cors.CrossOriginConfig;
 import io.helidon.http.HeaderNames;
 import io.helidon.http.HeaderValues;
 import io.helidon.http.Status;
+import io.helidon.json.JsonNull;
+import io.helidon.json.JsonObject;
+import io.helidon.json.JsonString;
+import io.helidon.json.JsonValue;
 import io.helidon.jsonrpc.core.JsonRpcError;
 import io.helidon.service.registry.Services;
-import io.helidon.webserver.cors.CorsSupport;
 import io.helidon.webserver.http.HttpFeature;
 import io.helidon.webserver.http.HttpRequest;
 import io.helidon.webserver.http.HttpRouting;
@@ -48,10 +50,6 @@ import io.helidon.webserver.jsonrpc.JsonRpcHandlers;
 import io.helidon.webserver.jsonrpc.JsonRpcRequest;
 import io.helidon.webserver.jsonrpc.JsonRpcResponse;
 import io.helidon.webserver.jsonrpc.JsonRpcRouting;
-
-import jakarta.json.JsonObject;
-import jakarta.json.JsonString;
-import jakarta.json.JsonValue;
 
 import static io.helidon.extensions.mcp.server.McpJsonSerializer.METHOD_COMPLETION_COMPLETE;
 import static io.helidon.extensions.mcp.server.McpJsonSerializer.METHOD_INITIALIZE;
@@ -174,11 +172,23 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         jsonRpcHandlers = builder.build();
     }
 
-    static McpServerFeature create(McpServerConfig config) {
+    /**
+     * Create an MCP server feature instance.
+     *
+     * @param config MCP server configuration
+     * @return the instance
+     */
+    public static McpServerFeature create(McpServerConfig config) {
         return new McpServerFeature(config);
     }
 
-    static McpServerFeature create(Consumer<McpServerConfig.Builder> consumer) {
+    /**
+     * Create an MCP server feature instance.
+     *
+     * @param consumer MCP server configuration
+     * @return the instance
+     */
+    public static McpServerFeature create(Consumer<McpServerConfig.Builder> consumer) {
         return McpServerConfig.builder().update(consumer).build();
     }
 
@@ -193,9 +203,6 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
 
     @Override
     public void setup(HttpRouting.Builder routing) {
-        var cors = CorsSupport.builder()
-                .addCrossOrigin(CrossOriginConfig.create())
-                .build();
         // add all the JSON-RPC routes first
         JsonRpcRouting jsonRpcRouting = JsonRpcRouting.builder()
                 .register(endpoint + "/message", jsonRpcHandlers)
@@ -204,7 +211,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         jsonRpcRouting.routing(routing);
 
         // additional HTTP routes for SSE and session disconnect
-        routing.get(DEFAULT_OIDC_METADATA_URI, cors, this::mcpMetadata)
+        routing.get(DEFAULT_OIDC_METADATA_URI, this::mcpMetadata)
                 .get(endpoint, this::sse)
                 .delete(endpoint, this::disconnect);
     }
@@ -224,7 +231,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         for (Config provider : providers.get()) {
             var identity = provider.get("oidc.identity-uri");
             if (identity.exists()) {
-                String identityUri = identity.asString().map(this::removeTrailingSlash).orElse(null);
+                String identityUri = identity.asString().map(this::removeTrailingSlash).orElse("");
                 response.header(HeaderNames.LOCATION, identityUri + DEFAULT_OIDC_METADATA_URI);
                 response.status(Status.SEE_OTHER_303);
                 response.send();
@@ -257,7 +264,8 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             response.status(Status.NOT_FOUND_404).send();
             return;
         }
-        foundSession.get().onDisconnect(response);
+        McpSession session = foundSession.orElseThrow(() -> new McpInternalException("Session not found"));
+        session.onDisconnect(response);
         response.send();
     }
 
@@ -281,7 +289,8 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     }
 
     private void initializeRpc(JsonRpcRequest req, JsonRpcResponse res) {
-        JsonValue requestId = req.rpcId().orElseThrow(() -> new McpInternalException("request id is required"));
+        JsonValue requestId = req.rpcId()
+                .orElseThrow(() -> new McpInternalException("request id is required"));
         Optional<McpSession> foundSession = findSession(req);
         McpSession session;
 
@@ -294,9 +303,9 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             sessions.put(sessionId, session);
             session.onConnect(res);
         } else {
-            session = foundSession.get();
+            session = foundSession.orElseThrow(() -> new McpInternalException("Session not found"));
         }
-        McpParameters params = new McpParameters(req.params(), req.params().asJsonObject());
+        McpParameters params = new McpParameters(req.params());
         McpProtocolVersion protocolVersion = params.get("protocolVersion")
                 .asString()
                 .map(McpProtocolVersion::find)
@@ -315,7 +324,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                         .ifPresent(it -> session.capability(McpCapability.ELICITATION));
         session.state(INITIALIZING);
         var payload = session.serializer().createJsonInitializeResponse(capabilities, config);
-        session.onRequest(requestId, req, res);
+        session.createTransport(requestId, req, res);
         res.result(payload.build());
         session.send(requestId, res);
     }
@@ -326,7 +335,8 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             res.send();
             return;
         }
-        session.get().state(McpSession.State.INITIALIZED);
+        McpSession foundSession = session.orElseThrow(() -> new McpInternalException("Session not found"));
+        foundSession.state(McpSession.State.INITIALIZED);
         res.status(Status.ACCEPTED_202);
     }
 
@@ -336,17 +346,20 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             res.send();
             return;
         }
-        McpSession session = foundSession.get();
+        McpSession session = foundSession.orElseThrow(() -> new McpInternalException("Session not found"));
         Optional<JsonValue> reason = req.params().find("reason");
         Optional<JsonValue> requestId = req.params().find("requestId");
         // Ignore malformed request
-        if (requestId.isEmpty()) {
+        if (requestId.isEmpty()
+                || reason.isEmpty()
+                || !(reason.get() instanceof JsonString)) {
             if (LOGGER.isLoggable(Level.TRACE)) {
-                LOGGER.log(Level.TRACE, "Malformed cancellation request: %s".formatted(req.asJsonObject()));
+                LOGGER.log(Level.TRACE,
+                           "Malformed cancellation request: %s".formatted(req.asJsonObject()));
             }
             return;
         }
-        String cancelReason = ((JsonString) reason.get()).getString();
+        String cancelReason = ((JsonString) reason.get()).value();
         session.findFeatures(requestId.get())
                 .map(McpFeatures::cancellation)
                 .ifPresent(cancellation -> cancellation.cancel(cancelReason, requestId.get()));
@@ -359,47 +372,49 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             res.send();
             return;
         }
-        session.get()
-                .context()
-                .register(McpRoots.McpRootClassifier.class, true);
+        McpSession foundSession = session.orElseThrow(() -> new McpInternalException("Session not found"));
+        foundSession.context().register(McpRoots.McpRootClassifier.class, true);
         res.status(Status.ACCEPTED_202);
     }
 
     private void pingRpc(JsonRpcRequest req, JsonRpcResponse res) {
-        JsonValue requestId = req.rpcId().orElseThrow(() -> new McpInternalException("request id is required"));
+        JsonValue requestId = req.rpcId()
+                .orElseThrow(() -> new McpInternalException("request id is required"));
         Optional<McpSession> foundSession = findSessionOnRequest(requestId, req, res);
         if (!res.status().equals(Status.OK_200)) {
             res.send();
             return;
         }
-        McpSession session = foundSession.get();
-        res.result(JsonValue.EMPTY_JSON_OBJECT);
+        McpSession session = foundSession.orElseThrow(() -> new McpInternalException("Session not found"));
+        res.result(JsonObject.empty());
         session.send(requestId, res);
     }
 
     private void toolsListRpc(JsonRpcRequest req, JsonRpcResponse res) {
-        JsonValue requestId = req.rpcId().orElseThrow(() -> new McpInternalException("request id is required"));
+        JsonValue requestId = req.rpcId()
+                .orElseThrow(() -> new McpInternalException("request id is required"));
         Optional<McpSession> foundSession = findSessionOnRequest(requestId, req, res);
         if (!res.status().equals(Status.OK_200)) {
             res.send();
             return;
         }
-        McpSession session = foundSession.get();
+        McpSession session = foundSession.orElseThrow(() -> new McpInternalException("Session not found"));
         McpPage<McpTool> page = tools.page(req.params());
         res.result(session.serializer().listTools(page));
         session.send(requestId, res);
     }
 
     private void toolsCallRpc(JsonRpcRequest req, JsonRpcResponse res) {
-        JsonValue requestId = req.rpcId().orElseThrow(() -> new McpInternalException("request id is required"));
+        JsonValue requestId = req.rpcId()
+                .orElseThrow(() -> new McpInternalException("request id is required"));
         Optional<McpSession> foundSession = findSessionOnRequest(requestId, req, res);
         if (!res.status().equals(Status.OK_200)) {
             res.send();
             return;
         }
         boolean error = false;
-        McpSession session = foundSession.get();
-        McpParameters parameters = new McpParameters(req.params(), req.params().asJsonObject());
+        McpSession session = foundSession.orElseThrow(() -> new McpInternalException("Session not found"));
+        McpParameters parameters = new McpParameters(req.params());
 
         String name = parameters.get("name").asString().orElse("");
         Optional<McpTool> tool = tools.content().stream()
@@ -431,28 +446,30 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     }
 
     private void resourcesListRpc(JsonRpcRequest req, JsonRpcResponse res) {
-        JsonValue requestId = req.rpcId().orElseThrow(() -> new McpInternalException("request id is required"));
+        JsonValue requestId = req.rpcId()
+                .orElseThrow(() -> new McpInternalException("request id is required"));
         Optional<McpSession> foundSession = findSessionOnRequest(requestId, req, res);
         if (!res.status().equals(Status.OK_200)) {
             res.send();
             return;
         }
-        McpSession session = foundSession.get();
+        McpSession session = foundSession.orElseThrow(() -> new McpInternalException("Session not found"));
         var resourceList = session.serializer().listResources(resources.page(req.params()));
         res.result(resourceList);
         session.send(requestId, res);
     }
 
     private void resourcesReadRpc(JsonRpcRequest req, JsonRpcResponse res) {
-        JsonValue requestId = req.rpcId().orElseThrow(() -> new McpInternalException("request id is required"));
+        JsonValue requestId = req.rpcId()
+                .orElseThrow(() -> new McpInternalException("request id is required"));
         Optional<McpSession> foundSession = findSessionOnRequest(requestId, req, res);
         if (!res.status().equals(Status.OK_200)) {
             res.send();
             return;
         }
-        McpSession session = foundSession.get();
+        McpSession session = foundSession.orElseThrow(() -> new McpInternalException("Session not found"));
 
-        McpParameters parameters = new McpParameters(req.params(), req.params().asJsonObject());
+        McpParameters parameters = new McpParameters(req.params());
         String resourceUri = parameters.get("uri").asString().orElse("");
         Optional<McpResource> resource = resources.content().stream()
                 .filter(r -> resourceUri.equals(r.uri()))
@@ -493,14 +510,15 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     }
 
     private void resourceSubscribeRpc(JsonRpcRequest req, JsonRpcResponse res) {
-        JsonValue requestId = req.rpcId().orElseThrow(() -> new McpInternalException("request id is required"));
+        JsonValue requestId = req.rpcId()
+                .orElseThrow(() -> new McpInternalException("request id is required"));
         Optional<McpSession> foundSession = findSessionOnRequest(requestId, req, res);
         if (!res.status().equals(Status.OK_200)) {
             res.send();
             return;
         }
-        McpSession session = foundSession.get();
-        McpParameters parameters = new McpParameters(req.params(), req.params().asJsonObject());
+        McpSession session = foundSession.orElseThrow(() -> new McpInternalException("Session not found"));
+        McpParameters parameters = new McpParameters(req.params());
         String resourceUri = parameters.get("uri").asString()
                 .orElseThrow(() -> new McpInternalException("uri is required"));
 
@@ -536,7 +554,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                                                .build());
             session.afterFeatureRequest(parameters, requestId);
             // send final response using active SSE sink
-            res.result(JsonValue.EMPTY_JSON_OBJECT);
+            res.result(JsonObject.empty());
             session.send(requestId, res);
             return;
         }
@@ -545,19 +563,20 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 .subscriptions()
                 .blockSubscribe(resourceUri);
         // send final response after unblocking
-        res.result(JsonValue.EMPTY_JSON_OBJECT);
+        res.result(JsonObject.empty());
         session.send(requestId, res);
     }
 
     private void resourceUnsubscribeRpc(JsonRpcRequest req, JsonRpcResponse res) {
-        JsonValue requestId = req.rpcId().orElseThrow(() -> new McpInternalException("request id is required"));
+        JsonValue requestId = req.rpcId()
+                .orElseThrow(() -> new McpInternalException("request id is required"));
         Optional<McpSession> foundSession = findSessionOnRequest(requestId, req, res);
         if (!res.status().equals(Status.OK_200)) {
             res.send();
             return;
         }
-        McpSession session = foundSession.get();
-        McpParameters parameters = new McpParameters(req.params(), req.params().asJsonObject());
+        McpSession session = foundSession.orElseThrow(() -> new McpInternalException("Session not found"));
+        McpParameters parameters = new McpParameters(req.params());
         String resourceUri = parameters.get("uri").asString()
                 .orElseThrow(() -> new McpInternalException("uri is required"));
 
@@ -583,18 +602,19 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         session.features()
                 .subscriptions()
                 .unsubscribe(resourceUri);
-        res.result(JsonValue.EMPTY_JSON_OBJECT);
+        res.result(JsonObject.empty());
         session.send(requestId, res);
     }
 
     private void resourceTemplateListRpc(JsonRpcRequest req, JsonRpcResponse res) {
-        JsonValue requestId = req.rpcId().orElseThrow(() -> new McpInternalException("request id is required"));
+        JsonValue requestId = req.rpcId()
+                .orElseThrow(() -> new McpInternalException("request id is required"));
         Optional<McpSession> foundSession = findSessionOnRequest(requestId, req, res);
         if (!res.status().equals(Status.OK_200)) {
             res.send();
             return;
         }
-        McpSession session = foundSession.get();
+        McpSession session = foundSession.orElseThrow(() -> new McpInternalException("Session not found"));
         var page = resourceTemplates.page(req.params());
         var payload = session.serializer().listResourceTemplates(page);
         res.result(payload);
@@ -602,13 +622,14 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     }
 
     private void promptsListRpc(JsonRpcRequest req, JsonRpcResponse res) {
-        JsonValue requestId = req.rpcId().orElseThrow(() -> new McpInternalException("request id is required"));
+        JsonValue requestId = req.rpcId()
+                .orElseThrow(() -> new McpInternalException("request id is required"));
         Optional<McpSession> foundSession = findSessionOnRequest(requestId, req, res);
         if (!res.status().equals(Status.OK_200)) {
             res.send();
             return;
         }
-        McpSession session = foundSession.get();
+        McpSession session = foundSession.orElseThrow(() -> new McpInternalException("Session not found"));
         var page = prompts.page(req.params());
         var payload = session.serializer().listPrompts(page);
         res.result(payload);
@@ -616,14 +637,15 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     }
 
     private void promptsGetRpc(JsonRpcRequest req, JsonRpcResponse res) {
-        JsonValue requestId = req.rpcId().orElseThrow(() -> new McpInternalException("request id is required"));
+        JsonValue requestId = req.rpcId()
+                .orElseThrow(() -> new McpInternalException("request id is required"));
         Optional<McpSession> foundSession = findSessionOnRequest(requestId, req, res);
         if (!res.status().equals(Status.OK_200)) {
             res.send();
             return;
         }
-        McpSession session = foundSession.get();
-        McpParameters parameters = new McpParameters(req.params(), req.params().asJsonObject());
+        McpSession session = foundSession.orElseThrow(() -> new McpInternalException("Session not found"));
+        McpParameters parameters = new McpParameters(req.params());
 
         String name = parameters.get("name").asString().orElse(null);
         if (name == null) {
@@ -659,20 +681,21 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     }
 
     private void loggingLogLevelRpc(JsonRpcRequest req, JsonRpcResponse res) {
-        JsonValue requestId = req.rpcId().orElseThrow(() -> new McpInternalException("request id is required"));
+        JsonValue requestId = req.rpcId()
+                .orElseThrow(() -> new McpInternalException("request id is required"));
         Optional<McpSession> foundSession = findSessionOnRequest(requestId, req, res);
         if (!res.status().equals(Status.OK_200)) {
             return;
         }
 
-        McpSession session = foundSession.get();
-        McpParameters parameters = new McpParameters(req.params(), req.params().asJsonObject());
+        McpSession session = foundSession.orElseThrow(() -> new McpInternalException("Session not found"));
+        McpParameters parameters = new McpParameters(req.params());
         OptionalValue<String> level = parameters.get("level").asString();
         if (level.isPresent()) {
             try {
                 McpLogger.Level logLevel = McpLogger.Level.valueOf(level.get().toUpperCase());
                 session.createFeatures(requestId, req, res).logger().setLevel(logLevel);
-                res.result(JsonValue.EMPTY_JSON_OBJECT);
+                res.result(JsonObject.empty());
                 session.send(requestId, res);
                 return;
             } catch (IllegalArgumentException e) {
@@ -687,13 +710,14 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     }
 
     private void completionRpc(JsonRpcRequest req, JsonRpcResponse res) {
-        JsonValue requestId = req.rpcId().orElseThrow(() -> new McpInternalException("request id is required"));
+        JsonValue requestId = req.rpcId()
+                .orElseThrow(() -> new McpInternalException("request id is required"));
         Optional<McpSession> foundSession = findSessionOnRequest(requestId, req, res);
         if (!res.status().equals(Status.OK_200)) {
             return;
         }
-        McpSession session = foundSession.get();
-        McpParameters parameters = new McpParameters(req.params(), req.params().asJsonObject());
+        McpSession session = foundSession.orElseThrow(() -> new McpInternalException("Session not found"));
+        McpParameters parameters = new McpParameters(req.params());
         McpParameters ref = parameters.get("ref");
         String referenceType = ref.get("type").asString().orElse(null);
         if (referenceType != null) {
@@ -789,14 +813,15 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         }
 
         // Look up session to send an error to the client
-        JsonValue requestId = request.rpcId().orElse(JsonValue.NULL);
+        JsonValue requestId = request.rpcId()
+                .orElse(JsonNull.instance());
         var session = findSession(request);
         if (session.isEmpty()) {
             response.header(HeaderValues.CONTENT_TYPE_JSON);
             if (stateless) {
                 return Optional.of(JsonRpcError.create(errorCode, throwable.getMessage()));
             }
-            return Optional.of(JsonRpcError.create(INTERNAL_ERROR, "Session not found"));
+            return Optional.of(JsonRpcError.create(INTERNAL_ERROR, "Internal server error"));
         }
         response.error(errorCode, throwable.getMessage());
 

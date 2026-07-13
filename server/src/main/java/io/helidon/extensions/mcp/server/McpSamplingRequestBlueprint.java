@@ -22,8 +22,6 @@ import java.util.Optional;
 import io.helidon.builder.api.Option;
 import io.helidon.builder.api.Prototype;
 
-import jakarta.json.JsonValue;
-
 /**
  * Configuration of an MCP sampling request.
  */
@@ -122,12 +120,18 @@ interface McpSamplingRequestBlueprint {
     Optional<McpIncludeContext> includeContext();
 
     /**
-     * Optional metadata to pass through to the LLM provider.
-     * The format of this metadata is provider-specific.
+     * Optional metadata to pass through to the LLM provider. The value is serialized using
+     * Helidon JSON binding, and its format is provider-specific. Custom types must have a
+     * Helidon JSON converter, for example by annotating the type with
+     * {@link io.helidon.json.binding.Json.Entity Json.Entity} and enabling Helidon JSON code generation.
+     *
+     * <p><strong>Compatibility:</strong> This option previously accepted {@code jakarta.json.JsonValue}. Accepting an
+     * {@link Object} instead is a backward-incompatible change. JSON-B annotations and
+     * unregistered POJOs are not supported.
      *
      * @return metadata
      */
-    Optional<JsonValue> metadata();
+    Optional<Object> metadata();
 
     /**
      * Sampling request timeout. Default is five seconds.

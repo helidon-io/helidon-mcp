@@ -178,6 +178,9 @@ a tool that returns structured content SHOULD also return the serialized JSON in
 added to the `McpToolResult` builder, Helidon will serialize the structured content and add it by itself.
 Tools have to provide an output schema for validation of structured results if it is using structured content.
 
+Structured content is serialized using Helidon JSON binding. Custom classes must be annotated with `@Json.Entity` and
+compiled with the Helidon JSON annotation processor. JSON-B annotations and unregistered POJOs are not supported.
+
 To add an output schema to the tool, implement the `outputSchema` method:
 ```java
 @Override
@@ -795,6 +798,15 @@ void process(McpRequest request) {
 }
 ```
 
+Custom parameter types are deserialized using Helidon JSON binding. Annotate them with `@Json.Entity` and enable the
+Helidon JSON annotation processor so a converter is generated:
+
+```java
+@Json.Entity
+record Address(String street, String city) {
+}
+```
+
 ### Checking for Presence
 
 You can check if a parameter is present or empty.
@@ -1097,7 +1109,7 @@ McpSamplingRequest request = McpSamplingRequest.builder()
                 .costPriority(0.1)
                 .speedPriority(0.1)
                 .hints(List.of("hint1"))
-                .metadata(JsonValue.TRUE)
+                .metadata(Map.of("requestId", "example-request"))
                 .intelligencePriority(0.1)
                 .systemPrompt("system prompt")
                 .timeout(Duration.ofSeconds(10))
@@ -1109,6 +1121,11 @@ McpSamplingRequest request = McpSamplingRequest.builder()
                                                      .build())
                 .build();
 ```
+
+Sampling metadata is serialized using Helidon JSON binding. The metadata option accepts `Object`; maps, collections,
+arrays, primitives, and converter-backed custom classes are supported. See
+[Migrate from JSON-B to Helidon JSON Binding](upgrade_guide_1.2.md#migrate-from-json-b-to-helidon-json-binding) for the
+compatibility impact and migration steps.
 
 Once your request is built, send it using the sampling feature.
 
