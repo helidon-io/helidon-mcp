@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0]
+
+This release of Helidon MCP contains bugfixes, dependency upgrades and is recommended for all users.
+
+### NOTABLE CHANGES
+
+- MicroProfile support 
+- Upgrade Helidon version to 4.5.0
+- Migration from JSON-B to Helidon JSON
+
+### BREAKING CHANGES
+
+Helidon MCP `1.2.0` introduces API changes that are not backward compatible. To upgrade, refer to the 
+[upgrade guide](docs/mcp/upgrade_guide_1.2.md) which documents each API change and provides upgrade guidance.
+
+### CHANGES
+
+- Handle optional cancellation reasons [191](https://github.com/helidon-io/helidon-mcp/pull/191)
+- Update Helidon version to 4.5.0 [196](https://github.com/helidon-io/helidon-mcp/pull/196)
+- Codegen emits invalid accessors for primitive numeric tool parameters [194](https://github.com/helidon-io/helidon-mcp/pull/194)
+- Add @Mcp.Required annotation for tool parameters [176](https://github.com/helidon-io/helidon-mcp/pull/176)
+- Remove timed-out resource subscriptions [192](https://github.com/helidon-io/helidon-mcp/pull/192)
+- Handle empty collections in paginated MCP list responses [189](https://github.com/helidon-io/helidon-mcp/pull/189)
+- Add a stateless server example [178](https://github.com/helidon-io/helidon-mcp/pull/178)
+- Make session capacity configurable [163](https://github.com/helidon-io/helidon-mcp/pull/163)
+- Fix headers check, notification error status, malformed cancellation request [171](https://github.com/helidon-io/helidon-mcp/pull/171)
+
 ## [1.1.1]
 
 This release of Helidon MCP contains bugfixes, dependency upgrades and is recommended for all users.
@@ -29,7 +56,7 @@ This release of Helidon MCP adds support for the `2025-06-18` MCP specification.
 
 ### BREAKING CHANGES
 
-Helidon MCP 1.1.0 introduces API changes that are not backward compatible. To upgrade, refer to 
+Helidon MCP `1.1.0` introduces API changes that are not backward compatible. To upgrade, refer to 
 the [upgrade guide](docs/mcp/upgrade_guide_1.1.md), which documents each API change and provides upgrade guidance.
 
 ### CHANGES
