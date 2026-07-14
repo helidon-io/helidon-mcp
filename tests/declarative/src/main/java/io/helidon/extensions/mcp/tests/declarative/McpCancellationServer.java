@@ -28,41 +28,45 @@ import io.helidon.extensions.mcp.server.McpToolResult;
 @Mcp.Server
 @Mcp.Path("/cancellation")
 class McpCancellationServer {
+    private static final String NO_CANCELLATION_REQUESTED = "No cancellation requested";
 
     @Mcp.Tool("Cancellation Tool")
     McpToolResult cancellationTool(McpCancellation cancellation) {
-        String reason = cancellation.result().reason();
-        return McpToolResult.builder().addTextContent(reason).build();
+        return McpToolResult.builder()
+                .addTextContent(cancellation.result().reason().orElse(NO_CANCELLATION_REQUESTED))
+                .build();
     }
 
     @Mcp.Tool("Cancellation Tool")
     String cancellationTool1(McpRequest request, McpCancellation cancellation, McpLogger logger) {
-        return request.features().cancellation().result().reason();
+        return request.features().cancellation().result().reason().orElse(NO_CANCELLATION_REQUESTED);
     }
 
     @Mcp.Prompt("Cancellation Prompt")
     McpPromptResult cancellationPrompt(McpCancellation cancellation) {
-        String reason = cancellation.result().reason();
-        return McpPromptResult.builder().addTextContent(reason).build();
+        return McpPromptResult.builder()
+                .addTextContent(cancellation.result().reason().orElse(NO_CANCELLATION_REQUESTED))
+                .build();
     }
 
     @Mcp.Prompt("Cancellation Prompt")
     String cancellationPrompt1(McpRequest request, McpCancellation cancellation, McpLogger logger) {
-        return request.features().cancellation().result().reason();
+        return request.features().cancellation().result().reason().orElse(NO_CANCELLATION_REQUESTED);
     }
 
     @Mcp.Resource(uri = "file://cancellation",
                   mediaType = MediaTypes.TEXT_PLAIN_VALUE,
                   description = "Cancellation Resource")
     McpResourceResult cancellationResource(McpCancellation cancellation) {
-        String reason = cancellation.result().reason();
-        return McpResourceResult.builder().addTextContent(reason).build();
+        return McpResourceResult.builder()
+                .addTextContent(cancellation.result().reason().orElse(NO_CANCELLATION_REQUESTED))
+                .build();
     }
 
     @Mcp.Resource(uri = "file://cancellation1",
                   mediaType = MediaTypes.TEXT_PLAIN_VALUE,
                   description = "Cancellation Resource")
     String cancellationResource1(McpRequest request, McpCancellation cancellation, McpLogger logger) {
-        return request.features().cancellation().result().reason();
+        return request.features().cancellation().result().reason().orElse(NO_CANCELLATION_REQUESTED);
     }
 }

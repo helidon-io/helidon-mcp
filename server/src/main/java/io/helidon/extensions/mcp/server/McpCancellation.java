@@ -34,7 +34,7 @@ public final class McpCancellation {
     private LazyValue<Runnable> hook = LazyValue.create(() -> noop);
 
     McpCancellation() {
-        result = new McpCancellationResult(false, "No cancellation requested");
+        result = new McpCancellationResultImpl(false);
     }
 
     /**
@@ -57,17 +57,31 @@ public final class McpCancellation {
 
     /**
      * Cancel the current operation. This method can be triggered only once and
-     * additional call are ignored.
+     * additional calls are ignored.
      *
      * @param reason cancellation reason
-     * @param requestId request ID to be cancelled
+     * @param requestId request ID to be canceled
      */
     void cancel(String reason, JsonValue requestId) {
+        cancel(new McpCancellationResultImpl(true, reason), requestId);
+    }
+
+    /**
+     * Cancel the current operation without a reason. This method can be triggered only once and
+     * additional calls are ignored.
+     *
+     * @param requestId request ID to be canceled
+     */
+    void cancel(JsonValue requestId) {
+        cancel(new McpCancellationResultImpl(true), requestId);
+    }
+
+    private void cancel(McpCancellationResult cancellationResult, JsonValue requestId) {
         if (!hook.isLoaded()) {
             if (LOGGER.isLoggable(Level.DEBUG)) {
                 LOGGER.log(Level.DEBUG, "Cancelling task with request id: %s", requestId);
             }
-            result = new McpCancellationResult(true, reason);
+            result = cancellationResult;
             hook.get().run();
         }
     }

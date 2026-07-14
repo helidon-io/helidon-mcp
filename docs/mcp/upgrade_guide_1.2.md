@@ -13,8 +13,37 @@ with Helidon JSON Binding. This document summarizes the key changes and explains
 - Custom classes used for MCP JSON serialization or deserialization must have a discoverable Helidon JSON converter.
 - `McpSamplingRequest.metadata()` now returns `Optional<Object>`, and its builder accepts `Object` instead of
   `jakarta.json.JsonValue`.
+- `McpCancellationResult` is now a sealed interface, and `reason()` returns `Optional<String>` instead of `String`.
 
 The sections below describe how to migrate applications to version `1.2.0`.
+
+## Migrate cancellation result handling
+
+An MCP cancellation notification can omit its reason. To represent this correctly, `McpCancellationResult` is now a
+sealed interface and its `reason()` method returns `Optional<String>` instead of `String`.
+
+Previous usage:
+
+```java
+String reason = cancellation.result().reason();
+```
+
+Updated usage:
+
+```java
+McpCancellationResult result = cancellation.result();
+if (result.isRequested()) {
+    String reason = result.reason().orElse("Cancellation requested");
+}
+```
+
+`reason()` returns `Optional.empty()` both before cancellation is requested and when a cancellation notification omits
+the reason. Use `isRequested()` to distinguish between those states.
+
+Changing `McpCancellationResult` from a class to an interface and changing the return type of `reason()` create binary
+and source incompatibilities. Applications compiled against an earlier version must be recompiled, including
+applications that only call `isRequested()`. Otherwise, previously compiled code can fail with an
+`IncompatibleClassChangeError` or `NoSuchMethodError` at runtime.
 
 ## Migrate from JSON-B to Helidon JSON Binding
 

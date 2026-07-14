@@ -16,6 +16,7 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.helidon.json.JsonNull;
@@ -31,7 +32,7 @@ class McpCancellationTest {
         McpCancellation cancellation = new McpCancellation();
 
         assertThat(cancellation.result().isRequested(), is(false));
-        assertThat(cancellation.result().reason(), is("No cancellation requested"));
+        assertThat(cancellation.result().reason(), is(Optional.empty()));
     }
 
     @Test
@@ -41,7 +42,16 @@ class McpCancellationTest {
         cancellation.cancel(reason, JsonNull.instance());
 
         assertThat(cancellation.result().isRequested(), is(true));
-        assertThat(cancellation.result().reason(), is(reason));
+        assertThat(cancellation.result().reason(), is(Optional.of(reason)));
+    }
+
+    @Test
+    void testCancellationRequestedWithoutReason() {
+        McpCancellation cancellation = new McpCancellation();
+        cancellation.cancel(JsonNull.instance());
+
+        assertThat(cancellation.result().isRequested(), is(true));
+        assertThat(cancellation.result().reason(), is(Optional.empty()));
     }
 
     @Test
@@ -56,7 +66,7 @@ class McpCancellationTest {
 
         McpCancellationResult result = cancellation.result();
         assertThat(result.isRequested(), is(true));
-        assertThat(result.reason(), is(reason));
+        assertThat(result.reason(), is(Optional.of(reason)));
         assertThat(counter.get(), is(1));
     }
 }

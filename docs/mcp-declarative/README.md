@@ -660,8 +660,9 @@ McpToolResult cancellationTool(McpCancellation cancellation) {
     long timeout = now + TimeUnit.SECONDS.toMillis(5);
 
     while (now < timeout) {
-        if (cancellation.verify().isRequested()) {
-            String reason = cancellation.verify().reason();
+        McpCancellationResult result = cancellation.result();
+        if (result.isRequested()) {
+            String reason = result.reason().orElse("Cancellation requested");
             return McpToolResult.create(reason);
         }
         longRunningOperation();
