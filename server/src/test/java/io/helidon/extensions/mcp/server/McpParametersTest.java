@@ -340,6 +340,17 @@ class McpParametersTest {
     }
 
     @Test
+    void testGenericTypeCreatedFromClass() {
+        JsonObject object = JsonParser.create("{\"foo\":\"value1\",\"bar\":\"value2\"}").readJsonObject();
+        JsonRpcParams params = JsonRpcParams.create(object);
+        McpParameters parameters = new McpParameters(params);
+        Foo foo = parameters.as(GenericType.create(Foo.class)).get();
+
+        assertThat(foo.foo(), is("value1"));
+        assertThat(foo.bar(), is("value2"));
+    }
+
+    @Test
     void testIsNumberInt() {
         JsonObject object = JsonParser.create("{\"foo\":1}").readJsonObject();
         JsonRpcParams params = JsonRpcParams.create(object);
