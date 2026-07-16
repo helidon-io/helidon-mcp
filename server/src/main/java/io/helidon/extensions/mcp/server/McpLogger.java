@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 package io.helidon.extensions.mcp.server;
 
 import java.util.Objects;
+
+import io.helidon.json.binding.Json;
 
 /**
  * MCP logger sends notification to the client.
@@ -41,8 +43,27 @@ public final class McpLogger extends McpFeature {
         Objects.requireNonNull(level, "level must not be null");
         Objects.requireNonNull(message, "message must not be null");
 
+        sendNotification(level, message);
+    }
+
+    /**
+     * Send a notification to the client with provided data and logging level.
+     * Data is serialized using Helidon JSON binding. Custom types must have a Helidon JSON converter,
+     * for example by annotating the type with {@link Json.Entity} and enabling Helidon JSON code generation.
+     *
+     * @param level notification level
+     * @param data  notification data
+     */
+    public void log(Level level, Object data) {
+        Objects.requireNonNull(level, "level must not be null");
+        Objects.requireNonNull(data, "data must not be null");
+
+        sendNotification(level, data);
+    }
+
+    private void sendNotification(Level level, Object data) {
         if (level.ordinal() >= level().ordinal()) {
-            var notification = session.serializer().createLoggingNotification(level, name, message);
+            var notification = session.serializer().createLoggingNotification(level, name, data);
             transport().send(notification);
         }
     }
@@ -57,12 +78,30 @@ public final class McpLogger extends McpFeature {
     }
 
     /**
+     * Send a debug notification to the client.
+     *
+     * @param data notification data
+     */
+    public void debug(Object data) {
+        log(Level.DEBUG, data);
+    }
+
+    /**
      * Send an info notification to the client.
      *
      * @param message notification
      */
     public void info(String message) {
         log(Level.INFO, message);
+    }
+
+    /**
+     * Send an info notification to the client.
+     *
+     * @param data notification data
+     */
+    public void info(Object data) {
+        log(Level.INFO, data);
     }
 
     /**
@@ -75,12 +114,30 @@ public final class McpLogger extends McpFeature {
     }
 
     /**
+     * Send a notice notification to the client.
+     *
+     * @param data notification data
+     */
+    public void notice(Object data) {
+        log(Level.NOTICE, data);
+    }
+
+    /**
      * Send a warning notification to the client.
      *
      * @param message notification
      */
     public void warn(String message) {
         log(Level.WARNING, message);
+    }
+
+    /**
+     * Send a warning notification to the client.
+     *
+     * @param data notification data
+     */
+    public void warn(Object data) {
+        log(Level.WARNING, data);
     }
 
     /**
@@ -93,12 +150,30 @@ public final class McpLogger extends McpFeature {
     }
 
     /**
+     * Send an error notification to the client.
+     *
+     * @param data notification data
+     */
+    public void error(Object data) {
+        log(Level.ERROR, data);
+    }
+
+    /**
      * Send a critical notification to the client.
      *
      * @param message notification
      */
     public void critical(String message) {
         log(Level.CRITICAL, message);
+    }
+
+    /**
+     * Send a critical notification to the client.
+     *
+     * @param data notification data
+     */
+    public void critical(Object data) {
+        log(Level.CRITICAL, data);
     }
 
     /**
@@ -111,12 +186,30 @@ public final class McpLogger extends McpFeature {
     }
 
     /**
+     * Send an alert notification to the client.
+     *
+     * @param data notification data
+     */
+    public void alert(Object data) {
+        log(Level.ALERT, data);
+    }
+
+    /**
      * Send an emergency notification to the client.
      *
      * @param message notification
      */
     public void emergency(String message) {
         log(Level.EMERGENCY, message);
+    }
+
+    /**
+     * Send an emergency notification to the client.
+     *
+     * @param data notification data
+     */
+    public void emergency(Object data) {
+        log(Level.EMERGENCY, data);
     }
 
     /**

@@ -15,9 +15,12 @@
  */
 package io.helidon.extensions.mcp.tests.common;
 
+import java.util.Map;
+
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpToolConfig;
 import io.helidon.extensions.mcp.server.McpToolResult;
+import io.helidon.json.binding.Json;
 import io.helidon.webserver.http.HttpRouting;
 
 /**
@@ -46,6 +49,38 @@ public class LoggingNotifications {
                                                                 .addTextContent("Dummy text")
                                                                 .build();
                                                     })
+                                                    .build())
+                                   .addTool(McpToolConfig.builder()
+                                                    .description("A tool that uses object logging")
+                                                    .name("object-logging")
+                                                    .schema("")
+                                                    .tool(request -> {
+                                                        request.features().logger().info(Map.of("message",
+                                                                                                "Logging data",
+                                                                                                "count",
+                                                                                                1));
+                                                        return McpToolResult.create("Dummy text");
+                                                    })
+                                                    .build())
+                                   .addTool(McpToolConfig.builder()
+                                                    .description("A tool that uses class logging")
+                                                    .name("class-logging")
+                                                    .schema("")
+                                                    .tool(request -> {
+                                                        request.features().logger()
+                                                                .info(new LoggingData("Logging data", 1));
+                                                        return McpToolResult.create("Dummy text");
+                                                    })
                                                     .build()));
+    }
+
+    /**
+     * Logging data object.
+     *
+     * @param message message
+     * @param count count
+     */
+    @Json.Entity
+    public record LoggingData(String message, int count) {
     }
 }
