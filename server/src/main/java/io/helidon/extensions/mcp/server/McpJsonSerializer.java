@@ -244,7 +244,7 @@ interface McpJsonSerializer {
 
     JsonObject progressNotification(McpProgress progress, int newProgress, String message);
 
-    JsonObject createLoggingNotification(McpLogger.Level level, String name, String message);
+    JsonObject createLoggingNotification(McpLogger.Level level, String name, Object data);
 
     JsonObject createUpdateNotification(String uri);
 

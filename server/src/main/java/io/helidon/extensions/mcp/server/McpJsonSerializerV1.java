@@ -400,11 +400,12 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     }
 
     @Override
-    public JsonObject createLoggingNotification(McpLogger.Level level, String name, String message) {
+    public JsonObject createLoggingNotification(McpLogger.Level level, String name, Object data) {
+        JsonValue jsonData = data instanceof JsonValue jsonValue ? jsonValue : McpJsonBinding.serialize(data);
         var params = JsonObject.builder()
                 .set("level", level.text())
                 .set("logger", name)
-                .set("data", message);
+                .set("data", jsonData);
         return createJsonRpcNotification(METHOD_NOTIFICATION_MESSAGE, params);
     }
 
