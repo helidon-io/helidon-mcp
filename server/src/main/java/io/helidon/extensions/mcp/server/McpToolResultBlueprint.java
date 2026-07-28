@@ -80,6 +80,10 @@ interface McpToolResultBlueprint {
      * must contain an output schema. The value is serialized using Helidon JSON binding.
      * Custom types must have a Helidon JSON converter, for example by annotating
      * the type with {@link io.helidon.json.binding.Json.Entity Json.Entity} and enabling Helidon JSON code generation.
+     * <p>
+     * Structured content for tool results was introduced by the
+     * <a href="https://modelcontextprotocol.io/specification/2025-06-18/server/tools">MCP 2025-06-18
+     * specification</a>.
      *
      * @return structured content
      */
