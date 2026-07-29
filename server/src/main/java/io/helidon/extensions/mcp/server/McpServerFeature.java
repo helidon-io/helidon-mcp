@@ -311,18 +311,9 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 .map(McpProtocolVersion::find)
                 .orElseGet(McpProtocolVersion::lastest);
         session.protocolVersion(protocolVersion);
-
-        var clientCapabilities = params.get("capabilities");
-        clientCapabilities.get(McpCapability.SAMPLING.text())
-                .ifPresent(it -> session.capability(McpCapability.SAMPLING));
-        clientCapabilities.get(McpCapability.ROOTS.text())
-                .get("listChanged")
-                .asBoolean()
-                .filter(Boolean::booleanValue)
-                .ifPresent(it -> session.capability(McpCapability.ROOTS));
-        clientCapabilities.get(McpCapability.ELICITATION.text())
-                        .ifPresent(it -> session.capability(McpCapability.ELICITATION));
+        session.initializeClientCapabilities(params.get("capabilities"));
         session.state(INITIALIZING);
+
         var payload = session.serializer().createJsonInitializeResponse(capabilities, config);
         session.createTransport(requestId, req, res);
         res.result(payload.build());

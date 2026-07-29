@@ -205,6 +205,32 @@ class McpSession {
         clientCapabilities.add(capability);
     }
 
+    void initializeClientCapabilities(McpParameters capabilities) {
+        var sampling = capabilities.get(McpCapability.SAMPLING.text());
+        sampling.ifPresent(it -> clientCapabilities.add(McpCapability.SAMPLING));
+        sampling.get("tools")
+                .ifPresent(it -> clientCapabilities.add(McpCapability.SAMPLING_TOOLS));
+        sampling.get("context")
+                .ifPresent(it -> clientCapabilities.add(McpCapability.SAMPLING_CONTEXT));
+
+        if (protocolVersion != McpProtocolVersion.VERSION_2025_11_25 && sampling.isPresent()) {
+            clientCapabilities.add(McpCapability.SAMPLING_CONTEXT);
+        }
+
+        capabilities.get(McpCapability.ROOTS.text())
+                .get("listChanged")
+                .asBoolean()
+                .filter(Boolean::booleanValue)
+                .ifPresent(it -> clientCapabilities.add(McpCapability.ROOTS));
+
+        var elicitation = capabilities.get(McpCapability.ELICITATION.text());
+        elicitation.ifPresent(it -> clientCapabilities.add(McpCapability.ELICITATION));
+        elicitation.get("form")
+                .ifPresent(it -> clientCapabilities.add(McpCapability.ELICITATION_FORM));
+        elicitation.get("url")
+                .ifPresent(it -> clientCapabilities.add(McpCapability.ELICITATION_URL));
+    }
+
     Set<McpCapability> capabilities() {
         return clientCapabilities;
     }

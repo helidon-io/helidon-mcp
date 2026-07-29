@@ -18,14 +18,89 @@ package io.helidon.extensions.mcp.server;
 import java.time.Duration;
 
 import io.helidon.json.JsonObject;
+import io.helidon.json.JsonParser;
+import io.helidon.jsonrpc.core.JsonRpcParams;
 
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
 
 class McpSessionTest {
+
+    @Test
+    void doesNotNegotiateMissingElicitationCapability() {
+        McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, """
+                {}
+                """);
+
+        assertThat(session.capabilities().contains(McpCapability.ELICITATION), is(false));
+    }
+
+    @Test
+    void negotiatesEmptyElicitationCapability() {
+        McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, """
+                {"elicitation": {}}
+                """);
+
+        assertThat(session.capabilities().contains(McpCapability.ELICITATION), is(true));
+    }
+
+    @Test
+    void negotiatesFormElicitationCapability() {
+        McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, """
+                {"elicitation": {"form": {}}}
+                """);
+
+        assertThat(session.capabilities().contains(McpCapability.ELICITATION_FORM), is(true));
+    }
+
+    @Test
+    void negotiatesUrlElicitationCapability() {
+        McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, """
+                {"elicitation": {"url": {}}}
+                """);
+
+        assertThat(session.capabilities().contains(McpCapability.ELICITATION_URL), is(true));
+    }
+
+    @Test
+    void negotiatesFormAndUrlElicitationCapabilities() {
+        McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, """
+                {"elicitation": {"form": {}, "url": {}}}
+                """);
+
+        assertThat(session.capabilities(),
+                   containsInAnyOrder(McpCapability.ELICITATION,
+                                      McpCapability.ELICITATION_FORM,
+                                      McpCapability.ELICITATION_URL));
+    }
+
+    @Test
+    void negotiatesLatestSamplingSubcapabilities() {
+        McpSession sampling = session(McpProtocolVersion.VERSION_2025_11_25, """
+                {"sampling": {}}
+                """);
+        McpSession samplingContext = session(McpProtocolVersion.VERSION_2025_11_25, """
+                {"sampling": {"context": {}}}
+                """);
+
+        assertThat(sampling.capabilities().contains(McpCapability.SAMPLING), is(true));
+        assertThat(sampling.capabilities().contains(McpCapability.SAMPLING_CONTEXT), is(false));
+        assertThat(samplingContext.capabilities().contains(McpCapability.SAMPLING), is(true));
+        assertThat(samplingContext.capabilities().contains(McpCapability.SAMPLING_CONTEXT), is(true));
+    }
+
+    @Test
+    void preservesLegacyElicitationCapability() {
+        McpSession session = session(McpProtocolVersion.VERSION_2025_06_18, """
+                {"elicitation": {}}
+                """);
+
+        assertThat(session.capabilities().contains(McpCapability.ELICITATION), is(true));
+    }
 
     @Test
     void ignoresResponseWithNonNumericId() {
@@ -47,5 +122,18 @@ class McpSessionTest {
 
         JsonObject response = session.pollResponse(42, Duration.ofSeconds(1));
         assertThat(response, is(expectedResponse));
+    }
+
+    private static McpSession session(McpProtocolVersion protocolVersion, String capabilities) {
+        McpServerConfig config = McpServerConfig.create();
+        McpSessions sessions = new McpSessions(config.maxSessionCount());
+        McpSession session = new McpSession(sessions,
+                                            mock(McpTransportManager.class),
+                                            config,
+                                            "test-session");
+        session.protocolVersion(protocolVersion);
+        JsonObject object = JsonParser.create(capabilities).readJsonObject();
+        session.initializeClientCapabilities(new McpParameters(JsonRpcParams.create(object)));
+        return session;
     }
 }
