@@ -560,14 +560,14 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
                     .map(String::toUpperCase)
                     .map(McpRole::valueOf)
                     .orElseThrow();
-            McpSamplingMessage message = parseMessage(role, result.objectValue("content").orElseThrow());
+            List<McpSamplingMessage> messages = parseMessages(role, find(result, "content").orElseThrow());
             McpStopReason stopReason = find(result, "stopReason")
                     .filter(this::isJsonString)
                     .map(JsonString.class::cast)
                     .map(JsonString::value)
                     .map(McpStopReason::map)
                     .orElse(null);
-            return new McpSamplingResponseImpl(message, model, stopReason);
+            return new McpSamplingResponseImpl(messages, model, stopReason);
         } catch (Exception e) {
             throw new McpSamplingException("Wrong sampling response format", e);
         }
@@ -581,6 +581,10 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     @Override
     public JsonObject createElicitationRequest(long id, McpElicitationRequest request) {
         throw new McpElicitationException("Elicitation not supported");
+    }
+
+    List<McpSamplingMessage> parseMessages(McpRole role, JsonValue content) {
+        return List.of(parseMessage(role, content.asObject()));
     }
 
     McpSamplingMessage parseMessage(McpRole role, JsonObject object) {

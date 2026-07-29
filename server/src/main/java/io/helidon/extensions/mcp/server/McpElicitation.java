@@ -27,13 +27,13 @@ public final class McpElicitation extends McpFeature {
 
     McpElicitation(McpSession session, McpTransport transport) {
         super(session, transport);
-        this.enabled = session.capabilities().contains(McpCapability.ELICITATION);
+        this.enabled = session.capabilities().contains(McpCapability.ELICITATION_FORM);
     }
 
     /**
-     * Whether the connected client supports elicitation feature.
+     * Whether the connected client supports form elicitation.
      *
-     * @return {@code true} if the connected client supports elicitation feature,
+     * @return {@code true} if the connected client supports form elicitation,
      * {@code false} otherwise.
      */
     public boolean enabled() {

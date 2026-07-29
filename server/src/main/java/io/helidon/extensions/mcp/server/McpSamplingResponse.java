@@ -15,6 +15,7 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -22,33 +23,43 @@ import java.util.Optional;
  */
 public sealed interface McpSamplingResponse permits McpSamplingResponseImpl {
     /**
-     * Sampling response message.
+     * First sampling response message.
      *
      * @return response
+     * @throws McpSamplingException if the response does not contain any messages
      */
     McpSamplingMessage message();
 
     /**
-     * Returns sampling response message as text message.
+     * All sampling response messages in wire order.
+     *
+     * @return immutable response messages
+     */
+    default List<McpSamplingMessage> messages() {
+        return List.of(message());
+    }
+
+    /**
+     * Returns the first sampling response message as a text message.
      *
      * @return message as text
-     * @throws McpSamplingException if the message is not a text
+     * @throws McpSamplingException if the response is empty or the first message is not text
      */
     McpSamplingTextMessage asTextMessage() throws McpSamplingException;
 
     /**
-     * Returns sampling response message as image message.
+     * Returns the first sampling response message as an image message.
      *
      * @return message as image
-     * @throws McpSamplingException if the message is not an image
+     * @throws McpSamplingException if the response is empty or the first message is not an image
      */
     McpSamplingImageMessage asImageMessage() throws McpSamplingException;
 
     /**
-     * Returns sampling response message as audio message.
+     * Returns the first sampling response message as an audio message.
      *
      * @return message as audio
-     * @throws McpSamplingException if the message is not an audio
+     * @throws McpSamplingException if the response is empty or the first message is not audio
      */
     McpSamplingAudioMessage asAudioMessage() throws McpSamplingException;
 

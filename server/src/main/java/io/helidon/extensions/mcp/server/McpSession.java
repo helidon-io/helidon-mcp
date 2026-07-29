@@ -19,6 +19,7 @@ import java.lang.System.Logger.Level;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -213,6 +214,7 @@ class McpSession {
         sampling.get("context")
                 .ifPresent(it -> clientCapabilities.add(McpCapability.SAMPLING_CONTEXT));
 
+        // Ensure backward compatibility with earlier specification versions.
         if (protocolVersion != McpProtocolVersion.VERSION_2025_11_25 && sampling.isPresent()) {
             clientCapabilities.add(McpCapability.SAMPLING_CONTEXT);
         }
@@ -225,6 +227,13 @@ class McpSession {
 
         var elicitation = capabilities.get(McpCapability.ELICITATION.text());
         elicitation.ifPresent(it -> clientCapabilities.add(McpCapability.ELICITATION));
+        if (protocolVersion == McpProtocolVersion.VERSION_2025_11_25) {
+            elicitation.asMap()
+                    .filter(Map::isEmpty)
+                    .ifPresent(it -> clientCapabilities.add(McpCapability.ELICITATION_FORM));
+        } else {
+            elicitation.ifPresent(it -> clientCapabilities.add(McpCapability.ELICITATION_FORM));
+        }
         elicitation.get("form")
                 .ifPresent(it -> clientCapabilities.add(McpCapability.ELICITATION_FORM));
         elicitation.get("url")

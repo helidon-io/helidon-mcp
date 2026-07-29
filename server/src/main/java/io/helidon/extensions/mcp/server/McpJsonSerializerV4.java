@@ -15,9 +15,12 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.util.List;
 import java.util.Set;
 
+import io.helidon.json.JsonArray;
 import io.helidon.json.JsonObject;
+import io.helidon.json.JsonValue;
 
 /**
  * JSON serializer for {@code 2025-11-25} MCP specification.
@@ -28,5 +31,16 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
     public JsonObject.Builder createJsonInitializeResponse(Set<McpCapability> capabilities, McpServerConfig config) {
         return super.createJsonInitializeResponse(capabilities, config)
                 .set("protocolVersion", McpProtocolVersion.VERSION_2025_11_25.text());
+    }
+
+    @Override
+    List<McpSamplingMessage> parseMessages(McpRole role, JsonValue content) {
+        if (content instanceof JsonArray array) {
+            return array.values().stream()
+                    .map(JsonValue::asObject)
+                    .map(value -> parseMessage(role, value))
+                    .toList();
+        }
+        return super.parseMessages(role, content);
     }
 }

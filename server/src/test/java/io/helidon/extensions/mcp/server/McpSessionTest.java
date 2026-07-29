@@ -20,6 +20,7 @@ import java.time.Duration;
 import io.helidon.json.JsonObject;
 import io.helidon.json.JsonParser;
 import io.helidon.jsonrpc.core.JsonRpcParams;
+import io.helidon.webserver.jsonrpc.JsonRpcResponse;
 
 import org.junit.jupiter.api.Test;
 
@@ -45,7 +46,7 @@ class McpSessionTest {
                 {"elicitation": {}}
                 """);
 
-        assertThat(session.capabilities().contains(McpCapability.ELICITATION), is(true));
+        assertThat(session.capabilities().contains(McpCapability.ELICITATION_FORM), is(true));
     }
 
     @Test
@@ -63,7 +64,20 @@ class McpSessionTest {
                 {"elicitation": {"url": {}}}
                 """);
 
-        assertThat(session.capabilities().contains(McpCapability.ELICITATION_URL), is(true));
+        assertThat(session.capabilities(),
+                   containsInAnyOrder(McpCapability.ELICITATION,
+                                      McpCapability.ELICITATION_URL));
+    }
+
+    @Test
+    void disablesFormElicitationForUrlOnlyCapability() {
+        McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, """
+                {"elicitation": {"url": {}}}
+                """);
+        McpElicitation elicitation = new McpElicitation(session,
+                                                        new McpStreamableHttpTransport(mock(JsonRpcResponse.class)));
+
+        assertThat(elicitation.enabled(), is(false));
     }
 
     @Test
@@ -99,7 +113,7 @@ class McpSessionTest {
                 {"elicitation": {}}
                 """);
 
-        assertThat(session.capabilities().contains(McpCapability.ELICITATION), is(true));
+        assertThat(session.capabilities().contains(McpCapability.ELICITATION_FORM), is(true));
     }
 
     @Test
