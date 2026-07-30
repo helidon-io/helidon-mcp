@@ -18,7 +18,9 @@ package io.helidon.extensions.mcp.tests.declarative;
 
 import java.time.Duration;
 
+import io.helidon.json.JsonArray;
 import io.helidon.json.JsonObject;
+import io.helidon.json.JsonParser;
 import io.helidon.jsonrpc.core.JsonRpcResult;
 import io.helidon.webclient.jsonrpc.JsonRpcClient;
 import io.helidon.webserver.WebServer;
@@ -35,6 +37,15 @@ import static org.hamcrest.Matchers.is;
 
 @ServerTest
 class McpSdkAnnotationConfigurationTest {
+    private static final JsonArray SERVER_ICONS = JsonParser.create("""
+            [
+              {
+                "src": "https://example.com/server-only.svg",
+                "sizes": ["any"]
+              }
+            ]
+            """).readJsonArray();
+
     private final int port;
     private final JsonRpcClient jsonRpcClient;
 
@@ -81,6 +92,7 @@ class McpSdkAnnotationConfigurationTest {
 
             assertThat(serverInfo.stringValue("description").orElseThrow(), is("Declarative Helidon MCP server"));
             assertThat(serverInfo.stringValue("websiteUrl").orElseThrow(), is("https://example.com/mcp"));
+            assertThat(serverInfo.arrayValue("icons").orElseThrow(), is(SERVER_ICONS));
         }
     }
 }

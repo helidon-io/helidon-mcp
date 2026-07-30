@@ -30,6 +30,7 @@ import io.helidon.common.types.TypeNames;
 import io.helidon.common.types.TypedElementInfo;
 
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.MCP_TYPES;
+import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.addIconsMethod;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.createClassName;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.getElementsWithAnnotation;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isIgnoredSchemaElement;
@@ -55,7 +56,8 @@ class McpPromptCodegen {
     void generate(ClassModel.Builder classModel, TypeInfo type) {
         getElementsWithAnnotation(type, MCP_PROMPT).forEach(element -> {
             TypeName innerTypeName = createClassName(element, "__Prompt");
-            String description = element.annotation(MCP_PROMPT).value().orElse("");
+            Annotation promptAnnotation = element.annotation(MCP_PROMPT);
+            String description = promptAnnotation.value().orElse("");
 
             recorder.prompt(innerTypeName);
             classModel.addInnerClass(clazz -> clazz
@@ -65,6 +67,7 @@ class McpPromptCodegen {
                     .addMethod(method -> addPromptNameMethod(method, element))
                     .addMethod(method -> addPromptDescriptionMethod(method, description))
                     .addMethod(method -> addPromptArgumentsMethod(method, element))
+                    .addMethod(method -> addIconsMethod(method, element))
                     .addMethod(method -> addPromptMethod(method, classModel, element)));
         });
     }

@@ -82,6 +82,36 @@ McpServerFeature.builder()
         .build();
 ```
 
+### Icons
+
+Servers, tools, prompts, resources, and resource templates implement `McpIcons` and can expose one or more icons to clients using the
+[MCP `2025-11-25` protocol version](https://modelcontextprotocol.io/specification/2025-11-25).
+Older negotiated protocol versions omit this metadata.
+
+Create an icon and add it to the server or any of its component builders:
+
+```java
+McpIcon icon = McpIcon.builder()
+        .source("https://example.com/icon.svg")
+        .mediaType(MediaTypes.create("image/svg+xml"))
+        .addSize("48x48")
+        .addSize("96x96")
+        .theme(McpIconTheme.DARK)
+        .build();
+
+McpServerFeature.builder()
+        .addIcon(icon)
+        .addTool(tool -> tool
+                .name("tool")
+                .description("Tool description")
+                .schema("")
+                .addIcon(icon)
+                .tool(request -> McpToolResult.create("result")));
+```
+
+The source can be an HTTP(S) URL or a `data:` URI. Sizes use the `WxH` format or `any`. Leave the theme unspecified when
+the icon is suitable for both light and dark backgrounds.
+
 ### Tool
 
 `Tools` enable models to interact with external systems: for example, by querying databases, calling APIs, or performing 
@@ -1487,12 +1517,18 @@ mcp:
     version: "0.0.1"
     description: "Provides tools and resources for Example"
     website-url: "https://example.com/mcp"
+    icons:
+      - source: "https://example.com/server.svg"
+        media-type: "image/svg+xml"
+        sizes: ["any"]
+        theme: "DARK"
     path: "/mcp"
     stateless: true
     max-sampling-tool-iterations: 10
 ```
 
-The optional description and website URL are included in `serverInfo` when the negotiated protocol version is `2025-11-25`.
+The optional description, website URL, and icons are included in `serverInfo` when the negotiated protocol version is
+`2025-11-25`.
 
 Register the configuration in code:
 

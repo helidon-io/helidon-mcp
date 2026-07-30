@@ -33,6 +33,7 @@ import io.helidon.common.types.TypeName;
 import io.helidon.common.types.TypeNames;
 import io.helidon.common.types.TypedElementInfo;
 
+import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.addIconsMethod;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.addToListMethod;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.createClassName;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.getDescription;
@@ -79,6 +80,7 @@ class McpToolCodegen {
                     .addMethod(method -> addToolDescriptionMethod(method, description))
                     .addMethod(method -> addToolSchemaMethod(method, element))
                     .addMethod(method -> addToolMethod(method, classModel, element))
+                    .addMethod(method -> addIconsMethod(method, element))
                     .addMethod(method -> addToolAnnotationsMethod(method, toolAnnotation))
                     .addMethod(method -> addToolOutputSchema(method, element)));
         });

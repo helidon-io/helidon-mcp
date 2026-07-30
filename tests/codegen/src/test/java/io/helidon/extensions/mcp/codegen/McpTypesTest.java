@@ -39,6 +39,8 @@ import io.helidon.extensions.mcp.server.McpCompletionResult;
 import io.helidon.extensions.mcp.server.McpCompletionType;
 import io.helidon.extensions.mcp.server.McpElicitation;
 import io.helidon.extensions.mcp.server.McpFeatures;
+import io.helidon.extensions.mcp.server.McpIcon;
+import io.helidon.extensions.mcp.server.McpIconTheme;
 import io.helidon.extensions.mcp.server.McpLogger;
 import io.helidon.extensions.mcp.server.McpParameters;
 import io.helidon.extensions.mcp.server.McpProgress;
@@ -129,6 +131,8 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "MCP_COMPLETION", Mcp.Completion.class);
         checkField(toCheck, checked, fields, "MCP_DESCRIPTION", Mcp.Description.class);
         checkField(toCheck, checked, fields, "MCP_REQUIRED", Mcp.Required.class);
+        checkField(toCheck, checked, fields, "MCP_ICON_ANNOTATION", Mcp.Icon.class);
+        checkField(toCheck, checked, fields, "MCP_ICONS", Mcp.Icons.class);
         checkField(toCheck, checked, fields, "MCP_ROOTS", McpRoots.class);
         checkField(toCheck, checked, fields, "MCP_LOGGER", McpLogger.class);
         checkField(toCheck, checked, fields, "MCP_ROLE_ENUM", McpRole.class);
@@ -136,6 +140,8 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "MCP_FEATURES", McpFeatures.class);
         checkField(toCheck, checked, fields, "MCP_PROGRESS", McpProgress.class);
         checkField(toCheck, checked, fields, "MCP_SAMPLING", McpSampling.class);
+        checkField(toCheck, checked, fields, "MCP_ICON", McpIcon.class);
+        checkField(toCheck, checked, fields, "MCP_ICON_THEME", McpIconTheme.class);
         checkField(toCheck, checked, fields, "MCP_TOOL_INTERFACE", McpTool.class);
         checkField(toCheck, checked, fields, "MCP_PARAMETERS", McpParameters.class);
         checkField(toCheck, checked, fields, "MCP_TOOL_RESULT", McpToolResult.class);
@@ -167,6 +173,7 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "SCOPE_ANNOTATION", Service.Scope.class);
         checkField(toCheck, checked, fields, "SERVICE_SINGLETON", Service.Singleton.class);
         checkField(toCheck, checked, fields, "LIST_STRING", List.class);
+        checkField(toCheck, checked, fields, "LIST_MCP_ICON", List.class);
         checkField(toCheck, checked, fields, "LIST_MCP_PROMPT_ARGUMENT", List.class);
         checkField(toCheck, checked, fields, "MCP_COMPLETION_RESULT", McpCompletionResult.class);
         checkField(toCheck, checked, fields, "MCP_TOOL_REQUEST", McpToolRequest.class);

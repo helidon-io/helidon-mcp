@@ -15,6 +15,7 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.util.List;
 import java.util.Optional;
 
 import io.helidon.common.media.type.MediaType;
@@ -54,5 +55,10 @@ final class McpResourceImpl implements McpResource {
     @Override
     public Optional<String> title() {
         return config.title();
+    }
+
+    @Override
+    public List<McpIcon> icons() {
+        return config.icons();
     }
 }

@@ -15,17 +15,20 @@
  */
 package io.helidon.extensions.mcp.codegen;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import io.helidon.codegen.CodegenException;
 import io.helidon.codegen.classmodel.ClassModel;
 import io.helidon.codegen.classmodel.Method;
 import io.helidon.codegen.classmodel.Parameter;
 import io.helidon.common.types.AccessModifier;
 import io.helidon.common.types.Annotated;
 import io.helidon.common.types.Annotation;
+import io.helidon.common.types.Annotations;
 import io.helidon.common.types.ResolvedType;
 import io.helidon.common.types.TypeInfo;
 import io.helidon.common.types.TypeName;
@@ -33,11 +36,17 @@ import io.helidon.common.types.TypeNames;
 import io.helidon.common.types.TypedElementInfo;
 
 import static io.helidon.common.types.TypeNames.LIST;
+import static io.helidon.extensions.mcp.codegen.McpTypes.HELIDON_MEDIA_TYPES;
+import static io.helidon.extensions.mcp.codegen.McpTypes.LIST_MCP_ICON;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_CANCELLATION;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_COMPLETION_REQUEST;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_DESCRIPTION;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ELICITATION;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_FEATURES;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ICON;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ICONS;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ICON_ANNOTATION;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_ICON_THEME;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_LOGGER;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PARAMETERS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROGRESS;
@@ -233,5 +242,100 @@ class McpCodegenUtil {
             return description.stringValue();
         }
         return Optional.empty();
+    }
+
+    static void addIconsMethod(Method.Builder builder, Annotated component) {
+        List<Annotation> icons = icons(component);
+        builder.name("icons")
+                .addAnnotation(Annotations.OVERRIDE)
+                .returnType(LIST_MCP_ICON);
+        if (icons.isEmpty()) {
+            builder.addContent("return ")
+                    .addContent(LIST)
+                    .addContentLine(".of();");
+            return;
+        }
+
+        builder.addContent("return ")
+                .addContent(LIST)
+                .addContentLine(".of(")
+                .increaseContentPadding();
+        for (int i = 0; i < icons.size(); i++) {
+            addIcon(builder, icons.get(i));
+            if (i < icons.size() - 1) {
+                builder.addContentLine(",");
+            } else {
+                builder.addContentLine("");
+            }
+        }
+        builder.decreaseContentPadding()
+                .addContentLine(");");
+    }
+
+    static void addIconsToBuilder(Method.Builder builder, TypeInfo serverType) {
+        for (Annotation icon : icons(serverType)) {
+            addIconToBuilder(builder, icon);
+        }
+    }
+
+    private static List<Annotation> icons(Annotated component) {
+        List<Annotation> result = new ArrayList<>();
+        for (Annotation annotation : component.annotations()) {
+            if (MCP_ICON_ANNOTATION.equals(annotation.typeName())) {
+                result.add(annotation);
+            } else if (MCP_ICONS.equals(annotation.typeName())) {
+                result.addAll(annotation.annotationValues().orElseGet(List::of));
+            }
+        }
+        return List.copyOf(result);
+    }
+
+    private static void addIconToBuilder(Method.Builder builder, Annotation icon) {
+        builder.addContent("builder.addIcon(");
+        addIcon(builder, icon);
+        builder.addContentLine(");");
+    }
+
+    private static void addIcon(Method.Builder builder, Annotation icon) {
+        String source = icon.stringValue()
+                .orElseThrow(() -> new CodegenException("Icon must have a source."));
+        String mimeType = icon.stringValue("mimeType").orElse("");
+        List<String> sizes = icon.stringValues("sizes").orElseGet(List::of);
+        String theme = icon.stringValue("theme").orElse("UNSPECIFIED");
+
+        builder.addContent(MCP_ICON)
+                .addContentLine(".builder()")
+                .increaseContentPadding()
+                .addContent(".source(")
+                .addContentLiteral(source)
+                .addContentLine(")");
+        if (!mimeType.isBlank()) {
+            builder.addContent(".mediaType(")
+                    .addContent(HELIDON_MEDIA_TYPES)
+                    .addContent(".create(")
+                    .addContentLiteral(mimeType)
+                    .addContentLine("))");
+        }
+        if (!sizes.isEmpty()) {
+            builder.addContent(".sizes(")
+                    .addContent(LIST)
+                    .addContent(".of(");
+            for (int sizeIndex = 0; sizeIndex < sizes.size(); sizeIndex++) {
+                if (sizeIndex > 0) {
+                    builder.addContent(", ");
+                }
+                builder.addContentLiteral(sizes.get(sizeIndex));
+            }
+            builder.addContentLine("))");
+        }
+        if (!theme.equals("UNSPECIFIED")) {
+            builder.addContent(".theme(")
+                    .addContent(MCP_ICON_THEME)
+                    .addContent(".")
+                    .addContent(theme)
+                    .addContentLine(")");
+        }
+        builder.addContent(".build()")
+                .decreaseContentPadding();
     }
 }

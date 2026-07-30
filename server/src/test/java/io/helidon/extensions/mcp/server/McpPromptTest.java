@@ -49,6 +49,7 @@ class McpPromptTest {
         assertThat(prompt.name(), is("name"));
         assertThat(prompt.title().isEmpty(), is(true));
         assertThat(prompt.description(), is("description"));
+        assertThat(config.icons().isEmpty(), is(true));
     }
 
     @Test

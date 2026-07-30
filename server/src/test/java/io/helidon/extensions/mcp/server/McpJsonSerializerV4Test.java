@@ -22,6 +22,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import io.helidon.common.media.type.MediaTypes;
 import io.helidon.json.JsonArray;
 import io.helidon.json.JsonObject;
 import io.helidon.json.JsonParser;
@@ -35,6 +36,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import static io.helidon.extensions.mcp.server.McpMetadata.META;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
@@ -45,12 +47,179 @@ class McpJsonSerializerV4Test {
             McpJsonSerializer.create(McpProtocolVersion.VERSION_2025_11_25);
     private static final McpJsonSerializer LEGACY_SERIALIZER =
             McpJsonSerializer.create(McpProtocolVersion.VERSION_2025_06_18);
+    private static final McpIcon FULL_ICON = McpIcon.builder()
+            .source("https://example.com/icon.svg")
+            .mediaType(MediaTypes.create("image/svg+xml"))
+            .addSize("48x48")
+            .addSize("96x96")
+            .theme(McpIconTheme.DARK)
+            .build();
+    private static final McpIcon MINIMAL_ICON = McpIcon.builder()
+            .source("data:image/png;base64,iVBORw0KGgo=")
+            .build();
+    private static final JsonArray EXPECTED_ICONS = JsonParser.create("""
+            [
+              {
+                "src": "https://example.com/icon.svg",
+                "mimeType": "image/svg+xml",
+                "sizes": ["48x48", "96x96"],
+                "theme": "dark"
+              },
+              {
+                "src": "data:image/png;base64,iVBORw0KGgo="
+              }
+            ]
+            """).readJsonArray();
+    private static final JsonObject EXPECTED_TOOL = JsonObject.builder()
+            .set("name", "tool")
+            .set("description", "description")
+            .set("inputSchema", McpJsonSerializerV1.EMPTY_OBJECT_SCHEMA)
+            .set("annotations", JsonObject.builder()
+                    .set("title", "annotation title")
+                    .set("destructiveHint", false)
+                    .set("idempotentHint", true)
+                    .set("openWorldHint", false)
+                    .set("readOnlyHint", true)
+                    .build())
+            .set("title", "tool title")
+            .set("outputSchema", McpJsonSerializerV1.EMPTY_OBJECT_SCHEMA)
+            .set("icons", EXPECTED_ICONS)
+            .build();
+    private static final JsonObject EXPECTED_PROMPT = JsonObject.builder()
+            .set("name", "prompt")
+            .set("description", "description")
+            .set("arguments", JsonArray.empty())
+            .set("title", "prompt title")
+            .set("icons", EXPECTED_ICONS)
+            .build();
+    private static final JsonObject EXPECTED_RESOURCE = JsonObject.builder()
+            .set("uri", "https://example.com/resource")
+            .set("name", "resource")
+            .set("description", "description")
+            .set("mimeType", MediaTypes.TEXT_PLAIN.text())
+            .set("title", "resource title")
+            .set("icons", EXPECTED_ICONS)
+            .build();
+    private static final JsonObject EXPECTED_RESOURCE_TEMPLATE = JsonObject.builder()
+            .set("uriTemplate", "https://example.com/resource/{id}")
+            .set("name", "resource")
+            .set("description", "description")
+            .set("mimeType", MediaTypes.TEXT_PLAIN.text())
+            .set("icons", EXPECTED_ICONS)
+            .build();
+
+    @Test
+    void serializesToolIcons() {
+        JsonObject response = SERIALIZER.listTools(new McpPage<>(List.of(tool())));
+
+        assertThat(component(response, "tools"), is(EXPECTED_TOOL));
+    }
+
+    @Test
+    void serializesPromptIcons() {
+        JsonObject response = SERIALIZER.listPrompts(new McpPage<>(List.of(prompt())));
+
+        assertThat(component(response, "prompts"), is(EXPECTED_PROMPT));
+    }
+
+    @Test
+    void serializesResourceIcons() {
+        JsonObject response = SERIALIZER.listResources(new McpPage<>(List.of(resource("https://example.com/resource"))));
+
+        assertThat(component(response, "resources"), is(EXPECTED_RESOURCE));
+    }
+
+    @Test
+    void serializesResourceTemplateIcons() {
+        McpResourceTemplate template = new McpResourceTemplate(resource("https://example.com/resource/{id}"));
+        JsonObject response = SERIALIZER.listResourceTemplates(new McpPage<>(List.of(template)));
+
+        assertThat(component(response, "resourceTemplates"), is(EXPECTED_RESOURCE_TEMPLATE));
+    }
+
+    @Test
+    void omitsEmptyIconMetadata() {
+        McpToolConfig config = McpToolConfig.builder()
+                .name("tool")
+                .description("description")
+                .schema("")
+                .icons(List.of())
+                .tool(request -> McpToolResult.create())
+                .build();
+        JsonObject response = SERIALIZER.listTools(new McpPage<>(List.of(new McpToolImpl(config))));
+
+        assertThat(component(response, "tools").containsKey("icons"), is(false));
+    }
+
+    @Test
+    void serializesThemeIndependentlyOfDefaultLocale() {
+        McpPromptConfig config = McpPromptConfig.builder()
+                .name("prompt")
+                .description("description")
+                .addIcon(icon -> icon.source("https://example.com/light.svg").theme(McpIconTheme.LIGHT))
+                .prompt(request -> McpPromptResult.create())
+                .build();
+        Locale defaultLocale = Locale.getDefault();
+        String theme;
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+            JsonObject response = SERIALIZER.listPrompts(new McpPage<>(List.of(new McpPromptImpl(config))));
+            theme = component(response, "prompts")
+                    .arrayValue("icons")
+                    .flatMap(icons -> icons.get(0))
+                    .map(JsonValue::asObject)
+                    .flatMap(icon -> icon.stringValue("theme"))
+                    .orElseThrow();
+        } finally {
+            Locale.setDefault(defaultLocale);
+        }
+
+        assertThat(theme, is("light"));
+    }
+
+    @Test
+    void omitsUnspecifiedIconTheme() {
+        McpPromptConfig config = McpPromptConfig.builder()
+                .name("prompt")
+                .description("description")
+                .addIcon(icon -> icon.source("https://example.com/icon.svg").theme(McpIconTheme.UNSPECIFIED))
+                .prompt(request -> McpPromptResult.create())
+                .build();
+        JsonObject response = SERIALIZER.listPrompts(new McpPage<>(List.of(new McpPromptImpl(config))));
+        JsonObject icon = component(response, "prompts")
+                .arrayValue("icons")
+                .flatMap(icons -> icons.get(0))
+                .map(JsonValue::asObject)
+                .orElseThrow();
+
+        assertThat(icon.containsKey("theme"), is(false));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = McpProtocolVersion.class,
+                names = {"VERSION_2024_11_05", "VERSION_2025_03_26", "VERSION_2025_06_18"})
+    void omitsIconsFromLegacyProtocolVersions(McpProtocolVersion version) {
+        McpJsonSerializer serializer = McpJsonSerializer.create(version);
+        McpResource resource = resource("https://example.com/resource");
+        McpResourceTemplate template = new McpResourceTemplate(resource("https://example.com/resource/{id}"));
+
+        List<Boolean> iconProperties = List.of(
+                component(serializer.listTools(new McpPage<>(List.of(tool()))), "tools").containsKey("icons"),
+                component(serializer.listPrompts(new McpPage<>(List.of(prompt()))), "prompts").containsKey("icons"),
+                component(serializer.listResources(new McpPage<>(List.of(resource))), "resources").containsKey("icons"),
+                component(serializer.listResourceTemplates(new McpPage<>(List.of(template))),
+                          "resourceTemplates").containsKey("icons"));
+
+        assertThat(iconProperties, everyItem(is(false)));
+    }
 
     @Test
     void serializesServerMetadata() {
         McpServerConfig config = McpServerConfig.builder()
                 .description("Helidon MCP server")
                 .websiteUrl("https://example.com/mcp")
+                .addIcon(FULL_ICON)
+                .addIcon(MINIMAL_ICON)
                 .buildPrototype();
         JsonObject response = SERIALIZER.createJsonInitializeResponse(Set.of(), config).build();
         JsonObject expected = JsonObject.builder()
@@ -58,6 +227,7 @@ class McpJsonSerializerV4Test {
                 .set("version", "0.0.1")
                 .set("description", "Helidon MCP server")
                 .set("websiteUrl", "https://example.com/mcp")
+                .set("icons", EXPECTED_ICONS)
                 .build();
 
         assertThat(response.objectValue("serverInfo").orElseThrow(), is(expected));
@@ -82,6 +252,7 @@ class McpJsonSerializerV4Test {
         McpServerConfig config = McpServerConfig.builder()
                 .description("Helidon MCP server")
                 .websiteUrl("https://example.com/mcp")
+                .addIcon(FULL_ICON)
                 .buildPrototype();
         JsonObject response = McpJsonSerializer.create(version)
                 .createJsonInitializeResponse(Set.of(), config)
@@ -154,7 +325,7 @@ class McpJsonSerializerV4Test {
         JsonObject result = JsonObject.builder()
                 .set("action", action.text())
                 .set("content", JsonObject.builder()
-                        .set("secret", "must-not-be-exposed")
+                        .set("marker", "ignored-content")
                         .build())
                 .build();
         JsonObject clientResponse = SERIALIZER.createJsonRpcResultResponse(1, result);
@@ -528,6 +699,37 @@ class McpJsonSerializerV4Test {
         assertThat(replayedBinaryResource.objectValue("resource").orElseThrow()
                            .objectValue(META).isEmpty(),
                    is(true));
+    }
+
+    @Test
+    void rejectsUnspecifiedWireIconTheme() {
+        JsonObject wireResponse = response("""
+                {
+                  "type": "tool_result",
+                  "toolUseId": "call-1",
+                  "content": [
+                    {
+                      "type": "resource_link",
+                      "uri": "https://example.com/resource",
+                      "name": "resource",
+                      "icons": [
+                        {
+                          "src": "https://example.com/icon.svg",
+                          "theme": "unspecified"
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """, "endTurn", "user");
+        McpJsonSerializerV4 serializer = (McpJsonSerializerV4) SERIALIZER;
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                                                           () -> serializer.parseContent(wireResponse
+                                                                   .objectValue("result").orElseThrow()
+                                                                   .objectValue("content").orElseThrow()));
+
+        assertThat(exception.getMessage(), is("Unsupported icon theme: unspecified"));
     }
 
     @Test
@@ -1462,5 +1664,57 @@ class McpJsonSerializerV4Test {
                 .set("id", 1)
                 .set("result", result)
                 .build();
+    }
+
+    private static JsonObject component(JsonObject response, String property) {
+        JsonArray components = response.arrayValue(property).orElseThrow();
+        return components.get(0).map(JsonValue::asObject).orElseThrow();
+    }
+
+    private static McpTool tool() {
+        McpToolConfig config = McpToolConfig.builder()
+                .name("tool")
+                .description("description")
+                .schema("")
+                .title("tool title")
+                .annotations(McpToolAnnotations.builder()
+                                     .title("annotation title")
+                                     .destructiveHint(false)
+                                     .idempotentHint(true)
+                                     .openWorldHint(false)
+                                     .readOnlyHint(true)
+                                     .build())
+                .outputSchema("")
+                .addIcon(FULL_ICON)
+                .addIcon(MINIMAL_ICON)
+                .tool(request -> McpToolResult.create())
+                .build();
+        return new McpToolImpl(config);
+    }
+
+    private static McpPrompt prompt() {
+        McpPromptConfig config = McpPromptConfig.builder()
+                .name("prompt")
+                .description("description")
+                .title("prompt title")
+                .addIcon(FULL_ICON)
+                .addIcon(MINIMAL_ICON)
+                .prompt(request -> McpPromptResult.create())
+                .build();
+        return new McpPromptImpl(config);
+    }
+
+    private static McpResource resource(String uri) {
+        McpResourceConfig config = McpResourceConfig.builder()
+                .uri(uri)
+                .name("resource")
+                .description("description")
+                .title("resource title")
+                .mediaType(MediaTypes.TEXT_PLAIN)
+                .addIcon(FULL_ICON)
+                .addIcon(MINIMAL_ICON)
+                .resource(request -> McpResourceResult.create())
+                .build();
+        return new McpResourceImpl(config);
     }
 }

@@ -67,6 +67,11 @@ class McpResourceTemplate implements McpResource {
         return delegate.title();
     }
 
+    @Override
+    public List<McpIcon> icons() {
+        return delegate.icons();
+    }
+
     boolean matches(String uri) {
         return pattern.get().matcher(uri).matches();
     }

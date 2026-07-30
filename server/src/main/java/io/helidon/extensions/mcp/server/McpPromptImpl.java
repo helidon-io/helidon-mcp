@@ -49,4 +49,9 @@ final class McpPromptImpl implements McpPrompt {
     public Optional<String> title() {
         return config.title();
     }
+
+    @Override
+    public List<McpIcon> icons() {
+        return config.icons();
+    }
 }

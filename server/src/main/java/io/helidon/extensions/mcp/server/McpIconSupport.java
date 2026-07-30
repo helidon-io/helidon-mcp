@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
+ * Copyright (c) 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.helidon.extensions.mcp.server;
 
-package io.helidon.extensions.mcp.tests.declarative;
+import io.helidon.builder.api.Prototype;
+import io.helidon.common.media.type.MediaType;
+import io.helidon.common.media.type.MediaTypes;
+import io.helidon.config.Config;
 
-import io.helidon.extensions.mcp.server.Mcp;
+final class McpIconSupport {
+    private McpIconSupport() {
+    }
 
-@Mcp.Path("/mcp-custom")
-@Mcp.Version("0.0.1-SNAPSHOT")
-@Mcp.WebsiteUrl("https://example.com/mcp")
-@Mcp.Description("Declarative Helidon MCP server")
-@Mcp.Server("mcp-server-custom-path")
-@Mcp.Icon(
-        value = "https://example.com/server-only.svg",
-        sizes = "any")
-class McpConfigurationServer {
+    @Prototype.ConfigFactoryMethod("mediaType")
+    static MediaType createMediaType(Config config) {
+        return config.asString()
+                .as(MediaTypes::create)
+                .get();
+    }
 }

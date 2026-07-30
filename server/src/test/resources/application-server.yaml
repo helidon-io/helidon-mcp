@@ -20,6 +20,12 @@ mcp:
     version: "1.0.0"
     description: "Helidon MCP server"
     website-url: "https://example.com/mcp"
+    icons:
+      - source: "https://example.com/server.svg"
+        media-type: "image/svg+xml"
+        sizes: ["48x48", "96x96"]
+        theme: "DARK"
+      - source: "data:image/png;base64,iVBORw0KGgo="
     path: "/path"
     stateless: "true"
     tools-page-size: 10

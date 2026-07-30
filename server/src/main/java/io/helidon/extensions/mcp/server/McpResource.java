@@ -22,7 +22,7 @@ import io.helidon.common.media.type.MediaType;
 /**
  * MCP Resource.
  */
-public interface McpResource {
+public interface McpResource extends McpIcons {
     /**
      * Resource URI.
      *
@@ -67,4 +67,5 @@ public interface McpResource {
     default Optional<String> title() {
         return Optional.empty();
     }
+
 }

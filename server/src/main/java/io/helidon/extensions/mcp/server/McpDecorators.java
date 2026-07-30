@@ -18,6 +18,7 @@ package io.helidon.extensions.mcp.server;
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -100,6 +101,48 @@ final class McpDecorators {
                     .ifPresent(priority -> {
                         throw new IllegalArgumentException("Annotation priority must be in range [0, 1]");
                     });
+        }
+    }
+
+    /**
+     * Enforce a valid HTTP(S) URL or data URI for an icon source.
+     */
+    static class IconSourceDecorator implements Prototype.OptionDecorator<McpIcon.BuilderBase<?, ?>, String> {
+        private static final String INVALID_ICON_SOURCE = "Icon source must be a valid HTTP(S) URL or data URI";
+
+        @Override
+        public void decorate(McpIcon.BuilderBase<?, ?> builder, String value) {
+            if (value.isBlank()) {
+                throw new IllegalArgumentException(INVALID_ICON_SOURCE);
+            }
+
+            URI source;
+            try {
+                source = URI.create(value);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException(INVALID_ICON_SOURCE, e);
+            }
+
+            String scheme = source.getScheme();
+            if (scheme == null) {
+                throw new IllegalArgumentException(INVALID_ICON_SOURCE);
+            }
+
+            switch (scheme.toLowerCase(Locale.ROOT)) {
+                case "http", "https" -> {
+                    if (source.getHost() == null) {
+                        throw new IllegalArgumentException(INVALID_ICON_SOURCE);
+                    }
+                }
+                case "data" -> {
+                    String data = source.getRawSchemeSpecificPart();
+                    int separator = data.indexOf(',');
+                    if (!source.isOpaque() || separator < 0 || separator == data.length() - 1) {
+                        throw new IllegalArgumentException(INVALID_ICON_SOURCE);
+                    }
+                }
+                default -> throw new IllegalArgumentException(INVALID_ICON_SOURCE);
+            }
         }
     }
 

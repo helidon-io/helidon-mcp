@@ -17,8 +17,10 @@
 package io.helidon.extensions.mcp.server;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 
+import io.helidon.common.media.type.MediaTypes;
 import io.helidon.config.Config;
 import io.helidon.config.ConfigSources;
 
@@ -30,6 +32,7 @@ import static io.helidon.extensions.mcp.server.McpPagination.DEFAULT_PAGE_SIZE;
 import static io.helidon.extensions.mcp.server.McpSampling.DEFAULT_MAX_TOOL_ITERATIONS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
 class ConfigurationTest {
@@ -41,6 +44,13 @@ class ConfigurationTest {
 
         assertThat(config.path(), is("/path"));
         assertThat(config.version(), is("1.0.0"));
+        assertThat(config.icons().size(), is(2));
+        McpIcon icon = config.icons().getFirst();
+        assertThat(icon.source(), is("https://example.com/server.svg"));
+        assertThat(icon.mediaType().orElseThrow(), is(MediaTypes.create("image/svg+xml")));
+        assertThat(icon.sizes(), is(List.of("48x48", "96x96")));
+        assertThat(icon.theme().orElseThrow(), is(McpIconTheme.DARK));
+        assertThat(config.icons().get(1).source(), is("data:image/png;base64,iVBORw0KGgo="));
         assertThat(config.name(), is("helidon-mcp-server"));
         assertThat(config.description().orElseThrow(), is("Helidon MCP server"));
         assertThat(config.websiteUrl().orElseThrow(), is("https://example.com/mcp"));
@@ -64,6 +74,7 @@ class ConfigurationTest {
 
         assertThat(config.path(), is("/mcp"));
         assertThat(config.version(), is("0.0.1"));
+        assertThat(config.icons(), is(List.of()));
         assertThat(config.name(), is("mcp-server"));
         assertThat(config.websiteUrl().isEmpty(), is(true));
         assertThat(config.description().isEmpty(), is(true));
@@ -78,6 +89,25 @@ class ConfigurationTest {
         assertThat(config.maxSamplingToolIterations(), is(DEFAULT_MAX_TOOL_ITERATIONS));
         assertThat(config.maxSessionCount(), is(1000));
         assertThat(config.maxRequestsPerSession(), is(1000));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "",
+            "icon.svg",
+            "not a uri",
+            "data://example.com/icon,abc",
+            "data:/image/png,abc",
+            "file:///tmp/icon.svg",
+            "javascript:alert(1)"
+    })
+    void testConfigurationInvalidIconSource(String source) {
+        Config config = Config.just(ConfigSources.create(Map.of("source", source)));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                                                           () -> McpIcon.create(config));
+
+        assertThat(exception.getMessage(), is("Icon source must be a valid HTTP(S) URL or data URI"));
     }
 
     @ParameterizedTest

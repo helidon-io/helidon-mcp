@@ -26,10 +26,11 @@ import io.helidon.builder.api.Prototype;
 @Prototype.Blueprint
 interface McpToolResourceLinkContentBlueprint extends McpResourceLinkContent, McpToolContent {
     /**
-     * Optional icons for this resource link.
+     * Icons for this resource link.
      *
      * @return icons
      */
+    @Override
     @Option.Singular
     List<McpIcon> icons();
 }

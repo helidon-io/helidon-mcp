@@ -15,6 +15,7 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -55,6 +56,14 @@ interface McpResourceConfigBlueprint {
      * @return type
      */
     MediaType mediaType();
+
+    /**
+     * Icons for this resource.
+     *
+     * @return icons
+     */
+    @Option.Singular
+    List<McpIcon> icons();
 
     /**
      * Resource reader.

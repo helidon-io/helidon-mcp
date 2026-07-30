@@ -21,7 +21,7 @@ import java.util.Optional;
 /**
  * MCP Prompt.
  */
-public interface McpPrompt {
+public interface McpPrompt extends McpIcons {
     /**
      * Prompt name.
      *
@@ -59,4 +59,5 @@ public interface McpPrompt {
     default Optional<String> title() {
         return Optional.empty();
     }
+
 }

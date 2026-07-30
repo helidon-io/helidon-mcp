@@ -15,6 +15,7 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.util.List;
 import java.util.Optional;
 
 final class McpToolImpl implements McpTool {
@@ -57,5 +58,10 @@ final class McpToolImpl implements McpTool {
     @Override
     public Optional<String> outputSchema() {
         return config.outputSchema();
+    }
+
+    @Override
+    public List<McpIcon> icons() {
+        return config.icons();
     }
 }

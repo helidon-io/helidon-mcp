@@ -33,7 +33,7 @@ import static io.helidon.extensions.mcp.server.McpSampling.DEFAULT_MAX_TOOL_ITER
 @Prototype.IncludeDefaultMethods
 @Prototype.CustomMethods(McpServerFeatureSupport.class)
 @Prototype.Configured(McpServerConfigBlueprint.CONFIG_ROOT)
-interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
+interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature>, McpIcons {
     String CONFIG_ROOT = "mcp.server";
 
     /**
@@ -80,6 +80,16 @@ interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
     default Optional<String> websiteUrl() {
         return Optional.empty();
     }
+
+    /**
+     * Icons for this server.
+     *
+     * @return icons
+     */
+    @Override
+    @Option.Singular
+    @Option.Configured
+    List<McpIcon> icons();
 
     /**
      * Enable stateless mode. MCP client are not required to go
