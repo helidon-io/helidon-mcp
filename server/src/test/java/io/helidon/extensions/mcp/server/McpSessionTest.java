@@ -23,6 +23,8 @@ import io.helidon.jsonrpc.core.JsonRpcParams;
 import io.helidon.webserver.jsonrpc.JsonRpcResponse;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -105,6 +107,23 @@ class McpSessionTest {
         assertThat(sampling.capabilities().contains(McpCapability.SAMPLING_CONTEXT), is(false));
         assertThat(samplingContext.capabilities().contains(McpCapability.SAMPLING), is(true));
         assertThat(samplingContext.capabilities().contains(McpCapability.SAMPLING_CONTEXT), is(true));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"{}", "{\"listChanged\": false}", "{\"listChanged\": true}"})
+    void negotiatesRootsCapabilityRegardlessOfListChanged(String rootsCapability) {
+        McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, """
+                {"roots": %s}
+                """.formatted(rootsCapability));
+
+        assertThat(session.capabilities().contains(McpCapability.ROOTS), is(true));
+    }
+
+    @Test
+    void doesNotNegotiateMissingRootsCapability() {
+        McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, "{}");
+
+        assertThat(session.capabilities().contains(McpCapability.ROOTS), is(false));
     }
 
     @Test

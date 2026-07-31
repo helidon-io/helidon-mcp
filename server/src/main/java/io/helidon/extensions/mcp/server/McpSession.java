@@ -220,9 +220,6 @@ class McpSession {
         }
 
         capabilities.get(McpCapability.ROOTS.text())
-                .get("listChanged")
-                .asBoolean()
-                .filter(Boolean::booleanValue)
                 .ifPresent(it -> clientCapabilities.add(McpCapability.ROOTS));
 
         var elicitation = capabilities.get(McpCapability.ELICITATION.text());

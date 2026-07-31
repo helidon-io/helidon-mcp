@@ -27,6 +27,12 @@ final class McpSamplingResponseImpl implements McpSamplingResponse {
         this(List.of(message), model, stopReason);
     }
 
+    McpSamplingResponseImpl(List<McpSamplingMessage> messages, String model) {
+        this.messages = List.copyOf(messages);
+        this.model = model;
+        this.stopReason = null;
+    }
+
     McpSamplingResponseImpl(List<McpSamplingMessage> messages, String model, McpStopReason stopReason) {
         this.messages = List.copyOf(messages);
         this.model = model;

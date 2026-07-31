@@ -566,13 +566,13 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
                     .map(McpRole::valueOf)
                     .orElseThrow();
             List<McpSamplingMessage> messages = parseMessages(role, find(result, "content").orElseThrow());
-            McpStopReason stopReason = find(result, "stopReason")
+            return find(result, "stopReason")
                     .filter(this::isJsonString)
                     .map(JsonString.class::cast)
                     .map(JsonString::value)
-                    .map(McpStopReason::map)
-                    .orElse(null);
-            return new McpSamplingResponseImpl(messages, model, stopReason);
+                    .flatMap(McpStopReason::find)
+                    .map(mcpStopReason -> new McpSamplingResponseImpl(messages, model, mcpStopReason))
+                    .orElseGet(() -> new McpSamplingResponseImpl(messages, model));
         } catch (Exception e) {
             throw new McpSamplingException("Wrong sampling response format", e);
         }

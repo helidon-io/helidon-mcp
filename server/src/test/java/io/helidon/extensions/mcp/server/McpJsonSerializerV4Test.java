@@ -19,6 +19,7 @@ import java.util.Set;
 
 import io.helidon.json.JsonObject;
 import io.helidon.json.JsonParser;
+import io.helidon.json.JsonValue;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -87,7 +88,7 @@ class McpJsonSerializerV4Test {
                   "type": "text",
                   "text": "first"
                 }
-                """));
+                """, "endTurn"));
 
         assertThat(response.messages().size(), is(1));
         assertThat(response.asTextMessage().text(), is("first"));
@@ -106,7 +107,7 @@ class McpJsonSerializerV4Test {
                     "text": "second"
                   }
                 ]
-                """));
+                """, "endTurn"));
 
         assertThat(response.messages().size(), is(2));
         assertThat(((McpSamplingTextMessage) response.messages().get(0)).text(), is("first"));
@@ -131,7 +132,7 @@ class McpJsonSerializerV4Test {
                     "text": "second"
                   }
                 ]
-                """));
+                """, "endTurn"));
 
         assertThat(response.message(), sameInstance(response.messages().getFirst()));
         assertThat(response.asTextMessage().text(), is("first"));
@@ -139,16 +140,43 @@ class McpJsonSerializerV4Test {
 
     @Test
     void supportsEmptySamplingContentBlockArray() {
-        McpSamplingResponse response = SERIALIZER.createSamplingResponse(response("[]"));
+        McpSamplingResponse response = SERIALIZER.createSamplingResponse(response("[]", "endTurn"));
 
         assertThat(response.messages().isEmpty(), is(true));
         assertThrows(McpSamplingException.class, response::message);
     }
 
     @Test
+    void parsesToolUseStopReason() {
+        McpSamplingResponse response = SERIALIZER.createSamplingResponse(response("""
+                {
+                  "type": "text",
+                  "text": "first"
+                }
+                """, "toolUse"));
+
+        assertThat(response.stopReason().orElseThrow(), is(McpStopReason.TOOL_USE));
+    }
+
+    @Test
+    void acceptsUnknownSamplingStopReason() {
+        McpSamplingResponse response = SERIALIZER.createSamplingResponse(response("""
+                {
+                  "type": "text",
+                  "text": "first"
+                }
+                """, "providerSpecificReason"));
+
+        assertThat(response.asTextMessage().text(), is("first"));
+        assertThat(response.model(), is("test-model"));
+        assertThat(response.stopReason().isEmpty(), is(true));
+    }
+
+    @Test
     void rejectsNonObjectSamplingContentBlock() {
         McpSamplingException exception = assertThrows(McpSamplingException.class,
-                                                      () -> SERIALIZER.createSamplingResponse(response("[42]")));
+                                                      () -> SERIALIZER.createSamplingResponse(
+                                                              response("[42]", "endTurn")));
 
         assertThat(exception.getMessage(), is("Wrong sampling response format"));
     }
@@ -163,23 +191,23 @@ class McpJsonSerializerV4Test {
                                                                   "text": "first"
                                                                 }
                                                               ]
-                                                              """)));
+                                                              """, "endTurn")));
 
         assertThat(exception.getMessage(), is("Wrong sampling response format"));
     }
 
-    private static JsonObject response(String content) {
-        return JsonParser.create("""
-                {
-                  "jsonrpc": "2.0",
-                  "id": 1,
-                  "result": {
-                    "model": "test-model",
-                    "role": "assistant",
-                    "content": %s,
-                    "stopReason": "endTurn"
-                  }
-                }
-                """.formatted(content)).readJsonObject();
+    private static JsonObject response(String content, String stopReason) {
+        JsonValue parsedContent = JsonParser.create(content).readJsonValue();
+        JsonObject result = JsonObject.builder()
+                .set("model", "test-model")
+                .set("role", "assistant")
+                .set("content", parsedContent)
+                .set("stopReason", stopReason)
+                .build();
+        return JsonObject.builder()
+                .set("jsonrpc", "2.0")
+                .set("id", 1)
+                .set("result", result)
+                .build();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,9 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.util.Locale;
+import java.util.Optional;
+
 /**
  * Sampling request stop reasons.
  */
@@ -31,19 +34,23 @@ public enum McpStopReason {
     /**
      * Max tokens.
      */
-    MAX_TOKENS;
+    MAX_TOKENS,
+    /**
+     * Tool use.
+     */
+    TOOL_USE;
 
     String text() {
-        return this.name().toLowerCase().replace("_", "");
+        return this.name().toLowerCase(Locale.ROOT).replace("_", "");
     }
 
-    static McpStopReason map(String reason) {
-        reason = reason.toLowerCase();
+    static Optional<McpStopReason> find(String reason) {
+        String normalizedReason = reason.toLowerCase(Locale.ROOT);
         for (McpStopReason stopReason : McpStopReason.values()) {
-            if (stopReason.text().equals(reason)) {
-                return stopReason;
+            if (stopReason.text().equals(normalizedReason)) {
+                return Optional.of(stopReason);
             }
         }
-        throw new IllegalArgumentException("Unknown stop reason: " + reason);
+        return Optional.empty();
     }
 }
