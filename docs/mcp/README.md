@@ -1101,6 +1101,15 @@ if (!sampling.enabled()) {
 }
 ```
 
+Sampling context inclusion is negotiated separately. Before setting `includeContext` to `THIS_SERVER` or `ALL_SERVERS`,
+verify that the client also supports it using `enabledContext()`:
+
+```java
+if (!sampling.enabledContext()) {
+    // The client supports sampling, but not sampling context inclusion.
+}
+```
+
 If the client supports sampling, you can send a sampling request using the request method. A builder is provided to configure
 and customize the sampling request as needed:
 
@@ -1123,6 +1132,9 @@ McpSamplingRequest request = McpSamplingRequest.builder()
                                                      .build())
                 .build();
 ```
+
+`McpIncludeContext.NONE` does not require context support. If `THIS_SERVER` or `ALL_SERVERS` is requested when
+`enabledContext()` is `false`, the `request` method throws an `McpSamplingException`.
 
 Sampling metadata is serialized using Helidon JSON binding. The metadata option accepts `Object`; maps, collections,
 arrays, primitives, and converter-backed custom classes are supported. See
@@ -1155,14 +1167,19 @@ McpSamplingRequest request = McpSamplingRequest.builder()
 ```
 
 Once your request is built, send it using the sampling feature. The `request` method may throw an `McpSamplingException` if an
-error occurs during processing. On success, it returns an `McpSamplingResponse` containing the response message, the model used,
-and optionally a stop reason.
+error occurs during processing. On success, it returns an `McpSamplingResponse` containing the response messages, the model used,
+and optionally a stop reason. The `messages()` method returns every response message in wire order as an immutable list.
+The compatibility methods `message()`, `asTextMessage()`, `asImageMessage()`, and `asAudioMessage()` access only the first
+message and may throw an `McpSamplingException` when the response is empty or the first message has a different content type.
 
 Sampling responses may include a `McpStopReason` (for example `END_TURN`, `STOP_SEQUENCE`, or `MAX_TOKENS`).
 
 ```java
 try {
     McpSamplingResponse response = sampling.request(req -> req.addTextMessage("text"));
+    for (McpSamplingMessage message : response.messages()) {
+        // Process each response message.
+    }
 } catch (McpSamplingException exception) {
     // Handle error
 }
