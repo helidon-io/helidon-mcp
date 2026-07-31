@@ -58,10 +58,15 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
                                 .set("subscribe", capabilities.contains(McpCapability.RESOURCE_SUBSCRIBE)).build())
                         .set("completions", JsonObject.empty())
                         .set("elicitation", JsonObject.empty()).build())
-                .set("serverInfo", JsonObject.builder()
-                        .set("name", config.name())
-                        .set("version", config.version()).build())
+                .set("serverInfo", serverInfo(config).build())
                 .set("instructions", config.instructions().orElse(""));
+    }
+
+    @Override
+    public JsonObject.Builder serverInfo(McpServerConfig config) {
+        return JsonObject.builder()
+                .set("name", config.name())
+                .set("version", config.version());
     }
 
     @Override

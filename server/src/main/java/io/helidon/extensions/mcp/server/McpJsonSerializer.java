@@ -157,6 +157,8 @@ interface McpJsonSerializer {
 
     JsonObject.Builder createJsonInitializeResponse(Set<McpCapability> capabilities, McpServerConfig config);
 
+    JsonObject.Builder serverInfo(McpServerConfig config);
+
     // ---------- LIST RESPONSE ----------
 
     JsonObject listResources(McpPage<McpResource> page);

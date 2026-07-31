@@ -18,6 +18,8 @@ package io.helidon.extensions.mcp.tests.declarative;
 
 import java.time.Duration;
 
+import io.helidon.json.JsonObject;
+import io.helidon.webclient.jsonrpc.JsonRpcClient;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.testing.junit5.ServerTest;
 
@@ -34,6 +36,7 @@ import static org.hamcrest.Matchers.is;
 @ServerTest
 class McpSdkAnnotationConfigurationTest {
     private static McpSyncClient client;
+    private final JsonRpcClient jsonRpcClient;
 
     McpSdkAnnotationConfigurationTest(WebServer server) {
         client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
@@ -42,6 +45,9 @@ class McpSdkAnnotationConfigurationTest {
                 .capabilities(McpSchema.ClientCapabilities.builder().build())
                 .requestTimeout(Duration.ofSeconds(1))
                 .build();
+        jsonRpcClient = JsonRpcClient.create(config -> config.baseUri("http://localhost:"
+                                                                              + server.port()
+                                                                              + "/mcp-custom"));
     }
 
     @AfterAll
@@ -56,5 +62,28 @@ class McpSdkAnnotationConfigurationTest {
 
         assertThat(infos.version(), is("0.0.1-SNAPSHOT"));
         assertThat(infos.name(), is("mcp-server-custom-path"));
+    }
+
+    @Test
+    void websiteUrlAnnotationConfig() {
+        JsonObject clientInfo = JsonObject.builder()
+                .set("name", "test-client")
+                .set("version", "1.0.0")
+                .build();
+
+        try (var response = jsonRpcClient.rpcMethod("initialize")
+                .rpcId(2)
+                .param("protocolVersion", "2025-11-25")
+                .param("capabilities", JsonObject.empty())
+                .param("clientInfo", clientInfo)
+                .submit()) {
+            String websiteUrl = response.result()
+                    .map(result -> result.asJsonObject())
+                    .flatMap(result -> result.objectValue("serverInfo"))
+                    .flatMap(serverInfo -> serverInfo.stringValue("websiteUrl"))
+                    .orElseThrow();
+
+            assertThat(websiteUrl, is("https://example.com/mcp"));
+        }
     }
 }

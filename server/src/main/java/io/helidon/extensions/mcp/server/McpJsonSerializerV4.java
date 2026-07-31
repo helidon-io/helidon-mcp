@@ -34,6 +34,13 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
     }
 
     @Override
+    public JsonObject.Builder serverInfo(McpServerConfig config) {
+        JsonObject.Builder builder = super.serverInfo(config);
+        config.websiteUrl().ifPresent(websiteUrl -> builder.set("websiteUrl", websiteUrl));
+        return builder;
+    }
+
+    @Override
     List<McpSamplingMessage> parseMessages(McpRole role, JsonValue content) {
         if (content instanceof JsonArray array) {
             return array.values().stream()

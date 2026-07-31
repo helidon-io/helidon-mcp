@@ -46,6 +46,7 @@ import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SERVER_CONFIG;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_STATELESS;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TOOLS_PAGE_SIZE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_VERSION;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_WEBSITE_URL;
 import static io.helidon.extensions.mcp.codegen.McpTypes.SERVICES;
 import static io.helidon.service.codegen.ServiceCodegenTypes.SERVICE_ANNOTATION_SINGLETON;
 
@@ -147,6 +148,12 @@ final class McpCodegen implements CodegenExtension {
                 .flatMap(Annotation::value)
                 .ifPresent(ver -> method.addContent("builder.version(")
                         .addContentLiteral(ver)
+                        .addContentLine(");"));
+
+        type.findAnnotation(MCP_WEBSITE_URL)
+                .flatMap(Annotation::value)
+                .ifPresent(websiteUrl -> method.addContent("builder.websiteUrl(")
+                        .addContentLiteral(websiteUrl)
                         .addContentLine(");"));
 
         type.findAnnotation(MCP_PATH)

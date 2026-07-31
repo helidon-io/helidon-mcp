@@ -15,10 +15,14 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.util.Set;
+
 import io.helidon.json.JsonObject;
 import io.helidon.json.JsonParser;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -30,6 +34,51 @@ class McpJsonSerializerV4Test {
             McpJsonSerializer.create(McpProtocolVersion.VERSION_2025_11_25);
     private static final McpJsonSerializer LEGACY_SERIALIZER =
             McpJsonSerializer.create(McpProtocolVersion.VERSION_2025_06_18);
+
+    @Test
+    void serializesServerWebsiteUrl() {
+        McpServerConfig config = McpServerConfig.builder()
+                .websiteUrl("https://example.com/mcp")
+                .buildPrototype();
+        JsonObject response = SERIALIZER.createJsonInitializeResponse(Set.of(), config).build();
+        JsonObject expected = JsonObject.builder()
+                .set("name", "mcp-server")
+                .set("version", "0.0.1")
+                .set("websiteUrl", "https://example.com/mcp")
+                .build();
+
+        assertThat(response.objectValue("serverInfo").orElseThrow(), is(expected));
+    }
+
+    @Test
+    void omitsUnconfiguredServerWebsiteUrl() {
+        McpServerConfig config = McpServerConfig.builder().buildPrototype();
+        JsonObject response = SERIALIZER.createJsonInitializeResponse(Set.of(), config).build();
+        JsonObject expected = JsonObject.builder()
+                .set("name", "mcp-server")
+                .set("version", "0.0.1")
+                .build();
+
+        assertThat(response.objectValue("serverInfo").orElseThrow(), is(expected));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = McpProtocolVersion.class,
+                names = {"VERSION_2024_11_05", "VERSION_2025_03_26", "VERSION_2025_06_18"})
+    void omitsServerWebsiteUrlFromLegacyProtocolVersions(McpProtocolVersion version) {
+        McpServerConfig config = McpServerConfig.builder()
+                .websiteUrl("https://example.com/mcp")
+                .buildPrototype();
+        JsonObject response = McpJsonSerializer.create(version)
+                .createJsonInitializeResponse(Set.of(), config)
+                .build();
+        JsonObject expected = JsonObject.builder()
+                .set("name", "mcp-server")
+                .set("version", "0.0.1")
+                .build();
+
+        assertThat(response.objectValue("serverInfo").orElseThrow(), is(expected));
+    }
 
     @Test
     void parsesSingleSamplingContentBlock() {

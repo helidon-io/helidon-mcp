@@ -69,6 +69,10 @@ public final class Mcp {
      *         Set the MCP server version. It will be communicated to MCP client when connecting to this server.
      *     </li>
      *     <li>
+     *         {@link io.helidon.extensions.mcp.server.Mcp.WebsiteUrl} -
+     *         Set the optional MCP server website URL.
+     *     </li>
+     *     <li>
      *         {@link io.helidon.extensions.mcp.server.Mcp.Path} -
      *         Set the path that an MCP server will server request for. Paths are relative, the base URI is served
      *         by Helidon Webserver and can be configured accordingly.
@@ -121,6 +125,20 @@ public final class Mcp {
          * Version of the server.
          *
          * @return server version
+         */
+        String value();
+    }
+
+    /**
+     * Annotation to define the {@link io.helidon.extensions.mcp.server.Mcp.Server} website URL.
+     */
+    @Target(TYPE)
+    @Retention(RUNTIME)
+    public @interface WebsiteUrl {
+        /**
+         * Website URL of the server.
+         *
+         * @return server website URL
          */
         String value();
     }

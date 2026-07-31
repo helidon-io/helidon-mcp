@@ -29,6 +29,7 @@ import static io.helidon.extensions.mcp.server.McpPagination.DEFAULT_PAGE_SIZE;
  * Configuration of an MCP server.
  */
 @Prototype.Blueprint
+@Prototype.IncludeDefaultMethods("websiteUrl")
 @Prototype.Configured(McpServerConfigBlueprint.CONFIG_ROOT)
 @Prototype.CustomMethods(McpServerFeatureSupport.class)
 interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
@@ -60,6 +61,16 @@ interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
     @Option.Configured
     @Option.Default("0.0.1")
     String version();
+
+    /**
+     * Website URL for this server.
+     *
+     * @return website URL
+     */
+    @Option.Configured
+    default Optional<String> websiteUrl() {
+        return Optional.empty();
+    }
 
     /**
      * Enable stateless mode. MCP client are not required to go
