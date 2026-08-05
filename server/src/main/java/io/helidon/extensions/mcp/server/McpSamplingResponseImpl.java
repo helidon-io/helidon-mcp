@@ -20,23 +20,23 @@ import java.util.Optional;
 
 final class McpSamplingResponseImpl implements McpSamplingResponse {
     private final String model;
-    private final McpStopReason stopReason;
+    private final String rawStopReason;
     private final List<McpSamplingMessage> messages;
 
     McpSamplingResponseImpl(McpSamplingMessage message, String model, McpStopReason stopReason) {
-        this(List.of(message), model, stopReason);
+        this(List.of(message), model, stopReason.text());
     }
 
     McpSamplingResponseImpl(List<McpSamplingMessage> messages, String model) {
         this.messages = List.copyOf(messages);
         this.model = model;
-        this.stopReason = null;
+        this.rawStopReason = null;
     }
 
-    McpSamplingResponseImpl(List<McpSamplingMessage> messages, String model, McpStopReason stopReason) {
+    McpSamplingResponseImpl(List<McpSamplingMessage> messages, String model, String rawStopReason) {
         this.messages = List.copyOf(messages);
         this.model = model;
-        this.stopReason = stopReason;
+        this.rawStopReason = rawStopReason;
     }
 
     @Override
@@ -86,6 +86,11 @@ final class McpSamplingResponseImpl implements McpSamplingResponse {
 
     @Override
     public Optional<McpStopReason> stopReason() {
-        return Optional.ofNullable(stopReason);
+        return rawStopReason().flatMap(McpStopReason::from);
+    }
+
+    @Override
+    public Optional<String> rawStopReason() {
+        return Optional.ofNullable(rawStopReason);
     }
 }

@@ -73,7 +73,16 @@ public sealed interface McpSamplingResponse permits McpSamplingResponseImpl {
     /**
      * Sampling stop reason.
      *
-     * @return stop reason
+     * @return matching standard stop reason, or empty if the client omitted the reason or returned a non-standard reason
      */
     Optional<McpStopReason> stopReason();
+
+    /**
+     * Sampling stop reason exactly as received from the client.
+     *
+     * @return raw stop reason, or empty if the client omitted it
+     */
+    default Optional<String> rawStopReason() {
+        return Optional.empty();
+    }
 }

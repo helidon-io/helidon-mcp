@@ -1172,7 +1172,11 @@ and optionally a stop reason. The `messages()` method returns every response mes
 The compatibility methods `message()`, `asTextMessage()`, `asImageMessage()`, and `asAudioMessage()` access only the first
 message and may throw an `McpSamplingException` when the response is empty or the first message has a different content type.
 
-Sampling responses may include a `McpStopReason` (for example `END_TURN`, `STOP_SEQUENCE`, or `MAX_TOKENS`).
+Sampling responses may include a stop reason string. The `rawStopReason()` method preserves the exact value returned by the
+client, including provider-specific values. The `stopReason()` method maps recognized standard values to `McpStopReason`
+(`END_TURN`, `STOP_SEQUENCE`, `MAX_TOKENS`, or `TOOL_USE`). It returns an empty `Optional` when the client omits the stop reason
+or returns a non-standard value. Use `rawStopReason()` to distinguish those cases: it is empty only when the client omitted the
+value.
 
 ```java
 try {
@@ -1180,6 +1184,12 @@ try {
     for (McpSamplingMessage message : response.messages()) {
         // Process each response message.
     }
+    response.stopReason().ifPresent(reason -> {
+        // Process a recognized standard stop reason.
+    });
+    response.rawStopReason().ifPresent(reason -> {
+        // Process the exact stop reason returned by the client.
+    });
 } catch (McpSamplingException exception) {
     // Handle error
 }

@@ -570,8 +570,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
                     .filter(this::isJsonString)
                     .map(JsonString.class::cast)
                     .map(JsonString::value)
-                    .flatMap(McpStopReason::find)
-                    .map(mcpStopReason -> new McpSamplingResponseImpl(messages, model, mcpStopReason))
+                    .map(stopReason -> new McpSamplingResponseImpl(messages, model, stopReason))
                     .orElseGet(() -> new McpSamplingResponseImpl(messages, model));
         } catch (Exception e) {
             throw new McpSamplingException("Wrong sampling response format", e);

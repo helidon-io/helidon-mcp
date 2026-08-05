@@ -16,38 +16,45 @@
 
 package io.helidon.extensions.mcp.server;
 
-import java.util.Locale;
 import java.util.Optional;
 
 /**
- * Sampling request stop reasons.
+ * Standard sampling response stop reasons recognized by this implementation.
+ * <p>
+ * The protocol also permits non-standard stop reasons. Their exact values are available through
+ * {@link McpSamplingResponse#rawStopReason()}.
  */
 public enum McpStopReason {
     /**
      * End turn.
      */
-    END_TURN,
+    END_TURN("endTurn"),
     /**
      * Stop sequence.
      */
-    STOP_SEQUENCE,
+    STOP_SEQUENCE("stopSequence"),
     /**
      * Max tokens.
      */
-    MAX_TOKENS,
+    MAX_TOKENS("maxTokens"),
     /**
      * Tool use.
      */
-    TOOL_USE;
+    TOOL_USE("toolUse");
 
-    String text() {
-        return this.name().toLowerCase(Locale.ROOT).replace("_", "");
+    private final String text;
+
+    McpStopReason(String text) {
+        this.text = text;
     }
 
-    static Optional<McpStopReason> find(String reason) {
-        String normalizedReason = reason.toLowerCase(Locale.ROOT);
+    String text() {
+        return text;
+    }
+
+    static Optional<McpStopReason> from(String reason) {
         for (McpStopReason stopReason : McpStopReason.values()) {
-            if (stopReason.text().equals(normalizedReason)) {
+            if (stopReason.text().equalsIgnoreCase(reason)) {
                 return Optional.of(stopReason);
             }
         }

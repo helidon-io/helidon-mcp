@@ -115,6 +115,7 @@ class McpJsonSerializerV4Test {
         assertThat(response.messages().getFirst().role(), is(McpRole.ASSISTANT));
         assertThat(response.messages().get(1).role(), is(McpRole.ASSISTANT));
         assertThat(response.model(), is("test-model"));
+        assertThat(response.rawStopReason().orElseThrow(), is("endTurn"));
         assertThat(response.stopReason().orElseThrow(), is(McpStopReason.END_TURN));
         assertThrows(UnsupportedOperationException.class, () -> response.messages().clear());
     }
@@ -155,12 +156,27 @@ class McpJsonSerializerV4Test {
                 }
                 """, "toolUse"));
 
+        assertThat(response.rawStopReason().orElseThrow(), is("toolUse"));
         assertThat(response.stopReason().orElseThrow(), is(McpStopReason.TOOL_USE));
     }
 
     @Test
-    void acceptsUnknownSamplingStopReason() {
+    void preservesCaseOfKnownSamplingStopReason() {
         McpSamplingResponse response = SERIALIZER.createSamplingResponse(response("""
+                {
+                  "type": "text",
+                  "text": "first"
+                }
+                """, "EndTurn"));
+
+        assertThat(response.rawStopReason().orElseThrow(), is("EndTurn"));
+        assertThat(response.stopReason().orElseThrow(), is(McpStopReason.END_TURN));
+    }
+
+    @ParameterizedTest
+    @EnumSource(McpProtocolVersion.class)
+    void acceptsUnknownSamplingStopReason(McpProtocolVersion version) {
+        McpSamplingResponse response = McpJsonSerializer.create(version).createSamplingResponse(response("""
                 {
                   "type": "text",
                   "text": "first"
@@ -169,6 +185,29 @@ class McpJsonSerializerV4Test {
 
         assertThat(response.asTextMessage().text(), is("first"));
         assertThat(response.model(), is("test-model"));
+        assertThat(response.rawStopReason().orElseThrow(), is("providerSpecificReason"));
+        assertThat(response.stopReason().isPresent(), is(false));
+    }
+
+    @Test
+    void preservesAbsentSamplingStopReason() {
+        JsonObject result = JsonObject.builder()
+                .set("model", "test-model")
+                .set("role", "assistant")
+                .set("content", JsonObject.builder()
+                        .set("type", "text")
+                        .set("text", "first")
+                        .build())
+                .build();
+        JsonObject json = JsonObject.builder()
+                .set("jsonrpc", "2.0")
+                .set("id", 1)
+                .set("result", result)
+                .build();
+
+        McpSamplingResponse response = SERIALIZER.createSamplingResponse(json);
+
+        assertThat(response.rawStopReason().isEmpty(), is(true));
         assertThat(response.stopReason().isEmpty(), is(true));
     }
 
