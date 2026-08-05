@@ -36,6 +36,9 @@ public sealed interface McpElicitationResponse permits McpElicitationResponseImp
      * The submitted form data. Content is present only when {@link #action()} is
      * {@link McpElicitationAction#ACCEPT} and the response belongs to a form elicitation request.
      * URL elicitation responses and responses with any other action have no content.
+     * Form values can be strings, numbers, booleans, or, starting with MCP protocol version
+     * {@code 2025-11-25}, lists of strings for multi-select enum fields. Use
+     * {@link McpParameters#asList(Class)} to read a multi-select value.
      *
      * @return values matching the requested schema, if present
      */

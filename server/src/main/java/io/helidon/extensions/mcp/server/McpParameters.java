@@ -41,7 +41,8 @@ import io.helidon.json.binding.Json;
 import io.helidon.jsonrpc.core.JsonRpcParams;
 
 /**
- * JSON object wrapper used for MCP client parameters, protocol metadata, and sampling tool input.
+ * JSON object wrapper used for MCP client parameters, protocol metadata, sampling tool input, and accepted form
+ * elicitation content.
  */
 public final class McpParameters {
     private static final Mappers MAPPERS = Mappers.create();

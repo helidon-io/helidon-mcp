@@ -35,7 +35,10 @@ interface McpElicitationRequestBlueprint {
     String message();
 
     /**
-     * A JSON schema to format client response.
+     * A restricted JSON Schema describing the form fields and response values.
+     * MCP protocol version {@code 2025-11-25} adds titled and untitled single-select and multi-select
+     * enum schemas while retaining the legacy titled enum schema.
+     * Multi-select values are returned as lists of strings.
      *
      * @return the schema
      */
