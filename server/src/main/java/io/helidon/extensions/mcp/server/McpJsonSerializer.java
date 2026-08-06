@@ -229,17 +229,13 @@ interface McpJsonSerializer {
 
     // ---------- SAMPLING ----------
 
-    JsonObject.Builder toJson(McpSamplingRequest request);
+    JsonObject.Builder toJson(McpSamplingRequest request, List<McpTool> tools);
 
     JsonObject.Builder toJson(McpSamplingMessage message);
 
-    JsonObject.Builder toJson(McpSamplingImageMessage image);
+    JsonObject.Builder toJson(McpSamplingContent content);
 
-    JsonObject.Builder toJson(McpSamplingTextMessage text);
-
-    JsonObject.Builder toJson(McpSamplingAudioMessage audio);
-
-    JsonObject createSamplingRequest(long id, McpSamplingRequest request);
+    JsonObject createSamplingRequest(long id, McpSamplingRequest request, List<McpTool> tools);
 
     McpSamplingResponse createSamplingResponse(JsonObject object) throws McpSamplingException;
 

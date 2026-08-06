@@ -740,9 +740,10 @@ McpToolResult samplingTool(McpSampling sampling) {
         McpSamplingResponse response = sampling.request(req -> req
                 .timeout(Duration.ofSeconds(10))
                 .systemPrompt("You are a concise, helpful assistant.")
-                .addTextMessage(McpSamplingTextMessage.builder().text("Write a 3-line summary of Helidon MCP Sampling.").role(McpRole.USER).build()));
+                .addTextMessage(McpRole.USER,
+                                "Write a 3-line summary of Helidon MCP Sampling."));
         return McpToolResult.builder()
-                .addTextContent(response.asTextMessage().text())
+                .addTextContent(response.asTextContent().text())
                 .build();
     } catch (McpSamplingException e) {
         return McpToolResult.builder()

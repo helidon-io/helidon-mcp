@@ -24,14 +24,15 @@ import io.helidon.builder.api.Option;
 import io.helidon.builder.api.Prototype;
 
 import static io.helidon.extensions.mcp.server.McpPagination.DEFAULT_PAGE_SIZE;
+import static io.helidon.extensions.mcp.server.McpSampling.DEFAULT_MAX_TOOL_ITERATIONS;
 
 /**
  * Configuration of an MCP server.
  */
 @Prototype.Blueprint
-@Prototype.IncludeDefaultMethods("websiteUrl")
-@Prototype.Configured(McpServerConfigBlueprint.CONFIG_ROOT)
+@Prototype.IncludeDefaultMethods
 @Prototype.CustomMethods(McpServerFeatureSupport.class)
+@Prototype.Configured(McpServerConfigBlueprint.CONFIG_ROOT)
 interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
     String CONFIG_ROOT = "mcp.server";
 
@@ -196,6 +197,18 @@ interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
      */
     @Option.Configured
     Optional<String> instructions();
+
+    /**
+     * Maximum number of sampling tool-execution rounds. The value must be greater than zero. Once reached, one additional
+     * request is sent with tool choice {@link McpToolChoice#NONE}. Default is
+     * {@value McpSampling#DEFAULT_MAX_TOOL_ITERATIONS}.
+     *
+     * @return maximum sampling tool iterations
+     */
+    @Option.Configured
+    @Option.DefaultInt(DEFAULT_MAX_TOOL_ITERATIONS)
+    @Option.Decorator(McpDecorators.SamplingToolIterationsDecorator.class)
+    int maxSamplingToolIterations();
 
     /**
      * Maximum number of concurrent request handled by sessions. Default is {@code 1000}.

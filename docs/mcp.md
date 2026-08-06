@@ -1102,12 +1102,22 @@ if (!sampling.enabled()) {
 }
 ```
 
-Sampling context inclusion is negotiated separately. Before setting `includeContext` to `THIS_SERVER` or `ALL_SERVERS`,
-verify that the client also supports it using `enabledContext()`:
+Sampling context inclusion is negotiated separately. `McpSamplingRequest.usesContext()` reports whether `includeContext` is
+set to `THIS_SERVER` or `ALL_SERVERS`. Before sending such a request, verify that the client also supports context inclusion
+using `enabledContext()`:
 
 ```java
 if (!sampling.enabledContext()) {
     // The client supports sampling, but not sampling context inclusion.
+}
+```
+
+Tool-enabled sampling is also negotiated separately. Before adding tool names or a tool choice to a sampling request, verify that
+the client supports them using `enabledTools()`:
+
+```java
+if (!sampling.enabledTools()) {
+    // The client supports basic sampling, but not tool-enabled sampling.
 }
 ```
 
@@ -1127,18 +1137,16 @@ McpSamplingRequest request = McpSamplingRequest.builder()
                 .timeout(Duration.ofSeconds(10))
                 .stopSequences(List.of("stop1"))
                 .includeContext(McpIncludeContext.NONE)
-                .addTextMessage(McpSamplingTextMessage.builder()
-                                                     .text("text")
-                                                     .role(McpRole.USER)
-                                                     .build())
+                .addTextMessage(McpRole.USER, "text")
                 .build();
 ```
 
 `McpIncludeContext.NONE` does not require context support. If `THIS_SERVER` or `ALL_SERVERS` is requested when
 `enabledContext()` is `false`, the `request` method throws an `McpSamplingException`.
 
-Sampling metadata is serialized using Helidon JSON binding. The metadata option accepts `Object`; maps, collections,
-arrays, primitives, and converter-backed custom classes are supported. See
+Sampling request metadata is serialized using Helidon JSON binding. This value uses the wire `metadata` field and the
+`McpSamplingRequest.metadata()` option, which accepts `Object`; maps, collections, arrays, primitives, and converter-backed
+custom classes are supported. This is separate from the protocol `_meta` field exposed through `metadata()`. See
 [Migrate from JSON-B to Helidon JSON Binding](./upgrade/upgrade_guide_1.2.md#migrate-from-json-b-to-helidon-json-binding) for the
 compatibility impact and migration steps.
 
@@ -1146,32 +1154,48 @@ Once your request is built, send it using the sampling feature.
 
 #### Sampling data model
 
-Three types of sampling request messages can be created:
+Each sampling message is an envelope with one role and an ordered collection of content blocks. A content block can contain
+text, image, audio, a tool use, or a tool result. Use `McpSamplingMessage.builder()` to create an envelope explicitly, then add
+it to the ordered `McpSamplingRequest.messages()` collection with `addMessage`. For a single text-content message, the request
+builder also provides `addTextMessage(String)` and `addTextMessage(McpRole, String)` convenience methods.
 
 - **Text**: Text message content.
 - **Image**: Image message content with a custom media type.
 - **Audio**: Audio message content with a custom media type.
+- **Tool use**: A client-model request to invoke a named sampling tool with structured input.
+- **Tool result**: The corresponding server result, represented by an `McpToolResult`.
+
+Text, image, and audio blocks can also carry `McpAnnotations` for audience, priority, and last-modified metadata. Every
+sampling content block and sampling message envelope supports its own wire `_meta` value through `metadata(...)` and
+`metadata()`. The public tool-content types, such as `McpToolTextContent` and `McpToolImageContent`, expose the same
+annotations and metadata options.
 
 Create sampling request messages with the `McpSamplingRequest` builder:
 
 ```java
 McpSamplingRequest request = McpSamplingRequest.builder()
-        .addTextMessage(message -> message.text("Explain Helidon MCP in one paragraph.")
-                                          .role(McpRole.USER))
-        .addImageMessage(image -> image.data(pngBytes)
-                                       .mediaType(MediaTypes.create("image/png"))
-                                       .role(McpRole.USER))
-        .addAudioMessage(audio -> audio.data(wavBytes)
-                                       .mediaType(MediaTypes.create("audio/wav"))
-                                       .role(McpRole.USER))
+        .addMessage(McpSamplingMessage.builder()
+                            .role(McpRole.USER)
+                            .addContent(McpSamplingTextContent.create(
+                                    "Explain Helidon MCP in one paragraph."))
+                            .addContent(McpSamplingImageContent.builder()
+                                                .data(pngBytes)
+                                                .mediaType(MediaTypes.create("image/png"))
+                                                .build())
+                            .addContent(McpSamplingAudioContent.builder()
+                                                .data(wavBytes)
+                                                .mediaType(MediaTypes.create("audio/wav"))
+                                                .build())
+                            .build())
         .build();
 ```
 
 Once your request is built, send it using the sampling feature. The `request` method may throw an `McpSamplingException` if an
-error occurs during processing. On success, it returns an `McpSamplingResponse` containing the response messages, the model used,
-and optionally a stop reason. The `messages()` method returns every response message in wire order as an immutable list.
-The compatibility methods `message()`, `asTextMessage()`, `asImageMessage()`, and `asAudioMessage()` access only the first
-message and may throw an `McpSamplingException` when the response is empty or the first message has a different content type.
+error occurs during processing. On success, it returns an `McpSamplingResponse` containing the final response message, the model
+used, and optionally a stop reason. `response.message()` returns the message envelope, and `message.contents()` returns its
+immutable, ordered content blocks. The convenience methods `asTextContent()`, `asImageContent()`, `asAudioContent()`, and
+`asToolUseContent()` access only the first content block and may throw an `McpSamplingException` when the message is empty or its
+first block has a different type.
 
 Sampling responses may include a stop reason string. The `rawStopReason()` method preserves the exact value returned by the
 client, including provider-specific values. The `stopReason()` method maps recognized standard values to `McpStopReason`
@@ -1182,8 +1206,8 @@ value.
 ```java
 try {
     McpSamplingResponse response = sampling.request(req -> req.addTextMessage("text"));
-    for (McpSamplingMessage message : response.messages()) {
-        // Process each response message.
+    for (McpSamplingContent content : response.message().contents()) {
+        // Process each response content block.
     }
     response.stopReason().ifPresent(reason -> {
         // Process a recognized standard stop reason.
@@ -1195,6 +1219,52 @@ try {
     // Handle error
 }
 ```
+
+#### Sampling with tools
+
+Tool-enabled sampling lets the client model request calls to tools registered with the MCP server. A sampling request selects
+the tools available to the model by name; it does not register additional tools. `McpToolChoice.AUTO` lets the model decide
+whether to use a tool, `REQUIRED` requires at least one tool call, and `NONE` prevents tool calls.
+
+Here, a tool named `weather` is already registered through `McpServerFeature.builder().addTool(...)`.
+
+```java
+McpSamplingRequest request = McpSamplingRequest.builder()
+        .addTool("weather")
+        .toolChoice(McpToolChoice.AUTO)
+        .addTextMessage(McpRole.USER, "What is the weather in Prague?")
+        .build();
+
+McpSamplingResponse response = sampling.request(request);
+```
+
+Providing `tools` or `toolChoice` when `enabledTools()` is `false` causes `request` to throw an `McpSamplingException`. A
+request's `usesTool()` method reports whether it contains tools, a tool choice, or tool content. A tool-enabled response can
+contain one or more `McpSamplingToolUseContent` blocks in its assistant message. Helidon automatically invokes each matching
+selected tool, appends the complete assistant message and one user message containing all matching
+`McpSamplingToolResultContent` blocks, then samples again. Results for parallel tool uses stay together in the same user message
+and retain tool-use order. The original request remains unchanged, and `request(...)` returns only the final response that has no
+tool-use blocks.
+
+Only registered tools whose names are included in `McpSamplingRequest.tools()` are eligible for automatic invocation. Registered
+tools are not offered automatically, and an unregistered request tool name causes `request(...)` to throw an
+`McpSamplingException` before sending the sampling request. If the client nevertheless requests a tool that was not offered,
+Helidon returns an error tool result so the model can recover. A `null` result or an exception from a selected tool is handled the
+same way. Tool callbacks run synchronously and sequentially. The request timeout applies independently to each sampling exchange.
+
+Helidon allows ten tool-execution rounds by default. Configure the limit with
+`mcp.server.max-sampling-tool-iterations` or `McpServerFeature.builder().maxSamplingToolIterations(...)`. The value must be greater
+than zero. The limit counts rounds, so parallel tool calls in one response count as one round. After reaching the limit, Helidon
+sends one additional request with tool choice `NONE`; another tool-use response then causes an `McpSamplingException`. A
+`REQUIRED` choice changes to `AUTO` after its first tool round because the requirement has been fulfilled.
+
+Build tool results with the type-specific builder methods, such as `addTextContent(...)`, `addImageContent(...)`,
+`addAudioContent(...)`, `addTextResourceContent(...)`, `addBinaryResourceContent(...)`, and
+`addResourceLinkContent(...)`. Read the corresponding typed lists from `textContents()`, `imageContents()`,
+`audioContents()`, `textResourceContents()`, `binaryResourceContents()`, and `resourceLinkContents()`. Content retains its
+insertion order within each typed list. On the wire, the lists are grouped in that same order: text, image, audio, text
+resource, binary resource, then resource link.
+
 #### Example
 
 Below is an example of a tool that uses the Sampling feature.
@@ -1232,7 +1302,7 @@ class SamplingTool implements McpTool {
                     .timeout(Duration.ofSeconds(10))
                     .systemPrompt("You are a concise, helpful assistant.")
                     .addTextMessage("Write a 3-line summary of Helidon MCP Sampling."));
-            return McpToolResult.create(response.asTextMessage().text());
+            return McpToolResult.create(response.asTextContent().text());
         } catch (McpSamplingException e) {
             return McpToolResult.builder()
                     .error(true)
@@ -1300,6 +1370,7 @@ mcp:
     website-url: "https://example.com/mcp"
     path: "/mcp"
     stateless: true
+    max-sampling-tool-iterations: 10
 ```
 
 The optional website URL is included in `serverInfo` when the negotiated protocol version is `2025-11-25`.

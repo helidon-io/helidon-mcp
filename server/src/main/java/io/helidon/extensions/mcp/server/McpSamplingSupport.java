@@ -15,8 +15,6 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 import io.helidon.builder.api.Prototype;
@@ -33,15 +31,53 @@ class McpSamplingSupport {
      */
     @Prototype.BuilderMethod
     static void addTextMessage(McpSamplingRequest.BuilderBase<?, ?> builder, String text) {
-        Objects.requireNonNull(text, "text is null");
-        builder.addTextMessage(b -> b.text(text).role(McpRole.ASSISTANT));
+        addTextMessage(builder, McpRole.ASSISTANT, text);
     }
 
-    static List<McpSamplingMessage> aggregate(McpSamplingRequest request) {
-        List<McpSamplingMessage> messages = new ArrayList<>();
-        messages.addAll(request.textMessages());
-        messages.addAll(request.imageMessages());
-        messages.addAll(request.audioMessages());
-        return messages;
+    /**
+     * Add a sampling text message to the sampling request from the provided role and text.
+     *
+     * @param builder sampling request builder
+     * @param role    message role
+     * @param text    text message
+     */
+    @Prototype.BuilderMethod
+    static void addTextMessage(McpSamplingRequest.BuilderBase<?, ?> builder, McpRole role, String text) {
+        Objects.requireNonNull(role, "role is null");
+        Objects.requireNonNull(text, "text is null");
+        builder.addMessage(McpSamplingMessage.builder()
+                                   .role(role)
+                                   .addContent(McpSamplingTextContent.create(text))
+                                   .build());
+    }
+
+    /**
+     * Whether this request uses sampling tools through tool names, a tool choice, or tool messages.
+     *
+     * @param request sampling request
+     * @return {@code true} if this request uses sampling tools
+     */
+    @Prototype.PrototypeMethod
+    static boolean usesTool(McpSamplingRequest request) {
+        return !request.tools().isEmpty()
+                || request.toolChoice().isPresent()
+                || request.messages().stream()
+                        .flatMap(message -> message.contents().stream())
+                        .map(McpSamplingContent::type)
+                        .anyMatch(type -> type == McpSamplingContentType.TOOL_USE
+                                || type == McpSamplingContentType.TOOL_RESULT);
+    }
+
+    /**
+     * Whether this request uses sampling context inclusion.
+     *
+     * @param request sampling request
+     * @return {@code true} if this request includes context from this or other servers
+     */
+    @Prototype.PrototypeMethod
+    static boolean usesContext(McpSamplingRequest request) {
+        return request.includeContext()
+                .filter(context -> context != McpIncludeContext.NONE)
+                .isPresent();
     }
 }

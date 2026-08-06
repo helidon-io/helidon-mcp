@@ -29,28 +29,27 @@ import io.helidon.builder.api.Prototype;
 @Prototype.CustomMethods(McpSamplingSupport.class)
 interface McpSamplingRequestBlueprint {
     /**
-     * Sampling text messages sent to the client.
+     * Ordered sampling messages sent to the client.
      *
-     * @return messages
+     * @return ordered messages
      */
     @Option.Singular
-    List<McpSamplingTextMessage> textMessages();
+    List<McpSamplingMessage> messages();
 
     /**
-     * Sampling image messages sent to the client.
+     * Names of server tools that the model may use during sampling.
      *
-     * @return messages
+     * @return tool names
      */
     @Option.Singular
-    List<McpSamplingImageMessage> imageMessages();
+    List<String> tools();
 
     /**
-     * Sampling audio messages sent to the client.
+     * Tool selection behavior for this sampling request.
      *
-     * @return messages
+     * @return tool choice
      */
-    @Option.Singular
-    List<McpSamplingAudioMessage> audioMessages();
+    Optional<McpToolChoice> toolChoice();
 
     /**
      * Sampling model hints.

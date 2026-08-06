@@ -15,20 +15,16 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import io.helidon.builder.api.Prototype;
+import java.util.Optional;
 
-class McpSamplingTextMessageSupport {
-    private McpSamplingTextMessageSupport() {
-    }
-
+/**
+ * MCP component that supports optional protocol metadata.
+ */
+interface McpMetadata {
     /**
-     * Create a {@link io.helidon.extensions.mcp.server.McpSamplingTextMessage} instance from the provided text.
+     * Optional protocol metadata represented by the {@code _meta} field.
      *
-     * @param text text message
-     * @return sampling text message instance
+     * @return protocol metadata
      */
-    @Prototype.PrototypeFactoryMethod
-    static McpSamplingTextMessage create(String text) {
-        return McpSamplingTextMessage.builder().text(text).role(McpRole.ASSISTANT).build();
-    }
+    Optional<McpParameters> metadata();
 }

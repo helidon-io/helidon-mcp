@@ -86,6 +86,19 @@ final class McpDecorators {
     }
 
     /**
+     * Enforce annotation priority value between 0 and 1.
+     */
+    static class AnnotationsPriorityDecorator implements Prototype.OptionDecorator<McpAnnotations.BuilderBase<?, ?>, Optional<Double>> {
+        @Override
+        public void decorate(McpAnnotations.BuilderBase<?, ?> builder, Optional<Double> value) {
+            value.filter(priority -> !McpDecorators.isPositiveAndLessThanOne(priority))
+                    .ifPresent(priority -> {
+                        throw new IllegalArgumentException("Annotation priority must be in range [0, 1]");
+                    });
+        }
+    }
+
+    /**
      * The URI scheme must be {@code file} when creating an MCP root.
      */
     static class RootUriDecorator implements Prototype.OptionDecorator<McpRoot.BuilderBase<?, ?>, URI> {
@@ -137,6 +150,16 @@ final class McpDecorators {
         public void decorate(McpServerConfig.BuilderBase<?, ?> builder, Integer value) {
             if (value < 0) {
                 throw new IllegalArgumentException("value must be greater than zero");
+            }
+        }
+    }
+
+    static class SamplingToolIterationsDecorator
+            implements Prototype.OptionDecorator<McpServerConfig.BuilderBase<?, ?>, Integer> {
+        @Override
+        public void decorate(McpServerConfig.BuilderBase<?, ?> builder, Integer value) {
+            if (value <= 0) {
+                throw new IllegalArgumentException("Maximum sampling tool iterations must be greater than zero");
             }
         }
     }

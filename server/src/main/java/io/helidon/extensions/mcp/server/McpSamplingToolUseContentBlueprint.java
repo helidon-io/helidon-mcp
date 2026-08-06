@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,36 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import io.helidon.builder.api.Prototype;
+
 /**
- * Sampling message types.
+ * MCP sampling tool use content.
  */
-public enum McpSamplingMessageType {
+@Prototype.Blueprint
+interface McpSamplingToolUseContentBlueprint extends McpSamplingContent {
     /**
-     * Sampling text message type.
+     * Unique identifier for this tool use.
+     *
+     * @return tool use identifier
      */
-    TEXT,
-    /**
-     * Sampling image message type.
-     */
-    IMAGE,
-    /**
-     * Sampling audio message type.
-     */
-    AUDIO;
+    String id();
 
     /**
-     * Returns lower case sampling message type name.
+     * Name of the tool to invoke.
      *
-     * @return type name
+     * @return tool name
      */
-    String text() {
-        return this.name().toLowerCase();
+    String name();
+
+    /**
+     * Arguments to pass to the tool.
+     *
+     * @return tool arguments
+     */
+    McpParameters input();
+
+    @Override
+    default McpSamplingContentType type() {
+        return McpSamplingContentType.TOOL_USE;
     }
 }

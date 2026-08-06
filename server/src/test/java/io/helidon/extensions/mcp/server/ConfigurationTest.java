@@ -27,6 +27,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import static io.helidon.extensions.mcp.server.McpPagination.DEFAULT_PAGE_SIZE;
+import static io.helidon.extensions.mcp.server.McpSampling.DEFAULT_MAX_TOOL_ITERATIONS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -50,6 +51,7 @@ class ConfigurationTest {
         assertThat(config.instructions().orElse(""), is("instructions"));
         assertThat(config.subscriptionTimeout(), is(Duration.ofSeconds(1)));
         assertThat(config.stateless(), is(true));
+        assertThat(config.maxSamplingToolIterations(), is(3));
         assertThat(config.maxSessionCount(), is(1));
         assertThat(config.maxRequestsPerSession(), is(1));
     }
@@ -71,6 +73,7 @@ class ConfigurationTest {
         assertThat(config.rootListTimeout(), is(Duration.ofSeconds(5)));
         assertThat(config.subscriptionTimeout(), is(Duration.ofMinutes(2)));
         assertThat(config.stateless(), is(false));
+        assertThat(config.maxSamplingToolIterations(), is(DEFAULT_MAX_TOOL_ITERATIONS));
         assertThat(config.maxSessionCount(), is(1000));
         assertThat(config.maxRequestsPerSession(), is(1000));
     }
@@ -101,6 +104,18 @@ class ConfigurationTest {
             fail("negative value are not allowed and must be checked.");
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), is("value must be greater than zero"));
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {-1, 0})
+    void testConfigurationInvalidSamplingToolIterations(int value) {
+        try {
+            var configSource = ConfigSources.create(Map.of("max-sampling-tool-iterations", Integer.toString(value)));
+            var config = McpServerConfig.create(Config.just(configSource));
+            fail("Sampling tool iterations must be greater than zero.");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), is("Maximum sampling tool iterations must be greater than zero"));
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
+ * Copyright (c) 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,18 @@ package io.helidon.extensions.mcp.server;
 
 import io.helidon.builder.api.Prototype;
 
-/**
- * MCP sampling audio message.
- */
-@Prototype.Blueprint
-interface McpSamplingAudioMessageBlueprint extends McpSamplingMediaMessage {
+class McpSamplingTextContentSupport {
+    private McpSamplingTextContentSupport() {
+    }
 
-    @Override
-    default McpSamplingMessageType type() {
-        return McpSamplingMessageType.AUDIO;
+    /**
+     * Create a {@link McpSamplingTextContent} instance from the provided text.
+     *
+     * @param text text content
+     * @return sampling text content instance
+     */
+    @Prototype.PrototypeFactoryMethod
+    static McpSamplingTextContent create(String text) {
+        return McpSamplingTextContent.builder().text(text).build();
     }
 }

@@ -15,17 +15,34 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.util.Optional;
+import java.util.Base64;
+
+import io.helidon.common.media.type.MediaType;
 
 /**
- * Tool contents that can be returned as part of the tool execution.
+ * MCP sampling media content.
  */
-interface McpToolContent extends McpContent, McpMetadata {
+public interface McpSamplingMediaContent extends McpSamplingAnnotatedContent {
     /**
-     * Optional annotations for this content block.
+     * Media content raw data.
      *
-     * @return annotations
+     * @return content
      */
-    Optional<McpAnnotations> annotations();
+    byte[] data();
 
+    /**
+     * Media content MIME type.
+     *
+     * @return MIME type
+     */
+    MediaType mediaType();
+
+    /**
+     * Returns the encoded media data using a base64 encoder.
+     *
+     * @return content in base64
+     */
+    default String encodeBase64Data() {
+        return Base64.getEncoder().encodeToString(data());
+    }
 }

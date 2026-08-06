@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
+ * Copyright (c) 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,23 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.util.Locale;
+
 /**
- * MCP sampling message.
+ * Display theme for an MCP icon.
  */
-public interface McpSamplingMessage {
+public enum McpIconTheme {
     /**
-     * Sampling message role.
-     *
-     * @return role
+     * Icon intended for a light background.
      */
-    McpRole role();
+    LIGHT,
 
     /**
-     * Sampling message type.
-     *
-     * @return type
+     * Icon intended for a dark background.
      */
-    McpSamplingMessageType type();
+    DARK;
+
+    String text() {
+        return name().toLowerCase(Locale.ROOT);
+    }
 }

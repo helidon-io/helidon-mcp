@@ -15,10 +15,10 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Set;
 
-import io.helidon.json.JsonArray;
 import io.helidon.json.JsonObject;
 import io.helidon.json.JsonValue;
 import io.helidon.jsonrpc.core.JsonRpcError;
@@ -46,14 +46,19 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
             }
         }
 
-        JsonObject.Builder builder = JsonObject.builder().from(super.toolCall(tool, result));
+        JsonObject original = super.toolCall(tool, result);
+        JsonObject.Builder builder = JsonObject.builder().from(original);
+        var contentValues = new ArrayList<>(original.arrayValue("content").orElseThrow().values());
         result.structuredContent().ifPresent((content) -> {
             JsonObject sc = McpJsonBinding.serializeObject(content);
             String json = sc.toString();
             builder.set("structuredContent", sc);
-            if (result.textContents().isEmpty()) {
+            if (McpToolSupport.aggregateContent(result).stream().noneMatch(McpToolTextContent.class::isInstance)) {
                 McpToolContent text = McpToolTextContent.builder().text(json).build();
-                toJson(text).ifPresent(it -> builder.set("content", JsonArray.create(it.build())));
+                toJson(text).ifPresent(it -> {
+                    contentValues.add(it.build());
+                    builder.setValues("content", contentValues);
+                });
             }
         });
         return builder.build();
@@ -61,10 +66,36 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
 
     @Override
     public Optional<JsonObject.Builder> toJson(McpContent content) {
+        Optional<JsonObject.Builder> result;
         if (content instanceof McpResourceLinkContent link) {
-            return Optional.of(toJson(link));
+            result = Optional.of(toJson(link));
+        } else {
+            result = super.toJson(content);
         }
-        return super.toJson(content);
+        if (content instanceof McpToolContent toolContent) {
+            result.ifPresent(builder -> {
+                toolContent.annotations().ifPresent(annotations -> builder.set("annotations", toJson(annotations)));
+                toolContent.metadata()
+                        .ifPresent(metadata -> builder.set("_meta",
+                                                           toolParameterObject(metadata, "Tool content metadata")));
+            });
+        }
+        return result;
+    }
+
+    @Override
+    public JsonObject.Builder toJson(McpSamplingContent content) {
+        JsonObject.Builder builder = super.toJson(content);
+        content.metadata()
+                .ifPresent(metadata -> builder.set("_meta", parameterObject(metadata, "Sampling content metadata")));
+        return builder;
+    }
+
+    @Override
+    JsonObject toJson(McpAnnotations annotations) {
+        JsonObject.Builder builder = JsonObject.builder().from(super.toJson(annotations));
+        annotations.lastModified().ifPresent(lastModified -> builder.set("lastModified", lastModified));
+        return builder.build();
     }
 
     @Override
@@ -108,6 +139,20 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
         content.mediaType().ifPresent(mediaType -> builder.set("mimeType", mediaType.text()));
         content.description().ifPresent(description -> builder.set("description", description));
         return builder;
+    }
+
+    JsonObject parameterObject(McpParameters parameters, String field) {
+        if (parameters.value() instanceof JsonObject object) {
+            return object;
+        }
+        throw new McpSamplingException(field + " must be a JSON object");
+    }
+
+    private JsonObject toolParameterObject(McpParameters parameters, String field) {
+        if (parameters.value() instanceof JsonObject object) {
+            return object;
+        }
+        throw new McpException(field + " must be a JSON object");
     }
 
     @Override

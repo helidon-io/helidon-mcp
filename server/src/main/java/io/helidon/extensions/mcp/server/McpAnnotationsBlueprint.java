@@ -16,20 +16,36 @@
 package io.helidon.extensions.mcp.server;
 
 import java.util.List;
+import java.util.Optional;
 
 import io.helidon.builder.api.Option;
 import io.helidon.builder.api.Prototype;
 
 /**
- * Tool resource link content.
+ * Optional annotations for MCP content.
  */
 @Prototype.Blueprint
-interface McpToolResourceLinkContentBlueprint extends McpResourceLinkContent, McpToolContent {
+interface McpAnnotationsBlueprint {
     /**
-     * Optional icons for this resource link.
+     * Roles for which the content is intended.
      *
-     * @return icons
+     * @return audience roles
      */
     @Option.Singular
-    List<McpIcon> icons();
+    List<McpRole> audience();
+
+    /**
+     * Content importance from zero to one.
+     *
+     * @return priority
+     */
+    @Option.Decorator(McpDecorators.AnnotationsPriorityDecorator.class)
+    Optional<Double> priority();
+
+    /**
+     * Last modification time as an ISO 8601 string.
+     *
+     * @return last modification time
+     */
+    Optional<String> lastModified();
 }

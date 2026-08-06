@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
+ * Copyright (c) 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,15 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import io.helidon.builder.api.Prototype;
-
 /**
- * MCP sampling image message.
+ * MCP sampling message content.
  */
-@Prototype.Blueprint
-interface McpSamplingImageMessageBlueprint extends McpSamplingMediaMessage {
+public interface McpSamplingContent extends McpMetadata {
+    /**
+     * Sampling content type.
+     *
+     * @return type
+     */
+    McpSamplingContentType type();
 
-    @Override
-    default McpSamplingMessageType type() {
-        return McpSamplingMessageType.IMAGE;
-    }
 }

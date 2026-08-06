@@ -15,43 +15,39 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.util.Base64;
-
-import io.helidon.common.media.type.MediaType;
+import java.util.Locale;
 
 /**
- * MCP sampling media content.
+ * Sampling content types.
  */
-public interface McpSamplingMediaMessage extends McpSamplingMessage {
+public enum McpSamplingContentType {
     /**
-     * Image content raw data.
-     *
-     * @return content
+     * Sampling text content type.
      */
-    byte[] data();
+    TEXT,
+    /**
+     * Sampling image content type.
+     */
+    IMAGE,
+    /**
+     * Sampling audio content type.
+     */
+    AUDIO,
+    /**
+     * Sampling tool use content type.
+     */
+    TOOL_USE,
+    /**
+     * Sampling tool result content type.
+     */
+    TOOL_RESULT;
 
     /**
-     * Image content MIME type.
+     * Returns lower case sampling content type name.
      *
-     * @return MIME type
+     * @return type name
      */
-    MediaType mediaType();
-
-    /**
-     * Returns the decoded image data using base64 decoder.
-     *
-     * @return decoded content.
-     */
-    default byte[] decodeBase64Data() {
-        return Base64.getDecoder().decode(data());
-    }
-
-    /**
-     * Returns the encoded image data using base64 encoder.
-     *
-     * @return content in base64.
-     */
-    default String encodeBase64Data() {
-        return Base64.getEncoder().encodeToString(data());
+    String text() {
+        return this.name().toLowerCase(Locale.ROOT);
     }
 }

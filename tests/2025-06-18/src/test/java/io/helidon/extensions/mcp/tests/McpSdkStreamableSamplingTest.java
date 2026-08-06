@@ -16,6 +16,7 @@
 
 package io.helidon.extensions.mcp.tests;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -85,7 +86,7 @@ class McpSdkStreamableSamplingTest extends AbstractMcpSdkTest {
         assertThat(audio.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
 
         var annotations = new McpSchema.Annotations(List.of(), 1.0);
-        var result = new McpSchema.AudioContent(annotations, SAMPLING_CLIENT_TEXT, MediaTypes.TEXT_PLAIN_VALUE);
+        var result = new McpSchema.AudioContent(annotations, encode(SAMPLING_CLIENT_TEXT), MediaTypes.TEXT_PLAIN_VALUE);
         return new McpSchema.CreateMessageResult(McpSchema.Role.USER,
                                                  result,
                                                  "test-model",
@@ -101,7 +102,7 @@ class McpSdkStreamableSamplingTest extends AbstractMcpSdkTest {
         assertThat(image.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
 
         var annotations = new McpSchema.Annotations(List.of(), 1.0);
-        var result = new McpSchema.ImageContent(annotations, SAMPLING_CLIENT_TEXT, MediaTypes.TEXT_PLAIN_VALUE);
+        var result = new McpSchema.ImageContent(annotations, encode(SAMPLING_CLIENT_TEXT), MediaTypes.TEXT_PLAIN_VALUE);
         return new McpSchema.CreateMessageResult(McpSchema.Role.USER, result, "test-model", STOP_SEQUENCE);
     }
 
@@ -129,7 +130,11 @@ class McpSdkStreamableSamplingTest extends AbstractMcpSdkTest {
     }
 
     private String decode(String data) {
-        return new String(Base64.getDecoder().decode(data));
+        return new String(Base64.getDecoder().decode(data), StandardCharsets.UTF_8);
+    }
+
+    private String encode(String data) {
+        return Base64.getEncoder().encodeToString(data.getBytes(StandardCharsets.UTF_8));
     }
 
     @ParameterizedTest

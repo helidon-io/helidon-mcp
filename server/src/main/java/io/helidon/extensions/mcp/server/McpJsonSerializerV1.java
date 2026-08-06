@@ -16,9 +16,10 @@
 package io.helidon.extensions.mcp.server;
 
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -252,33 +253,39 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
 
     @Override
     public Optional<JsonObject.Builder> toJson(McpContent content) {
+        Optional<JsonObject.Builder> result;
         if (content instanceof McpTextContent text) {
-            return Optional.of(toJson(text));
+            result = Optional.of(toJson(text));
+        } else if (content instanceof McpImageContent image) {
+            result = Optional.of(toJson(image));
+        } else if (content instanceof McpAudioContent audio) {
+            result = toJson(audio);
+        } else if (content instanceof McpEmbeddedTextResourceContent text) {
+            result = Optional.of(toJson(text));
+        } else if (content instanceof McpEmbeddedBinaryResourceContent binary) {
+            result = Optional.of(toJson(binary));
+        } else if (content instanceof McpResourceLinkContent) {
+            result = Optional.empty();
+        } else if (content instanceof McpToolContent) {
+            throw new McpException("Unsupported tool content implementation: " + content.getClass().getName());
+        } else {
+            result = Optional.empty();
         }
-        if (content instanceof McpImageContent image) {
-            return Optional.of(toJson(image));
+        if (content instanceof McpToolContent toolContent) {
+            result.ifPresent(builder -> toolContent.annotations()
+                    .ifPresent(annotations -> builder.set("annotations", toJson(annotations))));
         }
-        if (content instanceof McpEmbeddedTextResourceContent text) {
-            return Optional.of(toJson(text));
-        }
-        if (content instanceof McpEmbeddedBinaryResourceContent binary) {
-            return Optional.of(toJson(binary));
-        }
-        return Optional.empty();
+        return result;
     }
 
     @Override
     public JsonObject.Builder toJson(McpSamplingMessage message) {
-        if (message instanceof McpSamplingTextMessage text) {
-            return toJson(text);
+        if (message.contents().size() != 1) {
+            throw new McpSamplingException("This protocol version requires exactly one content block per sampling message");
         }
-        if (message instanceof McpSamplingImageMessage image) {
-            return toJson(image);
-        }
-        if (message instanceof McpSamplingAudioMessage resource) {
-            return toJson(resource);
-        }
-        throw new IllegalArgumentException("Unsupported content type: " + message.getClass().getName());
+        return JsonObject.builder()
+                .set("role", message.role().text())
+                .set("content", toJson(message.contents().getFirst()).build());
     }
 
     @Override
@@ -326,32 +333,34 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     }
 
     @Override
-    public JsonObject.Builder toJson(McpSamplingImageMessage image) {
-        return JsonObject.builder()
-                .set("role", image.role().text())
-                .set("content", JsonObject.builder()
-                        .set("type", image.type().text())
-                        .set("data", image.encodeBase64Data())
-                        .set("mimeType", image.mediaType().text()).build());
-    }
-
-    @Override
-    public JsonObject.Builder toJson(McpSamplingTextMessage text) {
-        return JsonObject.builder()
-                .set("role", text.role().text())
-                .set("content", JsonObject.builder()
-                        .set("type", text.type().text())
-                        .set("text", text.text()).build());
-    }
-
-    @Override
-    public JsonObject.Builder toJson(McpSamplingAudioMessage audio) {
-        return JsonObject.builder()
-                .set("role", audio.role().text())
-                .set("content", JsonObject.builder()
-                        .set("type", audio.type().text())
-                        .set("data", audio.encodeBase64Data())
-                        .set("mimeType", audio.mediaType().text()).build());
+    public JsonObject.Builder toJson(McpSamplingContent content) {
+        JsonObject.Builder builder;
+        if (content instanceof McpSamplingTextContent text) {
+            builder = JsonObject.builder()
+                    .set("type", text.type().text())
+                    .set("text", text.text());
+            text.annotations()
+                    .ifPresent(annotations -> builder.set("annotations", toJson(annotations)));
+        } else if (content instanceof McpSamplingImageContent image) {
+            builder = JsonObject.builder()
+                    .set("type", image.type().text())
+                    .set("data", image.encodeBase64Data())
+                    .set("mimeType", image.mediaType().text());
+            image.annotations()
+                    .ifPresent(annotations -> builder.set("annotations", toJson(annotations)));
+        } else if (content instanceof McpSamplingAudioContent audio) {
+            builder = JsonObject.builder()
+                    .set("type", audio.type().text())
+                    .set("data", audio.encodeBase64Data())
+                    .set("mimeType", audio.mediaType().text());
+            audio.annotations()
+                    .ifPresent(annotations -> builder.set("annotations", toJson(annotations)));
+        } else if (content instanceof McpSamplingToolUseContent || content instanceof McpSamplingToolResultContent) {
+            throw new McpSamplingException("Sampling tools are not supported by this protocol version");
+        } else {
+            throw new McpSamplingException("Unsupported sampling content implementation: " + content.getClass().getName());
+        }
+        return builder;
     }
 
     @Override
@@ -432,7 +441,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     }
 
     @Override
-    public JsonObject.Builder toJson(McpSamplingRequest request) {
+    public JsonObject.Builder toJson(McpSamplingRequest request, List<McpTool> tools) {
         List<JsonValue> hints = new ArrayList<>();
         var params = JsonObject.builder();
         List<JsonValue> messages = new ArrayList<>();
@@ -449,7 +458,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
         request.intelligencePriority().ifPresent(intelligence -> modelPreference.set("intelligencePriority", intelligence));
         params.set("modelPreference", modelPreference.build());
 
-        McpSamplingSupport.aggregate(request).stream()
+        request.messages().stream()
                 .map(this::toJson)
                 .map(JsonObject.Builder::build)
                 .forEach(messages::add);
@@ -541,8 +550,8 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     }
 
     @Override
-    public JsonObject createSamplingRequest(long id, McpSamplingRequest request) {
-        var params = toJson(request);
+    public JsonObject createSamplingRequest(long id, McpSamplingRequest request, List<McpTool> tools) {
+        var params = toJson(request, tools);
         return createJsonRpcRequest(id, METHOD_SAMPLING_CREATE_MESSAGE, params);
     }
 
@@ -563,16 +572,22 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
 
             String model = result.stringValue("model").orElseThrow();
             McpRole role = result.stringValue("role")
-                    .map(String::toUpperCase)
+                    .map(value -> value.toUpperCase(Locale.ROOT))
                     .map(McpRole::valueOf)
                     .orElseThrow();
-            List<McpSamplingMessage> messages = parseMessages(role, find(result, "content").orElseThrow());
+            McpSamplingMessage.Builder messageBuilder = McpSamplingMessage.builder()
+                    .role(role)
+                    .contents(parseContents(find(result, "content").orElseThrow()));
+            result.objectValue("_meta")
+                    .map(McpParameters::new)
+                    .ifPresent(messageBuilder::metadata);
+            McpSamplingMessage message = messageBuilder.build();
             return find(result, "stopReason")
                     .filter(this::isJsonString)
                     .map(JsonString.class::cast)
                     .map(JsonString::value)
-                    .map(stopReason -> new McpSamplingResponseImpl(messages, model, stopReason))
-                    .orElseGet(() -> new McpSamplingResponseImpl(messages, model));
+                    .map(stopReason -> new McpSamplingResponseImpl(message, model, stopReason))
+                    .orElseGet(() -> new McpSamplingResponseImpl(message, model));
         } catch (Exception e) {
             throw new McpSamplingException("Wrong sampling response format", e);
         }
@@ -588,32 +603,73 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
         throw new McpElicitationException("Elicitation not supported");
     }
 
-    List<McpSamplingMessage> parseMessages(McpRole role, JsonValue content) {
-        return List.of(parseMessage(role, content.asObject()));
+    List<McpSamplingContent> parseContents(JsonValue content) {
+        return List.of(parseContent(content.asObject()));
     }
 
-    McpSamplingMessage parseMessage(McpRole role, JsonObject object) {
+    McpSamplingContent parseContent(JsonObject object) {
         String type = object.stringValue("type")
-                .map(String::toUpperCase)
+                .map(value -> value.toUpperCase(Locale.ROOT))
                 .orElseThrow();
-        McpSamplingMessageType messageType = McpSamplingMessageType.valueOf(type);
-        return switch (messageType) {
-            case TEXT -> McpSamplingTextMessage.builder().text(object.stringValue("text").orElseThrow()).role(role).build();
+        McpSamplingContentType contentType = McpSamplingContentType.valueOf(type);
+        return switch (contentType) {
+            case TEXT -> {
+                McpSamplingTextContent.Builder builder = McpSamplingTextContent.builder()
+                        .text(object.stringValue("text").orElseThrow());
+                object.objectValue("_meta").map(McpParameters::new).ifPresent(builder::metadata);
+                parseAnnotations(object).ifPresent(builder::annotations);
+                yield builder.build();
+            }
             case IMAGE -> {
                 byte[] data = object.stringValue("data")
-                        .map(value -> value.getBytes(StandardCharsets.UTF_8))
+                        .map(value -> Base64.getDecoder().decode(value))
                         .orElseThrow();
                 MediaType mediaType = MediaTypes.create(object.stringValue("mimeType").orElseThrow());
-                yield McpSamplingImageMessage.builder().data(data).mediaType(mediaType).role(role).build();
+                McpSamplingImageContent.Builder builder = McpSamplingImageContent.builder()
+                        .data(data)
+                        .mediaType(mediaType);
+                object.objectValue("_meta").map(McpParameters::new).ifPresent(builder::metadata);
+                parseAnnotations(object).ifPresent(builder::annotations);
+                yield builder.build();
             }
             case AUDIO -> {
                 byte[] data = object.stringValue("data")
-                        .map(value -> value.getBytes(StandardCharsets.UTF_8))
+                        .map(value -> Base64.getDecoder().decode(value))
                         .orElseThrow();
                 MediaType mediaType = MediaTypes.create(object.stringValue("mimeType").orElseThrow());
-                yield McpSamplingAudioMessage.builder().data(data).mediaType(mediaType).role(role).build();
+                McpSamplingAudioContent.Builder builder = McpSamplingAudioContent.builder()
+                        .data(data)
+                        .mediaType(mediaType);
+                object.objectValue("_meta").map(McpParameters::new).ifPresent(builder::metadata);
+                parseAnnotations(object).ifPresent(builder::annotations);
+                yield builder.build();
             }
+            case TOOL_USE, TOOL_RESULT -> throw new IllegalArgumentException("Unsupported sampling content type: " + type);
         };
+    }
+
+    Optional<McpAnnotations> parseAnnotations(JsonObject content) {
+        return content.objectValue("annotations").map(annotations -> {
+            McpAnnotations.Builder builder = McpAnnotations.builder();
+            annotations.arrayValue("audience").ifPresent(audience -> audience.values().stream()
+                    .map(JsonValue::asString)
+                    .map(JsonString::value)
+                    .map(value -> value.toUpperCase(Locale.ROOT))
+                    .map(McpRole::valueOf)
+                    .forEach(builder::addAudience));
+            annotations.doubleValue("priority").ifPresent(builder::priority);
+            annotations.stringValue("lastModified").ifPresent(builder::lastModified);
+            return builder.build();
+        });
+    }
+
+    JsonObject toJson(McpAnnotations annotations) {
+        JsonObject.Builder builder = JsonObject.builder();
+        if (!annotations.audience().isEmpty()) {
+            builder.setStrings("audience", annotations.audience().stream().map(McpRole::text).toList());
+        }
+        annotations.priority().ifPresent(priority -> builder.set("priority", priority));
+        return builder.build();
     }
 
     Optional<JsonValue> find(JsonObject object, String key) {

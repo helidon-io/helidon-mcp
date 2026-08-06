@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
+ * Copyright (c) 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,33 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.util.Optional;
+import java.util.Locale;
 
 /**
- * Tool contents that can be returned as part of the tool execution.
+ * Tool selection behavior for an MCP sampling request.
  */
-interface McpToolContent extends McpContent, McpMetadata {
+public enum McpToolChoice {
     /**
-     * Optional annotations for this content block.
-     *
-     * @return annotations
+     * The model decides whether to use tools.
      */
-    Optional<McpAnnotations> annotations();
+    AUTO,
 
+    /**
+     * The model must use at least one tool.
+     */
+    REQUIRED,
+
+    /**
+     * The model must not use tools.
+     */
+    NONE;
+
+    /**
+     * Returns the protocol representation of this tool choice.
+     *
+     * @return protocol representation
+     */
+    String text() {
+        return name().toLowerCase(Locale.ROOT);
+    }
 }

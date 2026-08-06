@@ -55,9 +55,22 @@ public final class McpParameters {
         this(params.asJsonValue(), "key");
     }
 
+    /**
+     * Create parameters backed by a JSON object.
+     *
+     * @param value parameter values
+     */
+    public McpParameters(JsonObject value) {
+        this(Objects.requireNonNull(value, "value is null"), "key");
+    }
+
     private McpParameters(JsonValue root, String key) {
         this.value = root;
         this.key = key;
+    }
+
+    JsonValue value() {
+        return value;
     }
 
     /**

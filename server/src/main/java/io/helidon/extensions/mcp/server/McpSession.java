@@ -20,18 +20,14 @@ import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.helidon.common.LazyValue;
 import io.helidon.common.LruCache;
-import io.helidon.common.UncheckedException;
 import io.helidon.common.context.Context;
 import io.helidon.json.JsonException;
 import io.helidon.json.JsonObject;
@@ -56,8 +52,7 @@ class McpSession {
     private final List<McpFeatureLifecycle> featureListeners;
     private final LruCache<String, McpTransport> transports;
     private final LazyValue<McpSessionFeatures> sessionFeatures;
-    private final AtomicBoolean active = new AtomicBoolean(true);
-    private final BlockingQueue<JsonObject> responses = new LinkedBlockingQueue<>();
+    private final McpPendingResponses pendingResponses;
 
     private McpJsonSerializer serializer;
     private volatile State state = UNINITIALIZED;
@@ -71,6 +66,7 @@ class McpSession {
         this.featureListeners = new CopyOnWriteArrayList<>();
         this.features = LruCache.create(config.maxRequestsPerSession());
         this.transports = LruCache.create(config.maxRequestsPerSession());
+        this.pendingResponses = new McpPendingResponses(config.maxRequestsPerSession());
         this.featureListeners.add(McpProgress.McpProgressListener.create());
         this.sessionFeatures = LazyValue.create(() -> new McpSessionFeatures(this));
         this.context.register(McpServerConfigBlueprint.class, config);
@@ -81,7 +77,7 @@ class McpSession {
         McpTransport transport = transports.get(key)
                 .orElseThrow(() -> new McpInternalException("No transport for id " + id));
         transport.send(response);
-        transports.remove(key);
+        clearRequest(id);
     }
 
     void onConnect(ServerResponse response) {
@@ -90,7 +86,7 @@ class McpSession {
     }
 
     void onDisconnect(ServerResponse response) {
-        active.compareAndSet(true, false);
+        pendingResponses.disconnect();
         sessions.remove(id);
         manager.onDisconnect(response);
     }
@@ -133,45 +129,42 @@ class McpSession {
 
     void acceptResponse(JsonObject response) {
         try {
-            responses.put(response);
-        } catch (InterruptedException e) {
-            throw new UncheckedException(e);
+            long requestId = response.longValue("id").orElseThrow();
+            pendingResponses.accept(requestId, response);
+        } catch (JsonException | NoSuchElementException e) {
+            if (LOGGER.isLoggable(Level.TRACE)) {
+                LOGGER.log(Level.TRACE, "Received a response with wrong request id type", e);
+            }
         }
+    }
+
+    void prepareResponse(long requestId) {
+        pendingResponses.prepare(requestId);
+    }
+
+    void discardResponse(long requestId) {
+        pendingResponses.discard(requestId);
     }
 
     McpFeatures createFeatures(JsonValue requestId, JsonRpcRequest request, JsonRpcResponse response) {
         String key = requestId.toString();
         var transport = transports.get(key)
                 .orElseThrow(() -> new McpInternalException("No transport for request id " + requestId));
-        McpFeatures feat = new McpFeatures(this, transport);
+        McpFeatures feat = new McpFeatures(this, transport, request.context());
         features.put(key, feat);
         return feat;
     }
 
     JsonObject pollResponse(long requestId, Duration timeout) {
-        while (active.get()) {
-            try {
-                JsonObject response = responses.poll(timeout.toMillis(), TimeUnit.MILLISECONDS);
-                if (response != null) {
-                    if (LOGGER.isLoggable(System.Logger.Level.DEBUG)) {
-                        LOGGER.log(System.Logger.Level.DEBUG, "Response:\n" + prettyPrint(response));
-                    }
-                    long id = response.longValue("id").orElseThrow();
-                    if (id == requestId) {
-                        return response;
-                    }
-                } else {
-                    return serializer.jsonrpcErrorTimeoutResponse(requestId);
-                }
-            } catch (JsonException e) {
-                if (LOGGER.isLoggable(Level.TRACE)) {
-                    LOGGER.log(Level.TRACE, "Received a response with wrong request id type", e);
-                }
-            } catch (InterruptedException e) {
-                throw new McpInternalException("Session interrupted.", e);
-            }
+        Optional<JsonObject> response = pendingResponses.poll(requestId, timeout);
+        if (response.isEmpty()) {
+            return serializer.jsonrpcErrorTimeoutResponse(requestId);
         }
-        throw new McpInternalException("Session disconnected");
+        JsonObject jsonResponse = response.get();
+        if (LOGGER.isLoggable(System.Logger.Level.DEBUG)) {
+            LOGGER.log(System.Logger.Level.DEBUG, "Response:\n" + prettyPrint(jsonResponse));
+        }
+        return jsonResponse;
     }
 
     /**
@@ -209,8 +202,10 @@ class McpSession {
     void initializeClientCapabilities(McpParameters capabilities) {
         var sampling = capabilities.get(McpCapability.SAMPLING.text());
         sampling.ifPresent(it -> clientCapabilities.add(McpCapability.SAMPLING));
-        sampling.get("tools")
-                .ifPresent(it -> clientCapabilities.add(McpCapability.SAMPLING_TOOLS));
+        if (protocolVersion == McpProtocolVersion.VERSION_2025_11_25) {
+            sampling.get("tools")
+                    .ifPresent(it -> clientCapabilities.add(McpCapability.SAMPLING_TOOLS));
+        }
         sampling.get("context")
                 .ifPresent(it -> clientCapabilities.add(McpCapability.SAMPLING_CONTEXT));
 

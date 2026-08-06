@@ -18,80 +18,113 @@ package io.helidon.extensions.mcp.server;
 import java.nio.charset.StandardCharsets;
 
 import io.helidon.common.media.type.MediaTypes;
+import io.helidon.json.JsonObject;
 
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class McpSamplingResponseTest {
 
     @Test
-    void testSamplingResponseTextMessage() {
-        var message = McpSamplingTextMessage.builder().text("text").role(McpRole.USER).build();
+    void testSamplingResponseTextContent() {
+        McpSamplingTextContent content = McpSamplingTextContent.create("text");
+        McpSamplingMessage message = message(McpRole.USER, content);
         McpSamplingResponse response = new McpSamplingResponseImpl(message, "helidon-model", McpStopReason.END_TURN);
 
-        assertThat(response.model(), is("helidon-model"));
-        assertThat(response.rawStopReason().orElseThrow(), is("endTurn"));
-        assertThat(response.stopReason().isPresent(), is(true));
-        assertThat(response.stopReason().get(), is(McpStopReason.END_TURN));
-        assertThat(response.message(), instanceOf(McpSamplingTextMessage.class));
+        assertResponse(response, message);
+        assertThat(response.message().role(), is(McpRole.USER));
+        assertThat(response.asTextContent(), sameInstance(content));
+        assertThat(response.asTextContent().text(), is("text"));
 
-        McpSamplingTextMessage text = response.asTextMessage();
-        assertThat(text.role(), is(McpRole.USER));
-        assertThat(text.text(), is("text"));
-
-        assertThrows(McpSamplingException.class, response::asImageMessage);
-        assertThrows(McpSamplingException.class, response::asAudioMessage);
+        assertThrows(McpSamplingException.class, response::asImageContent);
+        assertThrows(McpSamplingException.class, response::asAudioContent);
+        assertThrows(McpSamplingException.class, response::asToolUseContent);
     }
 
     @Test
-    void testSamplingResponseImageMessage() {
-        var data = "data".getBytes(StandardCharsets.UTF_8);
-        var message = McpSamplingImageMessage.builder()
+    void testSamplingResponseImageContent() {
+        byte[] data = "data".getBytes(StandardCharsets.UTF_8);
+        McpSamplingImageContent content = McpSamplingImageContent.builder()
                 .data(data)
                 .mediaType(MediaTypes.TEXT_PLAIN)
-                .role(McpRole.USER)
                 .build();
+        McpSamplingMessage message = message(McpRole.USER, content);
         McpSamplingResponse response = new McpSamplingResponseImpl(message, "helidon-model", McpStopReason.END_TURN);
 
-        assertThat(response.model(), is("helidon-model"));
-        assertThat(response.rawStopReason().orElseThrow(), is("endTurn"));
-        assertThat(response.stopReason().isPresent(), is(true));
-        assertThat(response.stopReason().get(), is(McpStopReason.END_TURN));
-        assertThat(response.message(), instanceOf(McpSamplingImageMessage.class));
+        assertResponse(response, message);
+        assertThat(response.asImageContent(), sameInstance(content));
+        assertThat(response.asImageContent().data(), is(data));
 
-        McpSamplingImageMessage image = response.asImageMessage();
-        assertThat(image.role(), is(McpRole.USER));
-        assertThat(image.data(), is(data));
-
-        assertThrows(McpSamplingException.class, response::asTextMessage);
-        assertThrows(McpSamplingException.class, response::asAudioMessage);
+        assertThrows(McpSamplingException.class, response::asTextContent);
+        assertThrows(McpSamplingException.class, response::asAudioContent);
+        assertThrows(McpSamplingException.class, response::asToolUseContent);
     }
 
     @Test
-    void testSamplingResponseAudioMessage() {
-        var data = "data".getBytes(StandardCharsets.UTF_8);
-        var message = McpSamplingAudioMessage.builder()
+    void testSamplingResponseAudioContent() {
+        byte[] data = "data".getBytes(StandardCharsets.UTF_8);
+        McpSamplingAudioContent content = McpSamplingAudioContent.builder()
                 .data(data)
                 .mediaType(MediaTypes.TEXT_PLAIN)
-                .role(McpRole.USER)
                 .build();
+        McpSamplingMessage message = message(McpRole.USER, content);
         McpSamplingResponse response = new McpSamplingResponseImpl(message, "helidon-model", McpStopReason.END_TURN);
 
+        assertResponse(response, message);
+        assertThat(response.asAudioContent(), sameInstance(content));
+        assertThat(response.asAudioContent().data(), is(data));
+
+        assertThrows(McpSamplingException.class, response::asTextContent);
+        assertThrows(McpSamplingException.class, response::asImageContent);
+        assertThrows(McpSamplingException.class, response::asToolUseContent);
+    }
+
+    @Test
+    void testSamplingResponseToolUseContent() {
+        McpSamplingToolUseContent content = McpSamplingToolUseContent.builder()
+                .id("call-1")
+                .name("weather")
+                .input(new McpParameters(JsonObject.empty()))
+                .build();
+        McpSamplingMessage message = message(McpRole.ASSISTANT, content);
+        McpSamplingResponse response = new McpSamplingResponseImpl(message, "helidon-model", McpStopReason.TOOL_USE);
+
+        assertThat(response.model(), is("helidon-model"));
+        assertThat(response.rawStopReason().orElseThrow(), is("toolUse"));
+        assertThat(response.stopReason().orElseThrow(), is(McpStopReason.TOOL_USE));
+        assertThat(response.message(), sameInstance(message));
+        assertThat(response.asToolUseContent(), sameInstance(content));
+
+        assertThrows(McpSamplingException.class, response::asTextContent);
+        assertThrows(McpSamplingException.class, response::asImageContent);
+        assertThrows(McpSamplingException.class, response::asAudioContent);
+    }
+
+    @Test
+    void testEmptySamplingResponseContent() {
+        McpSamplingResponse response = new McpSamplingResponseImpl(McpSamplingMessage.builder()
+                                                                          .role(McpRole.ASSISTANT)
+                                                                          .build(),
+                                                                  "helidon-model");
+
+        assertThrows(McpSamplingException.class, response::asTextContent);
+    }
+
+    private static McpSamplingMessage message(McpRole role, McpSamplingContent content) {
+        return McpSamplingMessage.builder()
+                .role(role)
+                .addContent(content)
+                .build();
+    }
+
+    private static void assertResponse(McpSamplingResponse response, McpSamplingMessage message) {
         assertThat(response.model(), is("helidon-model"));
         assertThat(response.rawStopReason().orElseThrow(), is("endTurn"));
-        assertThat(response.stopReason().isPresent(), is(true));
-        assertThat(response.stopReason().get(), is(McpStopReason.END_TURN));
-        assertThat(response.message(), instanceOf(McpSamplingAudioMessage.class));
-
-        McpSamplingAudioMessage image = response.asAudioMessage();
-        assertThat(image.role(), is(McpRole.USER));
-        assertThat(image.data(), is(data));
-
-        assertThrows(McpSamplingException.class, response::asTextMessage);
-        assertThrows(McpSamplingException.class, response::asImageMessage);
+        assertThat(response.stopReason().orElseThrow(), is(McpStopReason.END_TURN));
+        assertThat(response.message(), sameInstance(message));
     }
 }

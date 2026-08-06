@@ -15,6 +15,11 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import io.helidon.json.JsonObject;
@@ -23,13 +28,28 @@ import io.helidon.json.JsonObject;
  * MCP Sampling feature.
  */
 public final class McpSampling extends McpFeature {
+    static final int DEFAULT_MAX_TOOL_ITERATIONS = 10;
+
+    private static final System.Logger LOGGER = System.getLogger(McpSampling.class.getName());
+
+    private final McpFeatures features;
     private final boolean enabled;
     private final boolean enabledContext;
+    private final boolean enabledTools;
+    private final int maxToolIterations;
+    private final List<McpTool> registeredTools;
 
-    McpSampling(McpSession session, McpTransport transport) {
+    McpSampling(McpSession session, McpTransport transport, McpFeatures features) {
         super(session, transport);
+        this.features = features;
         this.enabled = session.capabilities().contains(McpCapability.SAMPLING);
         this.enabledContext = session.capabilities().contains(McpCapability.SAMPLING_CONTEXT);
+        this.enabledTools = session.capabilities().contains(McpCapability.SAMPLING_TOOLS);
+        McpServerConfig config = session.context()
+                .get(McpServerConfigBlueprint.class, McpServerConfig.class)
+                .orElseThrow(() -> new McpInternalException("MCP server configuration not found"));
+        this.maxToolIterations = config.maxSamplingToolIterations();
+        this.registeredTools = config.tools();
     }
 
     /**
@@ -53,7 +73,18 @@ public final class McpSampling extends McpFeature {
     }
 
     /**
-     * Send the provided sampling request to the client and return its response.
+     * Whether the connected client supports sampling with tools.
+     *
+     * @return {@code true} if the connected client supports sampling with tools,
+     * {@code false} otherwise
+     */
+    public boolean enabledTools() {
+        return enabledTools;
+    }
+
+    /**
+     * Send the provided sampling request to the client and return its final response. If a response requests tools,
+     * each matching selected server tool is invoked and its result is submitted automatically before sampling continues.
      *
      * @param request sampling request
      * @return sampling response
@@ -66,26 +97,170 @@ public final class McpSampling extends McpFeature {
     }
 
     /**
-     * Send the provided sampling request to the client and return its response.
+     * Send the provided sampling request to the client and return its final response. If a response requests tools,
+     * each matching selected server tool is invoked and its result is submitted automatically before sampling continues.
      *
      * @param request sampling request
      * @return sampling response
      * @throws io.helidon.extensions.mcp.server.McpSamplingException when an error occurs
      */
     public McpSamplingResponse request(McpSamplingRequest request) throws McpSamplingException {
+        validateRequest(request);
+        Map<String, McpTool> tools = samplingTools(request.tools());
+        List<McpTool> toolDefinitions = List.copyOf(tools.values());
+        Set<String> toolUseIds = samplingToolUseIds(request.messages());
+        McpSamplingRequest currentRequest = request;
+        int toolIterations = 0;
+
+        while (true) {
+            McpSamplingResponse response = requestOnce(currentRequest, toolDefinitions);
+            List<McpSamplingToolUseContent> toolUses = response.message().contents().stream()
+                    .filter(McpSamplingToolUseContent.class::isInstance)
+                    .map(McpSamplingToolUseContent.class::cast)
+                    .toList();
+            if (toolUses.isEmpty()) {
+                if (response.stopReason().filter(reason -> reason == McpStopReason.TOOL_USE).isPresent()) {
+                    throw new McpSamplingException("Sampling response stopped for tool use without tool use content");
+                }
+                if (currentRequest.toolChoice().filter(choice -> choice == McpToolChoice.REQUIRED).isPresent()) {
+                    throw new McpSamplingException("Sampling response did not use a required tool");
+                }
+                return response;
+            }
+            if (!enabledTools) {
+                throw new McpSamplingException("Sampling tools are not supported by client");
+            }
+            if (toolIterations == maxToolIterations) {
+                throw new McpSamplingException("Sampling tool iteration limit reached");
+            }
+            if (currentRequest.toolChoice().filter(choice -> choice == McpToolChoice.NONE).isPresent()) {
+                throw new McpSamplingException("Sampling client returned a tool use when tool choice is none");
+            }
+            for (McpSamplingToolUseContent toolUse : toolUses) {
+                if (!toolUseIds.add(toolUse.id())) {
+                    throw new McpSamplingException("Sampling tool use identifier was reused: " + toolUse.id());
+                }
+            }
+
+            McpSamplingMessage.Builder results = McpSamplingMessage.builder().role(McpRole.USER);
+            for (McpSamplingToolUseContent toolUse : toolUses) {
+                results.addContent(McpSamplingToolResultContent.builder()
+                                           .toolUseId(toolUse.id())
+                                           .result(invokeTool(tools, toolUse))
+                                           .build());
+            }
+
+            McpSamplingRequest.Builder nextRequest = McpSamplingRequest.builder(currentRequest)
+                    .addMessage(response.message())
+                    .addMessage(results.build());
+            toolIterations++;
+            if (toolIterations == maxToolIterations) {
+                nextRequest.toolChoice(McpToolChoice.NONE);
+            } else if (currentRequest.toolChoice()
+                    .filter(choice -> choice == McpToolChoice.REQUIRED)
+                    .isPresent()) {
+                nextRequest.toolChoice(McpToolChoice.AUTO);
+            }
+            currentRequest = nextRequest.build();
+        }
+    }
+
+    private void validateRequest(McpSamplingRequest request) {
         if (!enabled) {
             throw new McpSamplingException("Sampling feature is not supported by client");
         }
-        if (request.includeContext()
-                        .filter(context -> context != McpIncludeContext.NONE)
-                        .isPresent()
-                && !enabledContext) {
+        if (request.usesContext() && !enabledContext) {
             throw new McpSamplingException("Sampling context is not supported by client");
         }
+        if (request.usesTool() && !enabledTools) {
+            throw new McpSamplingException("Sampling tools are not supported by client");
+        }
+    }
+
+    private McpSamplingResponse requestOnce(McpSamplingRequest request, List<McpTool> tools) {
         long id = session().jsonRpcId();
-        JsonObject payload = session().serializer().createSamplingRequest(id, request);
-        transport().send(payload);
-        JsonObject response = session().pollResponse(id, request.timeout());
-        return session().serializer().createSamplingResponse(response);
+        JsonObject payload = session().serializer().createSamplingRequest(id, request, tools);
+        session().prepareResponse(id);
+        try {
+            transport().send(payload);
+            JsonObject response = session().pollResponse(id, request.timeout());
+            return session().serializer().createSamplingResponse(response);
+        } finally {
+            session().discardResponse(id);
+        }
+    }
+
+    private Map<String, McpTool> samplingTools(List<String> toolNames) {
+        Map<String, McpTool> tools = new LinkedHashMap<>();
+        for (String toolName : toolNames) {
+            List<McpTool> matchingTools = registeredTools.stream()
+                    .filter(candidate -> toolName.equals(candidate.name()))
+                    .toList();
+            if (matchingTools.isEmpty()) {
+                throw new McpSamplingException("Sampling tool is not registered: " + toolName);
+            }
+            if (matchingTools.size() > 1) {
+                throw new McpSamplingException("Registered sampling tool names must be unique: " + toolName);
+            }
+            McpTool duplicate = tools.putIfAbsent(toolName, matchingTools.getFirst());
+            if (duplicate != null) {
+                throw new McpSamplingException("Sampling tool names must be unique: " + toolName);
+            }
+        }
+        return tools;
+    }
+
+    private Set<String> samplingToolUseIds(List<McpSamplingMessage> messages) {
+        Set<String> toolUseIds = new HashSet<>();
+        messages.stream()
+                .flatMap(message -> message.contents().stream())
+                .filter(McpSamplingToolUseContent.class::isInstance)
+                .map(McpSamplingToolUseContent.class::cast)
+                .map(McpSamplingToolUseContent::id)
+                .forEach(id -> {
+                    if (!toolUseIds.add(id)) {
+                        throw new McpSamplingException("Sampling tool use identifier was reused: " + id);
+                    }
+                });
+        return toolUseIds;
+    }
+
+    private McpToolResult invokeTool(Map<String, McpTool> tools, McpSamplingToolUseContent toolUse) {
+        McpTool tool = tools.get(toolUse.name());
+        if (tool == null) {
+            return createToolErrorResult("Tool with name " + toolUse.name() + " is not available");
+        }
+
+        JsonObject.Builder parametersBuilder = JsonObject.builder()
+                .set("name", toolUse.name())
+                .set("arguments", toolUse.input().value());
+        toolUse.metadata().ifPresent(metadata -> parametersBuilder.set("_meta", metadata.value()));
+        McpParameters parameters = new McpParameters(parametersBuilder.build());
+        McpRequest request = McpRequest.builder()
+                .parameters(parameters)
+                .meta(parameters.get("_meta"))
+                .features(features)
+                .protocolVersion(session().protocolVersion().text())
+                .sessionContext(session().context())
+                .requestContext(features.requestContext())
+                .build();
+        try {
+            McpToolResult result = tool.tool(new McpToolRequestImpl(request));
+            if (result == null) {
+                return createToolErrorResult("Tool with name " + toolUse.name() + " returned no result");
+            }
+            return result;
+        } catch (RuntimeException e) {
+            LOGGER.log(System.Logger.Level.TRACE, "Sampling tool execution failed: "
+                            + toolUse.name(), e);
+            return createToolErrorResult("Tool with name " + toolUse.name() + " failed");
+        }
+    }
+
+    private McpToolResult createToolErrorResult(String message) {
+        return McpToolResult.builder()
+                .addTextContent(message)
+                .error(true)
+                .build();
     }
 }

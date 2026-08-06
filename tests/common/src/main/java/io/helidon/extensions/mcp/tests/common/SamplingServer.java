@@ -23,11 +23,16 @@ import io.helidon.common.media.type.MediaTypes;
 import io.helidon.extensions.mcp.server.McpContentType;
 import io.helidon.extensions.mcp.server.McpException;
 import io.helidon.extensions.mcp.server.McpSampling;
+import io.helidon.extensions.mcp.server.McpSamplingAudioContent;
 import io.helidon.extensions.mcp.server.McpSamplingException;
+import io.helidon.extensions.mcp.server.McpSamplingImageContent;
+import io.helidon.extensions.mcp.server.McpSamplingMessage;
 import io.helidon.extensions.mcp.server.McpSamplingRequest;
 import io.helidon.extensions.mcp.server.McpSamplingResponse;
+import io.helidon.extensions.mcp.server.McpSamplingTextContent;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpTool;
+import io.helidon.extensions.mcp.server.McpToolChoice;
 import io.helidon.extensions.mcp.server.McpToolRequest;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.json.schema.Schema;
@@ -56,6 +61,18 @@ public class SamplingServer {
                                    .addTool(new TimeoutSamplingTool())
                                    .addTool(new MultipleSamplingRequestTool())
         );
+    }
+
+    /**
+     * Setup a webserver route for sampling with tools.
+     *
+     * @param builder routing builder
+     */
+    public static void setUpToolsRoute(HttpRouting.Builder builder) {
+        builder.addFeature(McpServerFeature.builder()
+                                   .path("/")
+                                   .addTool(new SamplingWithToolsTool())
+                                   .addTool(new SampledTool()));
     }
 
     private static class SamplingTool implements McpTool {
@@ -96,29 +113,41 @@ public class SamplingServer {
 
             McpSamplingRequest message = createMessage(requestType.get());
             McpSamplingResponse response = sampling.request(message);
-            var type = response.message().type();
+            var content = response.message().contents().getFirst();
+            var type = content.type();
             var result = McpToolResult.builder();
             return switch (type) {
-                case TEXT -> result.addTextContent(response.asTextMessage().text()).build();
-                case IMAGE -> result.addTextContent(new String(response.asImageMessage().data())).build();
-                case AUDIO -> result.addTextContent(new String(response.asAudioMessage().data())).build();
+                case TEXT -> result.addTextContent(((McpSamplingTextContent) content).text()).build();
+                case IMAGE -> result.addTextContent(new String(((McpSamplingImageContent) content).data(),
+                                                               StandardCharsets.UTF_8)).build();
+                case AUDIO -> result.addTextContent(new String(((McpSamplingAudioContent) content).data(),
+                                                               StandardCharsets.UTF_8)).build();
+                case TOOL_USE, TOOL_RESULT -> throw new McpException("Unsupported sampling response type: " + type);
             };
         }
 
         McpSamplingRequest createMessage(McpContentType type) {
             return switch (type) {
                 case TEXT -> McpSamplingRequest.builder()
-                        .addTextMessage(message -> message.text("samplingMessage").role(USER))
+                        .addTextMessage(USER, "samplingMessage")
                         .build();
                 case IMAGE -> McpSamplingRequest.builder()
-                        .addImageMessage(message -> message.data("samplingMessage".getBytes(StandardCharsets.UTF_8))
-                                .mediaType(MediaTypes.TEXT_PLAIN)
-                                .role(USER))
+                        .addMessage(McpSamplingMessage.builder()
+                                            .role(USER)
+                                            .addContent(McpSamplingImageContent.builder()
+                                                                .data("samplingMessage".getBytes(StandardCharsets.UTF_8))
+                                                                .mediaType(MediaTypes.TEXT_PLAIN)
+                                                                .build())
+                                            .build())
                         .build();
                 case AUDIO -> McpSamplingRequest.builder()
-                        .addAudioMessage(message -> message.data("samplingMessage".getBytes(StandardCharsets.UTF_8))
-                                .mediaType(MediaTypes.TEXT_PLAIN)
-                                .role(USER))
+                        .addMessage(McpSamplingMessage.builder()
+                                            .role(USER)
+                                            .addContent(McpSamplingAudioContent.builder()
+                                                                .data("samplingMessage".getBytes(StandardCharsets.UTF_8))
+                                                                .mediaType(MediaTypes.TEXT_PLAIN)
+                                                                .build())
+                                            .build())
                         .build();
                 default -> throw new McpException("Unsupported sampling message type: " + type);
             };
@@ -153,7 +182,7 @@ public class SamplingServer {
         @Override
         public McpToolResult tool(McpToolRequest request) {
             McpSampling sampling = request.features().sampling();
-            var response = sampling.request(req -> req.addTextMessage(message -> message.text("ignored").role(USER)));
+            var response = sampling.request(req -> req.addTextMessage(USER, "ignored"));
             return sampling(request);
         }
     }
@@ -170,7 +199,7 @@ public class SamplingServer {
                 request.features()
                         .sampling()
                         .request(req -> req.timeout(Duration.ofSeconds(2))
-                                .addTextMessage(message -> message.text("timeout").role(USER)));
+                                .addTextMessage(USER, "timeout"));
                 throw new McpException("Timeout should have been triggered");
             } catch (McpSamplingException e) {
                 return McpToolResult.builder()
@@ -192,7 +221,7 @@ public class SamplingServer {
             try {
                 request.features()
                         .sampling()
-                        .request(req -> req.addTextMessage(message -> message.text("error").role(USER)));
+                        .request(req -> req.addTextMessage(USER, "error"));
                 throw new McpException("MCP sampling exception should have been triggered");
             } catch (McpSamplingException e) {
                 return McpToolResult.builder()
@@ -200,6 +229,61 @@ public class SamplingServer {
                         .error(true)
                         .build();
             }
+        }
+    }
+
+    private static class SamplingWithToolsTool implements McpTool {
+        @Override
+        public String name() {
+            return "sampling-with-tools-tool";
+        }
+
+        @Override
+        public String description() {
+            return "Requests sampling with a server tool.";
+        }
+
+        @Override
+        public String schema() {
+            return Schema.builder().build().generate();
+        }
+
+        @Override
+        public McpToolResult tool(McpToolRequest request) {
+            McpSamplingResponse response = request.features()
+                    .sampling()
+                    .request(builder -> builder.addTextMessage(USER, "Use the sampled tool")
+                            .addTool(SampledTool.NAME)
+                            .toolChoice(McpToolChoice.REQUIRED));
+            return McpToolResult.create(response.asTextContent().text());
+        }
+    }
+
+    private static class SampledTool implements McpTool {
+        private static final String NAME = "sampled-tool";
+
+        @Override
+        public String name() {
+            return NAME;
+        }
+
+        @Override
+        public String description() {
+            return "Returns the supplied value.";
+        }
+
+        @Override
+        public String schema() {
+            return Schema.builder()
+                    .rootObject(root -> root.addStringProperty("value", value -> value.required(true)))
+                    .build()
+                    .generate();
+        }
+
+        @Override
+        public McpToolResult tool(McpToolRequest request) {
+            String value = request.arguments().get("value").asString().orElseThrow();
+            return McpToolResult.create("sampled " + value);
         }
     }
 }

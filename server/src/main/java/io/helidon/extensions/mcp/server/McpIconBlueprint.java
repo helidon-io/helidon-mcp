@@ -16,20 +16,43 @@
 package io.helidon.extensions.mcp.server;
 
 import java.util.List;
+import java.util.Optional;
 
 import io.helidon.builder.api.Option;
 import io.helidon.builder.api.Prototype;
+import io.helidon.common.media.type.MediaType;
 
 /**
- * Tool resource link content.
+ * An optionally-sized MCP icon.
  */
 @Prototype.Blueprint
-interface McpToolResourceLinkContentBlueprint extends McpResourceLinkContent, McpToolContent {
+interface McpIconBlueprint {
     /**
-     * Optional icons for this resource link.
+     * Icon source URI or data URI.
      *
-     * @return icons
+     * @return icon source
+     */
+    String src();
+
+    /**
+     * Optional MIME type override.
+     *
+     * @return MIME type
+     */
+    Optional<MediaType> mediaType();
+
+    /**
+     * Sizes at which the icon can be used.
+     *
+     * @return icon sizes
      */
     @Option.Singular
-    List<McpIcon> icons();
+    List<String> sizes();
+
+    /**
+     * Optional display theme.
+     *
+     * @return icon theme
+     */
+    Optional<McpIconTheme> theme();
 }

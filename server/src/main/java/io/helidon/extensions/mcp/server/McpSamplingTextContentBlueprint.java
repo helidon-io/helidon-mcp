@@ -18,11 +18,11 @@ package io.helidon.extensions.mcp.server;
 import io.helidon.builder.api.Prototype;
 
 /**
- * MCP sampling text message.
+ * MCP sampling text content.
  */
 @Prototype.Blueprint
-@Prototype.CustomMethods(McpSamplingTextMessageSupport.class)
-interface McpSamplingTextMessageBlueprint extends McpSamplingMessage {
+@Prototype.CustomMethods(McpSamplingTextContentSupport.class)
+interface McpSamplingTextContentBlueprint extends McpSamplingAnnotatedContent {
     /**
      * Text content as string.
      *
@@ -31,7 +31,7 @@ interface McpSamplingTextMessageBlueprint extends McpSamplingMessage {
     String text();
 
     @Override
-    default McpSamplingMessageType type() {
-        return McpSamplingMessageType.TEXT;
+    default McpSamplingContentType type() {
+        return McpSamplingContentType.TEXT;
     }
 }
