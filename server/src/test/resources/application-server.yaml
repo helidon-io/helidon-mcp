@@ -18,6 +18,7 @@ mcp:
   server:
     name: "helidon-mcp-server"
     version: "1.0.0"
+    website-url: "https://example.com/mcp"
     path: "/path"
     stateless: "true"
     tools-page-size: 10

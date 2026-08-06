@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,34 +16,48 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.util.Optional;
+
 /**
- * Sampling request stop reasons.
+ * Standard sampling response stop reasons recognized by this implementation.
+ * <p>
+ * The protocol also permits non-standard stop reasons. Their exact values are available through
+ * {@link McpSamplingResponse#rawStopReason()}.
  */
 public enum McpStopReason {
     /**
      * End turn.
      */
-    END_TURN,
+    END_TURN("endTurn"),
     /**
      * Stop sequence.
      */
-    STOP_SEQUENCE,
+    STOP_SEQUENCE("stopSequence"),
     /**
      * Max tokens.
      */
-    MAX_TOKENS;
+    MAX_TOKENS("maxTokens"),
+    /**
+     * Tool use.
+     */
+    TOOL_USE("toolUse");
 
-    String text() {
-        return this.name().toLowerCase().replace("_", "");
+    private final String text;
+
+    McpStopReason(String text) {
+        this.text = text;
     }
 
-    static McpStopReason map(String reason) {
-        reason = reason.toLowerCase();
+    String text() {
+        return text;
+    }
+
+    static Optional<McpStopReason> from(String reason) {
         for (McpStopReason stopReason : McpStopReason.values()) {
-            if (stopReason.text().equals(reason)) {
-                return stopReason;
+            if (stopReason.text().equalsIgnoreCase(reason)) {
+                return Optional.of(stopReason);
             }
         }
-        throw new IllegalArgumentException("Unknown stop reason: " + reason);
+        return Optional.empty();
     }
 }

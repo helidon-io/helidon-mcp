@@ -18,6 +18,9 @@ package io.helidon.extensions.mcp.tests.declarative;
 
 import java.time.Duration;
 
+import io.helidon.json.JsonObject;
+import io.helidon.jsonrpc.core.JsonRpcResult;
+import io.helidon.webclient.jsonrpc.JsonRpcClient;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.testing.junit5.ServerTest;
 
@@ -25,7 +28,6 @@ import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -33,28 +35,52 @@ import static org.hamcrest.Matchers.is;
 
 @ServerTest
 class McpSdkAnnotationConfigurationTest {
-    private static McpSyncClient client;
+    private final int port;
+    private final JsonRpcClient jsonRpcClient;
 
     McpSdkAnnotationConfigurationTest(WebServer server) {
-        client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + server.port())
-                                            .sseEndpoint("/mcp-custom")
-                                            .build())
-                .capabilities(McpSchema.ClientCapabilities.builder().build())
-                .requestTimeout(Duration.ofSeconds(1))
-                .build();
-    }
-
-    @AfterAll
-    static void close() {
-        client.close();
+        port = server.port();
+        jsonRpcClient = JsonRpcClient.create(config -> config.baseUri("http://localhost:"
+                                                                              + port
+                                                                              + "/mcp-custom"));
     }
 
     @Test
     void toolAnnotationConfig() {
-        var result = client.initialize();
-        var infos = result.serverInfo();
+        try (McpSyncClient client = McpClient.sync(HttpClientSseClientTransport.builder("http://localhost:" + port)
+                                                          .sseEndpoint("/mcp-custom")
+                                                          .build())
+                .capabilities(McpSchema.ClientCapabilities.builder().build())
+                .requestTimeout(Duration.ofSeconds(1))
+                .build()) {
+            var result = client.initialize();
+            var infos = result.serverInfo();
 
-        assertThat(infos.version(), is("0.0.1-SNAPSHOT"));
-        assertThat(infos.name(), is("mcp-server-custom-path"));
+            assertThat(infos.version(), is("0.0.1-SNAPSHOT"));
+            assertThat(infos.name(), is("mcp-server-custom-path"));
+        }
+    }
+
+    @Test
+    void websiteUrlAnnotationConfig() {
+        JsonObject clientInfo = JsonObject.builder()
+                .set("name", "test-client")
+                .set("version", "1.0.0")
+                .build();
+
+        try (var response = jsonRpcClient.rpcMethod("initialize")
+                .rpcId(2)
+                .param("protocolVersion", "2025-11-25")
+                .param("capabilities", JsonObject.empty())
+                .param("clientInfo", clientInfo)
+                .submit()) {
+            String websiteUrl = response.result()
+                    .map(JsonRpcResult::asJsonObject)
+                    .flatMap(result -> result.objectValue("serverInfo"))
+                    .flatMap(serverInfo -> serverInfo.stringValue("websiteUrl"))
+                    .orElseThrow();
+
+            assertThat(websiteUrl, is("https://example.com/mcp"));
+        }
     }
 }

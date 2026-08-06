@@ -23,12 +23,13 @@ import io.helidon.json.JsonObject;
  * MCP Sampling feature.
  */
 public final class McpSampling extends McpFeature {
-    private static final System.Logger LOGGER = System.getLogger(McpSampling.class.getName());
     private final boolean enabled;
+    private final boolean enabledContext;
 
     McpSampling(McpSession session, McpTransport transport) {
         super(session, transport);
         this.enabled = session.capabilities().contains(McpCapability.SAMPLING);
+        this.enabledContext = session.capabilities().contains(McpCapability.SAMPLING_CONTEXT);
     }
 
     /**
@@ -39,6 +40,16 @@ public final class McpSampling extends McpFeature {
      */
     public boolean enabled() {
         return enabled;
+    }
+
+    /**
+     * Whether the connected client supports sampling context inclusion.
+     *
+     * @return {@code true} if the connected client supports
+     * sampling context inclusion, {@code false} otherwise.
+     */
+    public boolean enabledContext() {
+        return enabledContext;
     }
 
     /**
@@ -64,6 +75,12 @@ public final class McpSampling extends McpFeature {
     public McpSamplingResponse request(McpSamplingRequest request) throws McpSamplingException {
         if (!enabled) {
             throw new McpSamplingException("Sampling feature is not supported by client");
+        }
+        if (request.includeContext()
+                        .filter(context -> context != McpIncludeContext.NONE)
+                        .isPresent()
+                && !enabledContext) {
+            throw new McpSamplingException("Sampling context is not supported by client");
         }
         long id = session().jsonRpcId();
         JsonObject payload = session().serializer().createSamplingRequest(id, request);

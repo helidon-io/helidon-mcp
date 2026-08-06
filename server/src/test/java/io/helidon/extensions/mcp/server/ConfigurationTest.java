@@ -40,6 +40,7 @@ class ConfigurationTest {
 
         assertThat(config.path(), is("/path"));
         assertThat(config.version(), is("1.0.0"));
+        assertThat(config.websiteUrl().orElseThrow(), is("https://example.com/mcp"));
         assertThat(config.name(), is("helidon-mcp-server"));
         assertThat(config.toolsPageSize(), is(10));
         assertThat(config.promptsPageSize(), is(10));
@@ -60,6 +61,7 @@ class ConfigurationTest {
 
         assertThat(config.path(), is("/mcp"));
         assertThat(config.version(), is("0.0.1"));
+        assertThat(config.websiteUrl().isEmpty(), is(true));
         assertThat(config.name(), is("mcp-server"));
         assertThat(config.instructions().isEmpty(), is(true));
         assertThat(config.toolsPageSize(), is(DEFAULT_PAGE_SIZE));

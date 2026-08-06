@@ -34,6 +34,7 @@ class McpSamplingResponseTest {
         McpSamplingResponse response = new McpSamplingResponseImpl(message, "helidon-model", McpStopReason.END_TURN);
 
         assertThat(response.model(), is("helidon-model"));
+        assertThat(response.rawStopReason().orElseThrow(), is("endTurn"));
         assertThat(response.stopReason().isPresent(), is(true));
         assertThat(response.stopReason().get(), is(McpStopReason.END_TURN));
         assertThat(response.message(), instanceOf(McpSamplingTextMessage.class));
@@ -57,6 +58,7 @@ class McpSamplingResponseTest {
         McpSamplingResponse response = new McpSamplingResponseImpl(message, "helidon-model", McpStopReason.END_TURN);
 
         assertThat(response.model(), is("helidon-model"));
+        assertThat(response.rawStopReason().orElseThrow(), is("endTurn"));
         assertThat(response.stopReason().isPresent(), is(true));
         assertThat(response.stopReason().get(), is(McpStopReason.END_TURN));
         assertThat(response.message(), instanceOf(McpSamplingImageMessage.class));
@@ -80,6 +82,7 @@ class McpSamplingResponseTest {
         McpSamplingResponse response = new McpSamplingResponseImpl(message, "helidon-model", McpStopReason.END_TURN);
 
         assertThat(response.model(), is("helidon-model"));
+        assertThat(response.rawStopReason().orElseThrow(), is("endTurn"));
         assertThat(response.stopReason().isPresent(), is(true));
         assertThat(response.stopReason().get(), is(McpStopReason.END_TURN));
         assertThat(response.message(), instanceOf(McpSamplingAudioMessage.class));

@@ -42,6 +42,12 @@ class McpJsonSerializerTest {
     }
 
     @Test
+    void testMcpJsonSerializerV4() {
+        McpJsonSerializer mjs = McpJsonSerializer.create(McpProtocolVersion.VERSION_2025_11_25);
+        assertThat(mjs, instanceOf(McpJsonSerializerV4.class));
+    }
+
+    @Test
     void testIsResponse() {
         JsonObject payload = JsonObject.builder()
                 .set("jsonrpc", 2.0)

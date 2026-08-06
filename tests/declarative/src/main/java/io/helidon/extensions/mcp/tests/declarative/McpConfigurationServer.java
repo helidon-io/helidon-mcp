@@ -20,6 +20,7 @@ import io.helidon.extensions.mcp.server.Mcp;
 
 @Mcp.Path("/mcp-custom")
 @Mcp.Version("0.0.1-SNAPSHOT")
+@Mcp.WebsiteUrl("https://example.com/mcp")
 @Mcp.Server("mcp-server-custom-path")
 class McpConfigurationServer {
 }

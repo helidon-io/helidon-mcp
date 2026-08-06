@@ -136,6 +136,7 @@ interface McpJsonSerializer {
 
     static McpJsonSerializer create(McpProtocolVersion version) {
         return switch (version) {
+            case VERSION_2025_11_25 -> new McpJsonSerializerV4();
             case VERSION_2025_06_18 -> new McpJsonSerializerV3();
             case VERSION_2025_03_26 -> new McpJsonSerializerV2();
             case VERSION_2024_11_05 -> new McpJsonSerializerV1();
@@ -155,6 +156,8 @@ interface McpJsonSerializer {
     }
 
     JsonObject.Builder createJsonInitializeResponse(Set<McpCapability> capabilities, McpServerConfig config);
+
+    JsonObject.Builder serverInfo(McpServerConfig config);
 
     // ---------- LIST RESPONSE ----------
 

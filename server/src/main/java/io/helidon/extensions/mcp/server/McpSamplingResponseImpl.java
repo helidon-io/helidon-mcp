@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Oracle and/or its affiliates.
+ * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,46 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.util.List;
 import java.util.Optional;
 
 final class McpSamplingResponseImpl implements McpSamplingResponse {
     private final String model;
-    private final McpStopReason stopReason;
-    private final McpSamplingMessage message;
+    private final String rawStopReason;
+    private final List<McpSamplingMessage> messages;
 
     McpSamplingResponseImpl(McpSamplingMessage message, String model, McpStopReason stopReason) {
-        this.message = message;
+        this(List.of(message), model, stopReason.text());
+    }
+
+    McpSamplingResponseImpl(List<McpSamplingMessage> messages, String model) {
+        this.messages = List.copyOf(messages);
         this.model = model;
-        this.stopReason = stopReason;
+        this.rawStopReason = null;
+    }
+
+    McpSamplingResponseImpl(List<McpSamplingMessage> messages, String model, String rawStopReason) {
+        this.messages = List.copyOf(messages);
+        this.model = model;
+        this.rawStopReason = rawStopReason;
     }
 
     @Override
     public McpSamplingMessage message() {
-        return message;
+        if (messages.isEmpty()) {
+            throw new McpSamplingException("Sampling response does not contain a message");
+        }
+        return messages.getFirst();
+    }
+
+    @Override
+    public List<McpSamplingMessage> messages() {
+        return messages;
     }
 
     @Override
     public McpSamplingTextMessage asTextMessage() throws McpSamplingException {
+        McpSamplingMessage message = message();
         if (message instanceof McpSamplingTextMessage text) {
             return text;
         }
@@ -43,6 +63,7 @@ final class McpSamplingResponseImpl implements McpSamplingResponse {
 
     @Override
     public McpSamplingImageMessage asImageMessage() throws McpSamplingException {
+        McpSamplingMessage message = message();
         if (message instanceof McpSamplingImageMessage image) {
             return image;
         }
@@ -51,6 +72,7 @@ final class McpSamplingResponseImpl implements McpSamplingResponse {
 
     @Override
     public McpSamplingAudioMessage asAudioMessage() throws McpSamplingException {
+        McpSamplingMessage message = message();
         if (message instanceof McpSamplingAudioMessage audio) {
             return audio;
         }
@@ -64,6 +86,11 @@ final class McpSamplingResponseImpl implements McpSamplingResponse {
 
     @Override
     public Optional<McpStopReason> stopReason() {
-        return Optional.ofNullable(stopReason);
+        return rawStopReason().flatMap(McpStopReason::from);
+    }
+
+    @Override
+    public Optional<String> rawStopReason() {
+        return Optional.ofNullable(rawStopReason);
     }
 }

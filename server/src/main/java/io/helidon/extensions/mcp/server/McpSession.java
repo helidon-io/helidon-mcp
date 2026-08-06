@@ -19,6 +19,7 @@ import java.lang.System.Logger.Level;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -203,6 +204,37 @@ class McpSession {
 
     void capability(McpCapability capability) {
         clientCapabilities.add(capability);
+    }
+
+    void initializeClientCapabilities(McpParameters capabilities) {
+        var sampling = capabilities.get(McpCapability.SAMPLING.text());
+        sampling.ifPresent(it -> clientCapabilities.add(McpCapability.SAMPLING));
+        sampling.get("tools")
+                .ifPresent(it -> clientCapabilities.add(McpCapability.SAMPLING_TOOLS));
+        sampling.get("context")
+                .ifPresent(it -> clientCapabilities.add(McpCapability.SAMPLING_CONTEXT));
+
+        // Ensure backward compatibility with earlier specification versions.
+        if (protocolVersion != McpProtocolVersion.VERSION_2025_11_25 && sampling.isPresent()) {
+            clientCapabilities.add(McpCapability.SAMPLING_CONTEXT);
+        }
+
+        capabilities.get(McpCapability.ROOTS.text())
+                .ifPresent(it -> clientCapabilities.add(McpCapability.ROOTS));
+
+        var elicitation = capabilities.get(McpCapability.ELICITATION.text());
+        elicitation.ifPresent(it -> clientCapabilities.add(McpCapability.ELICITATION));
+        if (protocolVersion == McpProtocolVersion.VERSION_2025_11_25) {
+            elicitation.asMap()
+                    .filter(Map::isEmpty)
+                    .ifPresent(it -> clientCapabilities.add(McpCapability.ELICITATION_FORM));
+        } else {
+            elicitation.ifPresent(it -> clientCapabilities.add(McpCapability.ELICITATION_FORM));
+        }
+        elicitation.get("form")
+                .ifPresent(it -> clientCapabilities.add(McpCapability.ELICITATION_FORM));
+        elicitation.get("url")
+                .ifPresent(it -> clientCapabilities.add(McpCapability.ELICITATION_URL));
     }
 
     Set<McpCapability> capabilities() {
