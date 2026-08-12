@@ -20,7 +20,7 @@ import java.util.Optional;
 /**
  * MCP component that supports optional protocol metadata.
  */
-interface McpMetadata {
+public interface McpMetadata {
     /**
      * Optional protocol metadata represented by the {@code _meta} field.
      *
