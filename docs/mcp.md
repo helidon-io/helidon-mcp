@@ -1,6 +1,7 @@
-# Helidon MCP Extension
-
-Server-side Helidon support for the Model Context Protocol (MCP).
+<!--@frontmatter
+description: "API for server-side MCP"
+-->
+# Helidon MCP
 
 ## Overview
 
