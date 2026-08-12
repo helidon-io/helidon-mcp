@@ -86,6 +86,7 @@ class McpSession {
     }
 
     void onDisconnect(ServerResponse response) {
+        state = State.DISCONNECTED;
         pendingResponses.disconnect();
         sessions.remove(id);
         manager.onDisconnect(response);
@@ -266,6 +267,7 @@ class McpSession {
     }
 
     enum State {
+        DISCONNECTED,
         INITIALIZED,
         INITIALIZING,
         UNINITIALIZED

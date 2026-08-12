@@ -26,6 +26,7 @@ import io.helidon.http.sse.SseEvent;
 import io.helidon.json.JsonObject;
 import io.helidon.json.JsonParser;
 import io.helidon.jsonrpc.core.JsonRpcParams;
+import io.helidon.webserver.http.ServerResponse;
 import io.helidon.webserver.jsonrpc.JsonRpcResponse;
 import io.helidon.webserver.sse.SseSink;
 
@@ -376,6 +377,88 @@ class McpSamplingTest {
         assertToolResult(results.get(1).asObject(), "call-2", false, "success");
         assertToolResult(results.get(2).asObject(), "call-3", true, "is not available");
         assertToolResult(results.get(3).asObject(), "call-4", true, "returned no result");
+    }
+
+    @Test
+    void stopsRemainingSamplingToolsAfterCancellation() {
+        AtomicInteger remainingInvocations = new AtomicInteger();
+        McpTool cancel = new TestTool("cancel", "Cancels", "", request -> {
+            request.features().cancellation().cancel(JsonObject.builder()
+                                                         .set("id", 1)
+                                                         .build()
+                                                         .value("id")
+                                                         .orElseThrow());
+            return McpToolResult.create("cancelled");
+        });
+        McpTool remaining = new TestTool("remaining", "Must not run", "", request -> {
+            remainingInvocations.incrementAndGet();
+            return McpToolResult.create("unexpected");
+        });
+        McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, """
+                {"sampling": {"tools": {}}}
+                """, cancel, remaining);
+        acceptSamplingResponse(session, 0, """
+                [
+                  {"type": "tool_use", "id": "call-1", "name": "cancel", "input": {}},
+                  {"type": "tool_use", "id": "call-2", "name": "remaining", "input": {}}
+                ]
+                """, "toolUse");
+        JsonRpcResponse response = mock(JsonRpcResponse.class);
+        SseSink sink = mock(SseSink.class);
+        when(response.sink(SseSink.TYPE)).thenReturn(sink);
+        McpSampling sampling = sampling(session, new McpStreamableHttpTransport(response));
+
+        McpSamplingException exception = assertThrows(McpSamplingException.class,
+                                                      () -> sampling.request(req -> req
+                                                              .addTool(cancel.name())
+                                                              .addTool(remaining.name())));
+
+        assertThat(exception.getMessage(), is("Sampling request cancelled"));
+        assertThat(remainingInvocations.get(), is(0));
+        sentSamplingRequests(sink, 1);
+    }
+
+    @Test
+    void stopsRemainingSamplingToolsAfterSessionDisconnect() {
+        AtomicInteger remainingInvocations = new AtomicInteger();
+        AtomicReference<McpSession> sessionRef = new AtomicReference<>();
+        McpTool disconnect = new TestTool("disconnect", "Disconnects", "", request -> {
+            sessionRef.get().onDisconnect(mock(ServerResponse.class));
+            return McpToolResult.create("disconnected");
+        });
+        McpTool remaining = new TestTool("remaining", "Must not run", "", request -> {
+            remainingInvocations.incrementAndGet();
+            return McpToolResult.create("unexpected");
+        });
+        McpServerConfig config = McpServerFeature.builder()
+                .addTool(disconnect)
+                .addTool(remaining)
+                .buildPrototype();
+        McpSession session = session(McpProtocolVersion.VERSION_2025_11_25,
+                                     """
+                                             {"sampling": {"tools": {}}}
+                                             """,
+                                     config);
+        sessionRef.set(session);
+        acceptSamplingResponse(session, 0, """
+                [
+                  {"type": "tool_use", "id": "call-1", "name": "disconnect", "input": {}},
+                  {"type": "tool_use", "id": "call-2", "name": "remaining", "input": {}}
+                ]
+                """, "toolUse");
+        JsonRpcResponse response = mock(JsonRpcResponse.class);
+        SseSink sink = mock(SseSink.class);
+        when(response.sink(SseSink.TYPE)).thenReturn(sink);
+        McpSampling sampling = sampling(session, new McpStreamableHttpTransport(response));
+
+        McpInternalException exception = assertThrows(McpInternalException.class,
+                                                      () -> sampling.request(req -> req
+                                                              .addTool(disconnect.name())
+                                                              .addTool(remaining.name())));
+
+        assertThat(exception.getMessage(), is("Session disconnected"));
+        assertThat(remainingInvocations.get(), is(0));
+        sentSamplingRequests(sink, 1);
     }
 
     @Test

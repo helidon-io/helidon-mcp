@@ -114,7 +114,9 @@ public final class McpSampling extends McpFeature {
         int toolExecutions = 0;
 
         while (true) {
+            checkRequestActive();
             McpSamplingResponse response = requestOnce(currentRequest, toolDefinitions);
+            checkRequestActive();
             List<McpSamplingToolUseContent> toolUses = response.message().contents().stream()
                     .filter(McpSamplingToolUseContent.class::isInstance)
                     .map(McpSamplingToolUseContent.class::cast)
@@ -149,6 +151,7 @@ public final class McpSampling extends McpFeature {
 
             McpSamplingMessage.Builder results = McpSamplingMessage.builder().role(McpRole.USER);
             for (McpSamplingToolUseContent toolUse : toolUses) {
+                checkRequestActive();
                 results.addContent(McpSamplingToolResultContent.builder()
                                            .toolUseId(toolUse.id())
                                            .result(invokeTool(tools, toolUse))
@@ -167,6 +170,15 @@ public final class McpSampling extends McpFeature {
                 nextRequest.toolChoice(McpToolChoice.AUTO);
             }
             currentRequest = nextRequest.build();
+        }
+    }
+
+    private void checkRequestActive() {
+        if (session().state() == McpSession.State.DISCONNECTED) {
+            throw new McpInternalException("Session disconnected");
+        }
+        if (features.cancellation().result().isRequested()) {
+            throw new McpSamplingException("Sampling request cancelled");
         }
     }
 
