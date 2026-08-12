@@ -105,7 +105,16 @@ public final class McpSampling extends McpFeature {
      * @throws io.helidon.extensions.mcp.server.McpSamplingException when an error occurs
      */
     public McpSamplingResponse request(McpSamplingRequest request) throws McpSamplingException {
-        validateRequest(request);
+        if (!enabled) {
+            throw new McpSamplingException("Sampling feature is not supported by client");
+        }
+        if (request.usesContext() && !enabledContext) {
+            throw new McpSamplingException("Sampling context is not supported by client");
+        }
+        if (request.usesTool() && !enabledTools) {
+            throw new McpSamplingException("Sampling tools are not supported by client");
+        }
+
         Map<String, McpTool> tools = samplingTools(request.tools());
         List<McpTool> toolDefinitions = List.copyOf(tools.values());
         Set<String> toolUseIds = samplingToolUseIds(request.messages());
@@ -179,18 +188,6 @@ public final class McpSampling extends McpFeature {
         }
         if (features.cancellation().result().isRequested()) {
             throw new McpSamplingException("Sampling request cancelled");
-        }
-    }
-
-    private void validateRequest(McpSamplingRequest request) {
-        if (!enabled) {
-            throw new McpSamplingException("Sampling feature is not supported by client");
-        }
-        if (request.usesContext() && !enabledContext) {
-            throw new McpSamplingException("Sampling context is not supported by client");
-        }
-        if (request.usesTool() && !enabledTools) {
-            throw new McpSamplingException("Sampling tools are not supported by client");
         }
     }
 
