@@ -1172,6 +1172,9 @@ annotations and metadata options.
 
 Create sampling request messages with the `McpSamplingRequest` builder:
 
+Multiple content blocks in one message envelope require negotiated protocol version `2025-11-25`. For earlier protocol
+versions, create a separate message envelope for each content block.
+
 ```java
 McpSamplingRequest request = McpSamplingRequest.builder()
         .addMessage(McpSamplingMessage.builder()
