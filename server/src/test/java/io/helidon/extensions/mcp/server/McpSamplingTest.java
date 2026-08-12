@@ -693,6 +693,84 @@ class McpSamplingTest {
     }
 
     @Test
+    void rejectsToolUseBatchBeyondRemainingExecutionBudgetBeforeInvocation() {
+        AtomicInteger invocations = new AtomicInteger();
+        McpTool tool = new TestTool("counter", "Counts", "", request ->
+                McpToolResult.create(Integer.toString(invocations.incrementAndGet())));
+        McpServerConfig config = McpServerFeature.builder()
+                .maxSamplingToolIterations(3)
+                .addTool(tool)
+                .buildPrototype();
+        McpSession session = session(McpProtocolVersion.VERSION_2025_11_25,
+                                     """
+                                             {"sampling": {"tools": {}}}
+                                             """,
+                                     config);
+        acceptSamplingResponse(session, 0, """
+                [
+                  {"type": "tool_use", "id": "call-1", "name": "counter", "input": {}},
+                  {"type": "tool_use", "id": "call-2", "name": "counter", "input": {}}
+                ]
+                """, "toolUse");
+        acceptSamplingResponse(session, 1, """
+                [
+                  {"type": "tool_use", "id": "call-3", "name": "counter", "input": {}},
+                  {"type": "tool_use", "id": "call-4", "name": "counter", "input": {}}
+                ]
+                """, "toolUse");
+        JsonRpcResponse response = mock(JsonRpcResponse.class);
+        SseSink sink = mock(SseSink.class);
+        when(response.sink(SseSink.TYPE)).thenReturn(sink);
+        McpSampling sampling = sampling(session, new McpStreamableHttpTransport(response));
+
+        McpSamplingException exception = assertThrows(McpSamplingException.class,
+                                                      () -> sampling.request(req -> req.addTool(tool.name())));
+
+        assertThat(exception.getMessage(), is("Sampling tool execution limit reached"));
+        assertThat(invocations.get(), is(2));
+        sentSamplingRequests(sink, 2);
+    }
+
+    @Test
+    void requestsFinalResponseWhenParallelToolUsesExhaustExecutionBudget() {
+        AtomicInteger invocations = new AtomicInteger();
+        McpTool tool = new TestTool("counter", "Counts", "", request ->
+                McpToolResult.create(Integer.toString(invocations.incrementAndGet())));
+        McpServerConfig config = McpServerFeature.builder()
+                .maxSamplingToolIterations(2)
+                .addTool(tool)
+                .buildPrototype();
+        McpSession session = session(McpProtocolVersion.VERSION_2025_11_25,
+                                     """
+                                             {"sampling": {"tools": {}}}
+                                             """,
+                                     config);
+        acceptSamplingResponse(session, 0, """
+                [
+                  {"type": "tool_use", "id": "call-1", "name": "counter", "input": {}},
+                  {"type": "tool_use", "id": "call-2", "name": "counter", "input": {}}
+                ]
+                """, "toolUse");
+        acceptSamplingResponse(session, 1, """
+                {"type": "text", "text": "Execution budget reached"}
+                """, "endTurn");
+        JsonRpcResponse response = mock(JsonRpcResponse.class);
+        SseSink sink = mock(SseSink.class);
+        when(response.sink(SseSink.TYPE)).thenReturn(sink);
+        McpSampling sampling = sampling(session, new McpStreamableHttpTransport(response));
+
+        McpSamplingResponse samplingResponse = sampling.request(req -> req.addTool(tool.name()));
+
+        assertThat(samplingResponse.asTextContent().text(), is("Execution budget reached"));
+        assertThat(invocations.get(), is(2));
+        List<JsonObject> sent = sentSamplingRequests(sink, 2);
+        assertThat(sent.getLast().objectValue("params").orElseThrow()
+                           .objectValue("toolChoice").orElseThrow()
+                           .stringValue("mode").orElseThrow(),
+                   is("none"));
+    }
+
+    @Test
     void rejectsToolUseResponseWithoutSamplingToolsCapability() {
         McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, """
                 {"sampling": {}}

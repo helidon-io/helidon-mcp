@@ -111,6 +111,7 @@ public final class McpSampling extends McpFeature {
         Set<String> toolUseIds = samplingToolUseIds(request.messages());
         McpSamplingRequest currentRequest = request;
         int toolIterations = 0;
+        int toolExecutions = 0;
 
         while (true) {
             McpSamplingResponse response = requestOnce(currentRequest, toolDefinitions);
@@ -136,11 +137,15 @@ public final class McpSampling extends McpFeature {
             if (currentRequest.toolChoice().filter(choice -> choice == McpToolChoice.NONE).isPresent()) {
                 throw new McpSamplingException("Sampling client returned a tool use when tool choice is none");
             }
+            if (toolUses.size() > maxToolIterations - toolExecutions) {
+                throw new McpSamplingException("Sampling tool execution limit reached");
+            }
             for (McpSamplingToolUseContent toolUse : toolUses) {
                 if (!toolUseIds.add(toolUse.id())) {
                     throw new McpSamplingException("Sampling tool use identifier was reused: " + toolUse.id());
                 }
             }
+            toolExecutions += toolUses.size();
 
             McpSamplingMessage.Builder results = McpSamplingMessage.builder().role(McpRole.USER);
             for (McpSamplingToolUseContent toolUse : toolUses) {
@@ -154,7 +159,7 @@ public final class McpSampling extends McpFeature {
                     .addMessage(response.message())
                     .addMessage(results.build());
             toolIterations++;
-            if (toolIterations == maxToolIterations) {
+            if (toolIterations == maxToolIterations || toolExecutions == maxToolIterations) {
                 nextRequest.toolChoice(McpToolChoice.NONE);
             } else if (currentRequest.toolChoice()
                     .filter(choice -> choice == McpToolChoice.REQUIRED)

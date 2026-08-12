@@ -199,8 +199,8 @@ interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
     Optional<String> instructions();
 
     /**
-     * Maximum number of sampling tool-execution rounds. The value must be greater than zero. Once reached, one additional
-     * request is sent with tool choice {@link McpToolChoice#NONE}. Default is
+     * Maximum number of sampling tool-execution rounds and cumulative tool executions. The value must be greater than zero.
+     * Once either limit is reached, one additional request is sent with tool choice {@link McpToolChoice#NONE}. Default is
      * {@value McpSampling#DEFAULT_MAX_TOOL_ITERATIONS}.
      *
      * @return maximum sampling tool iterations

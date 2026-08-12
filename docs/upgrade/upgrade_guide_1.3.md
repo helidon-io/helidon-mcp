@@ -161,7 +161,7 @@ tool, and names in one request must be unique.
 
 When a response contains tool-use content, `McpSampling.request(...)` invokes the selected tools, appends the assistant message
 and tool results, and continues sampling. It returns the final response without tool-use content. Configure the maximum number
-of tool rounds with `mcp.server.max-sampling-tool-iterations` or
+of tool rounds and cumulative tool executions with `mcp.server.max-sampling-tool-iterations` or
 `McpServerFeature.builder().maxSamplingToolIterations(...)`.
 
 ## Use annotations and protocol metadata

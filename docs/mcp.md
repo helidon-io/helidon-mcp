@@ -1255,11 +1255,12 @@ tools are not offered automatically, and an unregistered request tool name cause
 Helidon returns an error tool result so the model can recover. A `null` result or an exception from a selected tool is handled the
 same way. Tool callbacks run synchronously and sequentially. The request timeout applies independently to each sampling exchange.
 
-Helidon allows ten tool-execution rounds by default. Configure the limit with
-`mcp.server.max-sampling-tool-iterations` or `McpServerFeature.builder().maxSamplingToolIterations(...)`. The value must be greater
-than zero. The limit counts rounds, so parallel tool calls in one response count as one round. After reaching the limit, Helidon
-sends one additional request with tool choice `NONE`; another tool-use response then causes an `McpSamplingException`. A
-`REQUIRED` choice changes to `AUTO` after its first tool round because the requirement has been fulfilled.
+Helidon allows ten tool-execution rounds and ten cumulative tool executions by default. Configure both limits with
+`mcp.server.max-sampling-tool-iterations` or `McpServerFeature.builder().maxSamplingToolIterations(...)`. The value must be
+greater than zero. Parallel tool calls in one response count as one round, but each call counts as one execution. Helidon rejects
+an entire batch that would exceed the remaining execution budget before invoking any callback. After either limit is reached,
+Helidon sends one additional request with tool choice `NONE`; another tool-use response then causes an `McpSamplingException`.
+A `REQUIRED` choice changes to `AUTO` after its first tool round because the requirement has been fulfilled.
 
 Build tool results with the type-specific builder methods, such as `addTextContent(...)`, `addImageContent(...)`,
 `addAudioContent(...)`, `addTextResourceContent(...)`, `addBinaryResourceContent(...)`, and
