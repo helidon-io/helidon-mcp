@@ -183,7 +183,7 @@ class McpSessionTest {
         session.acceptResponse(malformedResponse);
         session.acceptResponse(expectedResponse);
 
-        JsonObject response = session.pollResponse(42, Duration.ofSeconds(1));
+        JsonObject response = pollResponse(session, 42, Duration.ofSeconds(1));
         assertThat(response, is(expectedResponse));
     }
 
@@ -203,8 +203,8 @@ class McpSessionTest {
         session.acceptResponse(secondResponse);
         session.acceptResponse(firstResponse);
 
-        assertThat(session.pollResponse(firstId, Duration.ofSeconds(1)), sameInstance(firstResponse));
-        assertThat(session.pollResponse(secondId, Duration.ofSeconds(1)), sameInstance(secondResponse));
+        assertThat(pollResponse(session, firstId, Duration.ofSeconds(1)), sameInstance(firstResponse));
+        assertThat(pollResponse(session, secondId, Duration.ofSeconds(1)), sameInstance(secondResponse));
     }
 
     @Test
@@ -228,13 +228,13 @@ class McpSessionTest {
         JsonObject thirdResponse = JsonObject.builder().set("id", thirdId).build();
         session.acceptResponse(secondResponse);
         session.acceptResponse(firstResponse);
-        assertThat(session.pollResponse(firstId, Duration.ofSeconds(1)), sameInstance(firstResponse));
+        assertThat(pollResponse(session, firstId, Duration.ofSeconds(1)), sameInstance(firstResponse));
 
         session.prepareResponse(thirdId);
         session.acceptResponse(thirdResponse);
 
-        assertThat(session.pollResponse(secondId, Duration.ofSeconds(1)), sameInstance(secondResponse));
-        assertThat(session.pollResponse(thirdId, Duration.ofSeconds(1)), sameInstance(thirdResponse));
+        assertThat(pollResponse(session, secondId, Duration.ofSeconds(1)), sameInstance(secondResponse));
+        assertThat(pollResponse(session, thirdId, Duration.ofSeconds(1)), sameInstance(thirdResponse));
     }
 
     @Test
@@ -245,7 +245,7 @@ class McpSessionTest {
         AtomicReference<Throwable> failure = new AtomicReference<>();
         Thread poller = Thread.ofVirtual().start(() -> {
             try {
-                session.pollResponse(requestId, Duration.ofSeconds(5));
+                pollResponse(session, requestId, Duration.ofSeconds(5));
             } catch (Throwable e) {
                 failure.set(e);
             }
@@ -273,7 +273,7 @@ class McpSessionTest {
         long requestId = session.jsonRpcId();
         session.prepareResponse(requestId);
 
-        JsonObject response = session.pollResponse(requestId, Duration.ZERO);
+        JsonObject response = pollResponse(session, requestId, Duration.ZERO);
 
         assertThat(response.objectValue("error").isPresent(), is(true));
     }
@@ -300,6 +300,14 @@ class McpSessionTest {
         assertThat(features.requestContext(), sameInstance(requestContext));
         session.send(requestId, response);
         assertThat(session.findFeatures(requestId).isEmpty(), is(true));
+    }
+
+    private static JsonObject pollResponse(McpSession session, long requestId, Duration timeout) {
+        try {
+            return session.pollResponse(requestId, timeout);
+        } finally {
+            session.discardResponse(requestId);
+        }
     }
 
     private static McpSession session(McpProtocolVersion protocolVersion, String capabilities) {

@@ -16,8 +16,9 @@
 package io.helidon.extensions.mcp.server;
 
 import java.time.Duration;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -26,7 +27,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import io.helidon.common.LruCache;
 import io.helidon.json.JsonObject;
 
 /**
@@ -34,13 +34,13 @@ import io.helidon.json.JsonObject;
  */
 final class McpPendingResponses {
     private final Lock lock = new ReentrantLock();
-    private final LruCache<Long, CompletableFuture<JsonObject>> responses;
-    private final List<CompletableFuture<JsonObject>> responseFutures = new ArrayList<>();
+    private final int capacity;
+    private final Map<Long, CompletableFuture<JsonObject>> responses = new HashMap<>();
 
     private boolean active = true;
 
     McpPendingResponses(int capacity) {
-        responses = LruCache.create(capacity);
+        this.capacity = capacity;
     }
 
     void prepare(long requestId) {
@@ -49,22 +49,21 @@ final class McpPendingResponses {
             if (!active) {
                 throw new McpInternalException("Session disconnected");
             }
-            if (responses.get(requestId).isPresent()) {
+            if (responses.containsKey(requestId)) {
                 return;
             }
-            if (responses.size() >= responses.capacity()) {
+            if (responses.size() >= capacity) {
                 throw new McpInternalException("Maximum pending response count reached");
             }
             CompletableFuture<JsonObject> response = new CompletableFuture<>();
             responses.put(requestId, response);
-            responseFutures.add(response);
         } finally {
             lock.unlock();
         }
     }
 
     void accept(long requestId, JsonObject response) {
-        Optional<CompletableFuture<JsonObject>> pendingResponse;
+        CompletableFuture<JsonObject> pendingResponse;
         lock.lock();
         try {
             if (!active) {
@@ -74,7 +73,9 @@ final class McpPendingResponses {
         } finally {
             lock.unlock();
         }
-        pendingResponse.ifPresent(future -> future.complete(response));
+        if (pendingResponse != null) {
+            pendingResponse.complete(response);
+        }
     }
 
     Optional<JsonObject> poll(long requestId, Duration timeout) {
@@ -84,8 +85,10 @@ final class McpPendingResponses {
             if (!active) {
                 throw new McpInternalException("Session disconnected");
             }
-            pendingResponse = responses.get(requestId)
-                    .orElseThrow(() -> new McpInternalException("No pending response for request id " + requestId));
+            pendingResponse = responses.get(requestId);
+            if (pendingResponse == null) {
+                throw new McpInternalException("No pending response for request id " + requestId);
+            }
         } finally {
             lock.unlock();
         }
@@ -102,15 +105,13 @@ final class McpPendingResponses {
                 throw runtimeException;
             }
             throw new McpInternalException("Unable to receive session response", cause);
-        } finally {
-            discard(requestId);
         }
     }
 
     void discard(long requestId) {
         lock.lock();
         try {
-            responses.remove(requestId).ifPresent(responseFutures::remove);
+            responses.remove(requestId);
         } finally {
             lock.unlock();
         }
@@ -124,8 +125,7 @@ final class McpPendingResponses {
                 return;
             }
             active = false;
-            pending = List.copyOf(responseFutures);
-            responseFutures.clear();
+            pending = List.copyOf(responses.values());
             responses.clear();
         } finally {
             lock.unlock();

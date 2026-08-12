@@ -18,6 +18,7 @@ package io.helidon.extensions.mcp.server;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
@@ -55,13 +56,13 @@ class McpPendingResponsesTest {
         JsonObject thirdResponse = JsonObject.builder().set("id", 3).build();
         responses.accept(2, secondResponse);
         responses.accept(1, firstResponse);
-        assertThat(responses.poll(1, Duration.ofSeconds(1)).orElseThrow(), sameInstance(firstResponse));
+        assertThat(pollAndDiscard(responses, 1, Duration.ofSeconds(1)).orElseThrow(), sameInstance(firstResponse));
 
         responses.prepare(3);
         responses.accept(3, thirdResponse);
 
-        assertThat(responses.poll(2, Duration.ofSeconds(1)).orElseThrow(), sameInstance(secondResponse));
-        assertThat(responses.poll(3, Duration.ofSeconds(1)).orElseThrow(), sameInstance(thirdResponse));
+        assertThat(pollAndDiscard(responses, 2, Duration.ofSeconds(1)).orElseThrow(), sameInstance(secondResponse));
+        assertThat(pollAndDiscard(responses, 3, Duration.ofSeconds(1)).orElseThrow(), sameInstance(thirdResponse));
     }
 
     @Test
@@ -69,12 +70,12 @@ class McpPendingResponsesTest {
         McpPendingResponses responses = new McpPendingResponses(1);
         responses.prepare(1);
 
-        assertThat(responses.poll(1, Duration.ZERO).isEmpty(), is(true));
+        assertThat(pollAndDiscard(responses, 1, Duration.ZERO).isEmpty(), is(true));
 
         JsonObject response = JsonObject.builder().set("id", 2).build();
         responses.prepare(2);
         responses.accept(2, response);
-        assertThat(responses.poll(2, Duration.ofSeconds(1)).orElseThrow(), sameInstance(response));
+        assertThat(pollAndDiscard(responses, 2, Duration.ofSeconds(1)).orElseThrow(), sameInstance(response));
     }
 
     @Test
@@ -148,7 +149,7 @@ class McpPendingResponsesTest {
         for (long requestId : prepared) {
             JsonObject response = JsonObject.builder().set("id", requestId).build();
             responses.accept(requestId, response);
-            assertThat(responses.poll(requestId, Duration.ofSeconds(1)).orElseThrow(), sameInstance(response));
+            assertThat(pollAndDiscard(responses, requestId, Duration.ofSeconds(1)).orElseThrow(), sameInstance(response));
         }
     }
 
@@ -157,11 +158,21 @@ class McpPendingResponsesTest {
                                AtomicReference<Throwable> failure) {
         return Thread.ofVirtual().start(() -> {
             try {
-                responses.poll(requestId, Duration.ofSeconds(5));
+                pollAndDiscard(responses, requestId, Duration.ofSeconds(5));
             } catch (Throwable e) {
                 failure.set(e);
             }
         });
+    }
+
+    private static Optional<JsonObject> pollAndDiscard(McpPendingResponses responses,
+                                                       long requestId,
+                                                       Duration timeout) {
+        try {
+            return responses.poll(requestId, timeout);
+        } finally {
+            responses.discard(requestId);
+        }
     }
 
     private static void awaitWaiting(Thread... threads) {
