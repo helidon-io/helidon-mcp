@@ -318,11 +318,14 @@ class McpJsonSerializerV4Test {
         JsonArray wireContent = wireResponse.objectValue("result").orElseThrow()
                 .objectValue("content").orElseThrow()
                 .arrayValue("content").orElseThrow();
-        McpSamplingResponse response = SERIALIZER.createSamplingResponse(wireResponse);
+        McpJsonSerializerV4 serializer = (McpJsonSerializerV4) SERIALIZER;
+        McpSamplingToolResultContent content = (McpSamplingToolResultContent) serializer.parseContent(
+                wireResponse.objectValue("result").orElseThrow().objectValue("content").orElseThrow());
+        McpSamplingMessage resultMessage = McpSamplingMessage.builder()
+                .role(McpRole.USER)
+                .addContent(content)
+                .build();
 
-        assertThat(response.message().role(), is(McpRole.USER));
-        assertThat(response.message().contents().getFirst(), instanceOf(McpSamplingToolResultContent.class));
-        McpSamplingToolResultContent content = (McpSamplingToolResultContent) response.message().contents().getFirst();
         McpToolResult result = content.result();
         assertThat(content.toolUseId(), is("call-1"));
         assertThat(result.textContents().getFirst().text(), is("18 C"));
@@ -352,7 +355,7 @@ class McpJsonSerializerV4Test {
                                                         .input(new McpParameters(JsonObject.empty()))
                                                         .build())
                                     .build())
-                .addMessage(response.message())
+                .addMessage(resultMessage)
                 .build();
         JsonArray replayedContent = SERIALIZER.toJson(replay, List.of()).build()
                 .arrayValue("messages").orElseThrow()
@@ -1221,16 +1224,16 @@ class McpJsonSerializerV4Test {
     }
 
     @Test
-    void acceptsUserRoleOrdinarySamplingResponse() {
-        McpSamplingResponse response = SERIALIZER.createSamplingResponse(response("""
-                {
-                  "type": "text",
-                  "text": "user response"
-                }
-                """, "endTurn", "user"));
+    void rejectsUserRoleOrdinarySamplingResponse() {
+        McpSamplingException exception = assertThrows(McpSamplingException.class,
+                                                      () -> SERIALIZER.createSamplingResponse(response("""
+                                                              {
+                                                                "type": "text",
+                                                                "text": "user response"
+                                                              }
+                                                              """, "endTurn", "user")));
 
-        assertThat(response.message().role(), is(McpRole.USER));
-        assertThat(response.asTextContent().text(), is("user response"));
+        assertThat(exception.getMessage(), is("Sampling response must have an assistant message role"));
     }
 
     @Test
@@ -1245,29 +1248,22 @@ class McpJsonSerializerV4Test {
                                                               }
                                                               """, "toolUse", "user")));
 
-        assertThat(exception.getMessage(), is("Sampling tool use content must have an assistant message role"));
+        assertThat(exception.getMessage(), is("Sampling response must have an assistant message role"));
     }
 
     @Test
-    void rejectsMixedSamplingToolResultResponse() {
+    void rejectsSamplingToolResultResponse() {
         McpSamplingException exception = assertThrows(McpSamplingException.class,
                                                       () -> SERIALIZER.createSamplingResponse(response("""
-                                                              [
-                                                                {
-                                                                  "type": "tool_result",
-                                                                  "toolUseId": "call-1",
-                                                                  "content": [],
-                                                                  "isError": false
-                                                                },
-                                                                {
-                                                                  "type": "text",
-                                                                  "text": "mixed content"
-                                                                }
-                                                              ]
-                                                              """, "endTurn", "user")));
+                                                              {
+                                                                "type": "tool_result",
+                                                                "toolUseId": "call-1",
+                                                                "content": [],
+                                                                "isError": false
+                                                              }
+                                                              """, "endTurn")));
 
-        assertThat(exception.getMessage(),
-                   is("Sampling messages with tool results must contain only tool results"));
+        assertThat(exception.getMessage(), is("Sampling response must not contain tool result content"));
     }
 
     @Test

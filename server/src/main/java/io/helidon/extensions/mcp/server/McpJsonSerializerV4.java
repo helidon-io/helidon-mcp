@@ -121,7 +121,7 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
     @Override
     public McpSamplingResponse createSamplingResponse(JsonObject object) throws McpSamplingException {
         McpSamplingResponse response = super.createSamplingResponse(object);
-        validateContentRoles(response.message());
+        validateSamplingResponse(response.message());
         return response;
     }
 
@@ -320,6 +320,22 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
         }
         icon.theme().ifPresent(theme -> builder.set("theme", theme.text()));
         return builder.build();
+    }
+
+    private void validateSamplingResponse(McpSamplingMessage message) {
+        if (message.role() != McpRole.ASSISTANT) {
+            throw new McpSamplingException("Sampling response must have an assistant message role");
+        }
+        if (message.contents().stream().anyMatch(McpSamplingToolResultContent.class::isInstance)) {
+            throw new McpSamplingException("Sampling response must not contain tool result content");
+        }
+        List<McpSamplingToolUseContent> toolUses = message.contents().stream()
+                .filter(McpSamplingToolUseContent.class::isInstance)
+                .map(McpSamplingToolUseContent.class::cast)
+                .toList();
+        if (toolUses.stream().map(McpSamplingToolUseContent::id).distinct().count() != toolUses.size()) {
+            throw new McpSamplingException("Sampling tool use identifiers must be unique within a message");
+        }
     }
 
     private void validateToolMessages(List<McpSamplingMessage> messages) {
