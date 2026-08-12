@@ -762,6 +762,27 @@ class McpSamplingTest {
     }
 
     @Test
+    void acceptsExtensionStopReasonThatDiffersFromToolUseCase() {
+        McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, """
+                {"sampling": {}}
+                """);
+        acceptSamplingResponse(session, 0, """
+                {"type": "text", "text": "Extension response"}
+                """, "TOOLUSE");
+        JsonRpcResponse response = mock(JsonRpcResponse.class);
+        SseSink sink = mock(SseSink.class);
+        when(response.sink(SseSink.TYPE)).thenReturn(sink);
+        McpSampling sampling = sampling(session, new McpStreamableHttpTransport(response));
+
+        McpSamplingResponse samplingResponse = sampling.request(req -> req.addTextMessage("Hello"));
+
+        assertThat(samplingResponse.asTextContent().text(), is("Extension response"));
+        assertThat(samplingResponse.rawStopReason().orElseThrow(), is("TOOLUSE"));
+        assertThat(samplingResponse.stopReason().orElseThrow(), is(McpStopReason.TOOL_USE));
+        sentSamplingRequests(sink, 1);
+    }
+
+    @Test
     void rejectsToolNamesWithoutSamplingToolsCapability() {
         JsonRpcResponse response = mock(JsonRpcResponse.class);
         McpSampling sampling = sampling(session(McpProtocolVersion.VERSION_2025_11_25, """

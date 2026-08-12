@@ -119,7 +119,7 @@ public final class McpSampling extends McpFeature {
                     .map(McpSamplingToolUseContent.class::cast)
                     .toList();
             if (toolUses.isEmpty()) {
-                if (response.stopReason().filter(reason -> reason == McpStopReason.TOOL_USE).isPresent()) {
+                if (response.rawStopReason().filter(McpStopReason.TOOL_USE.text()::equals).isPresent()) {
                     throw new McpSamplingException("Sampling response stopped for tool use without tool use content");
                 }
                 if (currentRequest.toolChoice().filter(choice -> choice == McpToolChoice.REQUIRED).isPresent()) {
