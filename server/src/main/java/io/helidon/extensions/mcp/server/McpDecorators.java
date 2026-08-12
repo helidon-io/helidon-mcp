@@ -88,7 +88,8 @@ final class McpDecorators {
     /**
      * Enforce annotation priority value between 0 and 1.
      */
-    static class AnnotationsPriorityDecorator implements Prototype.OptionDecorator<McpAnnotations.BuilderBase<?, ?>, Optional<Double>> {
+    static class AnnotationsPriorityDecorator
+            implements Prototype.OptionDecorator<McpAnnotations.BuilderBase<?, ?>, Optional<Double>> {
         @Override
         public void decorate(McpAnnotations.BuilderBase<?, ?> builder, Optional<Double> value) {
             value.filter(priority -> !McpDecorators.isPositiveAndLessThanOne(priority))
