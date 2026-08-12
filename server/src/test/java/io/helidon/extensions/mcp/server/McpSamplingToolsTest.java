@@ -31,9 +31,9 @@ class McpSamplingToolsTest {
 
     @Test
     void constructsToolContent() {
-        McpParameters input = new McpParameters(JsonObject.builder()
-                                                         .set("city", "Prague")
-                                                         .build());
+        McpParameters input = McpParameters.create(JsonObject.builder()
+                                                          .set("city", "Prague")
+                                                          .build());
         McpSamplingToolUseContent toolUse = McpSamplingToolUseContent.builder()
                 .id("call-1")
                 .name("weather")
@@ -118,7 +118,7 @@ class McpSamplingToolsTest {
     @Test
     void rejectsNullParameterObject() {
         NullPointerException exception = assertThrows(NullPointerException.class,
-                                                      () -> new McpParameters((JsonObject) null));
+                                                      () -> McpParameters.create(null));
 
         assertThat(exception.getMessage(), is("value is null"));
     }

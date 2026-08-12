@@ -176,7 +176,7 @@ McpSamplingTextContent content = McpSamplingTextContent.builder()
                 .addAudience(McpRole.USER)
                 .priority(0.8)
                 .build())
-        .metadata(new McpParameters(JsonObject.builder()
+        .metadata(McpParameters.create(JsonObject.builder()
                 .set("traceId", "trace-1")
                 .build()))
         .build();

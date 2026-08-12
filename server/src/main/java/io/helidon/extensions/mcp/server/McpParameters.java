@@ -59,8 +59,13 @@ public final class McpParameters {
      * Create parameters backed by a JSON object.
      *
      * @param value parameter values
+     * @return MCP parameters
      */
-    public McpParameters(JsonObject value) {
+    public static McpParameters create(JsonObject value) {
+        return new McpParameters(value);
+    }
+
+    McpParameters(JsonObject value) {
         this(Objects.requireNonNull(value, "value is null"), "key");
     }
 
