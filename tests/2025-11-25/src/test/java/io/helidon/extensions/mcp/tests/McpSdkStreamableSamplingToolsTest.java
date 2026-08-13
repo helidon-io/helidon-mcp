@@ -35,6 +35,7 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 
@@ -144,7 +145,7 @@ class McpSdkStreamableSamplingToolsTest {
         assertThat(tool.get("description"), is("Returns the supplied value."));
         Map<?, ?> inputSchema = asMap(tool.get("inputSchema"));
         assertThat(inputSchema.get("type"), is("object"));
-        assertThat(asMap(inputSchema.get("properties")).containsKey("value"), is(true));
+        assertThat(asMap(inputSchema.get("properties")), hasKey("value"));
         assertThat(inputSchema.get("required"), is(List.of("value")));
         assertThat(asMap(firstRequest.get("toolChoice")).get("mode"), is("required"));
 

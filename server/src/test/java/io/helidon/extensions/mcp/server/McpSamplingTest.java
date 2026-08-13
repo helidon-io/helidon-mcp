@@ -36,6 +36,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
@@ -1252,7 +1253,7 @@ class McpSamplingTest {
         assertThat(result.booleanValue("isError").orElseThrow(), is(error));
         String text = result.arrayValue("content").orElseThrow().values().get(0).asObject()
                 .stringValue("text").orElseThrow();
-        assertThat(text.contains(messageFragment), is(true));
+        assertThat(text, containsString(messageFragment));
     }
 
     private static McpSamplingMessage message(McpRole role, McpSamplingContent content) {
