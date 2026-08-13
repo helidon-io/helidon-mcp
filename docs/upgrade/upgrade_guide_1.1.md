@@ -33,7 +33,7 @@ public McpToolResult tool(McpToolRequest request) {
 }
 ```
 
-For details about the `McpToolResult` builder, see [Tool Result](README.md#tool-result-builder-and-content-types).
+For details about the `McpToolResult` builder, see [Tool Result](../mcp.md#tool-result).
 
 ### Migrate McpRequest to McpToolRequest
 
@@ -245,7 +245,7 @@ public McpPromptResult prompt(McpPromptRequest request) {
 }
 ```
 
-For details about the `McpPromptResult` builder, see [Prompt Result](README.md#prompt-result-builder-and-content-types).
+For details about the `McpPromptResult` builder, see [Prompt Result](../mcp.md#prompt-result).
 
 ### Migrate McpRequest to McpPromptRequest
 
@@ -426,7 +426,7 @@ public McpResourceResult resource(McpResourceRequest request) {
 }
 ```
 
-For details about the `McpResourceResult` builder, see [Resource Result](README.md#resource-result-builder-and-content-types).
+For details about the `McpResourceResult` builder, see [Resource Result](../mcp.md#resource-result).
 
 ### Migrate McpRequest to McpResourceRequest
 
@@ -523,7 +523,7 @@ public McpCompletionResult completion(McpCompletionRequest request) {
 }
 ```
 
-For details about the `McpCompletionResult` builder, see [Completion Result](README.md#completion-result-builder).
+For details about the `McpCompletionResult` builder, see [Completion Result](../mcp.md#completion-result).
 
 ### Migrate McpRequest to McpCompletionRequest
 

@@ -1139,7 +1139,7 @@ McpSamplingRequest request = McpSamplingRequest.builder()
 
 Sampling metadata is serialized using Helidon JSON binding. The metadata option accepts `Object`; maps, collections,
 arrays, primitives, and converter-backed custom classes are supported. See
-[Migrate from JSON-B to Helidon JSON Binding](upgrade_guide_1.2.md#migrate-from-json-b-to-helidon-json-binding) for the
+[Migrate from JSON-B to Helidon JSON Binding](./upgrade/upgrade_guide_1.2.md#migrate-from-json-b-to-helidon-json-binding) for the
 compatibility impact and migration steps.
 
 Once your request is built, send it using the sampling feature.
