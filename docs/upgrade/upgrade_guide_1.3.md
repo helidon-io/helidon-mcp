@@ -64,9 +64,12 @@ McpSamplingRequest request = McpSamplingRequest.builder()
         .build();
 ```
 
-Use separate message envelopes when content blocks have different roles or must remain separate messages. A separate envelope
-for each content block, as shown above, works with every supported protocol version. Multiple content blocks in one envelope are
-supported only when protocol version `2025-11-25` is negotiated; those blocks retain their insertion order on the wire.
+Use separate message envelopes when content blocks have different roles or must remain separate messages. Protocol version
+`2024-11-05` supports text and image content blocks, `2025-03-26` adds audio, and `2025-06-18` adds content `_meta` and
+`McpAnnotations.lastModified` while message `_meta` remains unsupported. Protocol version `2025-11-25` adds tool-use and
+tool-result blocks, message `_meta`, and multiple content blocks per envelope; those blocks retain their insertion order on the
+wire. For earlier protocol versions, use one content block per envelope and only the content types and metadata fields supported
+by the negotiated version.
 
 The principal type and accessor replacements are:
 
@@ -166,8 +169,9 @@ of tool rounds and cumulative tool executions with `mcp.server.max-sampling-tool
 
 ## Use annotations and protocol metadata
 
-Sampling message envelopes and content blocks can carry protocol `_meta` through `metadata(McpParameters)`. Annotated sampling
-content can also carry `McpAnnotations`, including audience roles, priority, and last-modified data.
+Sampling content blocks can carry protocol `_meta` through `metadata(McpParameters)` starting with `2025-06-18`; message
+envelopes can carry it starting with `2025-11-25`. Annotated sampling content supports audience and priority in every supported
+version, while `lastModified` requires `2025-06-18` or later.
 
 ```java
 McpSamplingTextContent content = McpSamplingTextContent.builder()
