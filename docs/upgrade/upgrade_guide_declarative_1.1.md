@@ -28,8 +28,8 @@ McpToolResult tool() {
 }
 ```
 
-For details about the `McpToolResult` class, see [README.md](README.md#tool-result) and
-[Upgrade Guide](../mcp/upgrade_guide_1.1.md#migrate-from-mcptoolcontents).
+For details about the `McpToolResult` class, see [Tool Result](../mcp-declarative.md#tool-result) and
+[Upgrade Guide](upgrade_guide_1.1.md#migrate-from-mcptoolcontents).
 
 ## Prompts
 
@@ -51,8 +51,8 @@ McpPromptResult prompt() {
 }
 ```
 
-For details about the `McpPromptResult` class, see [README.md](README.md#prompt-content-types) and
-[Upgrade Guide](../mcp/upgrade_guide_1.1.md#migrate-from-mcppromptcontents).
+For details about the `McpPromptResult` class, see [Prompt Result](../mcp-declarative.md#prompt-result) and
+[Upgrade Guide](upgrade_guide_1.1.md#migrate-from-mcppromptcontents).
 
 ## Resources
 
@@ -74,8 +74,8 @@ McpResourceResult resource() {
 }
 ```
 
-For details about the `McpResourceResult` class, see [README.md](README.md#resource-content-types) and
-[Upgrade Guide](../mcp/upgrade_guide_1.1.md#migrate-from-mcpresourcecontents).
+For details about the `McpResourceResult` class, see [Resource Result](../mcp-declarative.md#resource-result) and
+[Upgrade Guide](upgrade_guide_1.1.md#migrate-from-mcpresourcecontents).
 
 ## Completions
 
@@ -97,5 +97,5 @@ McpCompletionResult completion() {
 }
 ```
 
-For details about the `McpCompletionResult` class, see [README.md](README.md#completion-content-type) and
-[Upgrade Guide](../mcp/upgrade_guide_1.1.md#migrate-mcpcompletion-interface).
+For details about the `McpCompletionResult` class, see [Completion Result](../mcp-declarative.md#completion-result) and
+[Upgrade Guide](upgrade_guide_1.1.md#migrate-mcpcompletion-interface).
