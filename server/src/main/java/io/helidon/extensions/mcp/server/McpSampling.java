@@ -206,17 +206,29 @@ public final class McpSampling extends McpFeature {
 
     private Map<String, McpTool> samplingTools(List<String> toolNames) {
         Map<String, McpTool> tools = new LinkedHashMap<>();
+        if (toolNames.isEmpty()) {
+            return tools;
+        }
+
+        Map<String, McpTool> registeredToolsByName = new LinkedHashMap<>();
+        Set<String> duplicateRegisteredToolNames = new HashSet<>();
+        for (McpTool registeredTool : registeredTools) {
+            String registeredToolName = registeredTool.name();
+            McpTool existingTool = registeredToolsByName.putIfAbsent(registeredToolName, registeredTool);
+            if (existingTool != null) {
+                duplicateRegisteredToolNames.add(registeredToolName);
+            }
+        }
+
         for (String toolName : toolNames) {
-            List<McpTool> matchingTools = registeredTools.stream()
-                    .filter(candidate -> toolName.equals(candidate.name()))
-                    .toList();
-            if (matchingTools.isEmpty()) {
+            McpTool tool = registeredToolsByName.get(toolName);
+            if (tool == null) {
                 throw new McpSamplingException("Sampling tool is not registered: " + toolName);
             }
-            if (matchingTools.size() > 1) {
+            if (duplicateRegisteredToolNames.contains(toolName)) {
                 throw new McpSamplingException("Registered sampling tool names must be unique: " + toolName);
             }
-            McpTool duplicate = tools.putIfAbsent(toolName, matchingTools.getFirst());
+            McpTool duplicate = tools.putIfAbsent(toolName, tool);
             if (duplicate != null) {
                 throw new McpSamplingException("Sampling tool names must be unique: " + toolName);
             }

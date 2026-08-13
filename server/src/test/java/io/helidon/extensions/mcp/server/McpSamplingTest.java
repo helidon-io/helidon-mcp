@@ -649,6 +649,34 @@ class McpSamplingTest {
     }
 
     @Test
+    void ignoresAmbiguousUnselectedRegisteredSamplingToolName() {
+        McpTool weather = new TestTool("weather", "Looks up the weather", "");
+        McpTool first = new TestTool("duplicate", "First", "");
+        McpTool second = new TestTool("duplicate", "Second", "");
+        McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, """
+                {"sampling": {"tools": {}}}
+                """, weather, first, second);
+        acceptSamplingResponse(session, 0, """
+                {"type": "text", "text": "No duplicate tool selected"}
+                """, "endTurn");
+        JsonRpcResponse response = mock(JsonRpcResponse.class);
+        SseSink sink = mock(SseSink.class);
+        when(response.sink(SseSink.TYPE)).thenReturn(sink);
+        McpSampling sampling = sampling(session, new McpStreamableHttpTransport(response));
+
+        McpSamplingResponse samplingResponse = sampling.request(req -> req.addTool(weather.name()));
+
+        assertThat(samplingResponse.asTextContent().text(), is("No duplicate tool selected"));
+        var serializedTools = sentSamplingRequests(sink, 1).getFirst()
+                .objectValue("params").orElseThrow()
+                .arrayValue("tools").orElseThrow();
+        assertThat(serializedTools.size(), is(1));
+        assertThat(serializedTools.values().getFirst().asObject()
+                           .stringValue("name").orElseThrow(),
+                   is(weather.name()));
+    }
+
+    @Test
     void doesNotOfferRegisteredToolsForEmptySelection() {
         McpTool tool = new TestTool("weather", "Looks up the weather", "");
         McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, """
