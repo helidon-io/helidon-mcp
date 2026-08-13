@@ -1,6 +1,7 @@
-# Helidon MCP Extension
-
-Server-side Helidon support for the Model Context Protocol (MCP).
+<!--@frontmatter
+description: "Declarative API for server-side MCP"
+-->
+# Helidon MCP Declarative
 
 ## Overview
 
@@ -678,7 +679,7 @@ McpToolResult cancellationTool(McpCancellation cancellation) {
 
 ### Elicitation
 
-See the full [elicitation documentation details](../mcp/README.md#elicitation)
+See the full [elicitation documentation details](mcp.md#elicitation)
 
 #### Example
 
@@ -719,7 +720,7 @@ McpToolResult elicitationTool(McpElicitation elicitation) {
 
 ### Sampling
 
-See the full [sampling documentation details](../mcp/README.md#sampling)
+See the full [sampling documentation details](mcp.md#sampling)
 
 #### Example
 
@@ -754,7 +755,7 @@ McpToolResult samplingTool(McpSampling sampling) {
 
 ### Roots
 
-See the full [roots documentation details](../mcp/README.md#roots)
+See the full [roots documentation details](mcp.md#roots)
 
 #### Example
 
