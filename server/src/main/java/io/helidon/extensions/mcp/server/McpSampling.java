@@ -115,16 +115,60 @@ public final class McpSampling extends McpFeature {
             throw new McpSamplingException("Sampling tools are not supported by client");
         }
 
-        Map<String, McpTool> tools = samplingTools(request.tools());
+        Map<String, McpTool> tools = new LinkedHashMap<>();
+        if (!request.tools().isEmpty()) {
+            Map<String, McpTool> registeredToolsByName = new LinkedHashMap<>();
+            Set<String> duplicateRegisteredToolNames = new HashSet<>();
+            for (McpTool registeredTool : registeredTools) {
+                String registeredToolName = registeredTool.name();
+                McpTool existingTool = registeredToolsByName.putIfAbsent(registeredToolName, registeredTool);
+                if (existingTool != null) {
+                    duplicateRegisteredToolNames.add(registeredToolName);
+                }
+            }
+            for (String toolName : request.tools()) {
+                McpTool tool = registeredToolsByName.get(toolName);
+                if (tool == null) {
+                    throw new McpSamplingException("Sampling tool is not registered: " + toolName);
+                }
+                if (duplicateRegisteredToolNames.contains(toolName)) {
+                    throw new McpSamplingException("Registered sampling tool names must be unique: " + toolName);
+                }
+                McpTool duplicate = tools.putIfAbsent(toolName, tool);
+                if (duplicate != null) {
+                    throw new McpSamplingException("Sampling tool names must be unique: " + toolName);
+                }
+            }
+        }
         List<McpTool> toolDefinitions = List.copyOf(tools.values());
-        Set<String> toolUseIds = samplingToolUseIds(request.messages());
+        Set<String> toolUseIds = new HashSet<>();
+        request.messages().stream()
+                .flatMap(message -> message.contents().stream())
+                .filter(McpSamplingToolUseContent.class::isInstance)
+                .map(McpSamplingToolUseContent.class::cast)
+                .map(McpSamplingToolUseContent::id)
+                .forEach(id -> {
+                    if (!toolUseIds.add(id)) {
+                        throw new McpSamplingException("Sampling tool use identifier was reused: " + id);
+                    }
+                });
         McpSamplingRequest currentRequest = request;
         int toolIterations = 0;
         int toolExecutions = 0;
 
         while (true) {
             checkRequestActive();
-            McpSamplingResponse response = requestOnce(currentRequest, toolDefinitions);
+            long id = session().jsonRpcId();
+            JsonObject payload = session().serializer().createSamplingRequest(id, currentRequest, toolDefinitions);
+            session().prepareResponse(id);
+            McpSamplingResponse response;
+            try {
+                transport().send(payload);
+                JsonObject jsonResponse = session().pollResponse(id, currentRequest.timeout());
+                response = session().serializer().createSamplingResponse(jsonResponse);
+            } finally {
+                session().discardResponse(id);
+            }
             checkRequestActive();
             List<McpSamplingToolUseContent> toolUses = response.message().contents().stream()
                     .filter(McpSamplingToolUseContent.class::isInstance)
@@ -161,9 +205,38 @@ public final class McpSampling extends McpFeature {
             McpSamplingMessage.Builder results = McpSamplingMessage.builder().role(McpRole.USER);
             for (McpSamplingToolUseContent toolUse : toolUses) {
                 checkRequestActive();
+                McpTool tool = tools.get(toolUse.name());
+                McpToolResult toolResult;
+                if (tool == null) {
+                    toolResult = createToolErrorResult("Tool with name " + toolUse.name() + " is not available");
+                } else {
+                    JsonObject.Builder parametersBuilder = JsonObject.builder()
+                            .set("name", toolUse.name())
+                            .set("arguments", toolUse.input().value());
+                    toolUse.metadata().ifPresent(metadata -> parametersBuilder.set("_meta", metadata.value()));
+                    McpParameters parameters = new McpParameters(parametersBuilder.build());
+                    McpRequest toolRequest = McpRequest.builder()
+                            .parameters(parameters)
+                            .meta(parameters.get("_meta"))
+                            .features(features)
+                            .protocolVersion(session().protocolVersion().text())
+                            .sessionContext(session().context())
+                            .requestContext(features.requestContext())
+                            .build();
+                    try {
+                        toolResult = tool.tool(new McpToolRequestImpl(toolRequest));
+                    } catch (RuntimeException e) {
+                        LOGGER.log(System.Logger.Level.TRACE, "Sampling tool execution failed: "
+                                + toolUse.name(), e);
+                        toolResult = createToolErrorResult("Tool with name " + toolUse.name() + " failed");
+                    }
+                    if (toolResult == null) {
+                        toolResult = createToolErrorResult("Tool with name " + toolUse.name() + " returned no result");
+                    }
+                }
                 results.addContent(McpSamplingToolResultContent.builder()
                                            .toolUseId(toolUse.id())
-                                           .result(invokeTool(tools, toolUse))
+                                           .result(toolResult)
                                            .build());
             }
 
@@ -188,98 +261,6 @@ public final class McpSampling extends McpFeature {
         }
         if (features.cancellation().result().isRequested()) {
             throw new McpSamplingException("Sampling request cancelled");
-        }
-    }
-
-    private McpSamplingResponse requestOnce(McpSamplingRequest request, List<McpTool> tools) {
-        long id = session().jsonRpcId();
-        JsonObject payload = session().serializer().createSamplingRequest(id, request, tools);
-        session().prepareResponse(id);
-        try {
-            transport().send(payload);
-            JsonObject response = session().pollResponse(id, request.timeout());
-            return session().serializer().createSamplingResponse(response);
-        } finally {
-            session().discardResponse(id);
-        }
-    }
-
-    private Map<String, McpTool> samplingTools(List<String> toolNames) {
-        Map<String, McpTool> tools = new LinkedHashMap<>();
-        if (toolNames.isEmpty()) {
-            return tools;
-        }
-
-        Map<String, McpTool> registeredToolsByName = new LinkedHashMap<>();
-        Set<String> duplicateRegisteredToolNames = new HashSet<>();
-        for (McpTool registeredTool : registeredTools) {
-            String registeredToolName = registeredTool.name();
-            McpTool existingTool = registeredToolsByName.putIfAbsent(registeredToolName, registeredTool);
-            if (existingTool != null) {
-                duplicateRegisteredToolNames.add(registeredToolName);
-            }
-        }
-
-        for (String toolName : toolNames) {
-            McpTool tool = registeredToolsByName.get(toolName);
-            if (tool == null) {
-                throw new McpSamplingException("Sampling tool is not registered: " + toolName);
-            }
-            if (duplicateRegisteredToolNames.contains(toolName)) {
-                throw new McpSamplingException("Registered sampling tool names must be unique: " + toolName);
-            }
-            McpTool duplicate = tools.putIfAbsent(toolName, tool);
-            if (duplicate != null) {
-                throw new McpSamplingException("Sampling tool names must be unique: " + toolName);
-            }
-        }
-        return tools;
-    }
-
-    private Set<String> samplingToolUseIds(List<McpSamplingMessage> messages) {
-        Set<String> toolUseIds = new HashSet<>();
-        messages.stream()
-                .flatMap(message -> message.contents().stream())
-                .filter(McpSamplingToolUseContent.class::isInstance)
-                .map(McpSamplingToolUseContent.class::cast)
-                .map(McpSamplingToolUseContent::id)
-                .forEach(id -> {
-                    if (!toolUseIds.add(id)) {
-                        throw new McpSamplingException("Sampling tool use identifier was reused: " + id);
-                    }
-                });
-        return toolUseIds;
-    }
-
-    private McpToolResult invokeTool(Map<String, McpTool> tools, McpSamplingToolUseContent toolUse) {
-        McpTool tool = tools.get(toolUse.name());
-        if (tool == null) {
-            return createToolErrorResult("Tool with name " + toolUse.name() + " is not available");
-        }
-
-        JsonObject.Builder parametersBuilder = JsonObject.builder()
-                .set("name", toolUse.name())
-                .set("arguments", toolUse.input().value());
-        toolUse.metadata().ifPresent(metadata -> parametersBuilder.set("_meta", metadata.value()));
-        McpParameters parameters = new McpParameters(parametersBuilder.build());
-        McpRequest request = McpRequest.builder()
-                .parameters(parameters)
-                .meta(parameters.get("_meta"))
-                .features(features)
-                .protocolVersion(session().protocolVersion().text())
-                .sessionContext(session().context())
-                .requestContext(features.requestContext())
-                .build();
-        try {
-            McpToolResult result = tool.tool(new McpToolRequestImpl(request));
-            if (result == null) {
-                return createToolErrorResult("Tool with name " + toolUse.name() + " returned no result");
-            }
-            return result;
-        } catch (RuntimeException e) {
-            LOGGER.log(System.Logger.Level.TRACE, "Sampling tool execution failed: "
-                            + toolUse.name(), e);
-            return createToolErrorResult("Tool with name " + toolUse.name() + " failed");
         }
     }
 
