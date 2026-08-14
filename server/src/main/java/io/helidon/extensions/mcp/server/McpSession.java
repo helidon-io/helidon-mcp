@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.helidon.common.LazyValue;
 import io.helidon.common.LruCache;
@@ -53,9 +54,9 @@ class McpSession {
     private final LruCache<String, McpTransport> transports;
     private final LazyValue<McpSessionFeatures> sessionFeatures;
     private final McpPendingResponses pendingResponses;
+    private final AtomicReference<State> state = new AtomicReference<>(UNINITIALIZED);
 
     private McpJsonSerializer serializer;
-    private volatile State state = UNINITIALIZED;
     private volatile McpProtocolVersion protocolVersion;
 
     McpSession(McpSessions sessions, McpTransportManager manager, McpServerConfig config, String id) {
@@ -86,7 +87,7 @@ class McpSession {
     }
 
     void onDisconnect(ServerResponse response) {
-        state = State.DISCONNECTED;
+        state.set(State.DISCONNECTED);
         pendingResponses.disconnect();
         sessions.remove(id);
         manager.onDisconnect(response);
@@ -259,11 +260,11 @@ class McpSession {
     }
 
     void state(State state) {
-        this.state = state;
+        this.state.updateAndGet(current -> current == State.DISCONNECTED ? current : state);
     }
 
     State state() {
-        return state;
+        return state.get();
     }
 
     enum State {

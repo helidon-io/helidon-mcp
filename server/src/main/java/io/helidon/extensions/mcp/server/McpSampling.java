@@ -230,9 +230,6 @@ public final class McpSampling extends McpFeature {
                                 + toolUse.name(), e);
                         toolResult = createToolErrorResult("Tool with name " + toolUse.name() + " failed");
                     }
-                    if (toolResult == null) {
-                        toolResult = createToolErrorResult("Tool with name " + toolUse.name() + " returned no result");
-                    }
                 }
                 results.addContent(McpSamplingToolResultContent.builder()
                                            .toolUseId(toolUse.id())

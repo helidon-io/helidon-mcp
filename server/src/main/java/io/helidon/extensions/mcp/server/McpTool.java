@@ -48,7 +48,7 @@ public interface McpTool {
      * Tool execution.
      *
      * @param request tool request
-     * @return tool execution result
+     * @return tool execution result, never {@code null}
      */
     McpToolResult tool(McpToolRequest request);
 

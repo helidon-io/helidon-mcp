@@ -1259,8 +1259,9 @@ tool-use blocks.
 Only registered tools whose names are included in `McpSamplingRequest.tools()` are eligible for automatic invocation. Registered
 tools are not offered automatically, and an unregistered request tool name causes `request(...)` to throw an
 `McpSamplingException` before sending the sampling request. If the client nevertheless requests a tool that was not offered,
-Helidon returns an error tool result so the model can recover. A `null` result or an exception from a selected tool is handled the
-same way. Tool callbacks run synchronously and sequentially. The request timeout applies independently to each sampling exchange.
+Helidon returns an error tool result so the model can recover. Tool callbacks must return a non-null `McpToolResult`; use
+`McpToolResult.create()` for an empty result. An exception from a selected tool is returned as an error tool result. Tool callbacks
+run synchronously and sequentially. The request timeout applies independently to each sampling exchange.
 
 Helidon allows ten tool-execution rounds and ten cumulative tool executions by default. Configure both limits with
 `mcp.server.max-sampling-tool-iterations` or `McpServerFeature.builder().maxSamplingToolIterations(...)`. The value must be

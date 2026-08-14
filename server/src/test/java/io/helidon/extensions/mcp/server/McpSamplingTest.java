@@ -329,7 +329,7 @@ class McpSamplingTest {
     }
 
     @Test
-    void executesParallelToolUsesAndContinuesAfterToolErrors() {
+    void continuesAfterSamplingToolErrors() {
         AtomicInteger workingInvocations = new AtomicInteger();
         McpTool broken = new TestTool("broken", "Fails", "", request -> {
             throw new IllegalStateException("provider unavailable");
@@ -338,17 +338,15 @@ class McpSamplingTest {
             workingInvocations.incrementAndGet();
             return McpToolResult.create("success");
         });
-        McpTool empty = new TestTool("empty", "Returns null", "", request -> null);
         McpTool unselected = new TestTool("missing", "Not selected", "");
         McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, """
                 {"sampling": {"tools": {}}}
-                """, broken, working, empty, unselected);
+                """, broken, working, unselected);
         acceptSamplingResponse(session, 0, """
                 [
                   {"type": "tool_use", "id": "call-1", "name": "broken", "input": {}},
                   {"type": "tool_use", "id": "call-2", "name": "working", "input": {}},
-                  {"type": "tool_use", "id": "call-3", "name": "missing", "input": {}},
-                  {"type": "tool_use", "id": "call-4", "name": "empty", "input": {}}
+                  {"type": "tool_use", "id": "call-3", "name": "missing", "input": {}}
                 ]
                 """, "toolUse");
         acceptSamplingResponse(session, 1, """
@@ -362,7 +360,6 @@ class McpSamplingTest {
                 .addTextMessage(McpRole.USER, "Use the tools")
                 .addTool(broken.name())
                 .addTool(working.name())
-                .addTool(empty.name())
                 .build();
 
         McpSamplingResponse samplingResponse = sampling.request(request);
@@ -373,11 +370,29 @@ class McpSamplingTest {
         var messages = sent.get(1).objectValue("params").orElseThrow()
                 .arrayValue("messages").orElseThrow().values();
         var results = messages.get(2).asObject().arrayValue("content").orElseThrow().values();
-        assertThat(results.size(), is(4));
+        assertThat(results.size(), is(3));
         assertToolResult(results.get(0).asObject(), "call-1", true, "failed");
         assertToolResult(results.get(1).asObject(), "call-2", false, "success");
         assertToolResult(results.get(2).asObject(), "call-3", true, "is not available");
-        assertToolResult(results.get(3).asObject(), "call-4", true, "returned no result");
+    }
+
+    @Test
+    void rejectsNullSamplingToolResult() {
+        McpTool empty = new TestTool("empty", "Returns null", "", request -> null);
+        McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, """
+                {"sampling": {"tools": {}}}
+                """, empty);
+        acceptSamplingResponse(session, 0, """
+                {"type": "tool_use", "id": "call-1", "name": "empty", "input": {}}
+                """, "toolUse");
+        JsonRpcResponse response = mock(JsonRpcResponse.class);
+        SseSink sink = mock(SseSink.class);
+        when(response.sink(SseSink.TYPE)).thenReturn(sink);
+        McpSampling sampling = sampling(session, new McpStreamableHttpTransport(response));
+
+        assertThrows(NullPointerException.class, () -> sampling.request(req -> req.addTool(empty.name())));
+
+        sentSamplingRequests(sink, 1);
     }
 
     @Test
@@ -425,6 +440,7 @@ class McpSamplingTest {
         AtomicReference<McpSession> sessionRef = new AtomicReference<>();
         McpTool disconnect = new TestTool("disconnect", "Disconnects", "", request -> {
             sessionRef.get().onDisconnect(mock(ServerResponse.class));
+            sessionRef.get().state(McpSession.State.INITIALIZED);
             return McpToolResult.create("disconnected");
         });
         McpTool remaining = new TestTool("remaining", "Must not run", "", request -> {

@@ -78,7 +78,7 @@ interface McpToolConfigBlueprint {
     /**
      * Tool execution.
      *
-     * @return tool execution result
+     * @return tool execution result, never {@code null}
      */
     Function<McpToolRequest, McpToolResult> tool();
 }
