@@ -355,12 +355,19 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
                     .set("mimeType", audio.mediaType().text());
             audio.annotations()
                     .ifPresent(annotations -> builder.set("annotations", toJson(annotations)));
-        } else if (content instanceof McpSamplingToolUseContent || content instanceof McpSamplingToolResultContent) {
+        } else if (content instanceof McpSamplingToolUseContent toolUse) {
+            builder = toJson(toolUse);
+        } else if (content instanceof McpSamplingToolResultContent) {
             throw new McpSamplingException("Sampling tools are not supported by this protocol version");
         } else {
             throw new McpSamplingException("Unsupported sampling content implementation: " + content.getClass().getName());
         }
         return builder;
+    }
+
+    @Override
+    public JsonObject.Builder toJson(McpSamplingToolUseContent content) {
+        throw new McpSamplingException("Sampling tools are not supported by this protocol version");
     }
 
     @Override

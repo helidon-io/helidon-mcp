@@ -149,7 +149,8 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
         };
     }
 
-    private JsonObject.Builder toJson(McpSamplingToolUseContent content) {
+    @Override
+    public JsonObject.Builder toJson(McpSamplingToolUseContent content) {
         return JsonObject.builder()
                 .set("type", content.type().text())
                 .set("id", content.id())

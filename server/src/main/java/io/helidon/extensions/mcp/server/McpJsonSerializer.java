@@ -235,6 +235,8 @@ interface McpJsonSerializer {
 
     JsonObject.Builder toJson(McpSamplingContent content);
 
+    JsonObject.Builder toJson(McpSamplingToolUseContent content);
+
     JsonObject createSamplingRequest(long id, McpSamplingRequest request, List<McpTool> tools);
 
     McpSamplingResponse createSamplingResponse(JsonObject object) throws McpSamplingException;
