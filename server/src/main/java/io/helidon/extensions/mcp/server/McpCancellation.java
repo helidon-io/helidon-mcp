@@ -17,8 +17,12 @@
 package io.helidon.extensions.mcp.server;
 
 import java.lang.System.Logger.Level;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-import io.helidon.common.LazyValue;
 import io.helidon.json.JsonValue;
 
 /**
@@ -28,10 +32,11 @@ import io.helidon.json.JsonValue;
  * to wait for the completion of the operation.
  */
 public final class McpCancellation {
-    private static final System.Logger LOGGER = System.getLogger(McpServerFeature.class.getName());
-    private final Runnable noop = () -> {};
+    private static final System.Logger LOGGER = System.getLogger(McpCancellation.class.getName());
+
+    private final Lock lock = new ReentrantLock();
+    private final List<Runnable> hooks = new ArrayList<>();
     private volatile McpCancellationResult result;
-    private LazyValue<Runnable> hook = LazyValue.create(() -> noop);
 
     McpCancellation() {
         result = new McpCancellationResultImpl(false);
@@ -47,12 +52,27 @@ public final class McpCancellation {
     }
 
     /**
-     * Actions to be performed when cancellation get triggered.
+     * Register an action to perform when cancellation is triggered. Each registered hook is invoked once. If cancellation
+     * was already requested, the hook is invoked before this method returns.
      *
      * @param hook cancellation hook
+     * @throws NullPointerException if the hook is {@code null}
      */
     public void registerCancellationHook(Runnable hook) {
-        this.hook = LazyValue.create(() -> hook);
+        Objects.requireNonNull(hook, "hook is null");
+        boolean runNow;
+        lock.lock();
+        try {
+            runNow = result.isRequested();
+            if (!runNow) {
+                hooks.add(hook);
+            }
+        } finally {
+            lock.unlock();
+        }
+        if (runNow) {
+            runHook(hook);
+        }
     }
 
     /**
@@ -77,12 +97,31 @@ public final class McpCancellation {
     }
 
     private void cancel(McpCancellationResult cancellationResult, JsonValue requestId) {
-        if (!hook.isLoaded()) {
-            if (LOGGER.isLoggable(Level.DEBUG)) {
-                LOGGER.log(Level.DEBUG, "Cancelling task with request id: %s", requestId);
+        List<Runnable> registeredHooks;
+        lock.lock();
+        try {
+            if (result.isRequested()) {
+                return;
             }
             result = cancellationResult;
-            hook.get().run();
+            registeredHooks = List.copyOf(hooks);
+            hooks.clear();
+        } finally {
+            lock.unlock();
+        }
+        if (LOGGER.isLoggable(Level.DEBUG)) {
+            LOGGER.log(Level.DEBUG, "Cancelling task with request id: %s", requestId);
+        }
+        for (Runnable hook : registeredHooks) {
+            runHook(hook);
+        }
+    }
+
+    private static void runHook(Runnable hook) {
+        try {
+            hook.run();
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.WARNING, "Cancellation hook failed", e);
         }
     }
 }

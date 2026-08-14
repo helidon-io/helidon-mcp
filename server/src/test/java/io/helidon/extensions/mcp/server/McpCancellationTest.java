@@ -69,4 +69,45 @@ class McpCancellationTest {
         assertThat(result.reason(), is(Optional.of(reason)));
         assertThat(counter.get(), is(1));
     }
+
+    @Test
+    void testMultipleCancellationHooks() {
+        AtomicInteger firstCounter = new AtomicInteger();
+        AtomicInteger secondCounter = new AtomicInteger();
+        McpCancellation cancellation = new McpCancellation();
+
+        cancellation.registerCancellationHook(firstCounter::incrementAndGet);
+        cancellation.registerCancellationHook(secondCounter::incrementAndGet);
+        cancellation.cancel(JsonNull.instance());
+        cancellation.cancel(JsonNull.instance());
+
+        assertThat(firstCounter.get(), is(1));
+        assertThat(secondCounter.get(), is(1));
+    }
+
+    @Test
+    void testFailingCancellationHookDoesNotSuppressLaterHook() {
+        AtomicInteger counter = new AtomicInteger();
+        McpCancellation cancellation = new McpCancellation();
+
+        cancellation.registerCancellationHook(() -> {
+            throw new IllegalStateException("Hook failed");
+        });
+        cancellation.registerCancellationHook(counter::incrementAndGet);
+        cancellation.cancel(JsonNull.instance());
+
+        assertThat(counter.get(), is(1));
+    }
+
+    @Test
+    void testLateCancellationHookRunsImmediately() {
+        AtomicInteger counter = new AtomicInteger();
+        McpCancellation cancellation = new McpCancellation();
+        cancellation.cancel(JsonNull.instance());
+
+        cancellation.registerCancellationHook(counter::incrementAndGet);
+        cancellation.cancel(JsonNull.instance());
+
+        assertThat(counter.get(), is(1));
+    }
 }

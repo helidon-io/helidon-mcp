@@ -20,6 +20,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 import io.helidon.json.JsonObject;
@@ -33,11 +35,16 @@ public final class McpSampling extends McpFeature {
     private static final System.Logger LOGGER = System.getLogger(McpSampling.class.getName());
 
     private final McpFeatures features;
+    private final Lock toolBudgetLock = new ReentrantLock();
     private final boolean enabled;
     private final boolean enabledContext;
     private final boolean enabledTools;
     private final int maxToolIterations;
     private final List<McpTool> registeredTools;
+
+    private volatile boolean toolBudgetExhausted;
+    private int toolIterations;
+    private int toolExecutions;
 
     McpSampling(McpSession session, McpTransport transport, McpFeatures features) {
         super(session, transport);
@@ -153,9 +160,6 @@ public final class McpSampling extends McpFeature {
                     }
                 });
         McpSamplingRequest currentRequest = request;
-        int toolIterations = 0;
-        int toolExecutions = 0;
-
         while (true) {
             checkRequestActive();
             long id = session().jsonRpcId();
@@ -186,21 +190,28 @@ public final class McpSampling extends McpFeature {
             if (!enabledTools) {
                 throw new McpSamplingException("Sampling tools are not supported by client");
             }
-            if (toolIterations == maxToolIterations) {
-                throw new McpSamplingException("Sampling tool iteration limit reached");
-            }
-            if (currentRequest.toolChoice().filter(choice -> choice == McpToolChoice.NONE).isPresent()) {
-                throw new McpSamplingException("Sampling client returned a tool use when tool choice is none");
-            }
-            if (toolUses.size() > maxToolIterations - toolExecutions) {
-                throw new McpSamplingException("Sampling tool execution limit reached");
-            }
             for (McpSamplingToolUseContent toolUse : toolUses) {
                 if (!toolUseIds.add(toolUse.id())) {
                     throw new McpSamplingException("Sampling tool use identifier was reused: " + toolUse.id());
                 }
             }
-            toolExecutions += toolUses.size();
+            toolBudgetLock.lock();
+            try {
+                if (toolIterations >= maxToolIterations) {
+                    throw new McpSamplingException("Sampling tool iteration limit reached");
+                }
+                if (currentRequest.toolChoice().filter(choice -> choice == McpToolChoice.NONE).isPresent()) {
+                    throw new McpSamplingException("Sampling client returned a tool use when tool choice is none");
+                }
+                if (toolUses.size() > maxToolIterations - toolExecutions) {
+                    throw new McpSamplingException("Sampling tool execution limit reached");
+                }
+                toolIterations++;
+                toolExecutions += toolUses.size();
+                toolBudgetExhausted = toolIterations >= maxToolIterations || toolExecutions >= maxToolIterations;
+            } finally {
+                toolBudgetLock.unlock();
+            }
 
             McpSamplingMessage.Builder results = McpSamplingMessage.builder().role(McpRole.USER);
             for (McpSamplingToolUseContent toolUse : toolUses) {
@@ -240,8 +251,7 @@ public final class McpSampling extends McpFeature {
             McpSamplingRequest.Builder nextRequest = McpSamplingRequest.builder(currentRequest)
                     .addMessage(response.message())
                     .addMessage(results.build());
-            toolIterations++;
-            if (toolIterations == maxToolIterations || toolExecutions == maxToolIterations) {
+            if (toolBudgetExhausted) {
                 nextRequest.toolChoice(McpToolChoice.NONE);
             } else if (currentRequest.toolChoice()
                     .filter(choice -> choice == McpToolChoice.REQUIRED)

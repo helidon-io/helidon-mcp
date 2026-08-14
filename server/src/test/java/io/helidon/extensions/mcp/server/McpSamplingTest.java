@@ -23,6 +23,7 @@ import java.util.function.Function;
 
 import io.helidon.common.context.Context;
 import io.helidon.http.sse.SseEvent;
+import io.helidon.json.JsonNull;
 import io.helidon.json.JsonObject;
 import io.helidon.json.JsonParser;
 import io.helidon.jsonrpc.core.JsonRpcParams;
@@ -435,6 +436,38 @@ class McpSamplingTest {
     }
 
     @Test
+    void retainsParentCancellationHookWhenSamplingToolRegistersAnother() {
+        AtomicInteger parentCancellations = new AtomicInteger();
+        AtomicInteger toolCancellations = new AtomicInteger();
+        McpTool tool = new TestTool("tool", "Registers cancellation", "", request -> {
+            request.features().cancellation().registerCancellationHook(toolCancellations::incrementAndGet);
+            return McpToolResult.create("complete");
+        });
+        McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, """
+                {"sampling": {"tools": {}}}
+                """, tool);
+        acceptSamplingResponse(session, 0, """
+                {"type": "tool_use", "id": "call-1", "name": "tool", "input": {}}
+                """, "toolUse");
+        acceptSamplingResponse(session, 1, """
+                {"type": "text", "text": "complete"}
+                """, "endTurn");
+        JsonRpcResponse response = mock(JsonRpcResponse.class);
+        SseSink sink = mock(SseSink.class);
+        when(response.sink(SseSink.TYPE)).thenReturn(sink);
+        McpFeatures features = new McpFeatures(session, new McpStreamableHttpTransport(response));
+        features.cancellation().registerCancellationHook(parentCancellations::incrementAndGet);
+
+        McpSamplingResponse samplingResponse = features.sampling().request(request -> request.addTool(tool.name()));
+        features.cancellation().cancel(JsonNull.instance());
+
+        assertThat(samplingResponse.asTextContent().text(), is("complete"));
+        assertThat(parentCancellations.get(), is(1));
+        assertThat(toolCancellations.get(), is(1));
+        sentSamplingRequests(sink, 2);
+    }
+
+    @Test
     void stopsRemainingSamplingToolsAfterSessionDisconnect() {
         AtomicInteger remainingInvocations = new AtomicInteger();
         AtomicReference<McpSession> sessionRef = new AtomicReference<>();
@@ -783,6 +816,55 @@ class McpSamplingTest {
                            .objectValue("toolChoice").orElseThrow()
                            .stringValue("mode").orElseThrow(),
                    is("none"));
+    }
+
+    @Test
+    void sharesSamplingToolBudgetWithReentrantRequests() {
+        AtomicInteger invocations = new AtomicInteger();
+        AtomicReference<McpSamplingException> nestedFailure = new AtomicReference<>();
+        McpTool recursive = new TestTool("recursive", "Samples recursively", "", request -> {
+            if (invocations.incrementAndGet() == 1) {
+                try {
+                    request.features().sampling().request(builder -> builder.addTool("recursive"));
+                } catch (McpSamplingException e) {
+                    nestedFailure.set(e);
+                }
+            }
+            return McpToolResult.create("complete");
+        });
+        McpServerConfig config = McpServerFeature.builder()
+                .maxSamplingToolIterations(1)
+                .addTool(recursive)
+                .buildPrototype();
+        McpSession session = session(McpProtocolVersion.VERSION_2025_11_25,
+                                     """
+                                             {"sampling": {"tools": {}}}
+                                             """,
+                                     config);
+        acceptSamplingResponse(session, 0, """
+                {"type": "tool_use", "id": "call-outer", "name": "recursive", "input": {}}
+                """, "toolUse");
+        acceptSamplingResponse(session, 1, """
+                {"type": "tool_use", "id": "call-nested", "name": "recursive", "input": {}}
+                """, "toolUse");
+        acceptSamplingResponse(session, 2, """
+                {"type": "text", "text": "complete"}
+                """, "endTurn");
+        acceptSamplingResponse(session, 3, """
+                {"type": "text", "text": "complete"}
+                """, "endTurn");
+        JsonRpcResponse response = mock(JsonRpcResponse.class);
+        SseSink sink = mock(SseSink.class);
+        when(response.sink(SseSink.TYPE)).thenReturn(sink);
+        McpSampling sampling = sampling(session, new McpStreamableHttpTransport(response));
+
+        McpSamplingResponse samplingResponse = sampling.request(builder -> builder.addTool(recursive.name()));
+
+        assertThat(samplingResponse.asTextContent().text(), is("complete"));
+        assertThat(invocations.get(), is(1));
+        assertThat(nestedFailure.get(), instanceOf(McpSamplingException.class));
+        assertThat(nestedFailure.get().getMessage(), is("Sampling tool iteration limit reached"));
+        sentSamplingRequests(sink, 3);
     }
 
     @Test

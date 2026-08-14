@@ -1265,10 +1265,12 @@ run synchronously and sequentially. The request timeout applies independently to
 
 Helidon allows ten tool-execution rounds and ten cumulative tool executions by default. Configure both limits with
 `mcp.server.max-sampling-tool-iterations` or `McpServerFeature.builder().maxSamplingToolIterations(...)`. The value must be
-greater than zero. Parallel tool calls in one response count as one round, but each call counts as one execution. Helidon rejects
-an entire batch that would exceed the remaining execution budget before invoking any callback. After either limit is reached,
-Helidon sends one additional request with tool choice `NONE`; another tool-use response then causes an `McpSamplingException`.
-A `REQUIRED` choice changes to `AUTO` after its first tool round because the requirement has been fulfilled.
+greater than zero. The limits are shared by all sampling calls made through the originating request's `McpFeatures`, including
+sampling calls made by selected tools. Parallel tool calls in one response count as one round, but each call counts as one
+execution. Helidon rejects an entire batch that would exceed the remaining execution budget before invoking any callback. After
+either limit is reached, Helidon sends one additional request with tool choice `NONE`; another tool-use response then causes an
+`McpSamplingException`. A `REQUIRED` choice changes to `AUTO` after its first tool round because the requirement has been
+fulfilled.
 
 Build tool results with the type-specific builder methods, such as `addTextContent(...)`, `addImageContent(...)`,
 `addAudioContent(...)`, `addTextResourceContent(...)`, `addBinaryResourceContent(...)`, and

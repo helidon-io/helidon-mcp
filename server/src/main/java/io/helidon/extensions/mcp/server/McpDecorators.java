@@ -32,6 +32,10 @@ final class McpDecorators {
     private McpDecorators() {
     }
 
+    static boolean isPositiveAndLessThanOne(Double value) {
+        return 0 <= value && value <= 1.0;
+    }
+
     /**
      * Enforce positive page size.
      * <p>
@@ -163,9 +167,5 @@ final class McpDecorators {
                 throw new IllegalArgumentException("Maximum sampling tool iterations must be greater than zero");
             }
         }
-    }
-
-    static boolean isPositiveAndLessThanOne(Double value) {
-        return 0 <= value && value <= 1.0;
     }
 }
