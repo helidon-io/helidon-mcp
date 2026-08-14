@@ -92,13 +92,6 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
     }
 
     @Override
-    JsonObject toJson(McpAnnotations annotations) {
-        JsonObject.Builder builder = JsonObject.builder().from(super.toJson(annotations));
-        annotations.lastModified().ifPresent(lastModified -> builder.set("lastModified", lastModified));
-        return builder.build();
-    }
-
-    @Override
     public JsonObject.Builder toJson(McpTool tool) {
         var builder = super.toJson(tool);
         tool.title().ifPresent(title -> builder.set("title", title));
@@ -127,28 +120,6 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
         var builder = super.toJson(argument);
         argument.title().ifPresent(title -> builder.set("title", title));
         return builder;
-    }
-
-    private JsonObject.Builder toJson(McpResourceLinkContent content) {
-        var builder = JsonObject.builder()
-                .set("type", content.type().text())
-                .set("uri", content.uri())
-                .set("name", content.name());
-        content.size().ifPresent(size -> builder.set("size", size));
-        content.title().ifPresent(title -> builder.set("title", title));
-        content.mediaType().ifPresent(mediaType -> builder.set("mimeType", mediaType.text()));
-        content.description().ifPresent(description -> builder.set("description", description));
-        return builder;
-    }
-
-    JsonObject parameterObject(McpParameters parameters, String field) {
-        return parameters.asJsonObject()
-                .orElseThrow(() -> new McpSamplingException(field + " must be a JSON object"));
-    }
-
-    private JsonObject toolParameterObject(McpParameters parameters, String field) {
-        return parameters.asJsonObject()
-                .orElseThrow(() -> new McpException(field + " must be a JSON object"));
     }
 
     @Override
@@ -189,5 +160,34 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
         params.set("requestedSchema", jsonSchema);
         builder.set("params", params.build());
         return builder.build();
+    }
+
+    @Override
+    JsonObject toJson(McpAnnotations annotations) {
+        JsonObject.Builder builder = JsonObject.builder().from(super.toJson(annotations));
+        annotations.lastModified().ifPresent(lastModified -> builder.set("lastModified", lastModified));
+        return builder.build();
+    }
+
+    JsonObject parameterObject(McpParameters parameters, String field) {
+        return parameters.asJsonObject()
+                .orElseThrow(() -> new McpSamplingException(field + " must be a JSON object"));
+    }
+
+    private JsonObject.Builder toJson(McpResourceLinkContent content) {
+        var builder = JsonObject.builder()
+                .set("type", content.type().text())
+                .set("uri", content.uri())
+                .set("name", content.name());
+        content.size().ifPresent(size -> builder.set("size", size));
+        content.title().ifPresent(title -> builder.set("title", title));
+        content.mediaType().ifPresent(mediaType -> builder.set("mimeType", mediaType.text()));
+        content.description().ifPresent(description -> builder.set("description", description));
+        return builder;
+    }
+
+    private JsonObject toolParameterObject(McpParameters parameters, String field) {
+        return parameters.asJsonObject()
+                .orElseThrow(() -> new McpException(field + " must be a JSON object"));
     }
 }

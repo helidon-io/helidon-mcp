@@ -126,6 +126,15 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
     }
 
     @Override
+    public JsonObject.Builder toJson(McpSamplingToolUseContent content) {
+        return JsonObject.builder()
+                .set("type", content.type().text())
+                .set("id", content.id())
+                .set("name", content.name())
+                .set("input", parameterObject(content.input(), "Sampling tool input"));
+    }
+
+    @Override
     List<McpSamplingContent> parseContents(JsonValue content) {
         if (content instanceof JsonArray array) {
             return array.values().stream()
@@ -147,15 +156,6 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
             case TOOL_RESULT -> parseToolResultContent(object);
             case TEXT, IMAGE, AUDIO -> super.parseContent(object);
         };
-    }
-
-    @Override
-    public JsonObject.Builder toJson(McpSamplingToolUseContent content) {
-        return JsonObject.builder()
-                .set("type", content.type().text())
-                .set("id", content.id())
-                .set("name", content.name())
-                .set("input", parameterObject(content.input(), "Sampling tool input"));
     }
 
     private JsonObject.Builder toJson(McpSamplingToolResultContent content) {

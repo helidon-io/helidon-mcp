@@ -74,12 +74,6 @@ public final class McpParameters {
         this.key = key;
     }
 
-    Optional<JsonObject> asJsonObject() {
-        return value instanceof JsonObject object
-                ? Optional.of(object)
-                : Optional.empty();
-    }
-
     /**
      * Get MCP parameter node.
      *
@@ -382,6 +376,12 @@ public final class McpParameters {
             return empty();
         }
         return OptionalValue.create(MAPPERS, key, McpJsonBinding.deserialize(value, type), type);
+    }
+
+    Optional<JsonObject> asJsonObject() {
+        return value instanceof JsonObject object
+                ? Optional.of(object)
+                : Optional.empty();
     }
 
     @SuppressWarnings("unchecked")

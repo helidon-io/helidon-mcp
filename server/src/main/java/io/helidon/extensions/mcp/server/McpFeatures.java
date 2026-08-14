@@ -82,10 +82,6 @@ public final class McpFeatures {
         this.elicitation = LazyValue.create(() -> new McpElicitation(session, transport));
     }
 
-    Context requestContext() {
-        return requestContext;
-    }
-
     /**
      * Get a {@link io.helidon.extensions.mcp.server.McpProgress} feature.
      *
@@ -147,5 +143,9 @@ public final class McpFeatures {
      */
     public McpSubscriptions subscriptions() {
         return session.features().subscriptions();
+    }
+
+    Context requestContext() {
+        return requestContext;
     }
 }

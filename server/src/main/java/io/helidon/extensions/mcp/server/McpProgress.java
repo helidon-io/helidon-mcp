@@ -117,10 +117,6 @@ public final class McpProgress extends McpFeature {
         private McpProgressListener() {
         }
 
-        static McpProgressListener create() {
-            return INSTANCE.get();
-        }
-
         @Override
         public void beforeRequest(McpParameters parameters, McpFeatures features) {
             var progressToken = parameters.get("_meta").get("progressToken");
@@ -135,6 +131,10 @@ public final class McpProgress extends McpFeature {
         @Override
         public void afterRequest(McpParameters parameters, McpFeatures features) {
             features.progress().stopSending();
+        }
+
+        static McpProgressListener create() {
+            return INSTANCE.get();
         }
     }
 }

@@ -61,13 +61,6 @@ public final class McpLogger extends McpFeature {
         sendNotification(level, data);
     }
 
-    private void sendNotification(Level level, Object data) {
-        if (level.ordinal() >= level().ordinal()) {
-            var notification = session.serializer().createLoggingNotification(level, name, data);
-            transport().send(notification);
-        }
-    }
-
     /**
      * Send a debug notification to the client.
      *
@@ -229,6 +222,13 @@ public final class McpLogger extends McpFeature {
      */
     void setLevel(McpLogger.Level level) {
         session.context().register(ContextClassifier.class, level);
+    }
+
+    private void sendNotification(Level level, Object data) {
+        if (level.ordinal() >= level().ordinal()) {
+            var notification = session.serializer().createLoggingNotification(level, name, data);
+            transport().send(notification);
+        }
     }
 
     /**

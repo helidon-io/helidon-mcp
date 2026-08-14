@@ -216,6 +216,11 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 .delete(endpoint, this::disconnect);
     }
 
+    @Override
+    public McpServerConfig prototype() {
+        return config;
+    }
+
     private void mcpMetadata(ServerRequest request, ServerResponse response) {
         var config = Services.get(Config.class);
         var providers = config.get("security.providers").asList(Config.class);
@@ -243,11 +248,6 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         }
         response.status(Status.NOT_FOUND_404);
         response.send();
-    }
-
-    @Override
-    public McpServerConfig prototype() {
-        return config;
     }
 
     private void disconnect(ServerRequest request, ServerResponse response) {
