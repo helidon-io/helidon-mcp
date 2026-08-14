@@ -76,8 +76,8 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
             result.ifPresent(builder -> {
                 toolContent.annotations().ifPresent(annotations -> builder.set("annotations", toJson(annotations)));
                 toolContent.metadata()
-                        .ifPresent(metadata -> builder.set("_meta",
-                                                           toolParameterObject(metadata, "Tool content metadata")));
+                        .ifPresent(metadata -> builder.set("_meta", metadata.asJsonObject()
+                                .orElseThrow(() -> new McpException("Tool content metadata must be a JSON object"))));
             });
         }
         return result;
@@ -87,7 +87,8 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
     public JsonObject.Builder toJson(McpSamplingContent content) {
         JsonObject.Builder builder = super.toJson(content);
         content.metadata()
-                .ifPresent(metadata -> builder.set("_meta", parameterObject(metadata, "Sampling content metadata")));
+                .ifPresent(metadata -> builder.set("_meta", metadata.asJsonObject()
+                        .orElseThrow(() -> new McpSamplingException("Sampling content metadata must be a JSON object"))));
         return builder;
     }
 
@@ -169,11 +170,6 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
         return builder.build();
     }
 
-    JsonObject parameterObject(McpParameters parameters, String field) {
-        return parameters.asJsonObject()
-                .orElseThrow(() -> new McpSamplingException(field + " must be a JSON object"));
-    }
-
     private JsonObject.Builder toJson(McpResourceLinkContent content) {
         var builder = JsonObject.builder()
                 .set("type", content.type().text())
@@ -186,8 +182,4 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
         return builder;
     }
 
-    private JsonObject toolParameterObject(McpParameters parameters, String field) {
-        return parameters.asJsonObject()
-                .orElseThrow(() -> new McpException(field + " must be a JSON object"));
-    }
 }

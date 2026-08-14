@@ -83,7 +83,8 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
             builder.setValues("content", contents);
         }
         message.metadata()
-                .ifPresent(metadata -> builder.set("_meta", parameterObject(metadata, "Sampling message metadata")));
+                .ifPresent(metadata -> builder.set("_meta", metadata.asJsonObject()
+                        .orElseThrow(() -> new McpSamplingException("Sampling message metadata must be a JSON object"))));
         return builder;
     }
 
@@ -98,7 +99,8 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
             builder = super.toJson(content);
         }
         content.metadata()
-                .ifPresent(metadata -> builder.set("_meta", parameterObject(metadata, "Sampling content metadata")));
+                .ifPresent(metadata -> builder.set("_meta", metadata.asJsonObject()
+                        .orElseThrow(() -> new McpSamplingException("Sampling content metadata must be a JSON object"))));
         if (content instanceof McpSamplingAnnotatedContent annotated) {
             annotated.annotations().ifPresent(annotations -> builder.set("annotations", toJson(annotations)));
         }
@@ -131,7 +133,8 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
                 .set("type", content.type().text())
                 .set("id", content.id())
                 .set("name", content.name())
-                .set("input", parameterObject(content.input(), "Sampling tool input"));
+                .set("input", content.input().asJsonObject()
+                        .orElseThrow(() -> new McpSamplingException("Sampling tool input must be a JSON object")));
     }
 
     @Override
