@@ -35,8 +35,18 @@ import org.junit.platform.commons.JUnitException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.sameInstance;
 
 class McpParametersTest {
+    @Test
+    void testAsJsonObject() {
+        JsonObject object = JsonParser.create("{\"foo\":\"bar\"}").readJsonObject();
+        McpParameters parameters = McpParameters.create(object);
+
+        assertThat(parameters.asJsonObject().orElseThrow(), sameInstance(object));
+        assertThat(parameters.get("foo").asJsonObject().isEmpty(), is(true));
+    }
+
     @Test
     void testSimpleString() {
         JsonObject object = JsonParser.create("{\"foo\":\"bar\"}").readJsonObject();

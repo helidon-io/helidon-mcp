@@ -74,8 +74,10 @@ public final class McpParameters {
         this.key = key;
     }
 
-    JsonValue value() {
-        return value;
+    Optional<JsonObject> asJsonObject() {
+        return value instanceof JsonObject object
+                ? Optional.of(object)
+                : Optional.empty();
     }
 
     /**

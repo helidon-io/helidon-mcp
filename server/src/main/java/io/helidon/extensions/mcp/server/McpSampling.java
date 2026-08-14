@@ -210,11 +210,11 @@ public final class McpSampling extends McpFeature {
                 if (tool == null) {
                     toolResult = createToolErrorResult("Tool with name " + toolUse.name() + " is not available");
                 } else {
-                    JsonObject.Builder parametersBuilder = JsonObject.builder()
+                    JsonObject.Builder paramsBuilder = JsonObject.builder()
                             .set("name", toolUse.name())
-                            .set("arguments", toolUse.input().value());
-                    toolUse.metadata().ifPresent(metadata -> parametersBuilder.set("_meta", metadata.value()));
-                    McpParameters parameters = new McpParameters(parametersBuilder.build());
+                            .set("arguments", toolUse.input().asJsonObject().orElseThrow());
+                    toolUse.metadata().ifPresent(metadata -> paramsBuilder.set("_meta", metadata.asJsonObject().orElseThrow()));
+                    McpParameters parameters = new McpParameters(paramsBuilder.build());
                     McpRequest toolRequest = McpRequest.builder()
                             .parameters(parameters)
                             .meta(parameters.get("_meta"))

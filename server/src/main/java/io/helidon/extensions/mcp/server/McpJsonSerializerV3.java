@@ -142,17 +142,13 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
     }
 
     JsonObject parameterObject(McpParameters parameters, String field) {
-        if (parameters.value() instanceof JsonObject object) {
-            return object;
-        }
-        throw new McpSamplingException(field + " must be a JSON object");
+        return parameters.asJsonObject()
+                .orElseThrow(() -> new McpSamplingException(field + " must be a JSON object"));
     }
 
     private JsonObject toolParameterObject(McpParameters parameters, String field) {
-        if (parameters.value() instanceof JsonObject object) {
-            return object;
-        }
-        throw new McpException(field + " must be a JSON object");
+        return parameters.asJsonObject()
+                .orElseThrow(() -> new McpException(field + " must be a JSON object"));
     }
 
     @Override
