@@ -581,7 +581,6 @@ class McpJsonSerializerV4Test {
         McpSamplingToolResultContent firstResult = McpSamplingToolResultContent.builder()
                 .toolUseId("call-1")
                 .result(McpToolResult.builder()
-                                .addTextContent("18 C")
                                 .structuredContent(Map.of("temperature", 18))
                                 .build())
                 .metadata(new McpParameters(JsonParser.create("{\"cached\":true}").readJsonObject()))
@@ -620,9 +619,11 @@ class McpJsonSerializerV4Test {
         assertThat(results.size(), is(2));
         assertThat(first.stringValue("type").orElseThrow(), is("tool_result"));
         assertThat(first.stringValue("toolUseId").orElseThrow(), is("call-1"));
-        assertThat(first.arrayValue("content").orElseThrow().values().getFirst().asObject()
+        JsonArray firstContent = first.arrayValue("content").orElseThrow();
+        assertThat(firstContent.size(), is(1));
+        assertThat(firstContent.values().getFirst().asObject()
                            .stringValue("text").orElseThrow(),
-                   is("18 C"));
+                   is("{\"temperature\":18}"));
         assertThat(first.booleanValue("isError").orElseThrow(), is(false));
         assertThat(first.objectValue("structuredContent").orElseThrow()
                            .intValue("temperature").orElseThrow(),

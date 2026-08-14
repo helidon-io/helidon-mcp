@@ -159,8 +159,9 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
 
     private JsonObject.Builder toJson(McpSamplingToolResultContent content) {
         McpToolResult result = content.result();
+        List<McpToolContent> resultContents = McpToolSupport.aggregateContent(result);
         List<JsonValue> contents = new ArrayList<>();
-        for (McpToolContent resultContent : McpToolSupport.aggregateContent(result)) {
+        for (McpToolContent resultContent : resultContents) {
             toJson(resultContent).map(JsonObject.Builder::build).ifPresent(contents::add);
         }
         JsonObject.Builder builder = JsonObject.builder()
@@ -170,7 +171,16 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
                 .set("isError", result.error());
         result.structuredContent()
                 .map(McpJsonBinding::serializeObject)
-                .ifPresent(structured -> builder.set("structuredContent", structured));
+                .ifPresent(structured -> {
+                    builder.set("structuredContent", structured);
+                    if (resultContents.stream().noneMatch(McpToolTextContent.class::isInstance)) {
+                        McpToolContent text = McpToolTextContent.builder().text(structured.toString()).build();
+                        toJson(text).ifPresent(serialized -> {
+                            contents.add(serialized.build());
+                            builder.setValues("content", contents);
+                        });
+                    }
+                });
         return builder;
     }
 
