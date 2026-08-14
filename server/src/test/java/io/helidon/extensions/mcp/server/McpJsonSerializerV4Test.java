@@ -1224,16 +1224,16 @@ class McpJsonSerializerV4Test {
     }
 
     @Test
-    void rejectsUserRoleOrdinarySamplingResponse() {
-        McpSamplingException exception = assertThrows(McpSamplingException.class,
-                                                      () -> SERIALIZER.createSamplingResponse(response("""
-                                                              {
-                                                                "type": "text",
-                                                                "text": "user response"
-                                                              }
-                                                              """, "endTurn", "user")));
+    void acceptsUserRoleOrdinarySamplingResponse() {
+        McpSamplingResponse response = SERIALIZER.createSamplingResponse(response("""
+                {
+                  "type": "text",
+                  "text": "user response"
+                }
+                """, "endTurn", "user"));
 
-        assertThat(exception.getMessage(), is("Sampling response must have an assistant message role"));
+        assertThat(response.message().role(), is(McpRole.USER));
+        assertThat(response.asTextContent().text(), is("user response"));
     }
 
     @Test
@@ -1261,7 +1261,7 @@ class McpJsonSerializerV4Test {
                                                                 "content": [],
                                                                 "isError": false
                                                               }
-                                                              """, "endTurn")));
+                                                              """, "endTurn", "user")));
 
         assertThat(exception.getMessage(), is("Sampling response must not contain tool result content"));
     }

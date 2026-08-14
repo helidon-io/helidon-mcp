@@ -323,16 +323,16 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
     }
 
     private void validateSamplingResponse(McpSamplingMessage message) {
-        if (message.role() != McpRole.ASSISTANT) {
+        List<McpSamplingToolUseContent> toolUses = message.contents().stream()
+                .filter(McpSamplingToolUseContent.class::isInstance)
+                .map(McpSamplingToolUseContent.class::cast)
+                .toList();
+        if (!toolUses.isEmpty() && message.role() != McpRole.ASSISTANT) {
             throw new McpSamplingException("Sampling response must have an assistant message role");
         }
         if (message.contents().stream().anyMatch(McpSamplingToolResultContent.class::isInstance)) {
             throw new McpSamplingException("Sampling response must not contain tool result content");
         }
-        List<McpSamplingToolUseContent> toolUses = message.contents().stream()
-                .filter(McpSamplingToolUseContent.class::isInstance)
-                .map(McpSamplingToolUseContent.class::cast)
-                .toList();
         if (toolUses.stream().map(McpSamplingToolUseContent::id).distinct().count() != toolUses.size()) {
             throw new McpSamplingException("Sampling tool use identifiers must be unique within a message");
         }
