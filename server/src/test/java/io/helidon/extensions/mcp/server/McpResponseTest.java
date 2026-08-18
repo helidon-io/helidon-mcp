@@ -15,12 +15,16 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.math.BigDecimal;
+
 import io.helidon.common.context.Context;
+import io.helidon.json.JsonException;
 import io.helidon.json.JsonObject;
 
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -33,6 +37,7 @@ class McpResponseTest {
 
         McpResponse response = new McpResponseImpl(json, requestContext);
 
+        assertThat(response.id(), is(1L));
         assertThat(response.asJsonObject(), sameInstance(json));
         assertThat(response.requestContext(), sameInstance(requestContext));
     }
@@ -44,5 +49,19 @@ class McpResponseTest {
 
         assertThrows(NullPointerException.class, () -> new McpResponseImpl(null, requestContext));
         assertThrows(NullPointerException.class, () -> new McpResponseImpl(json, null));
+    }
+
+    @Test
+    void rejectsInvalidIdentifiers() {
+        Context requestContext = Context.create();
+        JsonObject missing = JsonObject.empty();
+        JsonObject string = JsonObject.builder().set("id", "1").build();
+        JsonObject fractional = JsonObject.builder().set("id", 1.5).build();
+        JsonObject outOfRange = JsonObject.builder().set("id", new BigDecimal("9223372036854775808")).build();
+
+        assertThrows(JsonException.class, () -> new McpResponseImpl(missing, requestContext));
+        assertThrows(JsonException.class, () -> new McpResponseImpl(string, requestContext));
+        assertThrows(JsonException.class, () -> new McpResponseImpl(fractional, requestContext));
+        assertThrows(JsonException.class, () -> new McpResponseImpl(outOfRange, requestContext));
     }
 }

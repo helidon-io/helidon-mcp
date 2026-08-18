@@ -19,6 +19,8 @@ import java.util.Objects;
 
 import io.helidon.common.LazyValue;
 
+import static io.helidon.extensions.mcp.server.McpMetadata.META;
+
 /**
  * Progress notification to the client.
  */
@@ -119,7 +121,7 @@ public final class McpProgress extends McpFeature {
 
         @Override
         public void beforeRequest(McpParameters parameters, McpFeatures features) {
-            var progressToken = parameters.get("_meta").get("progressToken");
+            var progressToken = parameters.get(META).get("progressToken");
             if (progressToken.isNumber()) {
                 features.progress().token(progressToken.asInteger().get());
             }

@@ -31,9 +31,9 @@ interface McpRequestBlueprint {
     McpParameters parameters();
 
     /**
-     * MCP client {@code _meta} parameter.
+     * MCP client {@value McpMetadata#META} parameter.
      *
-     * @return the {@code _meta} parameter
+     * @return the {@value McpMetadata#META} parameter
      */
     McpParameters meta();
 

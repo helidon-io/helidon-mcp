@@ -60,14 +60,14 @@ final class McpPendingResponses {
         }
     }
 
-    void accept(long requestId, McpResponse response) {
+    void accept(McpResponse response) {
         CompletableFuture<McpResponse> pendingResponse;
         lock.lock();
         try {
             if (!active) {
                 return;
             }
-            pendingResponse = responses.get(requestId);
+            pendingResponse = responses.get(response.id());
         } finally {
             lock.unlock();
         }

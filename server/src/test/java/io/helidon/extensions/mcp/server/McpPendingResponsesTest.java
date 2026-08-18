@@ -55,12 +55,12 @@ class McpPendingResponsesTest {
         McpResponse firstResponse = createResponse(1);
         McpResponse secondResponse = createResponse(2);
         McpResponse thirdResponse = createResponse(3);
-        responses.accept(2, secondResponse);
-        responses.accept(1, firstResponse);
+        responses.accept(secondResponse);
+        responses.accept(firstResponse);
         assertThat(pollAndDiscard(responses, 1, Duration.ofSeconds(1)).orElseThrow(), sameInstance(firstResponse));
 
         responses.prepare(3);
-        responses.accept(3, thirdResponse);
+        responses.accept(thirdResponse);
 
         assertThat(pollAndDiscard(responses, 2, Duration.ofSeconds(1)).orElseThrow(), sameInstance(secondResponse));
         assertThat(pollAndDiscard(responses, 3, Duration.ofSeconds(1)).orElseThrow(), sameInstance(thirdResponse));
@@ -75,7 +75,7 @@ class McpPendingResponsesTest {
 
         McpResponse response = createResponse(2);
         responses.prepare(2);
-        responses.accept(2, response);
+        responses.accept(response);
         assertThat(pollAndDiscard(responses, 2, Duration.ofSeconds(1)).orElseThrow(), sameInstance(response));
     }
 
@@ -100,7 +100,7 @@ class McpPendingResponsesTest {
         assertDisconnected(secondFailure.get());
         McpInternalException exception = assertThrows(McpInternalException.class, () -> responses.prepare(3));
         assertThat(exception.getMessage(), is("Session disconnected"));
-        responses.accept(1, createResponse(1));
+        responses.accept(createResponse(1));
     }
 
     @Test
@@ -149,7 +149,7 @@ class McpPendingResponsesTest {
         assertThat(rejected.get(), is(callers - capacity));
         for (long requestId : prepared) {
             McpResponse response = createResponse(requestId);
-            responses.accept(requestId, response);
+            responses.accept(response);
             McpResponse polled = pollAndDiscard(responses, requestId, Duration.ofSeconds(1)).orElseThrow();
             assertThat(polled, sameInstance(response));
         }

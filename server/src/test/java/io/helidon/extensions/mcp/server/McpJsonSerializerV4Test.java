@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
+import static io.helidon.extensions.mcp.server.McpMetadata.META;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.instanceOf;
@@ -372,16 +373,16 @@ class McpJsonSerializerV4Test {
         assertThat(replayedContent.values().get(2).toString(), is(wireContent.values().get(4).toString()));
         assertThat(replayedContent.values().get(5).toString(), is(wireContent.values().get(2).toString()));
         JsonObject replayedTextResource = replayedContent.values().get(3).asObject();
-        assertThat(replayedTextResource.objectValue("_meta").orElseThrow()
+        assertThat(replayedTextResource.objectValue(META).orElseThrow()
                            .booleanValue("embeddedText").orElseThrow(),
                    is(true));
-        assertThat(replayedTextResource.objectValue("resource").orElseThrow().objectValue("_meta").isEmpty(), is(true));
+        assertThat(replayedTextResource.objectValue("resource").orElseThrow().objectValue(META).isEmpty(), is(true));
         JsonObject replayedBinaryResource = replayedContent.values().get(4).asObject();
-        assertThat(replayedBinaryResource.objectValue("_meta").orElseThrow()
+        assertThat(replayedBinaryResource.objectValue(META).orElseThrow()
                            .booleanValue("embeddedBinary").orElseThrow(),
                    is(true));
         assertThat(replayedBinaryResource.objectValue("resource").orElseThrow()
-                           .objectValue("_meta").isEmpty(),
+                           .objectValue(META).isEmpty(),
                    is(true));
     }
 
@@ -428,11 +429,11 @@ class McpJsonSerializerV4Test {
                 .arrayValue("messages").orElseThrow()
                 .values().getFirst().asObject();
 
-        assertThat(serialized.objectValue("_meta").orElseThrow()
+        assertThat(serialized.objectValue(META).orElseThrow()
                            .stringValue("messageKey").orElseThrow(),
                    is("messageValue"));
         assertThat(serialized.objectValue("content").orElseThrow()
-                           .objectValue("_meta").orElseThrow()
+                           .objectValue(META).orElseThrow()
                            .stringValue("contentKey").orElseThrow(),
                    is("contentValue"));
         JsonObject serializedAnnotations = serialized.objectValue("content").orElseThrow()
@@ -475,7 +476,7 @@ class McpJsonSerializerV4Test {
                    is("user"));
         assertThat(annotations.doubleValue("priority").orElseThrow(), is(0.8));
         assertThat(annotations.stringValue("lastModified").orElseThrow(), is("2026-08-06T10:15:30Z"));
-        assertThat(serialized.objectValue("_meta").orElseThrow().stringValue("provider").orElseThrow(),
+        assertThat(serialized.objectValue(META).orElseThrow().stringValue("provider").orElseThrow(),
                    is("test"));
     }
 
@@ -628,7 +629,7 @@ class McpJsonSerializerV4Test {
         assertThat(first.objectValue("structuredContent").orElseThrow()
                            .intValue("temperature").orElseThrow(),
                    is(18));
-        assertThat(first.objectValue("_meta").orElseThrow()
+        assertThat(first.objectValue(META).orElseThrow()
                            .booleanValue("cached").orElseThrow(),
                    is(true));
         assertThat(second.stringValue("type").orElseThrow(), is("tool_result"));

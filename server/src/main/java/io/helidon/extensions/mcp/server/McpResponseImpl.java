@@ -18,15 +18,31 @@ package io.helidon.extensions.mcp.server;
 import java.util.Objects;
 
 import io.helidon.common.context.Context;
+import io.helidon.json.JsonException;
 import io.helidon.json.JsonObject;
 
 final class McpResponseImpl implements McpResponse {
+    private final long id;
     private final JsonObject response;
     private final Context requestContext;
 
     McpResponseImpl(JsonObject response, Context requestContext) {
         this.response = Objects.requireNonNull(response, "response is null");
         this.requestContext = Objects.requireNonNull(requestContext, "request context is null");
+        try {
+            this.id = response.value("id")
+                    .orElseThrow(() -> new JsonException("Response id is missing"))
+                    .asNumber()
+                    .bigDecimalValue()
+                    .longValueExact();
+        } catch (ArithmeticException e) {
+            throw new JsonException("Response id must be an integer", e);
+        }
+    }
+
+    @Override
+    public long id() {
+        return id;
     }
 
     @Override

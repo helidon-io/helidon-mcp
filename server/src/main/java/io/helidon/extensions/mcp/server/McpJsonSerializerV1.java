@@ -32,6 +32,8 @@ import io.helidon.json.JsonString;
 import io.helidon.json.JsonValue;
 import io.helidon.jsonrpc.core.JsonRpcError;
 
+import static io.helidon.extensions.mcp.server.McpMetadata.META;
+
 /**
  * JSON serializer for {@code 2024-11-05} MCP specification.
  */
@@ -575,7 +577,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
             McpSamplingMessage.Builder messageBuilder = McpSamplingMessage.builder()
                     .role(role)
                     .contents(parseContents(find(result, "content").orElseThrow()));
-            result.objectValue("_meta")
+            result.objectValue(META)
                     .map(McpParameters::new)
                     .ifPresent(messageBuilder::metadata);
             McpSamplingMessage message = messageBuilder.build();
@@ -613,7 +615,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
             case TEXT -> {
                 McpSamplingTextContent.Builder builder = McpSamplingTextContent.builder()
                         .text(object.stringValue("text").orElseThrow());
-                object.objectValue("_meta").map(McpParameters::new).ifPresent(builder::metadata);
+                object.objectValue(META).map(McpParameters::new).ifPresent(builder::metadata);
                 parseAnnotations(object).ifPresent(builder::annotations);
                 yield builder.build();
             }
@@ -625,7 +627,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
                 McpSamplingImageContent.Builder builder = McpSamplingImageContent.builder()
                         .data(data)
                         .mediaType(mediaType);
-                object.objectValue("_meta").map(McpParameters::new).ifPresent(builder::metadata);
+                object.objectValue(META).map(McpParameters::new).ifPresent(builder::metadata);
                 parseAnnotations(object).ifPresent(builder::annotations);
                 yield builder.build();
             }
@@ -637,7 +639,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
                 McpSamplingAudioContent.Builder builder = McpSamplingAudioContent.builder()
                         .data(data)
                         .mediaType(mediaType);
-                object.objectValue("_meta").map(McpParameters::new).ifPresent(builder::metadata);
+                object.objectValue(META).map(McpParameters::new).ifPresent(builder::metadata);
                 parseAnnotations(object).ifPresent(builder::annotations);
                 yield builder.build();
             }

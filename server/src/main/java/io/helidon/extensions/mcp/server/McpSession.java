@@ -15,12 +15,10 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.lang.System.Logger.Level;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -30,7 +28,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import io.helidon.common.LazyValue;
 import io.helidon.common.LruCache;
 import io.helidon.common.context.Context;
-import io.helidon.json.JsonException;
 import io.helidon.json.JsonValue;
 import io.helidon.webserver.http.ServerResponse;
 import io.helidon.webserver.jsonrpc.JsonRpcRequest;
@@ -129,14 +126,7 @@ class McpSession {
     }
 
     void acceptResponse(McpResponse response) {
-        try {
-            long requestId = response.asJsonObject().longValue("id").orElseThrow();
-            pendingResponses.accept(requestId, response);
-        } catch (JsonException | NoSuchElementException e) {
-            if (LOGGER.isLoggable(Level.TRACE)) {
-                LOGGER.log(Level.TRACE, "Received a response with wrong request id type", e);
-            }
-        }
+        pendingResponses.accept(response);
     }
 
     void prepareResponse(long requestId) {

@@ -35,6 +35,7 @@ import io.helidon.config.Config;
 import io.helidon.http.HeaderNames;
 import io.helidon.http.HeaderValues;
 import io.helidon.http.Status;
+import io.helidon.json.JsonException;
 import io.helidon.json.JsonNull;
 import io.helidon.json.JsonObject;
 import io.helidon.json.JsonString;
@@ -70,6 +71,7 @@ import static io.helidon.extensions.mcp.server.McpJsonSerializer.METHOD_TOOLS_CA
 import static io.helidon.extensions.mcp.server.McpJsonSerializer.METHOD_TOOLS_LIST;
 import static io.helidon.extensions.mcp.server.McpJsonSerializer.isResponse;
 import static io.helidon.extensions.mcp.server.McpJsonSerializer.prettyPrint;
+import static io.helidon.extensions.mcp.server.McpMetadata.META;
 import static io.helidon.extensions.mcp.server.McpSession.State.INITIALIZING;
 import static io.helidon.extensions.mcp.server.McpStreamableHttpTransportManager.SESSION_ID_HEADER;
 import static io.helidon.jsonrpc.core.JsonRpcError.INTERNAL_ERROR;
@@ -436,7 +438,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         session.beforeFeatureRequest(parameters, requestId);
         McpRequest request = McpRequest.builder()
                 .parameters(parameters)
-                .meta(parameters.get("_meta"))
+                .meta(parameters.get(META))
                 .features(features)
                 .protocolVersion(session.protocolVersion().text())
                 .sessionContext(session.context())
@@ -501,7 +503,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         session.beforeFeatureRequest(parameters, requestId);
         McpRequest request = McpRequest.builder()
                 .parameters(parameters)
-                .meta(parameters.get("_meta"))
+                .meta(parameters.get(META))
                 .features(features)
                 .protocolVersion(session.protocolVersion().text())
                 .sessionContext(session.context())
@@ -551,7 +553,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             session.beforeFeatureRequest(parameters, requestId);
             subscriber.get().subscribe(McpSubscribeRequest.builder()
                                                .parameters(parameters)
-                                               .meta(parameters.get("_meta"))
+                                               .meta(parameters.get(META))
                                                .features(features)
                                                .protocolVersion(session.protocolVersion().text())
                                                .sessionContext(session.context())
@@ -595,7 +597,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             session.beforeFeatureRequest(parameters, requestId);
             unsubscriber.get().unsubscribe(McpUnsubscribeRequest.builder()
                                                    .parameters(parameters)
-                                                   .meta(parameters.get("_meta"))
+                                                   .meta(parameters.get(META))
                                                    .features(features)
                                                    .protocolVersion(session.protocolVersion().text())
                                                    .sessionContext(session.context())
@@ -672,7 +674,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         session.beforeFeatureRequest(parameters, requestId);
         McpRequest request = McpRequest.builder()
                 .parameters(parameters)
-                .meta(parameters.get("_meta"))
+                .meta(parameters.get(META))
                 .features(features)
                 .protocolVersion(session.protocolVersion().text())
                 .sessionContext(session.context())
@@ -741,7 +743,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             session.beforeFeatureRequest(parameters, requestId);
             McpRequest request = McpRequest.builder()
                     .parameters(parameters)
-                    .meta(parameters.get("_meta"))
+                    .meta(parameters.get(META))
                     .features(features)
                     .protocolVersion(session.protocolVersion().text())
                     .sessionContext(session.context())
@@ -775,7 +777,13 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 if (LOGGER.isLoggable(Level.DEBUG)) {
                     LOGGER.log(Level.DEBUG, "Client response:\n" + prettyPrint(object));
                 }
-                session.get().acceptResponse(new McpResponseImpl(object, req.context()));
+                try {
+                    session.get().acceptResponse(new McpResponseImpl(object, req.context()));
+                } catch (JsonException e) {
+                    if (LOGGER.isLoggable(Level.TRACE)) {
+                        LOGGER.log(Level.TRACE, "Received a response with an invalid request id", e);
+                    }
+                }
                 return Optional.empty();
             }
         }

@@ -166,29 +166,6 @@ class McpSessionTest {
     }
 
     @Test
-    void ignoresResponseWithNonNumericId() {
-        McpServerConfig config = McpServerConfig.create();
-        McpSessions sessions = new McpSessions(config.maxSessionCount());
-        McpSession session = new McpSession(sessions,
-                                            mock(McpTransportManager.class),
-                                            config,
-                                            "test-session");
-        McpResponse malformedResponse = new McpResponseImpl(JsonObject.builder()
-                .set("id", "not-a-number")
-                .build(), Context.create());
-        McpResponse expectedResponse = new McpResponseImpl(JsonObject.builder()
-                .set("id", 42)
-                .build(), Context.create());
-
-        session.prepareResponse(42);
-        session.acceptResponse(malformedResponse);
-        session.acceptResponse(expectedResponse);
-
-        McpResponse response = pollResponse(session, 42, Duration.ofSeconds(1)).orElseThrow();
-        assertThat(response, sameInstance(expectedResponse));
-    }
-
-    @Test
     void correlatesOutOfOrderResponsesAndContextsByRequestId() {
         McpServerConfig config = McpServerFeature.builder()
                 .maxRequestsPerSession(2)
@@ -210,8 +187,10 @@ class McpSessionTest {
 
         McpResponse polledFirst = pollResponse(session, firstId, Duration.ofSeconds(1)).orElseThrow();
         McpResponse polledSecond = pollResponse(session, secondId, Duration.ofSeconds(1)).orElseThrow();
+        assertThat(polledFirst.id(), is(firstId));
         assertThat(polledFirst.asJsonObject(), sameInstance(firstJson));
         assertThat(polledFirst.requestContext(), sameInstance(firstContext));
+        assertThat(polledSecond.id(), is(secondId));
         assertThat(polledSecond.asJsonObject(), sameInstance(secondJson));
         assertThat(polledSecond.requestContext(), sameInstance(secondContext));
     }

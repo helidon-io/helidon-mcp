@@ -23,6 +23,8 @@ import io.helidon.json.JsonObject;
 import io.helidon.json.JsonValue;
 import io.helidon.jsonrpc.core.JsonRpcError;
 
+import static io.helidon.extensions.mcp.server.McpMetadata.META;
+
 /**
  * JSON serializer for {@code 2025-06-18} MCP specification.
  */
@@ -76,7 +78,7 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
             result.ifPresent(builder -> {
                 toolContent.annotations().ifPresent(annotations -> builder.set("annotations", toJson(annotations)));
                 toolContent.metadata()
-                        .ifPresent(metadata -> builder.set("_meta", metadata.asJsonObject()
+                        .ifPresent(metadata -> builder.set(META, metadata.asJsonObject()
                                 .orElseThrow(() -> new McpException("Tool content metadata must be a JSON object"))));
             });
         }
@@ -87,7 +89,7 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
     public JsonObject.Builder toJson(McpSamplingContent content) {
         JsonObject.Builder builder = super.toJson(content);
         content.metadata()
-                .ifPresent(metadata -> builder.set("_meta", metadata.asJsonObject()
+                .ifPresent(metadata -> builder.set(META, metadata.asJsonObject()
                         .orElseThrow(() -> new McpSamplingException("Sampling content metadata must be a JSON object"))));
         return builder;
     }

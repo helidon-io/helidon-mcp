@@ -26,6 +26,8 @@ import java.util.function.Consumer;
 
 import io.helidon.json.JsonObject;
 
+import static io.helidon.extensions.mcp.server.McpMetadata.META;
+
 /**
  * MCP Sampling feature.
  */
@@ -225,11 +227,12 @@ public final class McpSampling extends McpFeature {
                     JsonObject.Builder paramsBuilder = JsonObject.builder()
                             .set("name", toolUse.name())
                             .set("arguments", toolUse.input().asJsonObject().orElseThrow());
-                    toolUse.metadata().ifPresent(metadata -> paramsBuilder.set("_meta", metadata.asJsonObject().orElseThrow()));
+                    toolUse.metadata().ifPresent(metadata ->
+                            paramsBuilder.set(META, metadata.asJsonObject().orElseThrow()));
                     McpParameters parameters = new McpParameters(paramsBuilder.build());
                     McpRequest toolRequest = McpRequest.builder()
                             .parameters(parameters)
-                            .meta(parameters.get("_meta"))
+                            .meta(parameters.get(META))
                             .features(features)
                             .protocolVersion(session().protocolVersion().text())
                             .sessionContext(session().context())

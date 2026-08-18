@@ -28,6 +28,7 @@ import io.helidon.json.schema.SchemaString;
 
 import org.junit.jupiter.api.Test;
 
+import static io.helidon.extensions.mcp.server.McpMetadata.META;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -326,8 +327,8 @@ class McpJsonSerializerV3Test {
 
         JsonObject payload = MJS.toJson(content).orElseThrow().build();
 
-        assertThat(payload.objectValue("_meta").orElseThrow().booleanValue("content").orElseThrow(), is(true));
-        assertThat(payload.objectValue("resource").orElseThrow().objectValue("_meta").isEmpty(), is(true));
+        assertThat(payload.objectValue(META).orElseThrow().booleanValue("content").orElseThrow(), is(true));
+        assertThat(payload.objectValue("resource").orElseThrow().objectValue(META).isEmpty(), is(true));
     }
 
     @Test

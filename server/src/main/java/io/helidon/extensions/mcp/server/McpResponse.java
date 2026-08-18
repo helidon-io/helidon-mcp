@@ -23,6 +23,13 @@ import io.helidon.json.JsonObject;
  */
 sealed interface McpResponse permits McpResponseImpl {
     /**
+     * Identifier of the JSON-RPC request.
+     *
+     * @return request identifier
+     */
+    long id();
+
+    /**
      * JSON-RPC response.
      *
      * @return response object

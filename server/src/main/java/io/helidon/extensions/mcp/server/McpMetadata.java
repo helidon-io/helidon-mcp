@@ -22,7 +22,12 @@ import java.util.Optional;
  */
 public interface McpMetadata {
     /**
-     * Optional protocol metadata represented by the {@code _meta} field.
+     * MCP protocol metadata field name.
+     */
+    String META = "_meta";
+
+    /**
+     * Optional protocol metadata represented by the {@value #META} field.
      *
      * @return protocol metadata
      */
