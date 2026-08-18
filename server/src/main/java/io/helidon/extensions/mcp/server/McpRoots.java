@@ -77,8 +77,9 @@ public final class McpRoots extends McpFeature {
         session().prepareResponse(id);
         try {
             transport().send(request);
-            JsonObject response = session().pollResponse(id, timeout);
-            List<McpRoot> updatedRoots = session().serializer().parseRoots(response);
+            McpResponse response = session().pollResponse(id, timeout)
+                    .orElseThrow(() -> new McpRootException("response timeout"));
+            List<McpRoot> updatedRoots = session().serializer().parseRoots(response.asJsonObject());
             roots.clear();
             roots.addAll(updatedRoots);
             session().context().register(McpRootClassifier.class, false);

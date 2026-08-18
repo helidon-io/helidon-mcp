@@ -32,8 +32,6 @@ import io.helidon.json.JsonString;
 import io.helidon.json.JsonValue;
 import io.helidon.jsonrpc.core.JsonRpcError;
 
-import static io.helidon.jsonrpc.core.JsonRpcError.INTERNAL_ERROR;
-
 /**
  * JSON serializer for {@code 2024-11-05} MCP specification.
  */
@@ -522,14 +520,6 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
                 .set("id", id)
                 .set("result", params)
                 .build();
-    }
-
-    @Override
-    public JsonObject jsonrpcErrorTimeoutResponse(long requestId) {
-        var error = JsonObject.builder()
-                .set("code", INTERNAL_ERROR)
-                .set("message", "response timeout");
-        return createJsonRpcErrorResponse(requestId, error);
     }
 
     @Override

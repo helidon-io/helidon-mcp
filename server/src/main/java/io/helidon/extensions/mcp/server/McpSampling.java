@@ -34,12 +34,12 @@ public final class McpSampling extends McpFeature {
 
     private static final System.Logger LOGGER = System.getLogger(McpSampling.class.getName());
 
-    private final McpFeatures features;
-    private final Lock toolBudgetLock = new ReentrantLock();
     private final boolean enabled;
     private final boolean enabledContext;
     private final boolean enabledTools;
     private final int maxToolIterations;
+    private final Lock toolBudgetLock;
+    private final McpFeatures features;
     private final List<McpTool> registeredTools;
 
     private volatile boolean toolBudgetExhausted;
@@ -48,15 +48,16 @@ public final class McpSampling extends McpFeature {
 
     McpSampling(McpSession session, McpTransport transport, McpFeatures features) {
         super(session, transport);
-        this.features = features;
-        this.enabled = session.capabilities().contains(McpCapability.SAMPLING);
-        this.enabledContext = session.capabilities().contains(McpCapability.SAMPLING_CONTEXT);
-        this.enabledTools = session.capabilities().contains(McpCapability.SAMPLING_TOOLS);
         McpServerConfig config = session.context()
                 .get(McpServerConfigBlueprint.class, McpServerConfig.class)
                 .orElseThrow(() -> new McpInternalException("MCP server configuration not found"));
-        this.maxToolIterations = config.maxSamplingToolIterations();
+        this.features = features;
+        this.toolBudgetLock = new ReentrantLock();
         this.registeredTools = config.tools();
+        this.maxToolIterations = config.maxSamplingToolIterations();
+        this.enabled = session.capabilities().contains(McpCapability.SAMPLING);
+        this.enabledContext = session.capabilities().contains(McpCapability.SAMPLING_CONTEXT);
+        this.enabledTools = session.capabilities().contains(McpCapability.SAMPLING_TOOLS);
     }
 
     /**
@@ -121,7 +122,6 @@ public final class McpSampling extends McpFeature {
         if (request.usesTool() && !enabledTools) {
             throw new McpSamplingException("Sampling tools are not supported by client");
         }
-
         Map<String, McpTool> tools = new LinkedHashMap<>();
         if (!request.tools().isEmpty()) {
             Map<String, McpTool> registeredToolsByName = new LinkedHashMap<>();
@@ -165,11 +165,13 @@ public final class McpSampling extends McpFeature {
             long id = session().jsonRpcId();
             JsonObject payload = session().serializer().createSamplingRequest(id, currentRequest, toolDefinitions);
             session().prepareResponse(id);
+            McpResponse mcpResponse;
             McpSamplingResponse response;
             try {
                 transport().send(payload);
-                JsonObject jsonResponse = session().pollResponse(id, currentRequest.timeout());
-                response = session().serializer().createSamplingResponse(jsonResponse);
+                mcpResponse = session().pollResponse(id, currentRequest.timeout())
+                        .orElseThrow(() -> new McpSamplingException("response timeout"));
+                response = session().serializer().createSamplingResponse(mcpResponse.asJsonObject());
             } finally {
                 session().discardResponse(id);
             }
@@ -212,7 +214,6 @@ public final class McpSampling extends McpFeature {
             } finally {
                 toolBudgetLock.unlock();
             }
-
             McpSamplingMessage.Builder results = McpSamplingMessage.builder().role(McpRole.USER);
             for (McpSamplingToolUseContent toolUse : toolUses) {
                 checkRequestActive();
@@ -232,7 +233,7 @@ public final class McpSampling extends McpFeature {
                             .features(features)
                             .protocolVersion(session().protocolVersion().text())
                             .sessionContext(session().context())
-                            .requestContext(features.requestContext())
+                            .requestContext(mcpResponse.requestContext())
                             .build();
                     try {
                         toolResult = tool.tool(new McpToolRequestImpl(toolRequest));
@@ -247,7 +248,6 @@ public final class McpSampling extends McpFeature {
                                            .result(toolResult)
                                            .build());
             }
-
             McpSamplingRequest.Builder nextRequest = McpSamplingRequest.builder(currentRequest)
                     .addMessage(response.message())
                     .addMessage(results.build());

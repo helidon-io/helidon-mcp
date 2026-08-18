@@ -16,6 +16,7 @@
 package io.helidon.extensions.mcp.server;
 
 import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import io.helidon.common.context.Context;
@@ -172,23 +173,23 @@ class McpSessionTest {
                                             mock(McpTransportManager.class),
                                             config,
                                             "test-session");
-        JsonObject malformedResponse = JsonObject.builder()
+        McpResponse malformedResponse = new McpResponseImpl(JsonObject.builder()
                 .set("id", "not-a-number")
-                .build();
-        JsonObject expectedResponse = JsonObject.builder()
+                .build(), Context.create());
+        McpResponse expectedResponse = new McpResponseImpl(JsonObject.builder()
                 .set("id", 42)
-                .build();
+                .build(), Context.create());
 
         session.prepareResponse(42);
         session.acceptResponse(malformedResponse);
         session.acceptResponse(expectedResponse);
 
-        JsonObject response = pollResponse(session, 42, Duration.ofSeconds(1));
-        assertThat(response, is(expectedResponse));
+        McpResponse response = pollResponse(session, 42, Duration.ofSeconds(1)).orElseThrow();
+        assertThat(response, sameInstance(expectedResponse));
     }
 
     @Test
-    void correlatesOutOfOrderResponsesByRequestId() {
+    void correlatesOutOfOrderResponsesAndContextsByRequestId() {
         McpServerConfig config = McpServerFeature.builder()
                 .maxRequestsPerSession(2)
                 .buildPrototype();
@@ -197,14 +198,22 @@ class McpSessionTest {
         long secondId = session.jsonRpcId();
         session.prepareResponse(firstId);
         session.prepareResponse(secondId);
-        JsonObject firstResponse = JsonObject.builder().set("id", firstId).build();
-        JsonObject secondResponse = JsonObject.builder().set("id", secondId).build();
+        JsonObject firstJson = JsonObject.builder().set("id", firstId).build();
+        JsonObject secondJson = JsonObject.builder().set("id", secondId).build();
+        Context firstContext = Context.create();
+        Context secondContext = Context.create();
+        McpResponse firstResponse = new McpResponseImpl(firstJson, firstContext);
+        McpResponse secondResponse = new McpResponseImpl(secondJson, secondContext);
 
         session.acceptResponse(secondResponse);
         session.acceptResponse(firstResponse);
 
-        assertThat(pollResponse(session, firstId, Duration.ofSeconds(1)), sameInstance(firstResponse));
-        assertThat(pollResponse(session, secondId, Duration.ofSeconds(1)), sameInstance(secondResponse));
+        McpResponse polledFirst = pollResponse(session, firstId, Duration.ofSeconds(1)).orElseThrow();
+        McpResponse polledSecond = pollResponse(session, secondId, Duration.ofSeconds(1)).orElseThrow();
+        assertThat(polledFirst.asJsonObject(), sameInstance(firstJson));
+        assertThat(polledFirst.requestContext(), sameInstance(firstContext));
+        assertThat(polledSecond.asJsonObject(), sameInstance(secondJson));
+        assertThat(polledSecond.requestContext(), sameInstance(secondContext));
     }
 
     @Test
@@ -223,18 +232,21 @@ class McpSessionTest {
                                                        () -> session.prepareResponse(thirdId));
 
         assertThat(exception.getMessage(), is("Maximum pending response count reached"));
-        JsonObject firstResponse = JsonObject.builder().set("id", firstId).build();
-        JsonObject secondResponse = JsonObject.builder().set("id", secondId).build();
-        JsonObject thirdResponse = JsonObject.builder().set("id", thirdId).build();
+        JsonObject firstJson = JsonObject.builder().set("id", firstId).build();
+        JsonObject secondJson = JsonObject.builder().set("id", secondId).build();
+        JsonObject thirdJson = JsonObject.builder().set("id", thirdId).build();
+        McpResponse firstResponse = new McpResponseImpl(firstJson, Context.create());
+        McpResponse secondResponse = new McpResponseImpl(secondJson, Context.create());
+        McpResponse thirdResponse = new McpResponseImpl(thirdJson, Context.create());
         session.acceptResponse(secondResponse);
         session.acceptResponse(firstResponse);
-        assertThat(pollResponse(session, firstId, Duration.ofSeconds(1)), sameInstance(firstResponse));
+        assertThat(pollResponse(session, firstId, Duration.ofSeconds(1)).orElseThrow(), sameInstance(firstResponse));
 
         session.prepareResponse(thirdId);
         session.acceptResponse(thirdResponse);
 
-        assertThat(pollResponse(session, secondId, Duration.ofSeconds(1)), sameInstance(secondResponse));
-        assertThat(pollResponse(session, thirdId, Duration.ofSeconds(1)), sameInstance(thirdResponse));
+        assertThat(pollResponse(session, secondId, Duration.ofSeconds(1)).orElseThrow(), sameInstance(secondResponse));
+        assertThat(pollResponse(session, thirdId, Duration.ofSeconds(1)).orElseThrow(), sameInstance(thirdResponse));
     }
 
     @Test
@@ -266,20 +278,20 @@ class McpSessionTest {
     }
 
     @Test
-    void ignoresResponseWithoutPendingRequest() {
+    void ignoresResponseReceivedBeforeRequestIsPrepared() {
         McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, "{}");
         JsonObject unsolicited = JsonObject.builder().set("id", 0).build();
-        session.acceptResponse(unsolicited);
+        session.acceptResponse(new McpResponseImpl(unsolicited, Context.create()));
         long requestId = session.jsonRpcId();
         session.prepareResponse(requestId);
 
-        JsonObject response = pollResponse(session, requestId, Duration.ZERO);
+        Optional<McpResponse> response = pollResponse(session, requestId, Duration.ZERO);
 
-        assertThat(response.objectValue("error").isPresent(), is(true));
+        assertThat(response.isEmpty(), is(true));
     }
 
     @Test
-    void preservesRequestContextUntilResponseIsSent() {
+    void preservesFeaturesUntilResponseIsSent() {
         McpServerConfig config = McpServerConfig.create();
         McpTransportManager manager = mock(McpTransportManager.class);
         McpSession session = new McpSession(new McpSessions(config.maxSessionCount()),
@@ -289,20 +301,18 @@ class McpSessionTest {
         JsonRpcRequest request = mock(JsonRpcRequest.class);
         JsonRpcResponse response = mock(JsonRpcResponse.class);
         McpTransport transport = mock(McpStreamableHttpTransport.class);
-        Context requestContext = Context.create();
         JsonValue requestId = JsonObject.builder().set("id", 1).build().value("id").orElseThrow();
-        when(request.context()).thenReturn(requestContext);
         when(manager.create(request, response)).thenReturn(transport);
         session.createTransport(requestId, request, response);
 
-        McpFeatures features = session.createFeatures(requestId, request, response);
+        McpFeatures features = session.createFeatures(requestId);
 
-        assertThat(features.requestContext(), sameInstance(requestContext));
+        assertThat(session.findFeatures(requestId).orElseThrow(), sameInstance(features));
         session.send(requestId, response);
         assertThat(session.findFeatures(requestId).isEmpty(), is(true));
     }
 
-    private static JsonObject pollResponse(McpSession session, long requestId, Duration timeout) {
+    private static Optional<McpResponse> pollResponse(McpSession session, long requestId, Duration timeout) {
         try {
             return session.pollResponse(requestId, timeout);
         } finally {

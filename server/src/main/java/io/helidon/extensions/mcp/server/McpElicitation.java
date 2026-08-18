@@ -68,8 +68,9 @@ public final class McpElicitation extends McpFeature {
         session().prepareResponse(id);
         try {
             transport().send(payload);
-            JsonObject response = session().pollResponse(id, request.timeout());
-            return session().serializer().createElicitationResponse(response);
+            McpResponse response = session().pollResponse(id, request.timeout())
+                    .orElseThrow(() -> new McpElicitationException("response timeout"));
+            return session().serializer().createElicitationResponse(response.asJsonObject());
         } finally {
             session().discardResponse(id);
         }

@@ -18,7 +18,6 @@ package io.helidon.extensions.mcp.server;
 import java.util.Objects;
 
 import io.helidon.common.LazyValue;
-import io.helidon.common.context.Context;
 
 /**
  * Support for optional client features:
@@ -56,7 +55,6 @@ import io.helidon.common.context.Context;
  */
 public final class McpFeatures {
     private final McpSession session;
-    private final Context requestContext;
     private final LazyValue<McpRoots> roots;
     private final LazyValue<McpLogger> logger;
     private final LazyValue<McpSampling> sampling;
@@ -65,15 +63,9 @@ public final class McpFeatures {
     private final LazyValue<McpCancellation> cancellation;
 
     McpFeatures(McpSession session, McpTransport transport) {
-        this(session, transport, Context.create());
-    }
-
-    McpFeatures(McpSession session, McpTransport transport, Context requestContext) {
         Objects.requireNonNull(session, "session is null");
         Objects.requireNonNull(transport, "transport is null");
-        Objects.requireNonNull(requestContext, "request context is null");
         this.session = session;
-        this.requestContext = requestContext;
         this.cancellation = LazyValue.create(McpCancellation::new);
         this.roots = LazyValue.create(() -> new McpRoots(session, transport));
         this.logger = LazyValue.create(() -> new McpLogger(session, transport));
@@ -143,9 +135,5 @@ public final class McpFeatures {
      */
     public McpSubscriptions subscriptions() {
         return session.features().subscriptions();
-    }
-
-    Context requestContext() {
-        return requestContext;
     }
 }

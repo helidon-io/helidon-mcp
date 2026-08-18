@@ -15,6 +15,8 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -152,7 +154,7 @@ class McpSamplingTest {
                 {"sampling": {"tools": {}}}
                 """, time, weather);
         session.prepareResponse(0);
-        session.acceptResponse(JsonParser.create("""
+        JsonObject responseObject = JsonParser.create("""
                 {
                   "jsonrpc": "2.0",
                   "id": 0,
@@ -166,7 +168,8 @@ class McpSamplingTest {
                     "stopReason": "endTurn"
                   }
                 }
-                """).readJsonObject());
+                """).readJsonObject();
+        session.acceptResponse(new McpResponseImpl(responseObject, Context.create()));
         JsonRpcResponse response = mock(JsonRpcResponse.class);
         SseSink sink = mock(SseSink.class);
         when(response.sink(SseSink.TYPE)).thenReturn(sink);
@@ -209,6 +212,8 @@ class McpSamplingTest {
         McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, """
                 {"sampling": {"tools": {}}}
                 """, tool);
+        Context toolUseResponseContext = Context.create();
+        Context finalResponseContext = Context.create();
         acceptSamplingResponse(session, 0, """
                 [
                   {"type": "text", "text": "Checking the weather"},
@@ -220,16 +225,15 @@ class McpSamplingTest {
                     "_meta": {"trace": "sample-1"}
                   }
                 ]
-                """, "toolUse");
+                """, "toolUse", toolUseResponseContext);
         acceptSamplingResponse(session, 1, """
                 {"type": "text", "text": "It is 18 C in Prague"}
-                """, "endTurn");
+                """, "endTurn", finalResponseContext);
         JsonRpcResponse response = mock(JsonRpcResponse.class);
         SseSink sink = mock(SseSink.class);
         when(response.sink(SseSink.TYPE)).thenReturn(sink);
         McpTransport transport = new McpStreamableHttpTransport(response);
-        Context requestContext = Context.create();
-        McpFeatures features = new McpFeatures(session, transport, requestContext);
+        McpFeatures features = new McpFeatures(session, transport);
         McpSampling sampling = features.sampling();
         McpSamplingRequest request = McpSamplingRequest.builder()
                 .addTextMessage(McpRole.USER, "What is the weather in Prague?")
@@ -246,7 +250,7 @@ class McpSamplingTest {
         assertThat(toolRequest.get().meta().get("trace").asString().get(), is("sample-1"));
         assertThat(toolRequest.get().features(), sameInstance(features));
         assertThat(toolRequest.get().sessionContext(), sameInstance(session.context()));
-        assertThat(toolRequest.get().requestContext(), sameInstance(requestContext));
+        assertThat(toolRequest.get().requestContext(), sameInstance(toolUseResponseContext));
         assertThat(request.messages().size(), is(1));
         assertThat(request.toolChoice().orElseThrow(), is(McpToolChoice.REQUIRED));
 
@@ -514,17 +518,22 @@ class McpSamplingTest {
     @Test
     void executesMultipleSamplingToolRounds() {
         AtomicInteger invocations = new AtomicInteger();
-        McpTool tool = new TestTool("counter", "Counts", "", request ->
-                McpToolResult.create(Integer.toString(invocations.incrementAndGet())));
+        List<Context> requestContexts = new ArrayList<>();
+        McpTool tool = new TestTool("counter", "Counts", "", request -> {
+            requestContexts.add(request.requestContext());
+            return McpToolResult.create(Integer.toString(invocations.incrementAndGet()));
+        });
         McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, """
                 {"sampling": {"tools": {}}}
                 """, tool);
+        Context firstResponseContext = Context.create();
+        Context secondResponseContext = Context.create();
         acceptSamplingResponse(session, 0, """
                 {"type": "tool_use", "id": "call-1", "name": "counter", "input": {}}
-                """, "toolUse");
+                """, "toolUse", firstResponseContext);
         acceptSamplingResponse(session, 1, """
                 {"type": "tool_use", "id": "call-2", "name": "counter", "input": {}}
-                """, "toolUse");
+                """, "toolUse", secondResponseContext);
         acceptSamplingResponse(session, 2, """
                 {"type": "text", "text": "All tools completed"}
                 """, "endTurn");
@@ -541,6 +550,8 @@ class McpSamplingTest {
 
         assertThat(samplingResponse.asTextContent().text(), is("All tools completed"));
         assertThat(invocations.get(), is(2));
+        assertThat(requestContexts.get(0), sameInstance(firstResponseContext));
+        assertThat(requestContexts.get(1), sameInstance(secondResponseContext));
         List<JsonObject> sent = sentSamplingRequests(sink, 3);
         var messages = sent.get(2).objectValue("params").orElseThrow()
                 .arrayValue("messages").orElseThrow().values();
@@ -1071,6 +1082,25 @@ class McpSamplingTest {
     }
 
     @Test
+    void reportsSamplingResponseTimeout() {
+        McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, """
+                {"sampling": {}}
+                """);
+        JsonRpcResponse response = mock(JsonRpcResponse.class);
+        SseSink sink = mock(SseSink.class);
+        when(response.sink(SseSink.TYPE)).thenReturn(sink);
+        McpSampling sampling = sampling(session, new McpStreamableHttpTransport(response));
+        McpSamplingRequest request = McpSamplingRequest.builder()
+                .timeout(Duration.ZERO)
+                .build();
+
+        McpSamplingException exception = assertThrows(McpSamplingException.class, () -> sampling.request(request));
+
+        assertThat(exception.getMessage(), is("response timeout"));
+        sentSamplingRequests(sink, 1);
+    }
+
+    @Test
     void rejectsToolNamesWithoutSamplingToolsCapability() {
         JsonRpcResponse response = mock(JsonRpcResponse.class);
         McpSampling sampling = sampling(session(McpProtocolVersion.VERSION_2025_11_25, """
@@ -1248,7 +1278,7 @@ class McpSamplingTest {
                         """;
         McpSession session = session(protocolVersion, capabilities);
         session.prepareResponse(0);
-        session.acceptResponse(JsonParser.create("""
+        JsonObject responseObject = JsonParser.create("""
                 {
                   "jsonrpc": "2.0",
                   "id": 0,
@@ -1262,7 +1292,8 @@ class McpSamplingTest {
                     "stopReason": "endTurn"
                   }
                 }
-                """).readJsonObject());
+                """).readJsonObject();
+        session.acceptResponse(new McpResponseImpl(responseObject, Context.create()));
         JsonRpcResponse response = mock(JsonRpcResponse.class);
         SseSink sink = mock(SseSink.class);
         when(response.sink(SseSink.TYPE)).thenReturn(sink);
@@ -1317,8 +1348,17 @@ class McpSamplingTest {
     }
 
     private static void acceptSamplingResponse(McpSession session, long id, String content, String stopReason) {
+        Context requestContext = Context.create();
+        acceptSamplingResponse(session, id, content, stopReason, requestContext);
+    }
+
+    private static void acceptSamplingResponse(McpSession session,
+                                               long id,
+                                               String content,
+                                               String stopReason,
+                                               Context requestContext) {
         session.prepareResponse(id);
-        session.acceptResponse(JsonParser.create("""
+        JsonObject response = JsonParser.create("""
                 {
                   "jsonrpc": "2.0",
                   "id": %d,
@@ -1329,7 +1369,8 @@ class McpSamplingTest {
                     "stopReason": "%s"
                   }
                 }
-                """.formatted(id, id, content, stopReason)).readJsonObject());
+                """.formatted(id, id, content, stopReason)).readJsonObject();
+        session.acceptResponse(new McpResponseImpl(response, requestContext));
     }
 
     private static List<JsonObject> sentSamplingRequests(SseSink sink, int count) {

@@ -261,8 +261,6 @@ interface McpJsonSerializer {
 
     JsonObject createJsonRpcResultResponse(long id, JsonValue params);
 
-    JsonObject jsonrpcErrorTimeoutResponse(long requestId);
-
     // ---------- ROOTS ----------
 
     List<McpRoot> parseRoots(JsonObject response);

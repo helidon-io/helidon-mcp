@@ -31,7 +31,6 @@ import io.helidon.common.LazyValue;
 import io.helidon.common.LruCache;
 import io.helidon.common.context.Context;
 import io.helidon.json.JsonException;
-import io.helidon.json.JsonObject;
 import io.helidon.json.JsonValue;
 import io.helidon.webserver.http.ServerResponse;
 import io.helidon.webserver.jsonrpc.JsonRpcRequest;
@@ -129,9 +128,9 @@ class McpSession {
         });
     }
 
-    void acceptResponse(JsonObject response) {
+    void acceptResponse(McpResponse response) {
         try {
-            long requestId = response.longValue("id").orElseThrow();
+            long requestId = response.asJsonObject().longValue("id").orElseThrow();
             pendingResponses.accept(requestId, response);
         } catch (JsonException | NoSuchElementException e) {
             if (LOGGER.isLoggable(Level.TRACE)) {
@@ -148,25 +147,22 @@ class McpSession {
         pendingResponses.discard(requestId);
     }
 
-    McpFeatures createFeatures(JsonValue requestId, JsonRpcRequest request, JsonRpcResponse response) {
+    McpFeatures createFeatures(JsonValue requestId) {
         String key = requestId.toString();
         var transport = transports.get(key)
                 .orElseThrow(() -> new McpInternalException("No transport for request id " + requestId));
-        McpFeatures feat = new McpFeatures(this, transport, request.context());
+        McpFeatures feat = new McpFeatures(this, transport);
         features.put(key, feat);
         return feat;
     }
 
-    JsonObject pollResponse(long requestId, Duration timeout) {
-        Optional<JsonObject> response = pendingResponses.poll(requestId, timeout);
-        if (response.isEmpty()) {
-            return serializer.jsonrpcErrorTimeoutResponse(requestId);
-        }
-        JsonObject jsonResponse = response.get();
+    Optional<McpResponse> pollResponse(long requestId, Duration timeout) {
+        Optional<McpResponse> response = pendingResponses.poll(requestId, timeout);
         if (LOGGER.isLoggable(System.Logger.Level.DEBUG)) {
-            LOGGER.log(System.Logger.Level.DEBUG, "Response:\n" + prettyPrint(jsonResponse));
+            response.map(McpResponse::asJsonObject)
+                    .ifPresent(it -> LOGGER.log(System.Logger.Level.DEBUG, "Response:\n" + prettyPrint(it)));
         }
-        return jsonResponse;
+        return response;
     }
 
     /**

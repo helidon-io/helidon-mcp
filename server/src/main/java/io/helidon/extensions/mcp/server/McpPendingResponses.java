@@ -27,15 +27,13 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import io.helidon.json.JsonObject;
-
 /**
  * Pending JSON-RPC responses for an MCP session.
  */
 final class McpPendingResponses {
     private final Lock lock = new ReentrantLock();
     private final int capacity;
-    private final Map<Long, CompletableFuture<JsonObject>> responses = new HashMap<>();
+    private final Map<Long, CompletableFuture<McpResponse>> responses = new HashMap<>();
 
     private boolean active = true;
 
@@ -55,15 +53,15 @@ final class McpPendingResponses {
             if (responses.size() >= capacity) {
                 throw new McpInternalException("Maximum pending response count reached");
             }
-            CompletableFuture<JsonObject> response = new CompletableFuture<>();
+            CompletableFuture<McpResponse> response = new CompletableFuture<>();
             responses.put(requestId, response);
         } finally {
             lock.unlock();
         }
     }
 
-    void accept(long requestId, JsonObject response) {
-        CompletableFuture<JsonObject> pendingResponse;
+    void accept(long requestId, McpResponse response) {
+        CompletableFuture<McpResponse> pendingResponse;
         lock.lock();
         try {
             if (!active) {
@@ -78,8 +76,8 @@ final class McpPendingResponses {
         }
     }
 
-    Optional<JsonObject> poll(long requestId, Duration timeout) {
-        CompletableFuture<JsonObject> pendingResponse;
+    Optional<McpResponse> poll(long requestId, Duration timeout) {
+        CompletableFuture<McpResponse> pendingResponse;
         lock.lock();
         try {
             if (!active) {
@@ -118,7 +116,7 @@ final class McpPendingResponses {
     }
 
     void disconnect() {
-        List<CompletableFuture<JsonObject>> pending;
+        List<CompletableFuture<McpResponse>> pending;
         lock.lock();
         try {
             if (!active) {

@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.helidon.common.context.Context;
 import io.helidon.json.JsonObject;
 
 import org.junit.jupiter.api.Test;
@@ -51,9 +52,9 @@ class McpPendingResponsesTest {
         McpInternalException exception = assertThrows(McpInternalException.class, () -> responses.prepare(3));
 
         assertThat(exception.getMessage(), is("Maximum pending response count reached"));
-        JsonObject firstResponse = JsonObject.builder().set("id", 1).build();
-        JsonObject secondResponse = JsonObject.builder().set("id", 2).build();
-        JsonObject thirdResponse = JsonObject.builder().set("id", 3).build();
+        McpResponse firstResponse = createResponse(1);
+        McpResponse secondResponse = createResponse(2);
+        McpResponse thirdResponse = createResponse(3);
         responses.accept(2, secondResponse);
         responses.accept(1, firstResponse);
         assertThat(pollAndDiscard(responses, 1, Duration.ofSeconds(1)).orElseThrow(), sameInstance(firstResponse));
@@ -72,7 +73,7 @@ class McpPendingResponsesTest {
 
         assertThat(pollAndDiscard(responses, 1, Duration.ZERO).isEmpty(), is(true));
 
-        JsonObject response = JsonObject.builder().set("id", 2).build();
+        McpResponse response = createResponse(2);
         responses.prepare(2);
         responses.accept(2, response);
         assertThat(pollAndDiscard(responses, 2, Duration.ofSeconds(1)).orElseThrow(), sameInstance(response));
@@ -99,7 +100,7 @@ class McpPendingResponsesTest {
         assertDisconnected(secondFailure.get());
         McpInternalException exception = assertThrows(McpInternalException.class, () -> responses.prepare(3));
         assertThat(exception.getMessage(), is("Session disconnected"));
-        responses.accept(1, JsonObject.builder().set("id", 1).build());
+        responses.accept(1, createResponse(1));
     }
 
     @Test
@@ -147,10 +148,16 @@ class McpPendingResponsesTest {
         assertThat(prepared.size(), is(capacity));
         assertThat(rejected.get(), is(callers - capacity));
         for (long requestId : prepared) {
-            JsonObject response = JsonObject.builder().set("id", requestId).build();
+            McpResponse response = createResponse(requestId);
             responses.accept(requestId, response);
-            assertThat(pollAndDiscard(responses, requestId, Duration.ofSeconds(1)).orElseThrow(), sameInstance(response));
+            McpResponse polled = pollAndDiscard(responses, requestId, Duration.ofSeconds(1)).orElseThrow();
+            assertThat(polled, sameInstance(response));
         }
+    }
+
+    private static McpResponse createResponse(long requestId) {
+        JsonObject response = JsonObject.builder().set("id", requestId).build();
+        return new McpResponseImpl(response, Context.create());
     }
 
     private static Thread poll(McpPendingResponses responses,
@@ -165,9 +172,9 @@ class McpPendingResponsesTest {
         });
     }
 
-    private static Optional<JsonObject> pollAndDiscard(McpPendingResponses responses,
-                                                       long requestId,
-                                                       Duration timeout) {
+    private static Optional<McpResponse> pollAndDiscard(McpPendingResponses responses,
+                                                        long requestId,
+                                                        Duration timeout) {
         try {
             return responses.poll(requestId, timeout);
         } finally {
