@@ -16,7 +16,7 @@ changes and explains how to migrate existing code from `1.2.x` to `1.3.0`.
 - `McpSamplingContentType` includes `TOOL_USE` and `TOOL_RESULT`.
 - Sampling requests select registered server tools by name, and Helidon executes sampling tool loops automatically.
 - Sampling messages and content support protocol `_meta`; annotated content supports audience, priority, and last-modified data.
-- `McpRequest` exposes protocol `_meta` through `metadata()`; the former `meta()` accessor is deprecated.
+- `McpRequest` exposes protocol `_meta` through `metadata()`; the former `meta()` accessor is removed.
 
 The sections below describe how to migrate applications to version `1.3.0`.
 
@@ -34,10 +34,25 @@ String traceId = request.metadata()
         .orElse("unknown");
 ```
 
-`McpMetadata.metadata()` returns `Optional<McpParameters>`. The generated request builder uses `metadata(McpParameters)`
-instead of the former `meta(McpParameters)`. Use `McpParameters.create(Object)` to serialize a map or custom type with Helidon
-JSON binding; the value must produce a JSON object. The `meta()` request accessor remains as a deprecated compatibility bridge.
-Recompile builder callers and custom `McpRequest` implementations; custom implementations must provide `metadata()`.
+`McpMetadata.metadata()` returns `Optional<McpParameters>`. The generated request builder provides
+`metadata(McpParameters)` and `metadata()`. The former `McpRequest.meta()` accessor and generated builder methods
+`meta(McpParameters)` and `meta()` are removed. Replace builder calls as well:
+
+```java
+// Before
+builder.meta(metadata);
+McpParameters current = builder.meta().orElseThrow();
+
+// After
+builder.metadata(metadata);
+McpParameters current = builder.metadata().orElseThrow();
+```
+
+`McpRequest` builders are public for framework use but are not intended for application request construction. Applications
+should consume request instances supplied by the server. Existing binaries that invoke a removed `meta` method can fail with
+`NoSuchMethodError`; recompile them after applying these source changes. Custom `McpRequest` implementations must implement
+`metadata()`. Use `McpParameters.create(Object)` to serialize a map or custom type with Helidon JSON binding; the value must
+produce a JSON object.
 
 ## Migrate sampling requests to message envelopes
 

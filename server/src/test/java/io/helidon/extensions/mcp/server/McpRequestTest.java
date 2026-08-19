@@ -32,13 +32,8 @@ import static org.mockito.Mockito.mock;
 class McpRequestTest {
 
     @Test
-    @SuppressWarnings("removal")
     void exposesProtocolMetadata() {
-        McpParameters parameters = new McpParameters(JsonObject.builder()
-                                                            .set(McpMetadata.META, JsonObject.builder()
-                                                                    .set("trace", "legacy")
-                                                                    .build())
-                                                            .build());
+        McpParameters parameters = new McpParameters(JsonObject.empty());
         McpParameters metadata = McpParameters.create(Map.of("trace", "test"));
         McpRequest request = McpRequest.builder()
                 .parameters(parameters)
@@ -51,13 +46,11 @@ class McpRequestTest {
 
         McpMetadata requestMetadata = request;
         assertThat(requestMetadata.metadata().orElseThrow(), sameInstance(metadata));
-        assertThat(request.meta().get("trace").asString().orElseThrow(), is("test"));
 
         McpRequest requestWithoutMetadata = McpRequest.builder(request)
                 .clearMetadata()
                 .build();
         assertThat(requestWithoutMetadata.metadata().isEmpty(), is(true));
-        assertThat(requestWithoutMetadata.meta().get("trace").asString().orElseThrow(), is("legacy"));
     }
 
     @Test
@@ -68,4 +61,13 @@ class McpRequestTest {
 
         assertThrows(JsonException.class, () -> parameters.get(McpMetadata.META).as(JsonObject.class));
     }
+
+    @Test
+    void removesLegacyMetaMethods() {
+        assertThrows(NoSuchMethodException.class, () -> McpRequest.class.getMethod("meta"));
+        assertThrows(NoSuchMethodException.class, () -> McpRequest.BuilderBase.class.getMethod("meta"));
+        assertThrows(NoSuchMethodException.class,
+                     () -> McpRequest.BuilderBase.class.getMethod("meta", McpParameters.class));
+    }
+
 }

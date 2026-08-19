@@ -31,17 +31,6 @@ interface McpRequestBlueprint extends McpMetadata {
     McpParameters parameters();
 
     /**
-     * MCP client {@value McpMetadata#META} parameter.
-     *
-     * @return the {@value McpMetadata#META} parameter
-     * @deprecated use {@link #metadata()}
-     */
-    @Deprecated(since = "1.3.0", forRemoval = true)
-    default McpParameters meta() {
-        return metadata().orElseGet(() -> parameters().get(META));
-    }
-
-    /**
      * MCP client features.
      *
      * @return the features
