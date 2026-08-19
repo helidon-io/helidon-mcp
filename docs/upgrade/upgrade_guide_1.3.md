@@ -16,8 +16,27 @@ changes and explains how to migrate existing code from `1.2.x` to `1.3.0`.
 - `McpSamplingContentType` includes `TOOL_USE` and `TOOL_RESULT`.
 - Sampling requests select registered server tools by name, and Helidon executes sampling tool loops automatically.
 - Sampling messages and content support protocol `_meta`; annotated content supports audience, priority, and last-modified data.
+- `McpRequest` exposes protocol `_meta` through `metadata()`; the former `meta()` accessor is deprecated.
 
 The sections below describe how to migrate applications to version `1.3.0`.
+
+## Migrate request metadata access
+
+`McpRequest` now extends `McpMetadata`. Replace the deprecated `meta()` accessor with the optional `metadata()` accessor:
+
+```java
+// Before
+String traceId = request.meta().get("traceId").asString().orElse("unknown");
+
+// After
+String traceId = request.metadata()
+        .map(metadata -> metadata.get("traceId").asString().orElse("unknown"))
+        .orElse("unknown");
+```
+
+The generated request builder now uses `metadata(McpParameters)` instead of `meta(McpParameters)`. The `meta()` request
+accessor remains as a deprecated compatibility bridge, but the former builder method is removed. Recompile builder callers and
+custom `McpRequest` implementations; custom implementations must provide `metadata()`.
 
 ## Migrate sampling requests to message envelopes
 
@@ -180,7 +199,7 @@ McpSamplingTextContent content = McpSamplingTextContent.builder()
                 .addAudience(McpRole.USER)
                 .priority(0.8)
                 .build())
-        .metadata(McpParameters.create(JsonObject.builder()
+        .metadata(new McpParameters(JsonObject.builder()
                 .set("traceId", "trace-1")
                 .build()))
         .build();

@@ -232,7 +232,7 @@ public final class McpSampling extends McpFeature {
                     McpParameters parameters = new McpParameters(paramsBuilder.build());
                     McpRequest toolRequest = McpRequest.builder()
                             .parameters(parameters)
-                            .meta(parameters.get(META))
+                            .update(builder -> parameters.get(META).ifPresent(builder::metadata))
                             .features(features)
                             .protocolVersion(session().protocolVersion().text())
                             .sessionContext(session().context())

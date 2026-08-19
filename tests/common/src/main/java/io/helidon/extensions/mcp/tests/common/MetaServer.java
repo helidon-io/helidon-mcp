@@ -43,7 +43,9 @@ public class MetaServer {
                                            .description("Meta Tool")
                                            .schema("")
                                            .tool(request -> {
-                                               String meta = request.meta().get("foo").asString().orElse("Not found");
+                                               String meta = request.metadata()
+                                                       .map(metadata -> metadata.get("foo").asString().orElse("Not found"))
+                                                       .orElse("Not found");
                                                return McpToolResult.builder()
                                                        .addTextContent(meta)
                                                        .build();
@@ -52,7 +54,9 @@ public class MetaServer {
                                    .addPrompt(prompt -> prompt.name("meta-prompt")
                                            .description("Meta Prompt")
                                            .prompt(request -> {
-                                               String meta = request.meta().get("foo").asString().orElse("Not found");
+                                               String meta = request.metadata()
+                                                       .map(metadata -> metadata.get("foo").asString().orElse("Not found"))
+                                                       .orElse("Not found");
                                                return McpPromptResult.builder()
                                                        .addTextContent(meta)
                                                        .build();
@@ -63,7 +67,22 @@ public class MetaServer {
                                            .name("meta-resource")
                                            .mediaType(MediaTypes.TEXT_PLAIN)
                                            .resource(request -> {
-                                               String meta = request.meta().get("foo").asString().orElse("Not found");
+                                               String meta = request.metadata()
+                                                       .map(metadata -> metadata.get("foo").asString().orElse("Not found"))
+                                                       .orElse("Not found");
+                                               return McpResourceResult.builder()
+                                                       .addTextContent(meta)
+                                                       .build();
+                                           }))
+
+                                   .addResource(resource -> resource.uri("https://template/{name}")
+                                           .description("Meta Resource Template")
+                                           .name("meta-resource-template")
+                                           .mediaType(MediaTypes.TEXT_PLAIN)
+                                           .resource(request -> {
+                                               String meta = request.metadata()
+                                                       .map(metadata -> metadata.get("foo").asString().orElse("Not found"))
+                                                       .orElse("Not found");
                                                return McpResourceResult.builder()
                                                        .addTextContent(meta)
                                                        .build();
@@ -71,7 +90,9 @@ public class MetaServer {
 
                                    .addCompletion(completion -> completion.reference("meta-completion")
                                            .completion(request -> {
-                                               String meta = request.meta().get("foo").asString().orElse("Not found");
+                                               String meta = request.metadata()
+                                                       .map(metadata -> metadata.get("foo").asString().orElse("Not found"))
+                                                       .orElse("Not found");
                                                return McpCompletionResult.builder()
                                                        .addValue(meta)
                                                        .build();

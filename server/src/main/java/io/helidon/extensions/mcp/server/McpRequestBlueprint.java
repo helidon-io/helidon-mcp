@@ -22,7 +22,7 @@ import io.helidon.common.context.Context;
  * A representation of an MCP request.
  */
 @Prototype.Blueprint
-interface McpRequestBlueprint {
+interface McpRequestBlueprint extends McpMetadata {
     /**
      * MCP client parameters.
      *
@@ -34,8 +34,12 @@ interface McpRequestBlueprint {
      * MCP client {@value McpMetadata#META} parameter.
      *
      * @return the {@value McpMetadata#META} parameter
+     * @deprecated use {@link #metadata()}
      */
-    McpParameters meta();
+    @Deprecated(since = "1.3.0", forRemoval = true)
+    default McpParameters meta() {
+        return metadata().orElseGet(() -> parameters().get(META));
+    }
 
     /**
      * MCP client features.

@@ -737,7 +737,7 @@ McpCompletionResult result = McpCompletionResult.builder()
 The `McpRequest` object is the base interface for every request, providing access to client-side data and features.
 
 - **`parameters()`**: Returns `McpParameters` for accessing client-provided parameters.
-- **`meta()`**: Returns `McpParameters` for accessing client-provided metadata.
+- **`metadata()`**: Returns optional `McpParameters` for accessing client-provided protocol metadata.
 - **`features()`**: Returns `McpFeatures` for accessing advanced features such as logging, progress, cancellation, elicitation, sampling, and roots.
 - **`protocolVersion()`**: Returns the negotiated protocol version between the server and the client.
 - **`sessionContext()`**: Returns a `Context` for session-scoped data.

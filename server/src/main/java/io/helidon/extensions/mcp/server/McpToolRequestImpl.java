@@ -15,6 +15,8 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.util.Optional;
+
 import io.helidon.common.context.Context;
 
 final class McpToolRequestImpl implements McpToolRequest {
@@ -43,8 +45,8 @@ final class McpToolRequestImpl implements McpToolRequest {
     }
 
     @Override
-    public McpParameters meta() {
-        return request.meta();
+    public Optional<McpParameters> metadata() {
+        return request.metadata();
     }
 
     @Override

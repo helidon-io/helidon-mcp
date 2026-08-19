@@ -438,7 +438,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         session.beforeFeatureRequest(parameters, requestId);
         McpRequest request = McpRequest.builder()
                 .parameters(parameters)
-                .meta(parameters.get(META))
+                .update(builder -> parameters.get(META).ifPresent(builder::metadata))
                 .features(features)
                 .protocolVersion(session.protocolVersion().text())
                 .sessionContext(session.context())
@@ -477,6 +477,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         McpSession session = foundSession.orElseThrow(() -> new McpInternalException("Session not found"));
 
         McpParameters parameters = new McpParameters(req.params());
+        McpParameters metadata = parameters.get(META);
         String resourceUri = parameters.get("uri").asString().orElse("");
         Optional<McpResource> resource = resources.content().stream()
                 .filter(r -> resourceUri.equals(r.uri()))
@@ -503,7 +504,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         session.beforeFeatureRequest(parameters, requestId);
         McpRequest request = McpRequest.builder()
                 .parameters(parameters)
-                .meta(parameters.get(META))
+                .update(builder -> metadata.ifPresent(builder::metadata))
                 .features(features)
                 .protocolVersion(session.protocolVersion().text())
                 .sessionContext(session.context())
@@ -553,7 +554,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             session.beforeFeatureRequest(parameters, requestId);
             subscriber.get().subscribe(McpSubscribeRequest.builder()
                                                .parameters(parameters)
-                                               .meta(parameters.get(META))
+                                               .update(builder -> parameters.get(META).ifPresent(builder::metadata))
                                                .features(features)
                                                .protocolVersion(session.protocolVersion().text())
                                                .sessionContext(session.context())
@@ -597,7 +598,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             session.beforeFeatureRequest(parameters, requestId);
             unsubscriber.get().unsubscribe(McpUnsubscribeRequest.builder()
                                                    .parameters(parameters)
-                                                   .meta(parameters.get(META))
+                                                   .update(builder -> parameters.get(META).ifPresent(builder::metadata))
                                                    .features(features)
                                                    .protocolVersion(session.protocolVersion().text())
                                                    .sessionContext(session.context())
@@ -674,7 +675,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         session.beforeFeatureRequest(parameters, requestId);
         McpRequest request = McpRequest.builder()
                 .parameters(parameters)
-                .meta(parameters.get(META))
+                .update(builder -> parameters.get(META).ifPresent(builder::metadata))
                 .features(features)
                 .protocolVersion(session.protocolVersion().text())
                 .sessionContext(session.context())
@@ -743,7 +744,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             session.beforeFeatureRequest(parameters, requestId);
             McpRequest request = McpRequest.builder()
                     .parameters(parameters)
-                    .meta(parameters.get(META))
+                    .update(builder -> parameters.get(META).ifPresent(builder::metadata))
                     .features(features)
                     .protocolVersion(session.protocolVersion().text())
                     .sessionContext(session.context())

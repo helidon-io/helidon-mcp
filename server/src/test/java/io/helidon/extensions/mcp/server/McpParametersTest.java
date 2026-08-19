@@ -41,7 +41,7 @@ class McpParametersTest {
     @Test
     void testAsJsonObject() {
         JsonObject object = JsonParser.create("{\"foo\":\"bar\"}").readJsonObject();
-        McpParameters parameters = McpParameters.create(object);
+        McpParameters parameters = new McpParameters(object);
 
         assertThat(parameters.asJsonObject().orElseThrow(), sameInstance(object));
         assertThat(parameters.get("foo").asJsonObject().isEmpty(), is(true));
