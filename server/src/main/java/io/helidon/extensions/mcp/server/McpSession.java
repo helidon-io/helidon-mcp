@@ -136,6 +136,10 @@ class McpSession {
         pendingResponses.discard(requestId);
     }
 
+    void abortResponse(long requestId, RuntimeException exception) {
+        pendingResponses.abort(requestId, exception);
+    }
+
     McpFeatures createFeatures(JsonValue requestId) {
         String key = requestId.toString();
         var transport = transports.get(key)

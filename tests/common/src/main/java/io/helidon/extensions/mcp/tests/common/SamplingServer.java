@@ -17,6 +17,7 @@ package io.helidon.extensions.mcp.tests.common;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Map;
 import java.util.Optional;
 
 import io.helidon.common.media.type.MediaTypes;
@@ -252,7 +253,15 @@ public class SamplingServer {
         public McpToolResult tool(McpToolRequest request) {
             McpSamplingResponse response = request.features()
                     .sampling()
-                    .request(builder -> builder.addTextMessage(USER, "Use the sampled tool")
+                    .request(builder -> builder.addMessage(McpSamplingMessage.builder()
+                                                                  .role(USER)
+                                                                  .metadata(Map.of("source", "server-message"))
+                                                                  .addContent(McpSamplingTextContent.builder()
+                                                                                      .text("Use the sampled tool")
+                                                                                      .metadata(Map.of("source",
+                                                                                                       "server-content"))
+                                                                                      .build())
+                                                                  .build())
                             .addTool(SampledTool.NAME)
                             .toolChoice(McpToolChoice.REQUIRED));
             return McpToolResult.create(response.asTextContent().text());

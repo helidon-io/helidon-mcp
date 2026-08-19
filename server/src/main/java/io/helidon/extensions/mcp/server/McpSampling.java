@@ -34,6 +34,7 @@ import static io.helidon.extensions.mcp.server.McpMetadata.META;
 public final class McpSampling extends McpFeature {
     static final int DEFAULT_MAX_TOOL_ITERATIONS = 10;
 
+    private static final String CANCELLATION_MESSAGE = "Sampling request cancelled";
     private static final System.Logger LOGGER = System.getLogger(McpSampling.class.getName());
 
     private final boolean enabled;
@@ -165,18 +166,8 @@ public final class McpSampling extends McpFeature {
         while (true) {
             checkRequestActive();
             long id = session().jsonRpcId();
-            JsonObject payload = session().serializer().createSamplingRequest(id, currentRequest, toolDefinitions);
-            session().prepareResponse(id);
-            McpResponse mcpResponse;
-            McpSamplingResponse response;
-            try {
-                transport().send(payload);
-                mcpResponse = session().pollResponse(id, currentRequest.timeout())
-                        .orElseThrow(() -> new McpSamplingException("response timeout"));
-                response = session().serializer().createSamplingResponse(mcpResponse.asJsonObject());
-            } finally {
-                session().discardResponse(id);
-            }
+            McpResponse mcpResponse = requestClientResponse(id, currentRequest, toolDefinitions);
+            McpSamplingResponse response = session().serializer().createSamplingResponse(mcpResponse.asJsonObject());
             checkRequestActive();
             List<McpSamplingToolUseContent> toolUses = response.message().contents().stream()
                     .filter(McpSamplingToolUseContent.class::isInstance)
@@ -228,11 +219,11 @@ public final class McpSampling extends McpFeature {
                             .set("name", toolUse.name())
                             .set("arguments", toolUse.input().asJsonObject().orElseThrow());
                     toolUse.metadata().ifPresent(metadata ->
-                            paramsBuilder.set(META, metadata.asJsonObject().orElseThrow()));
+                            paramsBuilder.set(META, McpJsonBinding.serializeObject(metadata)));
                     McpParameters parameters = new McpParameters(paramsBuilder.build());
                     McpRequest toolRequest = McpRequest.builder()
                             .parameters(parameters)
-                            .update(builder -> parameters.get(META).ifPresent(builder::metadata))
+                            .update(builder -> parameters.get(META).as(JsonObject.class).ifPresent(builder::metadata))
                             .features(features)
                             .protocolVersion(session().protocolVersion().text())
                             .sessionContext(session().context())
@@ -265,12 +256,32 @@ public final class McpSampling extends McpFeature {
         }
     }
 
+    private McpResponse requestClientResponse(long id,
+                                              McpSamplingRequest request,
+                                              List<McpTool> toolDefinitions) {
+        JsonObject payload = session().serializer().createSamplingRequest(id, request, toolDefinitions);
+        McpCancellation cancellation = features.cancellation();
+        Runnable cancellationHook = () -> session()
+                .abortResponse(id, new McpSamplingException(CANCELLATION_MESSAGE));
+        try {
+            session().prepareResponse(id);
+            cancellation.registerCancellationHook(cancellationHook);
+            checkRequestActive();
+            transport().send(payload);
+            return session().pollResponse(id, request.timeout())
+                    .orElseThrow(() -> new McpSamplingException("response timeout"));
+        } finally {
+            cancellation.unregisterCancellationHook(cancellationHook);
+            session().discardResponse(id);
+        }
+    }
+
     private void checkRequestActive() {
         if (session().state() == McpSession.State.DISCONNECTED) {
             throw new McpInternalException("Session disconnected");
         }
         if (features.cancellation().result().isRequested()) {
-            throw new McpSamplingException("Sampling request cancelled");
+            throw new McpSamplingException(CANCELLATION_MESSAGE);
         }
     }
 

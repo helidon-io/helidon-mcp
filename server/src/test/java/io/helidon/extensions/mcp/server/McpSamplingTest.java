@@ -19,6 +19,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -44,6 +46,8 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -247,7 +251,9 @@ class McpSamplingTest {
         assertThat(samplingResponse.stopReason().orElseThrow(), is(McpStopReason.END_TURN));
         assertThat(toolRequest.get().name(), is("weather"));
         assertThat(toolRequest.get().arguments().get("city").asString().get(), is("Prague"));
-        assertThat(toolRequest.get().metadata().orElseThrow().get("trace").asString().get(), is("sample-1"));
+        Object metadata = toolRequest.get().metadata().orElseThrow();
+        assertThat(metadata, instanceOf(JsonObject.class));
+        assertThat(((JsonObject) metadata).stringValue("trace").orElseThrow(), is("sample-1"));
         assertThat(toolRequest.get().features(), sameInstance(features));
         assertThat(toolRequest.get().sessionContext(), sameInstance(session.context()));
         assertThat(toolRequest.get().requestContext(), sameInstance(toolUseResponseContext));
@@ -437,6 +443,43 @@ class McpSamplingTest {
         assertThat(exception.getMessage(), is("Sampling request cancelled"));
         assertThat(remainingInvocations.get(), is(0));
         sentSamplingRequests(sink, 1);
+    }
+
+    @Test
+    void cancellationWakesActiveSamplingWait() throws InterruptedException {
+        McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, """
+                {"sampling": {}}
+                """);
+        JsonRpcResponse response = mock(JsonRpcResponse.class);
+        SseSink sink = mock(SseSink.class);
+        CountDownLatch requestSent = new CountDownLatch(1);
+        when(response.sink(SseSink.TYPE)).thenReturn(sink);
+        doAnswer(invocation -> {
+            requestSent.countDown();
+            return null;
+        }).when(sink).emit(any());
+        McpFeatures features = new McpFeatures(session, new McpStreamableHttpTransport(response));
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+        Thread samplingThread = Thread.ofVirtual().start(() -> {
+            try {
+                features.sampling().request(request -> request
+                        .addTextMessage("Wait for cancellation")
+                        .timeout(Duration.ofMinutes(1)));
+            } catch (Throwable e) {
+                failure.set(e);
+            }
+        });
+        assertThat(requestSent.await(1, TimeUnit.SECONDS), is(true));
+
+        features.cancellation().cancel(JsonNull.instance());
+        samplingThread.join(1000);
+
+        assertThat(samplingThread.isAlive(), is(false));
+        assertThat(failure.get(), instanceOf(McpSamplingException.class));
+        assertThat(failure.get().getMessage(), is("Sampling request cancelled"));
+        McpInternalException exception = assertThrows(McpInternalException.class,
+                                                      () -> session.pollResponse(0, Duration.ZERO));
+        assertThat(exception.getMessage(), is("No pending response for request id 0"));
     }
 
     @Test

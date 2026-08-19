@@ -38,7 +38,10 @@ interface McpRequestBlueprint extends McpMetadata {
      */
     @Deprecated(since = "1.3.0", forRemoval = true)
     default McpParameters meta() {
-        return metadata().orElseGet(() -> parameters().get(META));
+        return metadata()
+                .map(McpJsonBinding::serializeObject)
+                .map(McpParameters::new)
+                .orElseGet(() -> parameters().get(META));
     }
 
     /**

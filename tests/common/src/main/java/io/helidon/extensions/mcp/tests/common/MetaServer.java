@@ -18,9 +18,11 @@ package io.helidon.extensions.mcp.tests.common;
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.extensions.mcp.server.McpCompletionResult;
 import io.helidon.extensions.mcp.server.McpPromptResult;
+import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpResourceResult;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpToolResult;
+import io.helidon.json.JsonObject;
 import io.helidon.webserver.http.HttpRouting;
 
 /**
@@ -30,7 +32,6 @@ public class MetaServer {
     private MetaServer() {
     }
 
-    // Returns the "foo" key from "_meta" object sent by client
     /**
      * Setup webserver routing.
      *
@@ -43,9 +44,7 @@ public class MetaServer {
                                            .description("Meta Tool")
                                            .schema("")
                                            .tool(request -> {
-                                               String meta = request.metadata()
-                                                       .map(metadata -> metadata.get("foo").asString().orElse("Not found"))
-                                                       .orElse("Not found");
+                                               String meta = metadata(request);
                                                return McpToolResult.builder()
                                                        .addTextContent(meta)
                                                        .build();
@@ -54,9 +53,7 @@ public class MetaServer {
                                    .addPrompt(prompt -> prompt.name("meta-prompt")
                                            .description("Meta Prompt")
                                            .prompt(request -> {
-                                               String meta = request.metadata()
-                                                       .map(metadata -> metadata.get("foo").asString().orElse("Not found"))
-                                                       .orElse("Not found");
+                                               String meta = metadata(request);
                                                return McpPromptResult.builder()
                                                        .addTextContent(meta)
                                                        .build();
@@ -67,9 +64,7 @@ public class MetaServer {
                                            .name("meta-resource")
                                            .mediaType(MediaTypes.TEXT_PLAIN)
                                            .resource(request -> {
-                                               String meta = request.metadata()
-                                                       .map(metadata -> metadata.get("foo").asString().orElse("Not found"))
-                                                       .orElse("Not found");
+                                               String meta = metadata(request);
                                                return McpResourceResult.builder()
                                                        .addTextContent(meta)
                                                        .build();
@@ -80,9 +75,7 @@ public class MetaServer {
                                            .name("meta-resource-template")
                                            .mediaType(MediaTypes.TEXT_PLAIN)
                                            .resource(request -> {
-                                               String meta = request.metadata()
-                                                       .map(metadata -> metadata.get("foo").asString().orElse("Not found"))
-                                                       .orElse("Not found");
+                                               String meta = metadata(request);
                                                return McpResourceResult.builder()
                                                        .addTextContent(meta)
                                                        .build();
@@ -90,12 +83,18 @@ public class MetaServer {
 
                                    .addCompletion(completion -> completion.reference("meta-completion")
                                            .completion(request -> {
-                                               String meta = request.metadata()
-                                                       .map(metadata -> metadata.get("foo").asString().orElse("Not found"))
-                                                       .orElse("Not found");
+                                               String meta = metadata(request);
                                                return McpCompletionResult.builder()
                                                        .addValue(meta)
                                                        .build();
                                            })));
+    }
+
+    private static String metadata(McpRequest request) {
+        Object value = request.metadata().orElseGet(JsonObject::empty);
+        if (value instanceof JsonObject metadata) {
+            return metadata.stringValue("foo").orElse("Not found");
+        }
+        return "Not found";
     }
 }

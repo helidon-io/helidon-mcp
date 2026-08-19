@@ -578,7 +578,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
                     .role(role)
                     .contents(parseContents(find(result, "content").orElseThrow()));
             result.objectValue(META)
-                    .map(McpParameters::new)
+                    .map(value -> McpJsonBinding.deserialize(value, Object.class))
                     .ifPresent(messageBuilder::metadata);
             McpSamplingMessage message = messageBuilder.build();
             return find(result, "stopReason")
@@ -615,7 +615,9 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
             case TEXT -> {
                 McpSamplingTextContent.Builder builder = McpSamplingTextContent.builder()
                         .text(object.stringValue("text").orElseThrow());
-                object.objectValue(META).map(McpParameters::new).ifPresent(builder::metadata);
+                object.objectValue(META)
+                        .map(value -> McpJsonBinding.deserialize(value, Object.class))
+                        .ifPresent(builder::metadata);
                 parseAnnotations(object).ifPresent(builder::annotations);
                 yield builder.build();
             }
@@ -627,7 +629,9 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
                 McpSamplingImageContent.Builder builder = McpSamplingImageContent.builder()
                         .data(data)
                         .mediaType(mediaType);
-                object.objectValue(META).map(McpParameters::new).ifPresent(builder::metadata);
+                object.objectValue(META)
+                        .map(value -> McpJsonBinding.deserialize(value, Object.class))
+                        .ifPresent(builder::metadata);
                 parseAnnotations(object).ifPresent(builder::annotations);
                 yield builder.build();
             }
@@ -639,7 +643,9 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
                 McpSamplingAudioContent.Builder builder = McpSamplingAudioContent.builder()
                         .data(data)
                         .mediaType(mediaType);
-                object.objectValue(META).map(McpParameters::new).ifPresent(builder::metadata);
+                object.objectValue(META)
+                        .map(value -> McpJsonBinding.deserialize(value, Object.class))
+                        .ifPresent(builder::metadata);
                 parseAnnotations(object).ifPresent(builder::annotations);
                 yield builder.build();
             }

@@ -85,24 +85,28 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
             builder.setValues("content", contents);
         }
         message.metadata()
-                .ifPresent(metadata -> builder.set(META, metadata.asJsonObject()
-                        .orElseThrow(() -> new McpSamplingException("Sampling message metadata must be a JSON object"))));
+                .ifPresent(metadata -> builder.set(META, serializeSamplingMessageMetadata(metadata)));
         return builder;
     }
 
     @Override
     public JsonObject.Builder toJson(McpSamplingContent content) {
         JsonObject.Builder builder;
+        boolean serializeMetadata;
         if (content instanceof McpSamplingToolUseContent toolUse) {
             builder = toJson(toolUse);
+            serializeMetadata = true;
         } else if (content instanceof McpSamplingToolResultContent toolResult) {
             builder = toJson(toolResult);
+            serializeMetadata = true;
         } else {
             builder = super.toJson(content);
+            serializeMetadata = false;
         }
-        content.metadata()
-                .ifPresent(metadata -> builder.set(META, metadata.asJsonObject()
-                        .orElseThrow(() -> new McpSamplingException("Sampling content metadata must be a JSON object"))));
+        if (serializeMetadata) {
+            content.metadata()
+                    .ifPresent(metadata -> builder.set(META, serializeSamplingContentMetadata(metadata)));
+        }
         if (content instanceof McpSamplingAnnotatedContent annotated) {
             annotated.annotations().ifPresent(annotations -> builder.set("annotations", toJson(annotations)));
         }
@@ -197,7 +201,7 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
                 .name(object.stringValue("name").orElseThrow())
                 .input(new McpParameters(input));
         object.objectValue(META)
-                .map(McpParameters::new)
+                .map(value -> McpJsonBinding.deserialize(value, Object.class))
                 .ifPresent(builder::metadata);
         return builder.build();
     }
@@ -230,7 +234,7 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
                 .toolUseId(object.stringValue("toolUseId").orElseThrow())
                 .result(resultBuilder.build());
         object.objectValue(META)
-                .map(McpParameters::new)
+                .map(value -> McpJsonBinding.deserialize(value, Object.class))
                 .ifPresent(builder::metadata);
         return builder.build();
     }
@@ -241,7 +245,9 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
                 McpToolTextContent.Builder builder = McpToolTextContent.builder()
                         .text(content.stringValue("text").orElseThrow());
                 parseAnnotations(content).ifPresent(builder::annotations);
-                content.objectValue(META).map(McpParameters::new).ifPresent(builder::metadata);
+                content.objectValue(META)
+                        .map(value -> McpJsonBinding.deserialize(value, Object.class))
+                        .ifPresent(builder::metadata);
                 yield builder.build();
             }
             case "image" -> {
@@ -251,7 +257,9 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
                                       .orElseThrow())
                         .mediaType(MediaTypes.create(content.stringValue("mimeType").orElseThrow()));
                 parseAnnotations(content).ifPresent(builder::annotations);
-                content.objectValue(META).map(McpParameters::new).ifPresent(builder::metadata);
+                content.objectValue(META)
+                        .map(value -> McpJsonBinding.deserialize(value, Object.class))
+                        .ifPresent(builder::metadata);
                 yield builder.build();
             }
             case "audio" -> {
@@ -261,7 +269,9 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
                                       .orElseThrow())
                         .mediaType(MediaTypes.create(content.stringValue("mimeType").orElseThrow()));
                 parseAnnotations(content).ifPresent(builder::annotations);
-                content.objectValue(META).map(McpParameters::new).ifPresent(builder::metadata);
+                content.objectValue(META)
+                        .map(value -> McpJsonBinding.deserialize(value, Object.class))
+                        .ifPresent(builder::metadata);
                 yield builder.build();
             }
             case "resource_link" -> parseToolResourceLink(content);
@@ -283,7 +293,9 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
                 .map(this::parseIcon)
                 .forEach(builder::addIcon));
         parseAnnotations(content).ifPresent(builder::annotations);
-        content.objectValue(META).map(McpParameters::new).ifPresent(builder::metadata);
+        content.objectValue(META)
+                .map(value -> McpJsonBinding.deserialize(value, Object.class))
+                .ifPresent(builder::metadata);
         return builder.build();
     }
 
@@ -298,7 +310,9 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
                                        .orElse(MediaTypes.TEXT_PLAIN))
                     .text(resource.stringValue("text").orElseThrow());
             parseAnnotations(content).ifPresent(builder::annotations);
-            content.objectValue(META).map(McpParameters::new).ifPresent(builder::metadata);
+            content.objectValue(META)
+                    .map(value -> McpJsonBinding.deserialize(value, Object.class))
+                    .ifPresent(builder::metadata);
             return builder.build();
         }
         McpToolBinaryResourceContent.Builder builder = McpToolBinaryResourceContent.builder()
@@ -310,7 +324,9 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
                               .map(value -> Base64.getDecoder().decode(value))
                               .orElseThrow());
         parseAnnotations(content).ifPresent(builder::annotations);
-        content.objectValue(META).map(McpParameters::new).ifPresent(builder::metadata);
+        content.objectValue(META)
+                .map(value -> McpJsonBinding.deserialize(value, Object.class))
+                .ifPresent(builder::metadata);
         return builder.build();
     }
 
@@ -418,6 +434,14 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
         }
         if (toolUses.stream().map(McpSamplingToolUseContent::id).distinct().count() != toolUses.size()) {
             throw new McpSamplingException("Sampling tool use identifiers must be unique within a message");
+        }
+    }
+
+    private JsonObject serializeSamplingMessageMetadata(Object metadata) {
+        try {
+            return McpJsonBinding.serializeObject(metadata);
+        } catch (RuntimeException e) {
+            throw new McpSamplingException("Sampling message metadata must be a JSON object", e);
         }
     }
 }

@@ -58,7 +58,9 @@ class McpSdkStreamableSamplingToolsTest {
                     "type", "tool_use",
                     "id", TOOL_USE_ID,
                     "name", SAMPLED_TOOL,
-                    "input", Map.of("value", TOOL_INPUT))),
+                    "input", Map.of("value", TOOL_INPUT),
+                    "_meta", Map.of("source", "client-content"))),
+            "_meta", Map.of("source", "client-message"),
             "model", "test-model",
             "stopReason", "toolUse");
     private static final Map<String, Object> FINAL_SAMPLING_RESPONSE = Map.of(
@@ -153,9 +155,11 @@ class McpSdkStreamableSamplingToolsTest {
         assertThat(firstMessages.size(), is(1));
         Map<?, ?> firstMessage = asMap(firstMessages.getFirst());
         assertThat(firstMessage.get("role"), is("user"));
+        assertThat(asMap(firstMessage.get("_meta")).get("source"), is("server-message"));
         Map<?, ?> firstContent = asMap(firstMessage.get("content"));
         assertThat(firstContent.get("type"), is("text"));
         assertThat(firstContent.get("text"), is("Use the sampled tool"));
+        assertThat(asMap(firstContent.get("_meta")).get("source"), is("server-content"));
 
         Map<String, Object> secondRequest = requests.get(1);
         assertThat(secondRequest.get("tools"), is(firstRequest.get("tools")));
@@ -165,11 +169,13 @@ class McpSdkStreamableSamplingToolsTest {
 
         Map<?, ?> toolUseMessage = asMap(messages.get(1));
         assertThat(toolUseMessage.get("role"), is("assistant"));
+        assertThat(asMap(toolUseMessage.get("_meta")).get("source"), is("client-message"));
         Map<?, ?> toolUse = asMap(toolUseMessage.get("content"));
         assertThat(toolUse.get("type"), is("tool_use"));
         assertThat(toolUse.get("id"), is(TOOL_USE_ID));
         assertThat(toolUse.get("name"), is(SAMPLED_TOOL));
         assertThat(asMap(toolUse.get("input")).get("value"), is(TOOL_INPUT));
+        assertThat(asMap(toolUse.get("_meta")).get("source"), is("client-content"));
 
         Map<?, ?> toolResultMessage = asMap(messages.get(2));
         assertThat(toolResultMessage.get("role"), is("user"));

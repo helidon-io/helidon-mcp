@@ -19,6 +19,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -73,6 +74,20 @@ final class McpPendingResponses {
         }
         if (pendingResponse != null) {
             pendingResponse.complete(response);
+        }
+    }
+
+    void abort(long requestId, RuntimeException exception) {
+        Objects.requireNonNull(exception, "exception is null");
+        CompletableFuture<McpResponse> pendingResponse;
+        lock.lock();
+        try {
+            pendingResponse = responses.get(requestId);
+        } finally {
+            lock.unlock();
+        }
+        if (pendingResponse != null) {
+            pendingResponse.completeExceptionally(exception);
         }
     }
 

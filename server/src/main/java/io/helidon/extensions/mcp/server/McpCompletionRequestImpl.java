@@ -56,7 +56,7 @@ final class McpCompletionRequestImpl implements McpCompletionRequest {
     }
 
     @Override
-    public Optional<McpParameters> metadata() {
+    public Optional<Object> metadata() {
         return request.metadata();
     }
 

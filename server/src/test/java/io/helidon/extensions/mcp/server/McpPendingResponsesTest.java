@@ -80,6 +80,39 @@ class McpPendingResponsesTest {
     }
 
     @Test
+    void abortWakesPendingPollAndReusesSlot() throws InterruptedException {
+        McpPendingResponses responses = new McpPendingResponses(1);
+        responses.prepare(1);
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+        Thread poller = poll(responses, 1, failure);
+        awaitWaiting(poller);
+        McpSamplingException cancellation = new McpSamplingException("Sampling request cancelled");
+
+        responses.abort(1, cancellation);
+        responses.accept(createResponse(1));
+        poller.join(1000);
+
+        assertThat(poller.isAlive(), is(false));
+        assertThat(failure.get(), sameInstance(cancellation));
+        McpResponse response = createResponse(2);
+        responses.prepare(2);
+        responses.accept(response);
+        assertThat(pollAndDiscard(responses, 2, Duration.ofSeconds(1)).orElseThrow(), sameInstance(response));
+    }
+
+    @Test
+    void completedResponseWinsLateAbort() {
+        McpPendingResponses responses = new McpPendingResponses(1);
+        responses.prepare(1);
+        McpResponse response = createResponse(1);
+        responses.accept(response);
+
+        responses.abort(1, new McpSamplingException("Sampling request cancelled"));
+
+        assertThat(pollAndDiscard(responses, 1, Duration.ofSeconds(1)).orElseThrow(), sameInstance(response));
+    }
+
+    @Test
     void disconnectCompletesAllPendingAndRejectsNewRegistrations() throws InterruptedException {
         McpPendingResponses responses = new McpPendingResponses(2);
         responses.prepare(1);

@@ -322,12 +322,12 @@ class McpJsonSerializerV3Test {
                 .uri(URI.create("memory://forecast"))
                 .mediaType(MediaTypes.TEXT_PLAIN)
                 .text("sunny")
-                .metadata(new McpParameters(JsonObject.builder().set("content", true).build()))
+                .metadata(new StructuredContent("metadata"))
                 .build();
 
         JsonObject payload = MJS.toJson(content).orElseThrow().build();
 
-        assertThat(payload.objectValue(META).orElseThrow().booleanValue("content").orElseThrow(), is(true));
+        assertThat(payload.objectValue(META).orElseThrow().stringValue("foo").orElseThrow(), is("metadata"));
         assertThat(payload.objectValue("resource").orElseThrow().objectValue(META).isEmpty(), is(true));
     }
 

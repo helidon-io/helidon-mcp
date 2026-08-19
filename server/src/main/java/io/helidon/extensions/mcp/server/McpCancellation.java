@@ -75,6 +75,16 @@ public final class McpCancellation {
         }
     }
 
+    void unregisterCancellationHook(Runnable hook) {
+        Objects.requireNonNull(hook, "hook is null");
+        lock.lock();
+        try {
+            hooks.remove(hook);
+        } finally {
+            lock.unlock();
+        }
+    }
+
     /**
      * Cancel the current operation. This method can be triggered only once and
      * additional calls are ignored.

@@ -15,7 +15,10 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.util.Map;
+
 import io.helidon.common.context.Context;
+import io.helidon.json.JsonException;
 import io.helidon.json.JsonObject;
 
 import org.junit.jupiter.api.Test;
@@ -23,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
 class McpRequestTest {
@@ -35,9 +39,7 @@ class McpRequestTest {
                                                                     .set("trace", "legacy")
                                                                     .build())
                                                             .build());
-        McpParameters metadata = new McpParameters(JsonObject.builder()
-                                                            .set("trace", "test")
-                                                            .build());
+        Map<String, String> metadata = Map.of("trace", "test");
         McpRequest request = McpRequest.builder()
                 .parameters(parameters)
                 .metadata(metadata)
@@ -49,12 +51,21 @@ class McpRequestTest {
 
         McpMetadata requestMetadata = request;
         assertThat(requestMetadata.metadata().orElseThrow(), sameInstance(metadata));
-        assertThat(request.meta(), sameInstance(metadata));
+        assertThat(request.meta().get("trace").asString().orElseThrow(), is("test"));
 
         McpRequest requestWithoutMetadata = McpRequest.builder(request)
                 .clearMetadata()
                 .build();
         assertThat(requestWithoutMetadata.metadata().isEmpty(), is(true));
         assertThat(requestWithoutMetadata.meta().get("trace").asString().orElseThrow(), is("legacy"));
+    }
+
+    @Test
+    void rejectsNonObjectProtocolMetadata() {
+        McpParameters parameters = new McpParameters(JsonObject.builder()
+                                                            .set(McpMetadata.META, 1)
+                                                            .build());
+
+        assertThrows(JsonException.class, () -> parameters.get(McpMetadata.META).as(JsonObject.class));
     }
 }

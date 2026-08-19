@@ -86,6 +86,19 @@ class McpCancellationTest {
     }
 
     @Test
+    void testUnregisteredCancellationHookDoesNotRun() {
+        AtomicInteger counter = new AtomicInteger();
+        McpCancellation cancellation = new McpCancellation();
+        Runnable hook = counter::incrementAndGet;
+        cancellation.registerCancellationHook(hook);
+
+        cancellation.unregisterCancellationHook(hook);
+        cancellation.cancel(JsonNull.instance());
+
+        assertThat(counter.get(), is(0));
+    }
+
+    @Test
     void testFailingCancellationHookDoesNotSuppressLaterHook() {
         AtomicInteger counter = new AtomicInteger();
         McpCancellation cancellation = new McpCancellation();
