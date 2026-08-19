@@ -45,7 +45,7 @@ final class McpPromptRequestImpl implements McpPromptRequest {
     }
 
     @Override
-    public Optional<Object> metadata() {
+    public Optional<McpParameters> metadata() {
         return request.metadata();
     }
 

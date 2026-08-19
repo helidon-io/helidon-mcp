@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import io.helidon.common.GenericType;
 import io.helidon.common.mapper.OptionalValue;
 import io.helidon.json.JsonArray;
+import io.helidon.json.JsonNull;
 import io.helidon.json.JsonObject;
 import io.helidon.json.JsonParser;
 import io.helidon.json.binding.Json;
@@ -36,15 +37,64 @@ import org.junit.platform.commons.JUnitException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class McpParametersTest {
     @Test
     void testAsJsonObject() {
         JsonObject object = JsonParser.create("{\"foo\":\"bar\"}").readJsonObject();
-        McpParameters parameters = new McpParameters(object);
+        McpParameters parameters = McpParameters.create(object);
 
         assertThat(parameters.asJsonObject().orElseThrow(), sameInstance(object));
         assertThat(parameters.get("foo").asJsonObject().isEmpty(), is(true));
+    }
+
+    @Test
+    void createsFromMap() {
+        Map<String, Object> values = new HashMap<>();
+        values.put("name", "metadata");
+        values.put("enabled", true);
+        values.put("count", 2);
+        values.put("nested", List.of("first", 3));
+        values.put("nullable", null);
+
+        McpParameters parameters = McpParameters.create(values);
+        values.put("name", "changed");
+
+        assertThat(parameters.get("name").asString().orElseThrow(), is("metadata"));
+        assertThat(parameters.get("enabled").asBoolean().orElseThrow(), is(true));
+        assertThat(parameters.get("count").asInteger().orElseThrow(), is(2));
+        assertThat(parameters.get("nested").asList().orElseThrow().size(), is(2));
+        assertThat(parameters.get("nullable").isEmpty(), is(true));
+        assertThat(McpParameters.create(Map.of()).asJsonObject().orElseThrow(), is(JsonObject.empty()));
+    }
+
+    @Test
+    void createsFromJsonEntity() {
+        Foo expected = new Foo("value1", "value2");
+
+        Foo actual = McpParameters.create(expected).as(Foo.class).orElseThrow();
+
+        assertThat(actual, is(expected));
+    }
+
+    @Test
+    void rejectsNullFactoryValue() {
+        NullPointerException exception = assertThrows(NullPointerException.class, () -> McpParameters.create(null));
+
+        assertThat(exception.getMessage(), is("value is null"));
+    }
+
+    @Test
+    void rejectsNonObjectFactoryValues() {
+        List<Object> values = List.of("text", 1, true, List.of("value"), new int[] {1}, JsonNull.instance(),
+                                      new Unsupported("value"), new McpParameters(JsonObject.empty()));
+
+        for (Object value : values) {
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                                                               () -> McpParameters.create(value));
+            assertThat(exception.getMessage(), is("value must serialize to a JSON object using Helidon JSON binding"));
+        }
     }
 
     @Test
@@ -486,5 +536,8 @@ class McpParametersTest {
 
     @Json.Entity
     public record Foo(String foo, String bar) {
+    }
+
+    private record Unsupported(String value) {
     }
 }

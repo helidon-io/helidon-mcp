@@ -22,7 +22,6 @@ import io.helidon.extensions.mcp.server.McpRequest;
 import io.helidon.extensions.mcp.server.McpResourceResult;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpToolResult;
-import io.helidon.json.JsonObject;
 import io.helidon.webserver.http.HttpRouting;
 
 /**
@@ -91,10 +90,9 @@ public class MetaServer {
     }
 
     private static String metadata(McpRequest request) {
-        Object value = request.metadata().orElseGet(JsonObject::empty);
-        if (value instanceof JsonObject metadata) {
-            return metadata.stringValue("foo").orElse("Not found");
+        if (request.metadata().isEmpty()) {
+            return "Not found";
         }
-        return "Not found";
+        return request.metadata().orElseThrow().get("foo").asString().orElse("Not found");
     }
 }

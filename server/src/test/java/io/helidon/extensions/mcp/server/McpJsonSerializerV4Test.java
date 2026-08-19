@@ -242,9 +242,7 @@ class McpJsonSerializerV4Test {
         assertThat(content.id(), is("call-1"));
         assertThat(content.name(), is("weather"));
         assertThat(content.input().get("city").asString().orElse(""), is("Prague"));
-        Object metadata = content.metadata().orElseThrow();
-        assertThat(metadata, instanceOf(JsonObject.class));
-        assertThat(((JsonObject) metadata).stringValue("provider").orElseThrow(), is("test"));
+        assertThat(content.metadata().orElseThrow().get("provider").asString().orElse(""), is("test"));
         assertThrows(McpSamplingException.class, response::asTextContent);
     }
 
@@ -336,21 +334,18 @@ class McpJsonSerializerV4Test {
         assertThat(result.audioContents().getFirst().data(), is("data".getBytes(StandardCharsets.UTF_8)));
         McpToolTextResourceContent textResource = result.textResourceContents().getFirst();
         assertThat(textResource.text(), is("sunny"));
-        JsonObject textResourceMetadata = (JsonObject) textResource.metadata().orElseThrow();
-        assertThat(textResourceMetadata.booleanValue("embeddedText").orElseThrow(), is(true));
-        assertThat(textResourceMetadata.value("resourceText").isEmpty(), is(true));
+        assertThat(textResource.metadata().orElseThrow().get("embeddedText").asBoolean().orElseThrow(), is(true));
+        assertThat(textResource.metadata().orElseThrow().get("resourceText").isEmpty(), is(true));
         McpToolBinaryResourceContent binaryResource = result.binaryResourceContents().getFirst();
         assertThat(binaryResource.data(), is("data".getBytes(StandardCharsets.UTF_8)));
-        JsonObject binaryResourceMetadata = (JsonObject) binaryResource.metadata().orElseThrow();
-        assertThat(binaryResourceMetadata.booleanValue("embeddedBinary").orElseThrow(), is(true));
-        assertThat(binaryResourceMetadata.value("resourceBinary").isEmpty(), is(true));
+        assertThat(binaryResource.metadata().orElseThrow().get("embeddedBinary").asBoolean().orElseThrow(), is(true));
+        assertThat(binaryResource.metadata().orElseThrow().get("resourceBinary").isEmpty(), is(true));
         McpToolResourceLinkContent link = result.resourceLinkContents().getFirst();
         assertThat(link.name(), is("weather"));
         assertThat(link.icons().getFirst().theme().orElseThrow(), is(McpIconTheme.DARK));
         assertThat(result.structuredContent().isPresent(), is(true));
         assertThat(result.error(), is(false));
-        JsonObject contentMetadata = (JsonObject) content.metadata().orElseThrow();
-        assertThat(contentMetadata.booleanValue("cached").orElseThrow(), is(true));
+        assertThat(content.metadata().orElseThrow().get("cached").asBoolean().orElseThrow(), is(true));
 
         McpSamplingRequest replay = McpSamplingRequest.builder()
                 .addMessage(McpSamplingMessage.builder()
@@ -416,10 +411,12 @@ class McpJsonSerializerV4Test {
                 }
                 """).readJsonObject());
 
-        JsonObject messageMetadata = (JsonObject) response.message().metadata().orElseThrow();
-        JsonObject contentMetadata = (JsonObject) response.asTextContent().metadata().orElseThrow();
-        assertThat(messageMetadata.stringValue("messageKey").orElseThrow(), is("messageValue"));
-        assertThat(contentMetadata.stringValue("contentKey").orElseThrow(), is("contentValue"));
+        assertThat(response.message().metadata().orElseThrow()
+                           .get("messageKey").asString().orElseThrow(),
+                   is("messageValue"));
+        assertThat(response.asTextContent().metadata().orElseThrow()
+                           .get("contentKey").asString().orElseThrow(),
+                   is("contentValue"));
         McpAnnotations annotations = response.asTextContent().annotations().orElseThrow();
         assertThat(annotations.audience(), contains(McpRole.USER, McpRole.ASSISTANT));
         assertThat(annotations.priority().orElseThrow(), is(0.8));
@@ -460,7 +457,7 @@ class McpJsonSerializerV4Test {
                                      .priority(0.8)
                                      .lastModified("2026-08-06T10:15:30Z")
                                      .build())
-                .metadata(Map.of("provider", "test"))
+                .metadata(McpParameters.create(Map.of("provider", "test")))
                 .build();
         McpSamplingRequest request = McpSamplingRequest.builder()
                 .addMessage(McpSamplingMessage.builder()
@@ -587,7 +584,7 @@ class McpJsonSerializerV4Test {
                 .result(McpToolResult.builder()
                                 .structuredContent(Map.of("temperature", 18))
                                 .build())
-                .metadata(Map.of("cached", true))
+                .metadata(McpParameters.create(Map.of("cached", true)))
                 .build();
         McpSamplingToolResultContent secondResult = McpSamplingToolResultContent.builder()
                 .toolUseId("call-2")
@@ -930,7 +927,6 @@ class McpJsonSerializerV4Test {
     @Test
     void rejectsNonObjectSamplingToolParameters() {
         McpParameters scalarParameter = new McpParameters(JsonObject.builder().set("value", 1).build()).get("value");
-        int scalarMetadata = 1;
         McpSamplingToolUseContent validUse = McpSamplingToolUseContent.builder()
                 .id("call-1")
                 .name("weather")
@@ -958,7 +954,7 @@ class McpJsonSerializerV4Test {
                 .addMessage(McpSamplingMessage.builder()
                                     .role(McpRole.ASSISTANT)
                                     .addContent(McpSamplingToolUseContent.builder(validUse)
-                                                        .metadata(scalarMetadata)
+                                                        .metadata(scalarParameter)
                                                         .build())
                                     .build())
                 .addMessage(McpSamplingMessage.builder()
@@ -974,14 +970,14 @@ class McpJsonSerializerV4Test {
                 .addMessage(McpSamplingMessage.builder()
                                     .role(McpRole.USER)
                                     .addContent(McpSamplingToolResultContent.builder(validResult)
-                                                        .metadata(scalarMetadata)
+                                                        .metadata(scalarParameter)
                                                         .build())
                                     .build())
                 .build();
         McpSamplingRequest scalarMessageMeta = McpSamplingRequest.builder()
                 .addMessage(McpSamplingMessage.builder()
                                     .role(McpRole.ASSISTANT)
-                                    .metadata(scalarMetadata)
+                                    .metadata(scalarParameter)
                                     .addContent(validUse)
                                     .build())
                 .addMessage(McpSamplingMessage.builder()

@@ -737,8 +737,8 @@ McpCompletionResult result = McpCompletionResult.builder()
 The `McpRequest` object is the base interface for every request, providing access to client-side data and features.
 
 - **`parameters()`**: Returns `McpParameters` for accessing client-provided parameters.
-- **`metadata()`**: Returns optional `Object` protocol metadata deserialized with Helidon JSON binding. Incoming JSON objects
-  are represented as `JsonObject`.
+- **`metadata()`**: Returns optional `McpParameters` for accessing client-provided protocol metadata. Use
+  `McpParameters.create(Object)` to create metadata from maps or custom Helidon JSON types.
 - **`features()`**: Returns `McpFeatures` for accessing advanced features such as logging, progress, cancellation, elicitation, sampling, and roots.
 - **`protocolVersion()`**: Returns the negotiated protocol version between the server and the client.
 - **`sessionContext()`**: Returns a `Context` for session-scoped data.
@@ -1169,9 +1169,8 @@ builder also provides `addTextMessage(String)` and `addTextMessage(McpRole, Stri
 Text, image, and audio blocks can also carry `McpAnnotations` for audience, priority, and last-modified metadata. Every
 sampling content block and sampling message envelope supports its own wire `_meta` value through `metadata(...)` and
 `metadata()`. The public tool-content types, such as `McpToolTextContent` and `McpToolImageContent`, expose the same
-annotations and metadata options. Builder values are serialized with Helidon JSON binding and must produce a JSON object;
-maps and converter-backed custom types are supported. Incoming metadata is deserialized as `Object`, with JSON objects
-represented as `JsonObject`.
+annotations and metadata options. These builders accept `McpParameters`; use `McpParameters.create(Object)` to serialize maps
+or converter-backed custom types with Helidon JSON binding. The supplied value must produce a JSON object.
 
 Create sampling request messages with the `McpSamplingRequest` builder:
 

@@ -23,6 +23,7 @@ import java.util.Optional;
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.extensions.mcp.server.McpContentType;
 import io.helidon.extensions.mcp.server.McpException;
+import io.helidon.extensions.mcp.server.McpParameters;
 import io.helidon.extensions.mcp.server.McpSampling;
 import io.helidon.extensions.mcp.server.McpSamplingAudioContent;
 import io.helidon.extensions.mcp.server.McpSamplingException;
@@ -251,15 +252,16 @@ public class SamplingServer {
 
         @Override
         public McpToolResult tool(McpToolRequest request) {
+            McpParameters messageMetadata = McpParameters.create(Map.of("source", "server-message"));
+            McpParameters contentMetadata = McpParameters.create(Map.of("source", "server-content"));
             McpSamplingResponse response = request.features()
                     .sampling()
                     .request(builder -> builder.addMessage(McpSamplingMessage.builder()
                                                                   .role(USER)
-                                                                  .metadata(Map.of("source", "server-message"))
+                                                                  .metadata(messageMetadata)
                                                                   .addContent(McpSamplingTextContent.builder()
                                                                                       .text("Use the sampled tool")
-                                                                                      .metadata(Map.of("source",
-                                                                                                       "server-content"))
+                                                                                      .metadata(contentMetadata)
                                                                                       .build())
                                                                   .build())
                             .addTool(SampledTool.NAME)

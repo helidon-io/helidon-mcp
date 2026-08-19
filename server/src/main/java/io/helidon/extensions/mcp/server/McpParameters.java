@@ -41,7 +41,7 @@ import io.helidon.json.binding.Json;
 import io.helidon.jsonrpc.core.JsonRpcParams;
 
 /**
- * MCP client parameters provided to {@link McpTool} and {@link McpPrompt}.
+ * JSON object wrapper used for MCP client parameters, protocol metadata, and sampling tool input.
  */
 public final class McpParameters {
     private static final Mappers MAPPERS = Mappers.create();
@@ -55,11 +55,6 @@ public final class McpParameters {
         this(params.asJsonValue(), "key");
     }
 
-    /**
-     * Create parameters backed by a JSON object.
-     *
-     * @param value parameter values
-     */
     McpParameters(JsonObject value) {
         this(Objects.requireNonNull(value, "value is null"), "key");
     }
@@ -67,6 +62,25 @@ public final class McpParameters {
     private McpParameters(JsonValue root, String key) {
         this.value = root;
         this.key = key;
+    }
+
+    /**
+     * Create parameters by serializing a value with Helidon JSON binding. The value must serialize to a JSON object. Custom
+     * types must have a Helidon JSON converter, for example by annotating the type with {@link Json.Entity} and enabling
+     * Helidon JSON code generation. JSON-B annotations and unregistered POJOs are not supported.
+     *
+     * @param value value to serialize
+     * @return MCP parameters
+     * @throws NullPointerException if {@code value} is {@code null}
+     * @throws IllegalArgumentException if the value cannot be serialized to a JSON object
+     */
+    public static McpParameters create(Object value) {
+        Objects.requireNonNull(value, "value is null");
+        try {
+            return new McpParameters(McpJsonBinding.serializeObject(value));
+        } catch (RuntimeException e) {
+            throw new IllegalArgumentException("value must serialize to a JSON object using Helidon JSON binding", e);
+        }
     }
 
     /**

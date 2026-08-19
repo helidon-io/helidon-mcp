@@ -578,7 +578,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
                     .role(role)
                     .contents(parseContents(find(result, "content").orElseThrow()));
             result.objectValue(META)
-                    .map(value -> McpJsonBinding.deserialize(value, Object.class))
+                    .map(McpParameters::new)
                     .ifPresent(messageBuilder::metadata);
             McpSamplingMessage message = messageBuilder.build();
             return find(result, "stopReason")
@@ -616,7 +616,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
                 McpSamplingTextContent.Builder builder = McpSamplingTextContent.builder()
                         .text(object.stringValue("text").orElseThrow());
                 object.objectValue(META)
-                        .map(value -> McpJsonBinding.deserialize(value, Object.class))
+                        .map(McpParameters::new)
                         .ifPresent(builder::metadata);
                 parseAnnotations(object).ifPresent(builder::annotations);
                 yield builder.build();
@@ -630,7 +630,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
                         .data(data)
                         .mediaType(mediaType);
                 object.objectValue(META)
-                        .map(value -> McpJsonBinding.deserialize(value, Object.class))
+                        .map(McpParameters::new)
                         .ifPresent(builder::metadata);
                 parseAnnotations(object).ifPresent(builder::annotations);
                 yield builder.build();
@@ -644,7 +644,7 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
                         .data(data)
                         .mediaType(mediaType);
                 object.objectValue(META)
-                        .map(value -> McpJsonBinding.deserialize(value, Object.class))
+                        .map(McpParameters::new)
                         .ifPresent(builder::metadata);
                 parseAnnotations(object).ifPresent(builder::annotations);
                 yield builder.build();

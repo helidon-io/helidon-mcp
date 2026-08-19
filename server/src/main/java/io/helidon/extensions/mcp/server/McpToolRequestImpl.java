@@ -45,7 +45,7 @@ final class McpToolRequestImpl implements McpToolRequest {
     }
 
     @Override
-    public Optional<Object> metadata() {
+    public Optional<McpParameters> metadata() {
         return request.metadata();
     }
 

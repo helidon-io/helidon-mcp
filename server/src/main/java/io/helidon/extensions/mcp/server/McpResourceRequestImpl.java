@@ -33,7 +33,7 @@ final class McpResourceRequestImpl implements McpResourceRequest {
     }
 
     @Override
-    public Optional<Object> metadata() {
+    public Optional<McpParameters> metadata() {
         return request.metadata();
     }
 

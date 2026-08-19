@@ -17,9 +17,6 @@ package io.helidon.extensions.mcp.server;
 
 import java.util.Optional;
 
-import io.helidon.json.JsonObject;
-import io.helidon.json.binding.Json;
-
 /**
  * MCP component that supports optional protocol metadata.
  */
@@ -30,14 +27,10 @@ public interface McpMetadata {
     String META = "_meta";
 
     /**
-     * Optional protocol metadata represented by the {@value #META} field. Values supplied to builders are serialized using
-     * Helidon JSON binding and must produce a JSON object. Custom types must have a Helidon JSON converter, for example by
-     * annotating the type with {@link Json.Entity} and enabling Helidon JSON code generation.
-     *
-     * <p>Wire metadata is deserialized using Helidon JSON binding and represented by {@link JsonObject}. JSON-B annotations
-     * and unregistered POJOs are not supported.
+     * Optional protocol metadata represented by the {@value #META} field. Use {@link McpParameters#create(Object)} to create
+     * metadata from a value supported by Helidon JSON binding.
      *
      * @return protocol metadata
      */
-    Optional<Object> metadata();
+    Optional<McpParameters> metadata();
 }

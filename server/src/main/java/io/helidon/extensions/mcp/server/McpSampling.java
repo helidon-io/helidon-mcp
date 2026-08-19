@@ -219,11 +219,13 @@ public final class McpSampling extends McpFeature {
                             .set("name", toolUse.name())
                             .set("arguments", toolUse.input().asJsonObject().orElseThrow());
                     toolUse.metadata().ifPresent(metadata ->
-                            paramsBuilder.set(META, McpJsonBinding.serializeObject(metadata)));
+                            paramsBuilder.set(META, metadata.asJsonObject().orElseThrow()));
                     McpParameters parameters = new McpParameters(paramsBuilder.build());
                     McpRequest toolRequest = McpRequest.builder()
                             .parameters(parameters)
-                            .update(builder -> parameters.get(META).as(JsonObject.class).ifPresent(builder::metadata))
+                            .update(builder -> parameters.get(META).as(JsonObject.class)
+                                    .map(McpParameters::new)
+                                    .ifPresent(builder::metadata))
                             .features(features)
                             .protocolVersion(session().protocolVersion().text())
                             .sessionContext(session().context())

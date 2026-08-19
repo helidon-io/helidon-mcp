@@ -251,9 +251,7 @@ class McpSamplingTest {
         assertThat(samplingResponse.stopReason().orElseThrow(), is(McpStopReason.END_TURN));
         assertThat(toolRequest.get().name(), is("weather"));
         assertThat(toolRequest.get().arguments().get("city").asString().get(), is("Prague"));
-        Object metadata = toolRequest.get().metadata().orElseThrow();
-        assertThat(metadata, instanceOf(JsonObject.class));
-        assertThat(((JsonObject) metadata).stringValue("trace").orElseThrow(), is("sample-1"));
+        assertThat(toolRequest.get().metadata().orElseThrow().get("trace").asString().get(), is("sample-1"));
         assertThat(toolRequest.get().features(), sameInstance(features));
         assertThat(toolRequest.get().sessionContext(), sameInstance(session.context()));
         assertThat(toolRequest.get().requestContext(), sameInstance(toolUseResponseContext));

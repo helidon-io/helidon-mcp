@@ -78,7 +78,8 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
             result.ifPresent(builder -> {
                 toolContent.annotations().ifPresent(annotations -> builder.set("annotations", toJson(annotations)));
                 toolContent.metadata()
-                        .ifPresent(metadata -> builder.set(META, serializeToolContentMetadata(metadata)));
+                        .ifPresent(metadata -> builder.set(META, metadata.asJsonObject()
+                                .orElseThrow(() -> new McpException("Tool content metadata must be a JSON object"))));
             });
         }
         return result;
@@ -88,7 +89,8 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
     public JsonObject.Builder toJson(McpSamplingContent content) {
         JsonObject.Builder builder = super.toJson(content);
         content.metadata()
-                .ifPresent(metadata -> builder.set(META, serializeSamplingContentMetadata(metadata)));
+                .ifPresent(metadata -> builder.set(META, metadata.asJsonObject()
+                        .orElseThrow(() -> new McpSamplingException("Sampling content metadata must be a JSON object"))));
         return builder;
     }
 
@@ -170,14 +172,6 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
         return builder.build();
     }
 
-    JsonObject serializeSamplingContentMetadata(Object metadata) {
-        try {
-            return McpJsonBinding.serializeObject(metadata);
-        } catch (RuntimeException e) {
-            throw new McpSamplingException("Sampling content metadata must be a JSON object", e);
-        }
-    }
-
     private JsonObject.Builder toJson(McpResourceLinkContent content) {
         var builder = JsonObject.builder()
                 .set("type", content.type().text())
@@ -188,14 +182,6 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
         content.mediaType().ifPresent(mediaType -> builder.set("mimeType", mediaType.text()));
         content.description().ifPresent(description -> builder.set("description", description));
         return builder;
-    }
-
-    private JsonObject serializeToolContentMetadata(Object metadata) {
-        try {
-            return McpJsonBinding.serializeObject(metadata);
-        } catch (RuntimeException e) {
-            throw new McpException("Tool content metadata must be a JSON object", e);
-        }
     }
 
 }

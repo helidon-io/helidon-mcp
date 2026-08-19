@@ -19,7 +19,6 @@ import java.net.URI;
 import java.util.Map;
 
 import io.helidon.common.media.type.MediaTypes;
-import io.helidon.json.JsonObject;
 
 import org.junit.jupiter.api.Test;
 
@@ -32,9 +31,7 @@ class McpSamplingToolsTest {
 
     @Test
     void constructsToolContent() {
-        McpParameters input = new McpParameters(JsonObject.builder()
-                                                        .set("city", "Prague")
-                                                        .build());
+        McpParameters input = McpParameters.create(Map.of("city", "Prague"));
         McpSamplingToolUseContent toolUse = McpSamplingToolUseContent.builder()
                 .id("call-1")
                 .name("weather")
@@ -43,7 +40,7 @@ class McpSamplingToolsTest {
         McpSamplingToolResultContent toolResult = McpSamplingToolResultContent.builder()
                 .toolUseId(toolUse.id())
                 .result(McpToolResult.create("18 C"))
-                .metadata(Map.of("cached", true))
+                .metadata(McpParameters.create(Map.of("cached", true)))
                 .build();
         McpSamplingMessage message = McpSamplingMessage.builder()
                 .role(McpRole.ASSISTANT)
@@ -55,7 +52,7 @@ class McpSamplingToolsTest {
                                                          .build())
                                     .build())
                 .addContent(toolUse)
-                .metadata(Map.of("traceId", "trace-1"))
+                .metadata(McpParameters.create(Map.of("traceId", "trace-1")))
                 .build();
 
         assertThat(toolUse.input().get("city").asString().orElseThrow(), is("Prague"));
@@ -64,29 +61,29 @@ class McpSamplingToolsTest {
         assertThat(((McpSamplingTextContent) message.contents().getFirst()).annotations().orElseThrow()
                            .audience().getFirst(),
                    is(McpRole.USER));
-        assertThat(message.metadata().orElseThrow(), is(Map.of("traceId", "trace-1")));
-        assertThat(toolResult.metadata().orElseThrow(), is(Map.of("cached", true)));
+        assertThat(message.metadata().orElseThrow().get("traceId").asString().orElseThrow(), is("trace-1"));
+        assertThat(toolResult.metadata().orElseThrow().get("cached").asBoolean().orElseThrow(), is(true));
         assertThat(McpSamplingRequest.builder().addMessage(message).build().usesTool(), is(true));
         assertThrows(UnsupportedOperationException.class, () -> message.contents().clear());
 
         McpToolTextContent textContent = McpToolTextContent.builder()
                 .text("text")
-                .metadata(Map.of("source", "tool"))
+                .metadata(McpParameters.create(Map.of("source", "tool")))
                 .build();
         McpToolResult result = McpToolResult.builder()
                 .addTextContent(textContent)
                 .build();
         assertThat(result.textContents().getFirst().type(), is(McpContentType.TEXT));
-        assertThat(textContent.metadata().orElseThrow(), is(Map.of("source", "tool")));
+        assertThat(textContent.metadata().orElseThrow().get("source").asString().orElseThrow(), is("tool"));
         assertThat(McpToolTextContent.builder(textContent).clearMetadata().build().metadata().isEmpty(), is(true));
 
         McpToolTextResourceContent resourceContent = McpToolTextResourceContent.builder()
                 .uri(URI.create("memory://forecast"))
                 .mediaType(MediaTypes.TEXT_PLAIN)
                 .text("sunny")
-                .metadata(Map.of("source", "resource"))
+                .metadata(McpParameters.create(Map.of("source", "resource")))
                 .build();
-        assertThat(resourceContent.metadata().orElseThrow(), is(Map.of("source", "resource")));
+        assertThat(resourceContent.metadata().orElseThrow().get("source").asString().orElseThrow(), is("resource"));
     }
 
     @Test
@@ -115,7 +112,7 @@ class McpSamplingToolsTest {
     @Test
     void rejectsNullParameterObject() {
         NullPointerException exception = assertThrows(NullPointerException.class,
-                                                      () -> new McpParameters((JsonObject) null));
+                                                      () -> McpParameters.create(null));
 
         assertThat(exception.getMessage(), is("value is null"));
     }

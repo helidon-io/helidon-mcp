@@ -322,7 +322,7 @@ class McpJsonSerializerV3Test {
                 .uri(URI.create("memory://forecast"))
                 .mediaType(MediaTypes.TEXT_PLAIN)
                 .text("sunny")
-                .metadata(new StructuredContent("metadata"))
+                .metadata(McpParameters.create(new StructuredContent("metadata")))
                 .build();
 
         JsonObject payload = MJS.toJson(content).orElseThrow().build();

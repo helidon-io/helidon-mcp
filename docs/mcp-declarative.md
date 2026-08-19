@@ -555,8 +555,8 @@ void convert(McpToolRequest request) {
 The `McpRequest` object is the base interface for every request, providing access to client-side data and features.
 
 - **`parameters()`**: Returns `McpParameters` for accessing client-provided parameters.
-- **`metadata()`**: Returns optional `Object` protocol metadata deserialized with Helidon JSON binding. Incoming JSON objects
-  are represented as `JsonObject`.
+- **`metadata()`**: Returns optional `McpParameters` for accessing client-provided protocol metadata. Use
+  `McpParameters.create(Object)` to create metadata from maps or custom Helidon JSON types.
 - **`features()`**: Returns `McpFeatures` for accessing advanced features such as logging, progress, cancellation, elicitation, sampling, and roots.
 - **`protocolVersion()`**: Returns the negotiated protocol version between the server and the client.
 - **`sessionContext()`**: Returns a `Context` for session-scoped data.

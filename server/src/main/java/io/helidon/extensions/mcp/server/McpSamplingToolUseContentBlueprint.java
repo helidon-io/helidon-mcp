@@ -37,7 +37,8 @@ interface McpSamplingToolUseContentBlueprint extends McpSamplingContent {
     String name();
 
     /**
-     * Arguments to pass to the tool.
+     * Arguments to pass to the tool. Use {@link McpParameters#create(Object)} to create arguments from a value supported by
+     * Helidon JSON binding.
      *
      * @return tool arguments
      */

@@ -39,7 +39,7 @@ class McpRequestTest {
                                                                     .set("trace", "legacy")
                                                                     .build())
                                                             .build());
-        Map<String, String> metadata = Map.of("trace", "test");
+        McpParameters metadata = McpParameters.create(Map.of("trace", "test"));
         McpRequest request = McpRequest.builder()
                 .parameters(parameters)
                 .metadata(metadata)

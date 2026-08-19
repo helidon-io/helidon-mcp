@@ -30,17 +30,14 @@ String traceId = request.meta().get("traceId").asString().orElse("unknown");
 
 // After
 String traceId = request.metadata()
-        .filter(JsonObject.class::isInstance)
-        .map(JsonObject.class::cast)
-        .flatMap(metadata -> metadata.stringValue("traceId"))
+        .map(metadata -> metadata.get("traceId").asString().orElse("unknown"))
         .orElse("unknown");
 ```
 
-`McpMetadata.metadata()` now returns `Optional<Object>`. Helidon JSON binding deserializes incoming JSON objects as
-`JsonObject`. Generated builders now accept `metadata(Object)` instead of `metadata(McpParameters)`; supplied values must
-serialize to a JSON object. Maps and custom types with a Helidon JSON converter are supported. The `meta()` request accessor
-remains as a deprecated compatibility bridge. Recompile builder callers and custom `McpRequest` implementations; custom
-implementations must provide `metadata()`.
+`McpMetadata.metadata()` returns `Optional<McpParameters>`. The generated request builder uses `metadata(McpParameters)`
+instead of the former `meta(McpParameters)`. Use `McpParameters.create(Object)` to serialize a map or custom type with Helidon
+JSON binding; the value must produce a JSON object. The `meta()` request accessor remains as a deprecated compatibility bridge.
+Recompile builder callers and custom `McpRequest` implementations; custom implementations must provide `metadata()`.
 
 ## Migrate sampling requests to message envelopes
 
@@ -202,18 +199,16 @@ McpSamplingTextContent content = McpSamplingTextContent.builder()
                 .addAudience(McpRole.USER)
                 .priority(0.8)
                 .build())
+        .metadata(McpParameters.create(Map.of("traceId", "trace-1")))
         .build();
 ```
 
 Sampling content blocks expose protocol `_meta` through `metadata()` starting with `2025-06-18`; message envelopes expose it
-starting with `2025-11-25`. Metadata uses the same Helidon JSON binding contract as request metadata. Read metadata received
-from the client as a `JsonObject`:
+starting with `2025-11-25`. Metadata uses the same `McpParameters` access API as request metadata:
 
 ```java
 String traceId = response.asTextContent().metadata()
-        .filter(JsonObject.class::isInstance)
-        .map(JsonObject.class::cast)
-        .flatMap(metadata -> metadata.stringValue("traceId"))
+        .map(metadata -> metadata.get("traceId").asString().orElse("unknown"))
         .orElse("unknown");
 ```
 
@@ -228,8 +223,8 @@ new defaults automatically. Applications that implement these interfaces directl
 - `McpServerConfig` adds `maxSamplingToolIterations()`. Return the configured limit, or `10` to retain the default behavior.
 - `McpToolTextContent`, `McpToolImageContent`, `McpToolAudioContent`, `McpToolTextResourceContent`,
   `McpToolBinaryResourceContent`, and `McpToolResourceLinkContent` add `annotations()` and `metadata()`. Return
-  `Optional.empty()` when the content has no annotations or protocol `_meta` value; otherwise return `Optional<Object>`
-  metadata supported by Helidon JSON binding.
+  `Optional.empty()` when the content has no annotations or protocol `_meta` value; otherwise return
+  `Optional<McpParameters>`.
 - For `McpToolTextResourceContent` and `McpToolBinaryResourceContent`, `metadata()` represents the outer embedded-content
   `_meta` field. The flattened API does not expose the nested resource-content `_meta` field.
 - `McpToolResourceLinkContent` also adds `icons()`.
