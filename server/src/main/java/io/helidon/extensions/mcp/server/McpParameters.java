@@ -60,7 +60,7 @@ public final class McpParameters {
      *
      * @param value parameter values
      */
-    public McpParameters(JsonObject value) {
+    McpParameters(JsonObject value) {
         this(Objects.requireNonNull(value, "value is null"), "key");
     }
 

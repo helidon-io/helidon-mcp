@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -29,6 +28,7 @@ import io.helidon.common.LazyValue;
 import io.helidon.common.LruCache;
 import io.helidon.common.context.Context;
 import io.helidon.json.JsonValue;
+import io.helidon.service.registry.Services;
 import io.helidon.webserver.http.ServerResponse;
 import io.helidon.webserver.jsonrpc.JsonRpcRequest;
 import io.helidon.webserver.jsonrpc.JsonRpcResponse;
@@ -60,11 +60,10 @@ class McpSession {
         this.manager = manager;
         this.sessions = sessions;
         this.clientCapabilities = new HashSet<>();
-        this.featureListeners = new CopyOnWriteArrayList<>();
+        this.featureListeners = Services.all(McpFeatureLifecycle.class);
         this.features = LruCache.create(config.maxRequestsPerSession());
         this.transports = LruCache.create(config.maxRequestsPerSession());
         this.pendingResponses = new McpPendingResponses(config.maxRequestsPerSession());
-        this.featureListeners.add(McpProgress.McpProgressListener.create());
         this.sessionFeatures = LazyValue.create(() -> new McpSessionFeatures(this));
         this.context.register(McpServerConfigBlueprint.class, config);
     }

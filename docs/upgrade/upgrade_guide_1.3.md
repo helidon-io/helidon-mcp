@@ -34,8 +34,8 @@ String traceId = request.metadata()
         .orElse("unknown");
 ```
 
-The generated request builder now uses `metadata(McpParameters)` instead of `meta(McpParameters)`. The `meta()` request
-accessor remains as a deprecated compatibility bridge, but the former builder method is removed. Recompile builder callers and
+`McpParameters` instances are supplied by Helidon from protocol data; applications consume them through `metadata()` rather
+than constructing parameter wrappers. The `meta()` request accessor remains as a deprecated compatibility bridge. Recompile
 custom `McpRequest` implementations; custom implementations must provide `metadata()`.
 
 ## Migrate sampling requests to message envelopes
@@ -186,11 +186,10 @@ and tool results, and continues sampling. It returns the final response without 
 of tool rounds and cumulative tool executions with `mcp.server.max-sampling-tool-iterations` or
 `McpServerFeature.builder().maxSamplingToolIterations(...)`.
 
-## Use annotations and protocol metadata
+## Use annotations and access protocol metadata
 
-Sampling content blocks can carry protocol `_meta` through `metadata(McpParameters)` starting with `2025-06-18`; message
-envelopes can carry it starting with `2025-11-25`. Annotated sampling content supports audience and priority in every supported
-version, while `lastModified` requires `2025-06-18` or later.
+Annotated sampling content supports audience and priority in every supported version, while `lastModified` requires
+`2025-06-18` or later.
 
 ```java
 McpSamplingTextContent content = McpSamplingTextContent.builder()
@@ -199,10 +198,16 @@ McpSamplingTextContent content = McpSamplingTextContent.builder()
                 .addAudience(McpRole.USER)
                 .priority(0.8)
                 .build())
-        .metadata(new McpParameters(JsonObject.builder()
-                .set("traceId", "trace-1")
-                .build()))
         .build();
+```
+
+Sampling content blocks expose protocol `_meta` through `metadata()` starting with `2025-06-18`; message envelopes expose it
+starting with `2025-11-25`. Helidon creates the returned `McpParameters` from wire data. Read metadata received from the client:
+
+```java
+String traceId = response.asTextContent().metadata()
+        .map(metadata -> metadata.get("traceId").asString().orElse("unknown"))
+        .orElse("unknown");
 ```
 
 This protocol `_meta` is distinct from `McpSamplingRequest.metadata(Object)`, which remains provider-specific sampling metadata

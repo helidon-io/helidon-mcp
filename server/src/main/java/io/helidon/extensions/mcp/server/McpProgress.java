@@ -17,7 +17,7 @@ package io.helidon.extensions.mcp.server;
 
 import java.util.Objects;
 
-import io.helidon.common.LazyValue;
+import io.helidon.service.registry.Service;
 
 import static io.helidon.extensions.mcp.server.McpMetadata.META;
 
@@ -109,16 +109,8 @@ public final class McpProgress extends McpFeature {
      * The progress listener look for progress token inside request
      * and set it in the associate progress feature instance.
      */
+    @Service.Singleton
     static class McpProgressListener implements McpFeatureLifecycle {
-        /**
-         * The listener being static and used for every session, a singleton
-         * avoid creation of unnecessary instance per session.
-         */
-        private static final LazyValue<McpProgressListener> INSTANCE = LazyValue.create(McpProgressListener::new);
-
-        private McpProgressListener() {
-        }
-
         @Override
         public void beforeRequest(McpParameters parameters, McpFeatures features) {
             var progressToken = parameters.get(META).get("progressToken");
@@ -133,10 +125,6 @@ public final class McpProgress extends McpFeature {
         @Override
         public void afterRequest(McpParameters parameters, McpFeatures features) {
             features.progress().stopSending();
-        }
-
-        static McpProgressListener create() {
-            return INSTANCE.get();
         }
     }
 }
