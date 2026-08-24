@@ -71,7 +71,7 @@ public final class McpFeatures {
         this.logger = LazyValue.create(() -> new McpLogger(session, transport));
         this.sampling = LazyValue.create(() -> new McpSampling(session, transport, this));
         this.progress = LazyValue.create(() -> new McpProgress(session, transport));
-        this.elicitation = LazyValue.create(() -> new McpElicitation(session, transport));
+        this.elicitation = LazyValue.create(() -> new McpElicitation(session, transport, this));
     }
 
     /**

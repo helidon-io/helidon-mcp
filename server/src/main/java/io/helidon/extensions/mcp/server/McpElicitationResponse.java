@@ -19,6 +19,10 @@ import java.util.Optional;
 
 /**
  * The client's response to an elicitation request.
+ * Form elicitation responses contain submitted data only when {@link #action()} is
+ * {@link McpElicitationAction#ACCEPT}; URL elicitation responses never contain submitted data.
+ * For URL elicitation, {@code ACCEPT} means only that the user consented to open and interact at the URL; it does not
+ * indicate that the out-of-band interaction has completed.
  */
 public sealed interface McpElicitationResponse permits McpElicitationResponseImpl {
     /**
@@ -29,9 +33,11 @@ public sealed interface McpElicitationResponse permits McpElicitationResponseImp
     McpElicitationAction action();
 
     /**
-     * The submitted form data, only present when action is "accept".
+     * The submitted form data. Content is present only when {@link #action()} is
+     * {@link McpElicitationAction#ACCEPT} and the response belongs to a form elicitation request.
+     * URL elicitation responses and responses with any other action have no content.
      *
-     * @return values matching the requested schema.
+     * @return values matching the requested schema, if present
      */
     Optional<McpParameters> content();
 }

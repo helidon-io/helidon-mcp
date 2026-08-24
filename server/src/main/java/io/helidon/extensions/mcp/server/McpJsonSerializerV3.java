@@ -16,6 +16,7 @@
 package io.helidon.extensions.mcp.server;
 
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -127,28 +128,16 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
 
     @Override
     public McpElicitationResponse createElicitationResponse(JsonObject object) throws McpElicitationException {
-        find(object, "error")
-                .filter(this::isJsonObject)
-                .map(JsonValue::asObject)
-                .map(JsonRpcError::create)
-                .ifPresent(error -> {
-                    throw new McpElicitationException(error.message());
-                });
+        ParsedElicitationResult parsedResult = parseElicitationResult(object);
+        if (parsedResult.action() != McpElicitationAction.ACCEPT) {
+            return new McpElicitationResponseImpl(parsedResult.action());
+        }
         try {
-            var result = find(object, "result")
+            var content = find(parsedResult.result(), "content")
                     .filter(this::isJsonObject)
-                    .map(JsonValue::asObject)
-                    .orElseThrow(() -> new McpElicitationException(String.format("Elicitation result not found: %s", object)));
-
-            McpElicitationAction action = result.stringValue("action")
-                    .map(String::toUpperCase)
-                    .map(McpElicitationAction::valueOf)
-                    .orElseThrow();
-            JsonObject content = find(result, "content")
-                    .filter(this::isJsonObject)
-                    .map(JsonValue::asObject)
-                    .orElse(null);
-            return new McpElicitationResponseImpl(action, content);
+                    .map(JsonValue::asObject);
+            return content.map(jsonObject -> new McpElicitationResponseImpl(parsedResult.action(), jsonObject))
+                    .orElseGet(() -> new McpElicitationResponseImpl(parsedResult.action()));
         } catch (Exception e) {
             throw new McpElicitationException("Wrong elicitation response format", e);
         }
@@ -163,6 +152,30 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
         params.set("requestedSchema", jsonSchema);
         builder.set("params", params.build());
         return builder.build();
+    }
+
+    ParsedElicitationResult parseElicitationResult(JsonObject object) throws McpElicitationException {
+        find(object, "error")
+                .filter(this::isJsonObject)
+                .map(JsonValue::asObject)
+                .map(JsonRpcError::create)
+                .ifPresent(error -> {
+                    throw new McpElicitationException(error.message());
+                });
+        try {
+            var result = find(object, "result")
+                    .filter(this::isJsonObject)
+                    .map(JsonValue::asObject)
+                    .orElseThrow(() -> new McpElicitationException(String.format("Elicitation result not found: %s", object)));
+
+            McpElicitationAction action = result.stringValue("action")
+                    .map(value -> value.toUpperCase(Locale.ROOT))
+                    .map(McpElicitationAction::valueOf)
+                    .orElseThrow(() -> new McpElicitationException(String.format("Elicitation action not found: %s", object)));
+            return new ParsedElicitationResult(action, result);
+        } catch (Exception e) {
+            throw new McpElicitationException("Wrong elicitation response format", e);
+        }
     }
 
     @Override
@@ -184,4 +197,6 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
         return builder;
     }
 
+    protected record ParsedElicitationResult(McpElicitationAction action, JsonObject result) {
+    }
 }

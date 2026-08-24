@@ -598,8 +598,18 @@ class McpJsonSerializerV1 implements McpJsonSerializer {
     }
 
     @Override
+    public McpElicitationResponse createElicitationUrlResponse(JsonObject object) throws McpElicitationException {
+        throw new McpElicitationException("URL elicitation not supported");
+    }
+
+    @Override
     public JsonObject createElicitationRequest(long id, McpElicitationRequest request) {
         throw new McpElicitationException("Elicitation not supported");
+    }
+
+    @Override
+    public JsonObject createElicitationRequest(long id, McpElicitationUrlRequest request) {
+        throw new McpElicitationException("URL elicitation not supported");
     }
 
     List<McpSamplingContent> parseContents(JsonValue content) {

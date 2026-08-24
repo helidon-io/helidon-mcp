@@ -24,6 +24,11 @@ final class McpElicitationResponseImpl implements McpElicitationResponse {
     private final McpParameters content;
     private final McpElicitationAction action;
 
+    McpElicitationResponseImpl(McpElicitationAction action) {
+        this.action = action;
+        this.content = null;
+    }
+
     McpElicitationResponseImpl(McpElicitationAction action, JsonObject content) {
         this.action = action;
         this.content = content != null

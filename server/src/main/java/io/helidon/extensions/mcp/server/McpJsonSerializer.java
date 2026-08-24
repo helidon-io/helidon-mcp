@@ -267,5 +267,9 @@ interface McpJsonSerializer {
 
     McpElicitationResponse createElicitationResponse(JsonObject object) throws McpElicitationException;
 
+    McpElicitationResponse createElicitationUrlResponse(JsonObject object) throws McpElicitationException;
+
     JsonObject createElicitationRequest(long id, McpElicitationRequest request);
+
+    JsonObject createElicitationRequest(long id, McpElicitationUrlRequest request);
 }

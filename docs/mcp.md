@@ -1005,11 +1005,16 @@ private class CancellationTool implements McpTool {
 
 ### Elicitation
 
-The `Elicitation` feature allows a server to request additional structured user input through the connected MCP client during
-request processing. This capability is useful when execution requires runtime information that is not available in the initial tool or prompt
-arguments (for example, confirmation data, credentials, or user-selected options).
+The `Elicitation` feature allows a server to request additional user interaction through the connected MCP client during request
+processing. Form mode collects non-sensitive structured data in the client. URL mode directs the user to an external URL for
+sensitive or out-of-band interactions such as third-party authorization or payment processing.
 
-Elicitation support is optional on the client side. Always verify support before sending a request:
+Elicitation support is optional on the client side, and clients negotiate form and URL modes separately. Use `enabled()` to check
+form support and `enabledUrl()` to check URL support.
+
+#### Form mode
+
+Always verify form support before sending a form request:
 
 ```java
 McpElicitation elicitation = request.features().elicitation();
@@ -1017,7 +1022,7 @@ if (!elicitation.enabled()) {
 }
 ```
 
-An elicitation request includes:
+A form elicitation request includes:
 
 - `message` – prompt shown to the user by the client
 - `schema` – JSON Schema describing the expected response payload
@@ -1028,7 +1033,10 @@ Client responses include:
 - `action()` – `ACCEPT`, `DECLINE`, or `CANCEL`
 - `content()` – response payload as `McpParameters` (present when accepted)
 
-#### Example
+Servers must not request sensitive information such as passwords, API keys, access tokens, or payment credentials through form
+mode. Use URL mode for these interactions.
+
+##### Example
 
 ```java
 class ElicitationTool implements McpTool {
@@ -1089,6 +1097,57 @@ class ElicitationTool implements McpTool {
     }
 }
 ```
+
+#### URL mode
+
+URL mode is available with MCP protocol version `2025-11-25`. A URL elicitation request includes:
+
+- `message` – explanation shown to the user by the client
+- `elicitationId` – identifier that is unique within the server and opaque to the client
+- `url` – valid absolute `URI` the user should navigate to
+- `timeout` – optional timeout for the client's response (defaults to 5 minutes)
+
+Before sending a URL request, verify URL support independently:
+
+```java
+McpElicitation elicitation = request.features().elicitation();
+if (!elicitation.enabledUrl()) {
+}
+```
+
+The URL must not contain sensitive user information or grant pre-authenticated access to a protected resource. Use HTTPS outside
+development environments, and bind the external interaction to the authenticated user on the server.
+
+```java
+String elicitationId = UUID.randomUUID().toString();
+McpElicitationResponse response = elicitation.requestUrl(req -> req
+        .message("Authorize access to the payment service.")
+        .elicitationId(elicitationId)
+        .url(URI.create("https://payments.example.com/authorize?elicitationId=" + elicitationId))
+        .timeout(Duration.ofSeconds(30)));
+
+if (response.action() == McpElicitationAction.ACCEPT) {
+    // The user consented to open the URL. Verify completion out of band.
+}
+```
+
+An `ACCEPT` response indicates consent to the URL interaction, not completion of the external flow. URL responses do not contain
+form content.
+
+When the original request cannot continue until one or more external interactions have completed, return the URL prerequisites
+to the client by throwing `McpUrlElicitationRequiredException` instead of sending a nested elicitation request:
+
+```java
+throw new McpUrlElicitationRequiredException(McpElicitationUrlRequest.builder()
+        .message("Authorize access to the payment service.")
+        .elicitationId(elicitationId)
+        .url(URI.create("https://payments.example.com/authorize?elicitationId=" + elicitationId))
+        .build());
+```
+
+This ends the original request with JSON-RPC error code `-32042` and includes the URL requests in
+`error.data.elicitations`. The client can present those URLs and retry the original request after the external interactions have
+completed. This error mechanism is available only with MCP protocol version `2025-11-25`.
 
 ### Sampling
 

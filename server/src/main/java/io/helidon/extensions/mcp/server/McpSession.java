@@ -214,13 +214,13 @@ class McpSession {
             elicitation.asMap()
                     .filter(Map::isEmpty)
                     .ifPresent(it -> clientCapabilities.add(McpCapability.ELICITATION_FORM));
+            elicitation.get("form")
+                    .ifPresent(it -> clientCapabilities.add(McpCapability.ELICITATION_FORM));
+            elicitation.get("url")
+                    .ifPresent(it -> clientCapabilities.add(McpCapability.ELICITATION_URL));
         } else {
             elicitation.ifPresent(it -> clientCapabilities.add(McpCapability.ELICITATION_FORM));
         }
-        elicitation.get("form")
-                .ifPresent(it -> clientCapabilities.add(McpCapability.ELICITATION_FORM));
-        elicitation.get("url")
-                .ifPresent(it -> clientCapabilities.add(McpCapability.ELICITATION_URL));
     }
 
     Set<McpCapability> capabilities() {

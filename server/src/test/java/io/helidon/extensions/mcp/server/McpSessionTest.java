@@ -88,10 +88,25 @@ class McpSessionTest {
         McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, """
                 {"elicitation": {"url": {}}}
                 """);
-        McpElicitation elicitation = new McpElicitation(session,
-                                                        new McpStreamableHttpTransport(mock(JsonRpcResponse.class)));
+        McpElicitation elicitation = new McpFeatures(
+                session,
+                new McpStreamableHttpTransport(mock(JsonRpcResponse.class))).elicitation();
 
         assertThat(elicitation.enabled(), is(false));
+        assertThat(elicitation.enabledUrl(), is(true));
+    }
+
+    @Test
+    void disablesUrlElicitationForFormOnlyCapability() {
+        McpSession session = session(McpProtocolVersion.VERSION_2025_11_25, """
+                {"elicitation": {"form": {}}}
+                """);
+        McpElicitation elicitation = new McpFeatures(
+                session,
+                new McpStreamableHttpTransport(mock(JsonRpcResponse.class))).elicitation();
+
+        assertThat(elicitation.enabled(), is(true));
+        assertThat(elicitation.enabledUrl(), is(false));
     }
 
     @Test
@@ -163,6 +178,16 @@ class McpSessionTest {
                 """);
 
         assertThat(session.capabilities().contains(McpCapability.ELICITATION_FORM), is(true));
+    }
+
+    @Test
+    void ignoresUrlElicitationSubcapabilityForLegacyProtocolVersion() {
+        McpSession session = session(McpProtocolVersion.VERSION_2025_06_18, """
+                {"elicitation": {"url": {}}}
+                """);
+
+        assertThat(session.capabilities().contains(McpCapability.ELICITATION_FORM), is(true));
+        assertThat(session.capabilities().contains(McpCapability.ELICITATION_URL), is(false));
     }
 
     @Test
