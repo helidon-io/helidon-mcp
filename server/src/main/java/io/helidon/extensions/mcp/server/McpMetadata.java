@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
+ * Copyright (c) 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,19 @@ package io.helidon.extensions.mcp.server;
 import java.util.Optional;
 
 /**
- * Tool contents that can be returned as part of the tool execution.
+ * MCP component that supports optional protocol metadata.
  */
-interface McpToolContent extends McpContent, McpMetadata {
+public interface McpMetadata {
     /**
-     * Optional annotations for this content block.
-     *
-     * @return annotations
+     * MCP protocol metadata field name.
      */
-    Optional<McpAnnotations> annotations();
+    String META = "_meta";
 
+    /**
+     * Optional protocol metadata represented by the {@value #META} field. Use {@link McpParameters#create(Object)} to create
+     * metadata from a value supported by Helidon JSON binding.
+     *
+     * @return protocol metadata
+     */
+    Optional<McpParameters> metadata();
 }

@@ -15,7 +15,6 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -23,45 +22,43 @@ import java.util.Optional;
  */
 public sealed interface McpSamplingResponse permits McpSamplingResponseImpl {
     /**
-     * First sampling response message.
+     * Sampling response message.
      *
-     * @return response
-     * @throws McpSamplingException if the response does not contain any messages
+     * @return response message
      */
     McpSamplingMessage message();
 
     /**
-     * All sampling response messages in wire order.
+     * Returns the first sampling response content block as text content.
      *
-     * @return immutable response messages
+     * @return text content
+     * @throws McpSamplingException if the message is empty or its first content block is not text
      */
-    default List<McpSamplingMessage> messages() {
-        return List.of(message());
-    }
+    McpSamplingTextContent asTextContent() throws McpSamplingException;
 
     /**
-     * Returns the first sampling response message as a text message.
+     * Returns the first sampling response content block as image content.
      *
-     * @return message as text
-     * @throws McpSamplingException if the response is empty or the first message is not text
+     * @return image content
+     * @throws McpSamplingException if the message is empty or its first content block is not an image
      */
-    McpSamplingTextMessage asTextMessage() throws McpSamplingException;
+    McpSamplingImageContent asImageContent() throws McpSamplingException;
 
     /**
-     * Returns the first sampling response message as an image message.
+     * Returns the first sampling response content block as audio content.
      *
-     * @return message as image
-     * @throws McpSamplingException if the response is empty or the first message is not an image
+     * @return audio content
+     * @throws McpSamplingException if the message is empty or its first content block is not audio
      */
-    McpSamplingImageMessage asImageMessage() throws McpSamplingException;
+    McpSamplingAudioContent asAudioContent() throws McpSamplingException;
 
     /**
-     * Returns the first sampling response message as an audio message.
+     * Returns the first sampling response content block as tool use content.
      *
-     * @return message as audio
-     * @throws McpSamplingException if the response is empty or the first message is not audio
+     * @return tool use content
+     * @throws McpSamplingException if the message is empty or its first content block is not a tool use
      */
-    McpSamplingAudioMessage asAudioMessage() throws McpSamplingException;
+    McpSamplingToolUseContent asToolUseContent() throws McpSamplingException;
 
     /**
      * Sampling model used.

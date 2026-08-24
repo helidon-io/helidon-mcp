@@ -15,20 +15,15 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import io.helidon.builder.api.Prototype;
-
-class McpSamplingTextMessageSupport {
-    private McpSamplingTextMessageSupport() {
-    }
-
+/**
+ * MCP sampling message content.
+ */
+public interface McpSamplingContent extends McpMetadata {
     /**
-     * Create a {@link io.helidon.extensions.mcp.server.McpSamplingTextMessage} instance from the provided text.
+     * Sampling content type.
      *
-     * @param text text message
-     * @return sampling text message instance
+     * @return type
      */
-    @Prototype.PrototypeFactoryMethod
-    static McpSamplingTextMessage create(String text) {
-        return McpSamplingTextMessage.builder().text(text).role(McpRole.ASSISTANT).build();
-    }
+    McpSamplingContentType type();
+
 }

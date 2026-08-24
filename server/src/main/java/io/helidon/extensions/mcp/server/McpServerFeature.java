@@ -35,6 +35,7 @@ import io.helidon.config.Config;
 import io.helidon.http.HeaderNames;
 import io.helidon.http.HeaderValues;
 import io.helidon.http.Status;
+import io.helidon.json.JsonException;
 import io.helidon.json.JsonNull;
 import io.helidon.json.JsonObject;
 import io.helidon.json.JsonString;
@@ -70,6 +71,7 @@ import static io.helidon.extensions.mcp.server.McpJsonSerializer.METHOD_TOOLS_CA
 import static io.helidon.extensions.mcp.server.McpJsonSerializer.METHOD_TOOLS_LIST;
 import static io.helidon.extensions.mcp.server.McpJsonSerializer.isResponse;
 import static io.helidon.extensions.mcp.server.McpJsonSerializer.prettyPrint;
+import static io.helidon.extensions.mcp.server.McpMetadata.META;
 import static io.helidon.extensions.mcp.server.McpSession.State.INITIALIZING;
 import static io.helidon.extensions.mcp.server.McpStreamableHttpTransportManager.SESSION_ID_HEADER;
 import static io.helidon.jsonrpc.core.JsonRpcError.INTERNAL_ERROR;
@@ -216,6 +218,11 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 .delete(endpoint, this::disconnect);
     }
 
+    @Override
+    public McpServerConfig prototype() {
+        return config;
+    }
+
     private void mcpMetadata(ServerRequest request, ServerResponse response) {
         var config = Services.get(Config.class);
         var providers = config.get("security.providers").asList(Config.class);
@@ -243,11 +250,6 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         }
         response.status(Status.NOT_FOUND_404);
         response.send();
-    }
-
-    @Override
-    public McpServerConfig prototype() {
-        return config;
     }
 
     private void disconnect(ServerRequest request, ServerResponse response) {
@@ -418,7 +420,6 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             res.send();
             return;
         }
-        boolean error = false;
         McpSession session = foundSession.orElseThrow(() -> new McpInternalException("Session not found"));
         McpParameters parameters = new McpParameters(req.params());
 
@@ -433,11 +434,13 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             return;
         }
 
-        McpFeatures features = session.createFeatures(requestId, req, res);
+        McpFeatures features = session.createFeatures(requestId);
         session.beforeFeatureRequest(parameters, requestId);
         McpRequest request = McpRequest.builder()
                 .parameters(parameters)
-                .meta(parameters.get("_meta"))
+                .update(builder -> parameters.get(META).as(JsonObject.class)
+                        .map(McpParameters::new)
+                        .ifPresent(builder::metadata))
                 .features(features)
                 .protocolVersion(session.protocolVersion().text())
                 .sessionContext(session.context())
@@ -476,6 +479,9 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         McpSession session = foundSession.orElseThrow(() -> new McpInternalException("Session not found"));
 
         McpParameters parameters = new McpParameters(req.params());
+        Optional<McpParameters> metadata = parameters.get(META)
+                .as(JsonObject.class)
+                .map(McpParameters::new);
         String resourceUri = parameters.get("uri").asString().orElse("");
         Optional<McpResource> resource = resources.content().stream()
                 .filter(r -> resourceUri.equals(r.uri()))
@@ -498,11 +504,11 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             resource = templates.map(Function.identity());
         }
 
-        McpFeatures features = session.createFeatures(requestId, req, res);
+        McpFeatures features = session.createFeatures(requestId);
         session.beforeFeatureRequest(parameters, requestId);
         McpRequest request = McpRequest.builder()
                 .parameters(parameters)
-                .meta(parameters.get("_meta"))
+                .update(builder -> metadata.ifPresent(builder::metadata))
                 .features(features)
                 .protocolVersion(session.protocolVersion().text())
                 .sessionContext(session.context())
@@ -548,11 +554,13 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 .filter(r -> resourceUri.equals(r.uri()))
                 .findFirst();
         if (subscriber.isPresent()) {
-            McpFeatures features = session.createFeatures(requestId, req, res);
+            McpFeatures features = session.createFeatures(requestId);
             session.beforeFeatureRequest(parameters, requestId);
             subscriber.get().subscribe(McpSubscribeRequest.builder()
                                                .parameters(parameters)
-                                               .meta(parameters.get("_meta"))
+                                               .update(builder -> parameters.get(META).as(JsonObject.class)
+                                                       .map(McpParameters::new)
+                                                       .ifPresent(builder::metadata))
                                                .features(features)
                                                .protocolVersion(session.protocolVersion().text())
                                                .sessionContext(session.context())
@@ -592,11 +600,13 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 .findFirst();
         // invoke user method to unsubscribe
         if (unsubscriber.isPresent()) {
-            McpFeatures features = session.createFeatures(requestId, req, res);
+            McpFeatures features = session.createFeatures(requestId);
             session.beforeFeatureRequest(parameters, requestId);
             unsubscriber.get().unsubscribe(McpUnsubscribeRequest.builder()
                                                    .parameters(parameters)
-                                                   .meta(parameters.get("_meta"))
+                                                   .update(builder -> parameters.get(META).as(JsonObject.class)
+                                                           .map(McpParameters::new)
+                                                           .ifPresent(builder::metadata))
                                                    .features(features)
                                                    .protocolVersion(session.protocolVersion().text())
                                                    .sessionContext(session.context())
@@ -669,11 +679,13 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             return;
         }
 
-        McpFeatures features = session.createFeatures(requestId, req, res);
+        McpFeatures features = session.createFeatures(requestId);
         session.beforeFeatureRequest(parameters, requestId);
         McpRequest request = McpRequest.builder()
                 .parameters(parameters)
-                .meta(parameters.get("_meta"))
+                .update(builder -> parameters.get(META).as(JsonObject.class)
+                        .map(McpParameters::new)
+                        .ifPresent(builder::metadata))
                 .features(features)
                 .protocolVersion(session.protocolVersion().text())
                 .sessionContext(session.context())
@@ -700,7 +712,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         if (level.isPresent()) {
             try {
                 McpLogger.Level logLevel = McpLogger.Level.valueOf(level.get().toUpperCase());
-                session.createFeatures(requestId, req, res).logger().setLevel(logLevel);
+                session.createFeatures(requestId).logger().setLevel(logLevel);
                 res.result(JsonObject.empty());
                 session.send(requestId, res);
                 return;
@@ -738,11 +750,13 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                         .map(resourceCompletions::get)
                         .orElseThrow(() -> new McpInternalException(INVALID_PARAMS, "No resource completion found"));
             };
-            McpFeatures features = session.createFeatures(requestId, req, res);
+            McpFeatures features = session.createFeatures(requestId);
             session.beforeFeatureRequest(parameters, requestId);
             McpRequest request = McpRequest.builder()
                     .parameters(parameters)
-                    .meta(parameters.get("_meta"))
+                    .update(builder -> parameters.get(META).as(JsonObject.class)
+                            .map(McpParameters::new)
+                            .ifPresent(builder::metadata))
                     .features(features)
                     .protocolVersion(session.protocolVersion().text())
                     .sessionContext(session.context())
@@ -776,7 +790,13 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                 if (LOGGER.isLoggable(Level.DEBUG)) {
                     LOGGER.log(Level.DEBUG, "Client response:\n" + prettyPrint(object));
                 }
-                session.get().acceptResponse(object);
+                try {
+                    session.get().acceptResponse(new McpResponseImpl(object, req.context()));
+                } catch (JsonException e) {
+                    if (LOGGER.isLoggable(Level.TRACE)) {
+                        LOGGER.log(Level.TRACE, "Received a response with an invalid request id", e);
+                    }
+                }
                 return Optional.empty();
             }
         }

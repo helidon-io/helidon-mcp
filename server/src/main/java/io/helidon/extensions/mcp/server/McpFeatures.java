@@ -69,7 +69,7 @@ public final class McpFeatures {
         this.cancellation = LazyValue.create(McpCancellation::new);
         this.roots = LazyValue.create(() -> new McpRoots(session, transport));
         this.logger = LazyValue.create(() -> new McpLogger(session, transport));
-        this.sampling = LazyValue.create(() -> new McpSampling(session, transport));
+        this.sampling = LazyValue.create(() -> new McpSampling(session, transport, this));
         this.progress = LazyValue.create(() -> new McpProgress(session, transport));
         this.elicitation = LazyValue.create(() -> new McpElicitation(session, transport));
     }

@@ -16,6 +16,7 @@
 package io.helidon.extensions.mcp.server;
 
 import java.net.URI;
+import java.util.Optional;
 
 import io.helidon.common.context.Context;
 
@@ -32,8 +33,8 @@ final class McpResourceRequestImpl implements McpResourceRequest {
     }
 
     @Override
-    public McpParameters meta() {
-        return request.meta();
+    public Optional<McpParameters> metadata() {
+        return request.metadata();
     }
 
     @Override

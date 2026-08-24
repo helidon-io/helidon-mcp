@@ -15,68 +15,67 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 final class McpSamplingResponseImpl implements McpSamplingResponse {
     private final String model;
     private final String rawStopReason;
-    private final List<McpSamplingMessage> messages;
+    private final McpSamplingMessage message;
 
     McpSamplingResponseImpl(McpSamplingMessage message, String model, McpStopReason stopReason) {
-        this(List.of(message), model, stopReason.text());
+        this(message, model, stopReason.text());
     }
 
-    McpSamplingResponseImpl(List<McpSamplingMessage> messages, String model) {
-        this.messages = List.copyOf(messages);
-        this.model = model;
-        this.rawStopReason = null;
+    McpSamplingResponseImpl(McpSamplingMessage message, String model) {
+        this(message, model, (String) null);
     }
 
-    McpSamplingResponseImpl(List<McpSamplingMessage> messages, String model, String rawStopReason) {
-        this.messages = List.copyOf(messages);
-        this.model = model;
+    McpSamplingResponseImpl(McpSamplingMessage message, String model, String rawStopReason) {
+        this.message = Objects.requireNonNull(message, "message is null");
+        this.model = Objects.requireNonNull(model, "model is null");
         this.rawStopReason = rawStopReason;
     }
 
     @Override
     public McpSamplingMessage message() {
-        if (messages.isEmpty()) {
-            throw new McpSamplingException("Sampling response does not contain a message");
-        }
-        return messages.getFirst();
+        return message;
     }
 
     @Override
-    public List<McpSamplingMessage> messages() {
-        return messages;
-    }
-
-    @Override
-    public McpSamplingTextMessage asTextMessage() throws McpSamplingException {
-        McpSamplingMessage message = message();
-        if (message instanceof McpSamplingTextMessage text) {
+    public McpSamplingTextContent asTextContent() throws McpSamplingException {
+        McpSamplingContent content = content();
+        if (content instanceof McpSamplingTextContent text) {
             return text;
         }
-        throw new McpSamplingException("Sampling message is not text");
+        throw new McpSamplingException("Sampling content is not text");
     }
 
     @Override
-    public McpSamplingImageMessage asImageMessage() throws McpSamplingException {
-        McpSamplingMessage message = message();
-        if (message instanceof McpSamplingImageMessage image) {
+    public McpSamplingImageContent asImageContent() throws McpSamplingException {
+        McpSamplingContent content = content();
+        if (content instanceof McpSamplingImageContent image) {
             return image;
         }
-        throw new McpSamplingException("Sampling message is not an image");
+        throw new McpSamplingException("Sampling content is not an image");
     }
 
     @Override
-    public McpSamplingAudioMessage asAudioMessage() throws McpSamplingException {
-        McpSamplingMessage message = message();
-        if (message instanceof McpSamplingAudioMessage audio) {
+    public McpSamplingAudioContent asAudioContent() throws McpSamplingException {
+        McpSamplingContent content = content();
+        if (content instanceof McpSamplingAudioContent audio) {
             return audio;
         }
-        throw new McpSamplingException("Sampling message is not an audio");
+        throw new McpSamplingException("Sampling content is not audio");
+    }
+
+    @Override
+    public McpSamplingToolUseContent asToolUseContent() throws McpSamplingException {
+        McpSamplingContent content = content();
+        if (content instanceof McpSamplingToolUseContent toolUse) {
+            return toolUse;
+        }
+        throw new McpSamplingException("Sampling content is not a tool use");
     }
 
     @Override
@@ -92,5 +91,12 @@ final class McpSamplingResponseImpl implements McpSamplingResponse {
     @Override
     public Optional<String> rawStopReason() {
         return Optional.ofNullable(rawStopReason);
+    }
+
+    private McpSamplingContent content() {
+        if (message.contents().isEmpty()) {
+            throw new McpSamplingException("Sampling response message does not contain content");
+        }
+        return message.contents().getFirst();
     }
 }

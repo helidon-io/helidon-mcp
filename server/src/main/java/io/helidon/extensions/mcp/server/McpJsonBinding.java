@@ -34,6 +34,9 @@ final class McpJsonBinding {
     }
 
     static JsonObject serializeObject(Object value) {
+        if (value instanceof JsonObject object) {
+            return object;
+        }
         byte[] json = JSON_BINDING.get().serializeToBytes(value);
         return JsonParser.create(json).readJsonObject();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
+ * Copyright (c) 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,13 @@ package io.helidon.extensions.mcp.server;
 import java.util.Optional;
 
 /**
- * Tool contents that can be returned as part of the tool execution.
+ * Sampling content that supports MCP content annotations.
  */
-interface McpToolContent extends McpContent, McpMetadata {
+public interface McpSamplingAnnotatedContent extends McpSamplingContent {
     /**
-     * Optional annotations for this content block.
+     * Optional content annotations.
      *
      * @return annotations
      */
     Optional<McpAnnotations> annotations();
-
 }

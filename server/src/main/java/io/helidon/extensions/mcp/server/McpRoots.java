@@ -74,13 +74,19 @@ public final class McpRoots extends McpFeature {
     private List<McpRoot> sendListRoot(Duration timeout) {
         long id = session().jsonRpcId();
         JsonObject request = session().serializer().createJsonRpcRequest(id, METHOD_ROOTS_LIST).build();
-        transport().send(request);
-        JsonObject response = session().pollResponse(id, timeout);
-        List<McpRoot> updatedRoots = session().serializer().parseRoots(response);
-        roots.clear();
-        roots.addAll(updatedRoots);
-        session().context().register(McpRootClassifier.class, false);
-        return roots;
+        session().prepareResponse(id);
+        try {
+            transport().send(request);
+            McpResponse response = session().pollResponse(id, timeout)
+                    .orElseThrow(() -> new McpRootException("response timeout"));
+            List<McpRoot> updatedRoots = session().serializer().parseRoots(response.asJsonObject());
+            roots.clear();
+            roots.addAll(updatedRoots);
+            session().context().register(McpRootClassifier.class, false);
+            return roots;
+        } finally {
+            session().discardResponse(id);
+        }
     }
 
     static class McpRootClassifier {

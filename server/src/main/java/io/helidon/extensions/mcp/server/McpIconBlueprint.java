@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
+ * Copyright (c) 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,46 +15,44 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.util.List;
+import java.util.Optional;
+
+import io.helidon.builder.api.Option;
 import io.helidon.builder.api.Prototype;
-import io.helidon.common.context.Context;
+import io.helidon.common.media.type.MediaType;
 
 /**
- * A representation of an MCP request.
+ * An optionally-sized MCP icon.
  */
 @Prototype.Blueprint
-interface McpRequestBlueprint extends McpMetadata {
+interface McpIconBlueprint {
     /**
-     * MCP client parameters.
+     * Icon source URI or data URI.
      *
-     * @return the parameters
+     * @return icon source
      */
-    McpParameters parameters();
+    String src();
 
     /**
-     * MCP client features.
+     * Optional MIME type override.
      *
-     * @return the features
+     * @return MIME type
      */
-    McpFeatures features();
+    Optional<MediaType> mediaType();
 
     /**
-     * Access to the negotiated protocol version.
+     * Sizes at which the icon can be used.
      *
-     * @return the protocol version
+     * @return icon sizes
      */
-    String protocolVersion();
+    @Option.Singular
+    List<String> sizes();
 
     /**
-     * Access context to store any session-scoped data.
+     * Optional display theme.
      *
-     * @return the session context
+     * @return icon theme
      */
-    Context sessionContext();
-
-    /**
-     * Access context to store any request-scoped data.
-     *
-     * @return the request context
-     */
-    Context requestContext();
+    Optional<McpIconTheme> theme();
 }

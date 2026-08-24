@@ -1,0 +1,73 @@
+/*
+ * Copyright (c) 2026 Oracle and/or its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.helidon.extensions.mcp.server;
+
+import java.util.Map;
+
+import io.helidon.common.context.Context;
+import io.helidon.json.JsonException;
+import io.helidon.json.JsonObject;
+
+import org.junit.jupiter.api.Test;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.sameInstance;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+
+class McpRequestTest {
+
+    @Test
+    void exposesProtocolMetadata() {
+        McpParameters parameters = new McpParameters(JsonObject.empty());
+        McpParameters metadata = McpParameters.create(Map.of("trace", "test"));
+        McpRequest request = McpRequest.builder()
+                .parameters(parameters)
+                .metadata(metadata)
+                .features(mock(McpFeatures.class))
+                .protocolVersion(McpProtocolVersion.VERSION_2025_11_25.text())
+                .sessionContext(Context.create())
+                .requestContext(Context.create())
+                .build();
+
+        McpMetadata requestMetadata = request;
+        assertThat(requestMetadata.metadata().orElseThrow(), sameInstance(metadata));
+
+        McpRequest requestWithoutMetadata = McpRequest.builder(request)
+                .clearMetadata()
+                .build();
+        assertThat(requestWithoutMetadata.metadata().isEmpty(), is(true));
+    }
+
+    @Test
+    void rejectsNonObjectProtocolMetadata() {
+        McpParameters parameters = new McpParameters(JsonObject.builder()
+                                                            .set(McpMetadata.META, 1)
+                                                            .build());
+
+        assertThrows(JsonException.class, () -> parameters.get(McpMetadata.META).as(JsonObject.class));
+    }
+
+    @Test
+    void removesLegacyMetaMethods() {
+        assertThrows(NoSuchMethodException.class, () -> McpRequest.class.getMethod("meta"));
+        assertThrows(NoSuchMethodException.class, () -> McpRequest.BuilderBase.class.getMethod("meta"));
+        assertThrows(NoSuchMethodException.class,
+                     () -> McpRequest.BuilderBase.class.getMethod("meta", McpParameters.class));
+    }
+
+}

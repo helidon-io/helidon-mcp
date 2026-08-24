@@ -15,21 +15,37 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.util.List;
-
-import io.helidon.builder.api.Option;
 import io.helidon.builder.api.Prototype;
 
 /**
- * Tool resource link content.
+ * MCP sampling tool use content.
  */
 @Prototype.Blueprint
-interface McpToolResourceLinkContentBlueprint extends McpResourceLinkContent, McpToolContent {
+interface McpSamplingToolUseContentBlueprint extends McpSamplingContent {
     /**
-     * Optional icons for this resource link.
+     * Unique identifier for this tool use.
      *
-     * @return icons
+     * @return tool use identifier
      */
-    @Option.Singular
-    List<McpIcon> icons();
+    String id();
+
+    /**
+     * Name of the tool to invoke.
+     *
+     * @return tool name
+     */
+    String name();
+
+    /**
+     * Arguments to pass to the tool. Use {@link McpParameters#create(Object)} to create arguments from a value supported by
+     * Helidon JSON binding.
+     *
+     * @return tool arguments
+     */
+    McpParameters input();
+
+    @Override
+    default McpSamplingContentType type() {
+        return McpSamplingContentType.TOOL_USE;
+    }
 }

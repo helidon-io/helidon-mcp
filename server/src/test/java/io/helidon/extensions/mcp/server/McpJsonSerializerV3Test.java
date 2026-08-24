@@ -15,6 +15,8 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.net.URI;
+
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.json.JsonArray;
 import io.helidon.json.JsonObject;
@@ -26,6 +28,7 @@ import io.helidon.json.schema.SchemaString;
 
 import org.junit.jupiter.api.Test;
 
+import static io.helidon.extensions.mcp.server.McpMetadata.META;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -224,7 +227,7 @@ class McpJsonSerializerV3Test {
     @Test
     void testStructuredContentWithContent() {
         McpToolResult result = McpToolResult.builder()
-                .addTextContent("foo")
+                .addTextContent(McpToolTextContent.builder().text("foo").build())
                 .structuredContent(new StructuredContent("bar"))
                 .build();
         McpToolConfig config = McpToolConfig.builder()
@@ -252,6 +255,32 @@ class McpJsonSerializerV3Test {
 
         JsonObject structuredContent = object.objectValue("structuredContent").orElseThrow();
         assertThat(structuredContent.stringValue("foo").orElseThrow(), is("bar"));
+    }
+
+    @Test
+    void testStructuredContentAppendsCompatibilityTextToNonTextContent() {
+        McpToolResult result = McpToolResult.builder()
+                .addImageContent(McpToolImageContent.builder()
+                                         .data(new byte[] {1, 2, 3})
+                                         .mediaType(MediaTypes.create("image/png"))
+                                         .build())
+                .structuredContent(new StructuredContent("bar"))
+                .build();
+        McpToolConfig config = McpToolConfig.builder()
+                .schema("")
+                .name("name")
+                .description("description")
+                .tool(request -> null)
+                .build();
+
+        JsonArray content = MJS.toolCall(new McpToolImpl(config), result)
+                .arrayValue("content")
+                .orElseThrow();
+
+        assertThat(content.size(), is(2));
+        assertThat(content.values().get(0).asObject().stringValue("type").orElseThrow(), is("image"));
+        assertThat(content.values().get(1).asObject().stringValue("type").orElseThrow(), is("text"));
+        assertThat(content.values().get(1).asObject().stringValue("text").orElseThrow(), is("{\"foo\":\"bar\"}"));
     }
 
     @Test
@@ -285,6 +314,21 @@ class McpJsonSerializerV3Test {
         assertThat(payload.stringValue("uri").orElseThrow(), is("https://foo"));
         assertThat(payload.stringValue("description").orElseThrow(), is("description"));
         assertThat(payload.stringValue("mimeType").orElseThrow(), is(MediaTypes.APPLICATION_JSON_VALUE));
+    }
+
+    @Test
+    void testSerializeTextResourceMetadata() {
+        McpToolContent content = McpToolTextResourceContent.builder()
+                .uri(URI.create("memory://forecast"))
+                .mediaType(MediaTypes.TEXT_PLAIN)
+                .text("sunny")
+                .metadata(McpParameters.create(new StructuredContent("metadata")))
+                .build();
+
+        JsonObject payload = MJS.toJson(content).orElseThrow().build();
+
+        assertThat(payload.objectValue(META).orElseThrow().stringValue("foo").orElseThrow(), is("metadata"));
+        assertThat(payload.objectValue("resource").orElseThrow().objectValue(META).isEmpty(), is(true));
     }
 
     @Test

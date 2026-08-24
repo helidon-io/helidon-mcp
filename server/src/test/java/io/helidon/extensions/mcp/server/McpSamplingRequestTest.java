@@ -39,11 +39,11 @@ class McpSamplingRequestTest {
         assertThat(request.hints().isEmpty(), is(true));
         assertThat(request.metadata().isEmpty(), is(true));
         assertThat(request.temperature().isEmpty(), is(true));
-        assertThat(request.textMessages().isEmpty(), is(true));
+        assertThat(request.messages().isEmpty(), is(true));
         assertThat(request.costPriority().isEmpty(), is(true));
         assertThat(request.systemPrompt().isEmpty(), is(true));
-        assertThat(request.imageMessages().isEmpty(), is(true));
-        assertThat(request.audioMessages().isEmpty(), is(true));
+        assertThat(request.tools().isEmpty(), is(true));
+        assertThat(request.toolChoice().isEmpty(), is(true));
         assertThat(request.stopSequences().isEmpty(), is(true));
         assertThat(request.speedPriority().isEmpty(), is(true));
         assertThat(request.includeContext().isEmpty(), is(true));
@@ -66,9 +66,25 @@ class McpSamplingRequestTest {
                 .timeout(Duration.ofSeconds(10))
                 .stopSequences(List.of("stop1"))
                 .includeContext(McpIncludeContext.NONE)
-                .addTextMessage(message -> message.text("text").role(McpRole.USER))
-                .addImageMessage(message -> message.data(new byte[0]).mediaType(MediaTypes.TEXT_PLAIN).role(McpRole.ASSISTANT))
-                .addAudioMessage(message -> message.data(new byte[0]).mediaType(MediaTypes.TEXT_PLAIN).role(McpRole.ASSISTANT))
+                .addTool("weather")
+                .addMessage(McpSamplingMessage.builder()
+                                    .role(McpRole.USER)
+                                    .addContent(McpSamplingTextContent.create("text"))
+                                    .build())
+                .addMessage(McpSamplingMessage.builder()
+                                    .role(McpRole.ASSISTANT)
+                                    .addContent(McpSamplingImageContent.builder()
+                                                        .data(new byte[0])
+                                                        .mediaType(MediaTypes.TEXT_PLAIN)
+                                                        .build())
+                                    .build())
+                .addMessage(McpSamplingMessage.builder()
+                                    .role(McpRole.ASSISTANT)
+                                    .addContent(McpSamplingAudioContent.builder()
+                                                        .data(new byte[0])
+                                                        .mediaType(MediaTypes.TEXT_PLAIN)
+                                                        .build())
+                                    .build())
                 .build();
 
         assertThat(request.maxTokens(), is(1));
@@ -77,38 +93,30 @@ class McpSamplingRequestTest {
         assertThat(request.hints().isEmpty(), is(false));
         assertThat(request.hints().get(), is(List.of("hint1")));
 
-        assertThat(request.textMessages().isEmpty(), is(false));
-        assertThat(request.textMessages().size(), is(1));
+        assertThat(request.messages().size(), is(3));
 
-        McpSamplingTextMessage message = request.textMessages().getFirst();
-        assertThat(message.text(), is("text"));
+        McpSamplingMessage message = request.messages().getFirst();
+        assertThat(((McpSamplingTextContent) message.contents().getFirst()).text(), is("text"));
         assertThat(message.role(), is(McpRole.USER));
 
-        assertThat(request.imageMessages().isEmpty(), is(false));
-        assertThat(request.imageMessages().size(), is(1));
-
-        McpSamplingImageMessage image = request.imageMessages().getFirst();
+        McpSamplingImageContent image = (McpSamplingImageContent) request.messages().get(1).contents().getFirst();
         assertThat(image.data(), is(new byte[0]));
-        assertThat(image.role(), is(McpRole.ASSISTANT));
         assertThat(image.mediaType(), is(MediaTypes.TEXT_PLAIN));
 
-        assertThat(request.audioMessages().isEmpty(), is(false));
-        assertThat(request.audioMessages().size(), is(1));
-
-        McpSamplingAudioMessage audio = request.audioMessages().getFirst();
+        McpSamplingAudioContent audio = (McpSamplingAudioContent) request.messages().get(2).contents().getFirst();
         assertThat(audio.data(), is(new byte[0]));
-        assertThat(audio.role(), is(McpRole.ASSISTANT));
         assertThat(audio.mediaType(), is(MediaTypes.TEXT_PLAIN));
 
         assertThat(request.metadata().isEmpty(), is(false));
         assertThat(request.metadata().get(), is(metadata));
 
-        JsonObject serialized = new McpJsonSerializerV1().toJson(request).build();
+        JsonObject serialized = new McpJsonSerializerV1().toJson(request, List.of()).build();
         JsonObject serializedMetadata = serialized.objectValue("metadata").orElseThrow();
         assertThat(serializedMetadata.booleanValue("enabled").orElseThrow(), is(true));
 
         assertThat(request.includeContext().isEmpty(), is(false));
         assertThat(request.includeContext().get(), is(McpIncludeContext.NONE));
+        assertThat(request.tools(), is(List.of("weather")));
 
         assertThat(request.systemPrompt().isEmpty(), is(false));
         assertThat(request.systemPrompt().get(), is("system prompt"));

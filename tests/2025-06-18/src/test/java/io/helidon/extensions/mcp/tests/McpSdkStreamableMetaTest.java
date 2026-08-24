@@ -67,6 +67,15 @@ class McpSdkStreamableMetaTest extends AbstractMcpSdkTest {
     }
 
     @Test
+    void testMissingMetaTool() {
+        McpSchema.CallToolResult result = client.callTool(McpSchema.CallToolRequest.builder()
+                                                                  .name("meta-tool")
+                                                                  .build());
+        McpSchema.TextContent text = (McpSchema.TextContent) result.content().getFirst();
+        assertThat(text.text(), is("Not found"));
+    }
+
+    @Test
     void testMetaPrompt() {
         McpSchema.GetPromptRequest request = new McpSchema.GetPromptRequest("meta-prompt", Map.of(), Map.of("foo", "bar"));
         McpSchema.GetPromptResult result = client.getPrompt(request);
@@ -89,6 +98,15 @@ class McpSdkStreamableMetaTest extends AbstractMcpSdkTest {
         assertThat(content, instanceOf(McpSchema.TextResourceContents.class));
 
         McpSchema.TextResourceContents text = (McpSchema.TextResourceContents) content;
+        assertThat(text.text(), is("bar"));
+    }
+
+    @Test
+    void testMetaResourceTemplate() {
+        McpSchema.ReadResourceRequest request = new McpSchema.ReadResourceRequest("https://template/test",
+                                                                                  Map.of("foo", "bar"));
+        McpSchema.ReadResourceResult result = client.readResource(request);
+        McpSchema.TextResourceContents text = (McpSchema.TextResourceContents) result.contents().getFirst();
         assertThat(text.text(), is("bar"));
     }
 

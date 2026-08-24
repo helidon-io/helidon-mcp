@@ -15,27 +15,20 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.lang.System.Logger.Level;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.helidon.common.LazyValue;
 import io.helidon.common.LruCache;
-import io.helidon.common.UncheckedException;
 import io.helidon.common.context.Context;
-import io.helidon.json.JsonException;
-import io.helidon.json.JsonObject;
 import io.helidon.json.JsonValue;
+import io.helidon.service.registry.Services;
 import io.helidon.webserver.http.ServerResponse;
 import io.helidon.webserver.jsonrpc.JsonRpcRequest;
 import io.helidon.webserver.jsonrpc.JsonRpcResponse;
@@ -56,11 +49,10 @@ class McpSession {
     private final List<McpFeatureLifecycle> featureListeners;
     private final LruCache<String, McpTransport> transports;
     private final LazyValue<McpSessionFeatures> sessionFeatures;
-    private final AtomicBoolean active = new AtomicBoolean(true);
-    private final BlockingQueue<JsonObject> responses = new LinkedBlockingQueue<>();
+    private final McpPendingResponses pendingResponses;
+    private final AtomicReference<State> state = new AtomicReference<>(UNINITIALIZED);
 
     private McpJsonSerializer serializer;
-    private volatile State state = UNINITIALIZED;
     private volatile McpProtocolVersion protocolVersion;
 
     McpSession(McpSessions sessions, McpTransportManager manager, McpServerConfig config, String id) {
@@ -68,10 +60,10 @@ class McpSession {
         this.manager = manager;
         this.sessions = sessions;
         this.clientCapabilities = new HashSet<>();
-        this.featureListeners = new CopyOnWriteArrayList<>();
+        this.featureListeners = Services.all(McpFeatureLifecycle.class);
         this.features = LruCache.create(config.maxRequestsPerSession());
         this.transports = LruCache.create(config.maxRequestsPerSession());
-        this.featureListeners.add(McpProgress.McpProgressListener.create());
+        this.pendingResponses = new McpPendingResponses(config.maxRequestsPerSession());
         this.sessionFeatures = LazyValue.create(() -> new McpSessionFeatures(this));
         this.context.register(McpServerConfigBlueprint.class, config);
     }
@@ -81,7 +73,7 @@ class McpSession {
         McpTransport transport = transports.get(key)
                 .orElseThrow(() -> new McpInternalException("No transport for id " + id));
         transport.send(response);
-        transports.remove(key);
+        clearRequest(id);
     }
 
     void onConnect(ServerResponse response) {
@@ -90,7 +82,8 @@ class McpSession {
     }
 
     void onDisconnect(ServerResponse response) {
-        active.compareAndSet(true, false);
+        state.set(State.DISCONNECTED);
+        pendingResponses.disconnect();
         sessions.remove(id);
         manager.onDisconnect(response);
     }
@@ -131,15 +124,23 @@ class McpSession {
         });
     }
 
-    void acceptResponse(JsonObject response) {
-        try {
-            responses.put(response);
-        } catch (InterruptedException e) {
-            throw new UncheckedException(e);
-        }
+    void acceptResponse(McpResponse response) {
+        pendingResponses.accept(response);
     }
 
-    McpFeatures createFeatures(JsonValue requestId, JsonRpcRequest request, JsonRpcResponse response) {
+    void prepareResponse(long requestId) {
+        pendingResponses.prepare(requestId);
+    }
+
+    void discardResponse(long requestId) {
+        pendingResponses.discard(requestId);
+    }
+
+    void abortResponse(long requestId, RuntimeException exception) {
+        pendingResponses.abort(requestId, exception);
+    }
+
+    McpFeatures createFeatures(JsonValue requestId) {
         String key = requestId.toString();
         var transport = transports.get(key)
                 .orElseThrow(() -> new McpInternalException("No transport for request id " + requestId));
@@ -148,30 +149,13 @@ class McpSession {
         return feat;
     }
 
-    JsonObject pollResponse(long requestId, Duration timeout) {
-        while (active.get()) {
-            try {
-                JsonObject response = responses.poll(timeout.toMillis(), TimeUnit.MILLISECONDS);
-                if (response != null) {
-                    if (LOGGER.isLoggable(System.Logger.Level.DEBUG)) {
-                        LOGGER.log(System.Logger.Level.DEBUG, "Response:\n" + prettyPrint(response));
-                    }
-                    long id = response.longValue("id").orElseThrow();
-                    if (id == requestId) {
-                        return response;
-                    }
-                } else {
-                    return serializer.jsonrpcErrorTimeoutResponse(requestId);
-                }
-            } catch (JsonException e) {
-                if (LOGGER.isLoggable(Level.TRACE)) {
-                    LOGGER.log(Level.TRACE, "Received a response with wrong request id type", e);
-                }
-            } catch (InterruptedException e) {
-                throw new McpInternalException("Session interrupted.", e);
-            }
+    Optional<McpResponse> pollResponse(long requestId, Duration timeout) {
+        Optional<McpResponse> response = pendingResponses.poll(requestId, timeout);
+        if (LOGGER.isLoggable(System.Logger.Level.DEBUG)) {
+            response.map(McpResponse::asJsonObject)
+                    .ifPresent(it -> LOGGER.log(System.Logger.Level.DEBUG, "Response:\n" + prettyPrint(it)));
         }
-        throw new McpInternalException("Session disconnected");
+        return response;
     }
 
     /**
@@ -209,8 +193,10 @@ class McpSession {
     void initializeClientCapabilities(McpParameters capabilities) {
         var sampling = capabilities.get(McpCapability.SAMPLING.text());
         sampling.ifPresent(it -> clientCapabilities.add(McpCapability.SAMPLING));
-        sampling.get("tools")
-                .ifPresent(it -> clientCapabilities.add(McpCapability.SAMPLING_TOOLS));
+        if (protocolVersion == McpProtocolVersion.VERSION_2025_11_25) {
+            sampling.get("tools")
+                    .ifPresent(it -> clientCapabilities.add(McpCapability.SAMPLING_TOOLS));
+        }
         sampling.get("context")
                 .ifPresent(it -> clientCapabilities.add(McpCapability.SAMPLING_CONTEXT));
 
@@ -263,14 +249,15 @@ class McpSession {
     }
 
     void state(State state) {
-        this.state = state;
+        this.state.updateAndGet(current -> current == State.DISCONNECTED ? current : state);
     }
 
     State state() {
-        return state;
+        return state.get();
     }
 
     enum State {
+        DISCONNECTED,
         INITIALIZED,
         INITIALIZING,
         UNINITIALIZED

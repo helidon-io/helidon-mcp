@@ -16,6 +16,7 @@
 
 package io.helidon.extensions.mcp.tests;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -30,15 +31,16 @@ import io.helidon.webserver.testing.junit5.SetUpRoute;
 
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
+import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import static io.modelcontextprotocol.spec.McpSchema.CreateMessageResult.StopReason.STOP_SEQUENCE;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ServerTest
 class McpSdkSseSamplingTest extends AbstractMcpSdkTest {
@@ -83,8 +85,10 @@ class McpSdkSseSamplingTest extends AbstractMcpSdkTest {
         assertThat(decode(image.data()), is(SAMPLING_CLIENT_TEXT));
         assertThat(image.mimeType(), is(MediaTypes.TEXT_PLAIN_VALUE));
 
-        var annotations = new McpSchema.Annotations(List.of(), 1.0);
-        var result = new McpSchema.ImageContent(List.of(), 0.0, SAMPLING_CLIENT_TEXT, MediaTypes.TEXT_PLAIN_VALUE);
+        var result = new McpSchema.ImageContent(List.of(),
+                                                0.0,
+                                                encode(SAMPLING_CLIENT_TEXT),
+                                                MediaTypes.TEXT_PLAIN_VALUE);
         return new McpSchema.CreateMessageResult(McpSchema.Role.USER, result, "test-model", STOP_SEQUENCE);
     }
 
@@ -112,13 +116,16 @@ class McpSdkSseSamplingTest extends AbstractMcpSdkTest {
     }
 
     private String decode(String data) {
-        return new String(Base64.getDecoder().decode(data));
+        return new String(Base64.getDecoder().decode(data), StandardCharsets.UTF_8);
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {"image", "audio"})
-    void testContentTypeSamplingTool(String type) {
-        var request = new McpSchema.CallToolRequest("sampling-tool", Map.of("type", "text"));
+    private String encode(String data) {
+        return Base64.getEncoder().encodeToString(data.getBytes(StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void testImageContentTypeSamplingTool() {
+        var request = new McpSchema.CallToolRequest("sampling-tool", Map.of("type", "image"));
         var result = client().callTool(request);
         List<McpSchema.Content> contents = result.content();
         assertThat(contents.size(), is(1));
@@ -128,6 +135,15 @@ class McpSdkSseSamplingTest extends AbstractMcpSdkTest {
 
         McpSchema.TextContent textContent = (McpSchema.TextContent) content;
         assertThat(textContent.text(), is(SAMPLING_CLIENT_TEXT));
+    }
+
+    @Test
+    void rejectsAudioContentTypeSamplingTool() {
+        var request = new McpSchema.CallToolRequest("sampling-tool", Map.of("type", "audio"));
+
+        McpError exception = assertThrows(McpError.class, () -> client().callTool(request));
+
+        assertThat(exception.getMessage(), containsString("Wrong sampling message type"));
     }
 
     @Test

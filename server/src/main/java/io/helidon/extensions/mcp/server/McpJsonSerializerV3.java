@@ -15,13 +15,15 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Set;
 
-import io.helidon.json.JsonArray;
 import io.helidon.json.JsonObject;
 import io.helidon.json.JsonValue;
 import io.helidon.jsonrpc.core.JsonRpcError;
+
+import static io.helidon.extensions.mcp.server.McpMetadata.META;
 
 /**
  * JSON serializer for {@code 2025-06-18} MCP specification.
@@ -46,14 +48,19 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
             }
         }
 
-        JsonObject.Builder builder = JsonObject.builder().from(super.toolCall(tool, result));
+        JsonObject original = super.toolCall(tool, result);
+        JsonObject.Builder builder = JsonObject.builder().from(original);
+        var contentValues = new ArrayList<>(original.arrayValue("content").orElseThrow().values());
         result.structuredContent().ifPresent((content) -> {
             JsonObject sc = McpJsonBinding.serializeObject(content);
             String json = sc.toString();
             builder.set("structuredContent", sc);
-            if (result.textContents().isEmpty()) {
+            if (McpToolSupport.aggregateContent(result).stream().noneMatch(McpToolTextContent.class::isInstance)) {
                 McpToolContent text = McpToolTextContent.builder().text(json).build();
-                toJson(text).ifPresent(it -> builder.set("content", JsonArray.create(it.build())));
+                toJson(text).ifPresent(it -> {
+                    contentValues.add(it.build());
+                    builder.setValues("content", contentValues);
+                });
             }
         });
         return builder.build();
@@ -61,10 +68,30 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
 
     @Override
     public Optional<JsonObject.Builder> toJson(McpContent content) {
+        Optional<JsonObject.Builder> result;
         if (content instanceof McpResourceLinkContent link) {
-            return Optional.of(toJson(link));
+            result = Optional.of(toJson(link));
+        } else {
+            result = super.toJson(content);
         }
-        return super.toJson(content);
+        if (content instanceof McpToolContent toolContent) {
+            result.ifPresent(builder -> {
+                toolContent.annotations().ifPresent(annotations -> builder.set("annotations", toJson(annotations)));
+                toolContent.metadata()
+                        .ifPresent(metadata -> builder.set(META, metadata.asJsonObject()
+                                .orElseThrow(() -> new McpException("Tool content metadata must be a JSON object"))));
+            });
+        }
+        return result;
+    }
+
+    @Override
+    public JsonObject.Builder toJson(McpSamplingContent content) {
+        JsonObject.Builder builder = super.toJson(content);
+        content.metadata()
+                .ifPresent(metadata -> builder.set(META, metadata.asJsonObject()
+                        .orElseThrow(() -> new McpSamplingException("Sampling content metadata must be a JSON object"))));
+        return builder;
     }
 
     @Override
@@ -95,18 +122,6 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
     public JsonObject.Builder toJson(McpPromptArgument argument) {
         var builder = super.toJson(argument);
         argument.title().ifPresent(title -> builder.set("title", title));
-        return builder;
-    }
-
-    private JsonObject.Builder toJson(McpResourceLinkContent content) {
-        var builder = JsonObject.builder()
-                .set("type", content.type().text())
-                .set("uri", content.uri())
-                .set("name", content.name());
-        content.size().ifPresent(size -> builder.set("size", size));
-        content.title().ifPresent(title -> builder.set("title", title));
-        content.mediaType().ifPresent(mediaType -> builder.set("mimeType", mediaType.text()));
-        content.description().ifPresent(description -> builder.set("description", description));
         return builder;
     }
 
@@ -149,4 +164,24 @@ class McpJsonSerializerV3 extends McpJsonSerializerV2 {
         builder.set("params", params.build());
         return builder.build();
     }
+
+    @Override
+    JsonObject toJson(McpAnnotations annotations) {
+        JsonObject.Builder builder = JsonObject.builder().from(super.toJson(annotations));
+        annotations.lastModified().ifPresent(lastModified -> builder.set("lastModified", lastModified));
+        return builder.build();
+    }
+
+    private JsonObject.Builder toJson(McpResourceLinkContent content) {
+        var builder = JsonObject.builder()
+                .set("type", content.type().text())
+                .set("uri", content.uri())
+                .set("name", content.name());
+        content.size().ifPresent(size -> builder.set("size", size));
+        content.title().ifPresent(title -> builder.set("title", title));
+        content.mediaType().ifPresent(mediaType -> builder.set("mimeType", mediaType.text()));
+        content.description().ifPresent(description -> builder.set("description", description));
+        return builder;
+    }
+
 }

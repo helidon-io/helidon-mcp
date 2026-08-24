@@ -555,7 +555,8 @@ void convert(McpToolRequest request) {
 The `McpRequest` object is the base interface for every request, providing access to client-side data and features.
 
 - **`parameters()`**: Returns `McpParameters` for accessing client-provided parameters.
-- **`meta()`**: Returns `McpParameters` for accessing client-provided metadata.
+- **`metadata()`**: Returns optional `McpParameters` for accessing client-provided protocol metadata. Use
+  `McpParameters.create(Object)` to create metadata from maps or custom Helidon JSON types.
 - **`features()`**: Returns `McpFeatures` for accessing advanced features such as logging, progress, cancellation, elicitation, sampling, and roots.
 - **`protocolVersion()`**: Returns the negotiated protocol version between the server and the client.
 - **`sessionContext()`**: Returns a `Context` for session-scoped data.
@@ -740,9 +741,10 @@ McpToolResult samplingTool(McpSampling sampling) {
         McpSamplingResponse response = sampling.request(req -> req
                 .timeout(Duration.ofSeconds(10))
                 .systemPrompt("You are a concise, helpful assistant.")
-                .addTextMessage(McpSamplingTextMessage.builder().text("Write a 3-line summary of Helidon MCP Sampling.").role(McpRole.USER).build()));
+                .addTextMessage(McpRole.USER,
+                                "Write a 3-line summary of Helidon MCP Sampling."));
         return McpToolResult.builder()
-                .addTextContent(response.asTextMessage().text())
+                .addTextContent(response.asTextContent().text())
                 .build();
     } catch (McpSamplingException e) {
         return McpToolResult.builder()

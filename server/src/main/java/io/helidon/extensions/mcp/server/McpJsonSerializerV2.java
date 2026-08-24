@@ -31,14 +31,6 @@ class McpJsonSerializerV2 extends McpJsonSerializerV1 {
     }
 
     @Override
-    public Optional<JsonObject.Builder> toJson(McpContent content) {
-        if (content instanceof McpAudioContent audio) {
-            return toJson(audio);
-        }
-        return super.toJson(content);
-    }
-
-    @Override
     public Optional<JsonObject.Builder> toJson(McpPromptContent content) {
         if (content instanceof McpPromptAudioContent resource) {
             return toJson(resource);

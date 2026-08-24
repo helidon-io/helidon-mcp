@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
+ * Copyright (c) 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,31 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import io.helidon.builder.api.Prototype;
+import io.helidon.common.context.Context;
+import io.helidon.json.JsonObject;
 
 /**
- * MCP sampling text message.
+ * An MCP client response and the context of the request that delivered it.
  */
-@Prototype.Blueprint
-@Prototype.CustomMethods(McpSamplingTextMessageSupport.class)
-interface McpSamplingTextMessageBlueprint extends McpSamplingMessage {
+sealed interface McpResponse permits McpResponseImpl {
     /**
-     * Text content as string.
+     * Identifier of the JSON-RPC request.
      *
-     * @return text
+     * @return request identifier
      */
-    String text();
+    long id();
 
-    @Override
-    default McpSamplingMessageType type() {
-        return McpSamplingMessageType.TEXT;
-    }
+    /**
+     * JSON-RPC response.
+     *
+     * @return response object
+     */
+    JsonObject asJsonObject();
+
+    /**
+     * Context of the request that delivered the response.
+     *
+     * @return request context
+     */
+    Context requestContext();
 }

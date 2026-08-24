@@ -15,17 +15,16 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.util.Optional;
+import io.helidon.builder.api.Prototype;
 
 /**
- * Tool contents that can be returned as part of the tool execution.
+ * MCP sampling audio content.
  */
-interface McpToolContent extends McpContent, McpMetadata {
-    /**
-     * Optional annotations for this content block.
-     *
-     * @return annotations
-     */
-    Optional<McpAnnotations> annotations();
+@Prototype.Blueprint
+interface McpSamplingAudioContentBlueprint extends McpSamplingMediaContent {
 
+    @Override
+    default McpSamplingContentType type() {
+        return McpSamplingContentType.AUDIO;
+    }
 }

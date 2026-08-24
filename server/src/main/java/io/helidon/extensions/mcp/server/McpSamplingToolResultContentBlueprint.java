@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, 2026 Oracle and/or its affiliates.
+ * Copyright (c) 2026 Oracle and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,29 @@
  */
 package io.helidon.extensions.mcp.server;
 
-import java.util.Optional;
+import io.helidon.builder.api.Prototype;
 
 /**
- * Tool contents that can be returned as part of the tool execution.
+ * MCP sampling tool result content.
  */
-interface McpToolContent extends McpContent, McpMetadata {
+@Prototype.Blueprint
+interface McpSamplingToolResultContentBlueprint extends McpSamplingContent {
     /**
-     * Optional annotations for this content block.
+     * Identifier of the tool use that produced this result.
      *
-     * @return annotations
+     * @return tool use identifier
      */
-    Optional<McpAnnotations> annotations();
+    String toolUseId();
 
+    /**
+     * Tool execution result.
+     *
+     * @return tool result
+     */
+    McpToolResult result();
+
+    @Override
+    default McpSamplingContentType type() {
+        return McpSamplingContentType.TOOL_RESULT;
+    }
 }
