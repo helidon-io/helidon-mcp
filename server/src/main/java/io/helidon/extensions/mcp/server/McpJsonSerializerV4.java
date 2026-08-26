@@ -48,6 +48,7 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
     @Override
     public JsonObject.Builder serverInfo(McpServerConfig config) {
         JsonObject.Builder builder = super.serverInfo(config);
+        config.description().ifPresent(description -> builder.set("description", description));
         config.websiteUrl().ifPresent(websiteUrl -> builder.set("websiteUrl", websiteUrl));
         return builder;
     }

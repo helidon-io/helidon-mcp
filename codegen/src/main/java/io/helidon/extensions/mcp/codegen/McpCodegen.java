@@ -37,6 +37,7 @@ import io.helidon.common.types.TypeName;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.generatedTypeName;
 import static io.helidon.extensions.mcp.codegen.McpTypes.HTTP_FEATURE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.HTTP_ROUTING_BUILDER;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_DESCRIPTION;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PATH;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_PROMPTS_PAGE_SIZE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCES_PAGE_SIZE;
@@ -143,6 +144,12 @@ final class McpCodegen implements CodegenExtension {
                 .addContent("builder.name(")
                 .addContentLiteral(serverName)
                 .addContentLine(");");
+
+        type.findAnnotation(MCP_DESCRIPTION)
+                .flatMap(Annotation::value)
+                .ifPresent(description -> method.addContent("builder.description(")
+                        .addContentLiteral(description)
+                        .addContentLine(");"));
 
         type.findAnnotation(MCP_VERSION)
                 .flatMap(Annotation::value)

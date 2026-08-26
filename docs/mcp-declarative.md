@@ -60,6 +60,7 @@ class McpServer {
 #### Configuration
 
 - **`@Mcp.Server`**: Defines the class as an MCP server and can override the default server name.
+- **`@Mcp.Description`**: Sets the optional server description.
 - **`@Mcp.Path`**: Sets the HTTP endpoint path for the server.
 - **`@Mcp.Version`**: Establishes the server version.
 - **`@Mcp.WebsiteUrl`**: Sets the optional server website URL.
@@ -68,13 +69,14 @@ class McpServer {
 ```java
 @Mcp.Path("/mcp")
 @Mcp.Version("0.0.1")
+@Mcp.Description("Provides tools and resources for Example")
 @Mcp.WebsiteUrl("https://example.com/mcp")
 @Mcp.Server("MyServer")
 class McpServer {
 }
 ```
 
-The website URL is included in `serverInfo` when the negotiated protocol version is `2025-11-25`.
+The description and website URL are included in `serverInfo` when the negotiated protocol version is `2025-11-25`.
 
 #### Stateless mode
 

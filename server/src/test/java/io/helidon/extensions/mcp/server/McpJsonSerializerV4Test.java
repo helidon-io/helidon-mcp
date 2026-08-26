@@ -47,14 +47,16 @@ class McpJsonSerializerV4Test {
             McpJsonSerializer.create(McpProtocolVersion.VERSION_2025_06_18);
 
     @Test
-    void serializesServerWebsiteUrl() {
+    void serializesServerMetadata() {
         McpServerConfig config = McpServerConfig.builder()
+                .description("Helidon MCP server")
                 .websiteUrl("https://example.com/mcp")
                 .buildPrototype();
         JsonObject response = SERIALIZER.createJsonInitializeResponse(Set.of(), config).build();
         JsonObject expected = JsonObject.builder()
                 .set("name", "mcp-server")
                 .set("version", "0.0.1")
+                .set("description", "Helidon MCP server")
                 .set("websiteUrl", "https://example.com/mcp")
                 .build();
 
@@ -62,7 +64,7 @@ class McpJsonSerializerV4Test {
     }
 
     @Test
-    void omitsUnconfiguredServerWebsiteUrl() {
+    void omitsUnconfiguredServerMetadata() {
         McpServerConfig config = McpServerConfig.builder().buildPrototype();
         JsonObject response = SERIALIZER.createJsonInitializeResponse(Set.of(), config).build();
         JsonObject expected = JsonObject.builder()
@@ -76,8 +78,9 @@ class McpJsonSerializerV4Test {
     @ParameterizedTest
     @EnumSource(value = McpProtocolVersion.class,
                 names = {"VERSION_2024_11_05", "VERSION_2025_03_26", "VERSION_2025_06_18"})
-    void omitsServerWebsiteUrlFromLegacyProtocolVersions(McpProtocolVersion version) {
+    void omitsServerMetadataFromLegacyProtocolVersions(McpProtocolVersion version) {
         McpServerConfig config = McpServerConfig.builder()
+                .description("Helidon MCP server")
                 .websiteUrl("https://example.com/mcp")
                 .buildPrototype();
         JsonObject response = McpJsonSerializer.create(version)

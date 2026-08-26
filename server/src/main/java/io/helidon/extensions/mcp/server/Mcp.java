@@ -65,6 +65,10 @@ public final class Mcp {
      * The MCP server can be configured using the following annotations:
      * <ul>
      *     <li>
+     *         {@link io.helidon.extensions.mcp.server.Mcp.Description} -
+     *         Set the optional human-readable MCP server description.
+     *     </li>
+     *     <li>
      *         {@link io.helidon.extensions.mcp.server.Mcp.Version} -
      *         Set the MCP server version. It will be communicated to MCP client when connecting to this server.
      *     </li>
@@ -91,13 +95,13 @@ public final class Mcp {
     }
 
     /**
-     * Annotation to describe a prompt argument.
+     * Annotation to describe an MCP server, prompt argument, or generated JSON schema element.
      */
     @Target({TYPE, METHOD, FIELD, PARAMETER})
     @Retention(RUNTIME)
     public @interface Description {
         /**
-         * Prompt argument description.
+         * Description of the annotated server or element.
          *
          * @return description
          */
