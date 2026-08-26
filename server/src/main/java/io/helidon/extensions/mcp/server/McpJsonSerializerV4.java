@@ -37,6 +37,7 @@ import static io.helidon.extensions.mcp.server.McpMetadata.META;
  * JSON serializer for {@code 2025-11-25} MCP specification.
  */
 class McpJsonSerializerV4 extends McpJsonSerializerV3 {
+    private static final McpSchemaHashMap ELICITATION_SCHEMA = new McpSchemaHashMap();
 
     @Override
     public JsonObject.Builder createJsonInitializeResponse(Set<McpCapability> capabilities, McpServerConfig config) {
@@ -49,6 +50,30 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
         JsonObject.Builder builder = super.serverInfo(config);
         config.websiteUrl().ifPresent(websiteUrl -> builder.set("websiteUrl", websiteUrl));
         return builder;
+    }
+
+    @Override
+    public JsonObject createElicitationRequest(long id, McpElicitationRequest request) {
+        var params = JsonObject.builder()
+                .set("mode", "form")
+                .set("message", request.message())
+                .set("requestedSchema", ELICITATION_SCHEMA.get(request.schema()));
+        return createJsonRpcRequest(id, METHOD_ELICITATION_CREATE, params);
+    }
+
+    @Override
+    public JsonObject createElicitationRequest(long id, McpElicitationUrlRequest request) {
+        var params = JsonObject.builder()
+                .set("mode", "url")
+                .set("message", request.message())
+                .set("elicitationId", request.elicitationId())
+                .set("url", request.url().toASCIIString());
+        return createJsonRpcRequest(id, METHOD_ELICITATION_CREATE, params);
+    }
+
+    @Override
+    public McpElicitationResponse createElicitationUrlResponse(JsonObject object) throws McpElicitationException {
+        return new McpElicitationResponseImpl(parseElicitationResult(object).action());
     }
 
     @Override

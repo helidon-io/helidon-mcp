@@ -168,6 +168,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
 
         builder.errorHandler(this::handleErrorRequest);
         builder.exception(McpInternalException.class, this::mcpInternalExceptionHandler);
+        builder.exception(McpUrlElicitationRequiredException.class, this::urlElicitationRequiredExceptionHandler);
         builder.exception(McpException.class, this::mcpExceptionHandler);
         builder.exception(Throwable.class, this::throwableExceptionHandler);
 
@@ -809,14 +810,49 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     private Optional<JsonRpcError> throwableExceptionHandler(JsonRpcRequest request,
                                                              JsonRpcResponse response,
                                                              Throwable throwable) {
-        return sendError(request, response, throwable, INTERNAL_ERROR);
+        String message = throwable.getMessage() == null ? "Internal server error" : throwable.getMessage();
+        return sendError(request,
+                         response,
+                         throwable,
+                         JsonRpcError.create(INTERNAL_ERROR, message));
     }
 
     private Optional<JsonRpcError> mcpExceptionHandler(JsonRpcRequest request,
                                                        JsonRpcResponse response,
                                                        Throwable throwable) {
         if (throwable instanceof McpException exception) {
-            return sendError(request, response, exception, exception.code());
+            String message = exception.getMessage() == null ? "Internal server error" : exception.getMessage();
+            boolean reservedUrlElicitationError = exception.code() == McpUrlElicitationRequiredException.ERROR_CODE
+                    && findSession(request)
+                    .map(session -> session.protocolVersion() == McpProtocolVersion.VERSION_2025_11_25)
+                    .orElse(true);
+            JsonRpcError error = reservedUrlElicitationError
+                    ? JsonRpcError.create(INTERNAL_ERROR,
+                                          "McpUrlElicitationRequiredException must be used for error code "
+                                                  + McpUrlElicitationRequiredException.ERROR_CODE)
+                    : JsonRpcError.create(exception.code(), message);
+            return sendError(request, response, exception, error);
+        }
+        return throwableExceptionHandler(request, response, throwable);
+    }
+
+    private Optional<JsonRpcError> urlElicitationRequiredExceptionHandler(JsonRpcRequest request,
+                                                                          JsonRpcResponse response,
+                                                                          Throwable throwable) {
+        if (throwable instanceof McpUrlElicitationRequiredException exception) {
+            Optional<McpSession> session = findSession(request);
+            JsonRpcError error;
+            if (session.isPresent()
+                    && session.get().protocolVersion() != McpProtocolVersion.VERSION_2025_11_25) {
+                error = JsonRpcError.create(INTERNAL_ERROR,
+                                            "URL elicitation required error is not supported by protocol version "
+                                                    + session.get().protocolVersion().text());
+            } else {
+                error = JsonRpcError.create(McpUrlElicitationRequiredException.ERROR_CODE,
+                                            exception.getMessage(),
+                                            exception.errorData());
+            }
+            return sendError(request, response, exception, error);
         }
         return throwableExceptionHandler(request, response, throwable);
     }
@@ -825,7 +861,11 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                                                                JsonRpcResponse response,
                                                                Throwable throwable) {
         if (throwable instanceof McpInternalException exception) {
-            return sendError(request, response, exception, exception.code());
+            String message = exception.getMessage() == null ? "Internal server error" : exception.getMessage();
+            return sendError(request,
+                             response,
+                             exception,
+                             JsonRpcError.create(exception.code(), message));
         }
         return throwableExceptionHandler(request, response, throwable);
     }
@@ -833,7 +873,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     private Optional<JsonRpcError> sendError(JsonRpcRequest request,
                                              JsonRpcResponse response,
                                              Throwable throwable,
-                                             int errorCode) {
+                                             JsonRpcError error) {
         if (LOGGER.isLoggable(Level.DEBUG)) {
             LOGGER.log(Level.DEBUG, "Send error response because of: ", throwable);
         }
@@ -845,15 +885,21 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         if (session.isEmpty()) {
             response.header(HeaderValues.CONTENT_TYPE_JSON);
             if (stateless) {
-                return Optional.of(JsonRpcError.create(errorCode, throwable.getMessage()));
+                return Optional.of(error);
             }
             return Optional.of(JsonRpcError.create(INTERNAL_ERROR, "Internal server error"));
         }
-        response.error(errorCode, throwable.getMessage());
+        McpSession foundSession = session.orElseThrow();
+        Optional<JsonValue> errorData = error.data();
+        if (errorData.isPresent()) {
+            response.error(error.code(), error.message(), errorData.get());
+        } else {
+            response.error(error.code(), error.message());
+        }
 
         // If streamable HTTP transport and did not switch to SSE
         // the handler manages the response
-        var transport = session.get()
+        var transport = foundSession
                 .transport(requestId)
                 .filter(it -> it instanceof McpStreamableHttpTransport)
                 .map(McpStreamableHttpTransport.class::cast)
@@ -862,11 +908,11 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             if (LOGGER.isLoggable(Level.DEBUG)) {
                 LOGGER.log(Level.DEBUG, "Streamable HTTP:\n" + prettyPrint(response.asJsonObject()));
             }
-            session.get().clearRequest(requestId);
+            foundSession.clearRequest(requestId);
             response.header(HeaderValues.CONTENT_TYPE_JSON);
             return response.error();
         }
-        session.get().send(requestId, response);
+        foundSession.send(requestId, response);
         return Optional.empty();
     }
 

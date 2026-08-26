@@ -682,6 +682,13 @@ McpToolResult cancellationTool(McpCancellation cancellation) {
 
 See the full [elicitation documentation details](mcp.md#elicitation)
 
+Declarative handlers can use both form and URL mode through the injected `McpElicitation`. Check `enabled()` before a form
+request and `enabledUrl()` before a URL request.
+
+When a handler cannot continue until an external URL interaction is complete, it can throw
+`McpUrlElicitationRequiredException` with one or more `McpElicitationUrlRequest` values. The client receives JSON-RPC error
+code `-32042` with the required URLs and can retry the original request after completing them.
+
 #### Example
 
 ```java

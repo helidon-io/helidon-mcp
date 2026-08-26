@@ -116,6 +116,30 @@ final class McpDecorators {
     }
 
     /**
+     * Enforce an absolute URI for URL mode elicitation.
+     */
+    static class ElicitationUrlDecorator implements Prototype.OptionDecorator<McpElicitationUrlRequest.BuilderBase<?, ?>, URI> {
+        @Override
+        public void decorate(McpElicitationUrlRequest.BuilderBase<?, ?> builder, URI value) {
+            if (!value.isAbsolute()) {
+                throw new McpElicitationException("Elicitation URL must be an absolute URI");
+            }
+        }
+    }
+
+    /**
+     * Enforce a non-blank URL mode elicitation identifier.
+     */
+    static class ElicitationIdDecorator implements Prototype.OptionDecorator<McpElicitationUrlRequest.BuilderBase<?, ?>, String> {
+        @Override
+        public void decorate(McpElicitationUrlRequest.BuilderBase<?, ?> builder, String value) {
+            if (value.isBlank()) {
+                throw new McpElicitationException("Elicitation ID must not be blank");
+            }
+        }
+    }
+
+    /**
      * Number of suggestions must not exceed 100 items.
      */
     static class CompletionValuesDecorator implements Prototype.OptionDecorator<McpCompletionResult.BuilderBase<?, ?>, String> {

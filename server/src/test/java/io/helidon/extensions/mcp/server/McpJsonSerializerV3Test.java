@@ -27,6 +27,8 @@ import io.helidon.json.schema.Schema;
 import io.helidon.json.schema.SchemaString;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static io.helidon.extensions.mcp.server.McpMetadata.META;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -190,6 +192,23 @@ class McpJsonSerializerV3Test {
         assertThat(response.action(), is(McpElicitationAction.ACCEPT));
         assertThat(response.content().isEmpty(), is(false));
         assertThat(response.content().map(McpParameters::isPresent).orElse(false), is(true));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = McpElicitationAction.class, names = {"DECLINE", "CANCEL"})
+    void ignoresContentForNonAcceptFormElicitationResponse(McpElicitationAction action) {
+        JsonObject params = JsonObject.builder()
+                .set("action", action.text())
+                .set("content", JsonObject.builder()
+                        .set("secret", "must-not-be-exposed")
+                        .build())
+                .build();
+        JsonObject elicitation = MJS.createJsonRpcResultResponse(1, params);
+
+        McpElicitationResponse response = MJS.createElicitationResponse(elicitation);
+
+        assertThat(response.action(), is(action));
+        assertThat(response.content().isEmpty(), is(true));
     }
 
     @Test

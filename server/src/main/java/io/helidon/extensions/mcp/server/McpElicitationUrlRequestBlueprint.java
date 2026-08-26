@@ -15,18 +15,17 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.net.URI;
 import java.time.Duration;
 
 import io.helidon.builder.api.Option;
 import io.helidon.builder.api.Prototype;
 
 /**
- * A request from the server to elicit additional information from the user via the client.
- * Starting with MCP protocol version {@code 2025-11-25}, this type creates a form elicitation request.
- * Use {@link McpElicitationUrlRequest} to create a URL elicitation request.
+ * A request from the server to direct the user to an external URL via the client.
  */
 @Prototype.Blueprint
-interface McpElicitationRequestBlueprint {
+interface McpElicitationUrlRequestBlueprint {
     /**
      * The message to present to the user.
      *
@@ -35,11 +34,20 @@ interface McpElicitationRequestBlueprint {
     String message();
 
     /**
-     * A JSON schema to format client response.
+     * A unique identifier for the elicitation within this server.
      *
-     * @return the schema
+     * @return the elicitation identifier
      */
-    String schema();
+    @Option.Decorator(McpDecorators.ElicitationIdDecorator.class)
+    String elicitationId();
+
+    /**
+     * The URL the user should navigate to.
+     *
+     * @return the URL
+     */
+    @Option.Decorator(McpDecorators.ElicitationUrlDecorator.class)
+    URI url();
 
     /**
      * Elicitation request timeout. Default value is 5 minutes.

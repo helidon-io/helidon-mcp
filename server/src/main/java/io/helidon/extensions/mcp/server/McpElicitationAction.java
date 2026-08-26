@@ -20,7 +20,9 @@ package io.helidon.extensions.mcp.server;
  */
 public enum McpElicitationAction {
     /**
-     * User accepted to request and processed it.
+     * User accepted the request. For form elicitation, the user submitted the requested data. For URL elicitation,
+     * the user consented to open and interact at the URL; this action does not indicate that the out-of-band
+     * interaction has completed.
      */
     ACCEPT,
     /**

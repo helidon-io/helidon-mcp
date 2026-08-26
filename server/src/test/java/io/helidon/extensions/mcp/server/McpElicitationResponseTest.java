@@ -25,7 +25,7 @@ class McpElicitationResponseTest {
 
     @Test
     void testDefaultResponse() {
-        McpElicitationResponse response = new McpElicitationResponseImpl(McpElicitationAction.ACCEPT, null);
+        McpElicitationResponse response = new McpElicitationResponseImpl(McpElicitationAction.ACCEPT);
 
         assertThat(response.content().isEmpty(), is(true));
         assertThat(response.action(), is(McpElicitationAction.ACCEPT));

@@ -15,6 +15,7 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
@@ -88,6 +89,125 @@ class McpJsonSerializerV4Test {
                 .build();
 
         assertThat(response.objectValue("serverInfo").orElseThrow(), is(expected));
+    }
+
+    @Test
+    void serializesFormElicitationRequest() {
+        String schema = """
+                {
+                  "type": "object",
+                  "properties": {
+                    "name": {"type": "string"}
+                  }
+                }
+                """;
+        McpElicitationRequest elicitationRequest = McpElicitationRequest.builder()
+                .message("Provide your name")
+                .schema(schema)
+                .build();
+        JsonObject expected = JsonObject.builder()
+                .set("jsonrpc", "2.0")
+                .set("id", 1)
+                .set("method", "elicitation/create")
+                .set("params", JsonObject.builder()
+                        .set("mode", "form")
+                        .set("message", "Provide your name")
+                        .set("requestedSchema", JsonParser.create(schema).readJsonObject())
+                        .build())
+                .build();
+
+        JsonObject request = SERIALIZER.createElicitationRequest(1, elicitationRequest);
+
+        assertThat(request.toString(), is(expected.toString()));
+    }
+
+    @Test
+    void serializesUrlElicitationRequest() {
+        McpElicitationUrlRequest elicitationRequest = McpElicitationUrlRequest.builder()
+                .message("Authorize access")
+                .elicitationId("elicitation-id")
+                .url(URI.create("https://example.com/authorize"))
+                .build();
+        JsonObject expected = JsonObject.builder()
+                .set("jsonrpc", "2.0")
+                .set("id", 1)
+                .set("method", "elicitation/create")
+                .set("params", JsonObject.builder()
+                        .set("mode", "url")
+                        .set("message", "Authorize access")
+                        .set("elicitationId", "elicitation-id")
+                        .set("url", "https://example.com/authorize")
+                        .build())
+                .build();
+
+        JsonObject request = SERIALIZER.createElicitationRequest(1, elicitationRequest);
+
+        assertThat(request.toString(), is(expected.toString()));
+    }
+
+    @ParameterizedTest
+    @EnumSource(McpElicitationAction.class)
+    void createsUrlElicitationResponseWithoutFormContent(McpElicitationAction action) {
+        JsonObject result = JsonObject.builder()
+                .set("action", action.text())
+                .set("content", JsonObject.builder()
+                        .set("secret", "must-not-be-exposed")
+                        .build())
+                .build();
+        JsonObject clientResponse = SERIALIZER.createJsonRpcResultResponse(1, result);
+
+        McpElicitationResponse response = SERIALIZER.createElicitationUrlResponse(clientResponse);
+
+        assertThat(response.action(), is(action));
+        assertThat(response.content().isEmpty(), is(true));
+    }
+
+    @Test
+    void parsesUrlElicitationActionIndependentlyOfDefaultLocale() {
+        Locale previous = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr"));
+            JsonObject result = JsonObject.builder()
+                    .set("action", "decline")
+                    .build();
+            JsonObject clientResponse = SERIALIZER.createJsonRpcResultResponse(1, result);
+
+            McpElicitationResponse response = SERIALIZER.createElicitationUrlResponse(clientResponse);
+
+            assertThat(response.action(), is(McpElicitationAction.DECLINE));
+        } finally {
+            Locale.setDefault(previous);
+        }
+    }
+
+    @Test
+    void rejectsUrlElicitationResponseForLegacyProtocolVersions() {
+        JsonObject result = JsonObject.builder()
+                .set("action", "accept")
+                .build();
+        JsonObject clientResponse = LEGACY_SERIALIZER.createJsonRpcResultResponse(1, result);
+
+        McpElicitationException exception = assertThrows(McpElicitationException.class,
+                                                         () -> LEGACY_SERIALIZER.createElicitationUrlResponse(
+                                                                 clientResponse));
+
+        assertThat(exception.getMessage(), is("URL elicitation not supported"));
+    }
+
+    @Test
+    void rejectsUrlElicitationForLegacyProtocolVersions() {
+        McpElicitationUrlRequest elicitationRequest = McpElicitationUrlRequest.builder()
+                .message("Authorize access")
+                .elicitationId("elicitation-id")
+                .url(URI.create("https://example.com/authorize"))
+                .build();
+
+        McpElicitationException exception = assertThrows(McpElicitationException.class,
+                                                         () -> LEGACY_SERIALIZER.createElicitationRequest(
+                                                                 1,
+                                                                 elicitationRequest));
+
+        assertThat(exception.getMessage(), is("URL elicitation not supported"));
     }
 
     @Test
