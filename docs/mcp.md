@@ -109,8 +109,8 @@ McpServerFeature.builder()
                 .tool(request -> McpToolResult.create("result")));
 ```
 
-The source can be an HTTP(S) URL or a `data:` URI. Sizes use the `WxH` format or `any`. Leave the theme unspecified when
-the icon is suitable for both light and dark backgrounds.
+The source can be an HTTP(S) URL or a `data:` URI with a Base64-encoded payload. Sizes use the `WxH` format or `any`.
+Leave the theme unspecified when the icon is suitable for both light and dark backgrounds.
 
 ### Tool
 

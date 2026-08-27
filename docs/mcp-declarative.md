@@ -132,8 +132,8 @@ String tool() {
 }
 ```
 
-The source can be an HTTP(S) URL or a `data:` URI. Sizes use the `WxH` format or `any`. The same `@Mcp.Resource`
-annotation configures icons for both resources and resource templates.
+The source can be an HTTP(S) URL or a `data:` URI with a Base64-encoded payload. Sizes use the `WxH` format or `any`.
+The same repeatable `@Mcp.Icon` annotations configure icons for both resources and resource templates.
 
 ### Tool
 

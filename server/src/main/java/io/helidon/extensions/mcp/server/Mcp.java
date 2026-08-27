@@ -189,7 +189,7 @@ public final class Mcp {
     public @interface Icon {
         /**
          * Icon source. This must be an {@code http} or {@code https} URL, or a
-         * {@code data} URI.
+         * {@code data} URI with a Base64-encoded payload.
          *
          * @return icon source
          */

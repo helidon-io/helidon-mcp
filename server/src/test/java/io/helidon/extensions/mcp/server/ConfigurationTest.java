@@ -96,6 +96,8 @@ class ConfigurationTest {
             "",
             "icon.svg",
             "not a uri",
+            "data:image/png,not-base64",
+            "data:image/png;base64,@@@@",
             "data://example.com/icon,abc",
             "data:/image/png,abc",
             "file:///tmp/icon.svg",

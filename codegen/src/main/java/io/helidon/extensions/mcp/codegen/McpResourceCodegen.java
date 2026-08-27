@@ -30,7 +30,7 @@ import io.helidon.common.types.TypeNames;
 import io.helidon.common.types.TypedElementInfo;
 
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.MCP_TYPES;
-import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.addIconsMethod;
+import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.addIcons;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.createClassName;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.getElementsWithAnnotation;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isMcpType;
@@ -85,7 +85,7 @@ class McpResourceCodegen {
                     .addMethod(method -> addResourceUriMethod(method, uri))
                     .addMethod(method -> addResourceNameMethod(method, element))
                     .addMethod(method -> addResourceDescriptionMethod(method, description))
-                    .addMethod(method -> addIconsMethod(method, element))
+                    .update(component -> addIcons(component, element))
                     .addMethod(method -> addResourceMethod(method, uri, classModel, element))
                     .addMethod(method -> addResourceMediaTypeMethod(method, mediaTypeContent)));
         });

@@ -23,6 +23,9 @@ import java.util.stream.Collectors;
 
 import io.helidon.codegen.CodegenException;
 import io.helidon.codegen.classmodel.ClassModel;
+import io.helidon.codegen.classmodel.ContentBuilder;
+import io.helidon.codegen.classmodel.Field;
+import io.helidon.codegen.classmodel.InnerClass;
 import io.helidon.codegen.classmodel.Method;
 import io.helidon.codegen.classmodel.Parameter;
 import io.helidon.common.types.AccessModifier;
@@ -63,11 +66,6 @@ import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_UNSUBSCRIBE_REQUEST
  * Utility class for methods used by several MCP code generator.
  */
 class McpCodegenUtil {
-    /**
-     * Pattern to match the first character of a string.
-     */
-    private static final Pattern PATTERN = Pattern.compile("^.");
-
     static final List<String> MCP_TYPES = List.of(MCP_REQUEST.classNameWithEnclosingNames(),
                                                   MCP_FEATURES.classNameWithEnclosingNames(),
                                                   MCP_LOGGER.classNameWithEnclosingNames(),
@@ -76,6 +74,13 @@ class McpCodegenUtil {
                                                   MCP_SAMPLING.classNameWithEnclosingNames(),
                                                   MCP_ELICITATION.classNameWithEnclosingNames(),
                                                   MCP_PARAMETERS.classNameWithEnclosingNames());
+
+    private static final String ICONS_FIELD = "ICONS";
+
+    /**
+     * Pattern to match the first character of a string.
+     */
+    private static final Pattern PATTERN = Pattern.compile("^.");
 
     private McpCodegenUtil() {
     }
@@ -244,19 +249,33 @@ class McpCodegenUtil {
         return Optional.empty();
     }
 
-    static void addIconsMethod(Method.Builder builder, Annotated component) {
+    static void addIcons(InnerClass.Builder builder, Annotated component) {
         List<Annotation> icons = icons(component);
-        builder.name("icons")
-                .addAnnotation(Annotations.OVERRIDE)
-                .returnType(LIST_MCP_ICON);
-        if (icons.isEmpty()) {
-            builder.addContent("return ")
-                    .addContent(LIST)
-                    .addContentLine(".of();");
-            return;
+        if (!icons.isEmpty()) {
+            builder.addField(field -> addIconsField(field, icons));
         }
+        builder.addMethod(method -> {
+            method.name("icons")
+                    .addAnnotation(Annotations.OVERRIDE)
+                    .returnType(LIST_MCP_ICON);
+            if (icons.isEmpty()) {
+                method.addContent("return ")
+                        .addContent(LIST)
+                        .addContentLine(".of();");
+            } else {
+                method.addContent("return ")
+                        .addContent(ICONS_FIELD)
+                        .addContentLine(";");
+            }
+        });
+    }
 
-        builder.addContent("return ")
+    private static void addIconsField(Field.Builder builder, List<Annotation> icons) {
+        builder.name(ICONS_FIELD)
+                .accessModifier(AccessModifier.PRIVATE)
+                .isStatic(true)
+                .isFinal(true)
+                .type(LIST_MCP_ICON)
                 .addContent(LIST)
                 .addContentLine(".of(")
                 .increaseContentPadding();
@@ -269,12 +288,14 @@ class McpCodegenUtil {
             }
         }
         builder.decreaseContentPadding()
-                .addContentLine(");");
+                .addContent(")");
     }
 
     static void addIconsToBuilder(Method.Builder builder, TypeInfo serverType) {
         for (Annotation icon : icons(serverType)) {
-            addIconToBuilder(builder, icon);
+            builder.addContent("builder.addIcon(");
+            addIcon(builder, icon);
+            builder.addContentLine(");");
         }
     }
 
@@ -290,13 +311,7 @@ class McpCodegenUtil {
         return List.copyOf(result);
     }
 
-    private static void addIconToBuilder(Method.Builder builder, Annotation icon) {
-        builder.addContent("builder.addIcon(");
-        addIcon(builder, icon);
-        builder.addContentLine(");");
-    }
-
-    private static void addIcon(Method.Builder builder, Annotation icon) {
+    private static void addIcon(ContentBuilder<?> builder, Annotation icon) {
         String source = icon.stringValue()
                 .orElseThrow(() -> new CodegenException("Icon must have a source."));
         String mimeType = icon.stringValue("mimeType").orElse("");

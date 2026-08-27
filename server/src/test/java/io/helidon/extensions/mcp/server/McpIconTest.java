@@ -68,6 +68,17 @@ class McpIconTest {
         assertThat(metadata, is("data:image/png;base64,iVBORw0KGgo=|true|true|true"));
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "data:;base64,AA==",
+            "data:;base64,+w==",
+            "data:image/png;base64,AQ%3D%3D",
+            "data:image/png;charset=utf-8;BASE64,iVBORw0KGgo="
+    })
+    void acceptsValidDataSources(String source) {
+        assertThat(McpIcon.builder().source(source).build().source(), is(source));
+    }
+
     @Test
     void keepsSizesImmutable() {
         McpIcon icon = McpIcon.builder()
@@ -87,6 +98,14 @@ class McpIconTest {
             "https://",
             "https:/icon.svg",
             "data:image/png;base64,",
+            "data:image/png,not-base64",
+            "data:image/png;base64,@@@@",
+            "data:image/png;base64,A",
+            "data:image/png;base64,AA=A",
+            "data:image/png;base64=1,AAAA",
+            "data:image/png;base64;charset=utf-8,AAAA",
+            "data:image;base64,AAAA",
+            "data:image/png;base64,AQ%3",
             "data://example.com/icon,abc",
             "data:/image/png,abc",
             "file:///tmp/icon.svg",

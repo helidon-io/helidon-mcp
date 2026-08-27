@@ -16,6 +16,7 @@
 package io.helidon.extensions.mcp.server;
 
 import java.net.URI;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -23,6 +24,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import io.helidon.builder.api.Prototype;
+import io.helidon.common.media.type.MediaTypes;
 
 import static io.helidon.extensions.mcp.server.McpPagination.DEFAULT_PAGE_SIZE;
 
@@ -109,6 +111,7 @@ final class McpDecorators {
      */
     static class IconSourceDecorator implements Prototype.OptionDecorator<McpIcon.BuilderBase<?, ?>, String> {
         private static final String INVALID_ICON_SOURCE = "Icon source must be a valid HTTP(S) URL or data URI";
+        private static final String BASE64_MARKER = ";base64";
 
         @Override
         public void decorate(McpIcon.BuilderBase<?, ?> builder, String value) {
@@ -140,9 +143,54 @@ final class McpDecorators {
                     if (!source.isOpaque() || separator < 0 || separator == data.length() - 1) {
                         throw new IllegalArgumentException(INVALID_ICON_SOURCE);
                     }
+                    String metadata = data.substring(0, separator);
+                    int base64Offset = metadata.length() - BASE64_MARKER.length();
+                    if (base64Offset < 0
+                            || !metadata.regionMatches(true, base64Offset, BASE64_MARKER, 0, BASE64_MARKER.length())) {
+                        throw new IllegalArgumentException(INVALID_ICON_SOURCE);
+                    }
+                    String mediaType = metadata.substring(0, base64Offset);
+                    if (!mediaType.isEmpty()) {
+                        try {
+                            MediaTypes.create(mediaType.charAt(0) == ';' ? "text/plain" + mediaType : mediaType);
+                        } catch (IllegalArgumentException e) {
+                            throw new IllegalArgumentException(INVALID_ICON_SOURCE, e);
+                        }
+                    }
+                    try {
+                        Base64.getDecoder().decode(decodePercentEncoded(data.substring(separator + 1)));
+                    } catch (IllegalArgumentException e) {
+                        throw new IllegalArgumentException(INVALID_ICON_SOURCE, e);
+                    }
                 }
                 default -> throw new IllegalArgumentException(INVALID_ICON_SOURCE);
             }
+        }
+
+        private static String decodePercentEncoded(String value) {
+            int firstEscape = value.indexOf('%');
+            if (firstEscape == -1) {
+                return value;
+            }
+            StringBuilder decoded = new StringBuilder(value.length());
+            decoded.append(value, 0, firstEscape);
+            for (int i = firstEscape; i < value.length(); i++) {
+                char character = value.charAt(i);
+                if (character != '%') {
+                    decoded.append(character);
+                    continue;
+                }
+                if (i + 2 >= value.length()) {
+                    throw new IllegalArgumentException(INVALID_ICON_SOURCE);
+                }
+                int high = Character.digit(value.charAt(++i), 16);
+                int low = Character.digit(value.charAt(++i), 16);
+                if (high == -1 || low == -1) {
+                    throw new IllegalArgumentException(INVALID_ICON_SOURCE);
+                }
+                decoded.append((char) ((high << 4) | low));
+            }
+            return decoded.toString();
         }
     }
 
