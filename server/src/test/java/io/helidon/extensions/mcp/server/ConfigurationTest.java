@@ -41,8 +41,9 @@ class ConfigurationTest {
 
         assertThat(config.path(), is("/path"));
         assertThat(config.version(), is("1.0.0"));
-        assertThat(config.websiteUrl().orElseThrow(), is("https://example.com/mcp"));
         assertThat(config.name(), is("helidon-mcp-server"));
+        assertThat(config.description().orElseThrow(), is("Helidon MCP server"));
+        assertThat(config.websiteUrl().orElseThrow(), is("https://example.com/mcp"));
         assertThat(config.toolsPageSize(), is(10));
         assertThat(config.promptsPageSize(), is(10));
         assertThat(config.resourcesPageSize(), is(10));
@@ -63,8 +64,9 @@ class ConfigurationTest {
 
         assertThat(config.path(), is("/mcp"));
         assertThat(config.version(), is("0.0.1"));
-        assertThat(config.websiteUrl().isEmpty(), is(true));
         assertThat(config.name(), is("mcp-server"));
+        assertThat(config.websiteUrl().isEmpty(), is(true));
+        assertThat(config.description().isEmpty(), is(true));
         assertThat(config.instructions().isEmpty(), is(true));
         assertThat(config.toolsPageSize(), is(DEFAULT_PAGE_SIZE));
         assertThat(config.promptsPageSize(), is(DEFAULT_PAGE_SIZE));
@@ -88,7 +90,7 @@ class ConfigurationTest {
     void testConfigurationNegativePageSizeValues(String key) {
         try {
             var configSource = ConfigSources.create(Map.of(key, "-1"));
-            var config = McpServerConfig.create(Config.just(configSource));
+            McpServerConfig.create(Config.just(configSource));
             fail("Page size with negative value are not allowed and must be checked.");
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), is("Page size must be greater than zero"));
@@ -100,7 +102,7 @@ class ConfigurationTest {
     void testConfigurationNegativeSessionPoolSize(String key) {
         try {
             var configSource = ConfigSources.create(Map.of(key, "-1"));
-            var config = McpServerConfig.create(Config.just(configSource));
+            McpServerConfig.create(Config.just(configSource));
             fail("negative value are not allowed and must be checked.");
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), is("value must be greater than zero"));
@@ -112,7 +114,7 @@ class ConfigurationTest {
     void testConfigurationInvalidSamplingToolIterations(int value) {
         try {
             var configSource = ConfigSources.create(Map.of("max-sampling-tool-iterations", Integer.toString(value)));
-            var config = McpServerConfig.create(Config.just(configSource));
+            McpServerConfig.create(Config.just(configSource));
             fail("Sampling tool iterations must be greater than zero.");
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), is("Maximum sampling tool iterations must be greater than zero"));

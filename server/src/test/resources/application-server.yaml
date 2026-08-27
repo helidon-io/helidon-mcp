@@ -18,6 +18,7 @@ mcp:
   server:
     name: "helidon-mcp-server"
     version: "1.0.0"
+    description: "Helidon MCP server"
     website-url: "https://example.com/mcp"
     path: "/path"
     stateless: "true"

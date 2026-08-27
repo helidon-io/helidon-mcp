@@ -64,6 +64,14 @@ interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature> {
     String version();
 
     /**
+     * Human-readable description of this server.
+     *
+     * @return server description
+     */
+    @Option.Configured
+    Optional<String> description();
+
+    /**
      * Website URL for this server.
      *
      * @return website URL

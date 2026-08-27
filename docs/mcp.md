@@ -45,6 +45,7 @@ class McpServer {
                     .path("/mcp")
                     .version("0.0.1")
                     .name("MyServer")
+                    .description("Provides tools and resources for Example")
                     .websiteUrl("https://example.com/mcp")
                     .build()));
     }
@@ -1484,13 +1485,14 @@ mcp:
   server:
     name: "MyServer"
     version: "0.0.1"
+    description: "Provides tools and resources for Example"
     website-url: "https://example.com/mcp"
     path: "/mcp"
     stateless: true
     max-sampling-tool-iterations: 10
 ```
 
-The optional website URL is included in `serverInfo` when the negotiated protocol version is `2025-11-25`.
+The optional description and website URL are included in `serverInfo` when the negotiated protocol version is `2025-11-25`.
 
 Register the configuration in code:
 

@@ -62,7 +62,7 @@ class McpSdkAnnotationConfigurationTest {
     }
 
     @Test
-    void websiteUrlAnnotationConfig() {
+    void serverMetadataAnnotationConfig() {
         JsonObject clientInfo = JsonObject.builder()
                 .set("name", "test-client")
                 .set("version", "1.0.0")
@@ -74,13 +74,13 @@ class McpSdkAnnotationConfigurationTest {
                 .param("capabilities", JsonObject.empty())
                 .param("clientInfo", clientInfo)
                 .submit()) {
-            String websiteUrl = response.result()
+            JsonObject serverInfo = response.result()
                     .map(JsonRpcResult::asJsonObject)
                     .flatMap(result -> result.objectValue("serverInfo"))
-                    .flatMap(serverInfo -> serverInfo.stringValue("websiteUrl"))
                     .orElseThrow();
 
-            assertThat(websiteUrl, is("https://example.com/mcp"));
+            assertThat(serverInfo.stringValue("description").orElseThrow(), is("Declarative Helidon MCP server"));
+            assertThat(serverInfo.stringValue("websiteUrl").orElseThrow(), is("https://example.com/mcp"));
         }
     }
 }
