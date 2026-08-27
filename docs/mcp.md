@@ -1036,6 +1036,48 @@ Client responses include:
 Servers must not request sensitive information such as passwords, API keys, access tokens, or payment credentials through form
 mode. Use URL mode for these interactions.
 
+Starting with MCP protocol version `2025-11-25`, enum fields support all five schema forms defined by the
+[MCP specification](https://modelcontextprotocol.io/specification/2025-11-25/schema#enumschema):
+
+- legacy titled single-select with `enum` and `enumNames` for backward compatibility
+- untitled single-select with `enum`
+- titled single-select with `oneOf` entries containing `const` and `title`
+- untitled multi-select with `items.type` and `items.enum`
+- titled multi-select with `items.anyOf` entries containing `const` and `title`
+
+Prefer the standards-based titled single-select form over the legacy `enumNames` form.
+
+Multi-select responses contain lists of strings. For example, a titled multi-select property can be requested and read as follows:
+
+```java
+String schema = """
+        {
+          "type": "object",
+          "properties": {
+            "colors": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 2,
+              "items": {
+                "anyOf": [
+                  {"const": "red", "title": "Red"},
+                  {"const": "blue", "title": "Blue"}
+                ]
+              },
+              "default": ["red"]
+            }
+          }
+        }
+        """;
+
+McpElicitationResponse response = elicitation.request(req -> req
+        .message("Choose colors")
+        .schema(schema));
+List<String> colors = response.content()
+        .map(content -> content.get("colors").asList(String.class).orElse(List.of()))
+        .orElse(List.of());
+```
+
 ##### Example
 
 ```java

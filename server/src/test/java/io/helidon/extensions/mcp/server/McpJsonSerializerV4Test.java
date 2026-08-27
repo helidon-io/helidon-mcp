@@ -163,6 +163,27 @@ class McpJsonSerializerV4Test {
     }
 
     @Test
+    void createsFormElicitationResponseWithMultiSelectContent() {
+        JsonObject result = JsonObject.builder()
+                .set("action", "accept")
+                .set("content", JsonObject.builder()
+                        .setStrings("colors", List.of("red", "blue"))
+                        .build())
+                .build();
+        JsonObject clientResponse = SERIALIZER.createJsonRpcResultResponse(1, result);
+
+        McpElicitationResponse response = SERIALIZER.createElicitationResponse(clientResponse);
+
+        assertThat(response.action(), is(McpElicitationAction.ACCEPT));
+        List<String> colors = response.content()
+                .orElseThrow()
+                .get("colors")
+                .asList(String.class)
+                .get();
+        assertThat(colors, is(List.of("red", "blue")));
+    }
+
+    @Test
     void parsesUrlElicitationActionIndependentlyOfDefaultLocale() {
         Locale previous = Locale.getDefault();
         try {
