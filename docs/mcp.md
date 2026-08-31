@@ -84,7 +84,7 @@ McpServerFeature.builder()
 
 ### Icons
 
-Servers, tools, prompts, resources, and resource templates implement `McpIcons` and can expose one or more icons to clients using the
+Server's configuration, tools, prompts, resources, and resource templates implement `McpIcons` and can expose one or more icons to clients using the
 [MCP `2025-11-25` protocol version](https://modelcontextprotocol.io/specification/2025-11-25).
 Older negotiated protocol versions omit this metadata.
 
