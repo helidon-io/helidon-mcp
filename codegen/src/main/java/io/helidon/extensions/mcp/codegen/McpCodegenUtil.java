@@ -270,6 +270,14 @@ class McpCodegenUtil {
         });
     }
 
+    static void addIconsToBuilder(Method.Builder builder, TypeInfo serverType) {
+        for (Annotation icon : icons(serverType)) {
+            builder.addContent("builder.addIcon(");
+            addIcon(builder, icon);
+            builder.addContentLine(");");
+        }
+    }
+
     private static void addIconsField(Field.Builder builder, List<Annotation> icons) {
         builder.name(ICONS_FIELD)
                 .accessModifier(AccessModifier.PRIVATE)
@@ -289,14 +297,6 @@ class McpCodegenUtil {
         }
         builder.decreaseContentPadding()
                 .addContent(")");
-    }
-
-    static void addIconsToBuilder(Method.Builder builder, TypeInfo serverType) {
-        for (Annotation icon : icons(serverType)) {
-            builder.addContent("builder.addIcon(");
-            addIcon(builder, icon);
-            builder.addContentLine(");");
-        }
     }
 
     private static List<Annotation> icons(Annotated component) {

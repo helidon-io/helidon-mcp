@@ -24,7 +24,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import io.helidon.builder.api.Prototype;
-import io.helidon.common.media.type.MediaTypes;
 
 import static io.helidon.extensions.mcp.server.McpPagination.DEFAULT_PAGE_SIZE;
 
@@ -150,12 +149,8 @@ final class McpDecorators {
                         throw new IllegalArgumentException(INVALID_ICON_SOURCE);
                     }
                     String mediaType = metadata.substring(0, base64Offset);
-                    if (!mediaType.isEmpty()) {
-                        try {
-                            MediaTypes.create(mediaType.charAt(0) == ';' ? "text/plain" + mediaType : mediaType);
-                        } catch (IllegalArgumentException e) {
-                            throw new IllegalArgumentException(INVALID_ICON_SOURCE, e);
-                        }
+                    if (!isValidMediaType(mediaType)) {
+                        throw new IllegalArgumentException(INVALID_ICON_SOURCE);
                     }
                     try {
                         Base64.getDecoder().decode(decodePercentEncoded(data.substring(separator + 1)));
@@ -165,6 +160,109 @@ final class McpDecorators {
                 }
                 default -> throw new IllegalArgumentException(INVALID_ICON_SOURCE);
             }
+        }
+
+        private static boolean isValidMediaType(String value) {
+            if (value.isEmpty()) {
+                return true;
+            }
+
+            int firstParameter = value.indexOf(';');
+            int mediaTypeEnd = firstParameter == -1 ? value.length() : firstParameter;
+            if (mediaTypeEnd > 0) {
+                int slash = value.indexOf('/');
+                if (slash <= 0 || slash >= mediaTypeEnd - 1) {
+                    return false;
+                }
+                int secondSlash = value.indexOf('/', slash + 1);
+                if ((secondSlash >= 0 && secondSlash < mediaTypeEnd)
+                        || !isMimeToken(value, 0, slash)
+                        || !isMimeToken(value, slash + 1, mediaTypeEnd)) {
+                    return false;
+                }
+            }
+
+            for (int offset = mediaTypeEnd; offset < value.length();) {
+                if (value.charAt(offset) != ';') {
+                    return false;
+                }
+                int end = value.indexOf(';', offset + 1);
+                end = end == -1 ? value.length() : end;
+                int equals = value.indexOf('=', offset + 1);
+                if (equals < offset + 2 || equals >= end - 1
+                        || !isMimeToken(value, offset + 1, equals)
+                        || !isParameterValue(value, equals + 1, end)) {
+                    return false;
+                }
+                int secondEquals = value.indexOf('=', equals + 1);
+                if (secondEquals >= 0 && secondEquals < end) {
+                    return false;
+                }
+                offset = end;
+            }
+            return true;
+        }
+
+        private static boolean isMimeToken(String value, int start, int end) {
+            if (start == end) {
+                return false;
+            }
+            for (int i = start; i < end; i++) {
+                char character = value.charAt(i);
+                if (character == '%') {
+                    if (i + 2 >= end) {
+                        return false;
+                    }
+                    int high = Character.digit(value.charAt(++i), 16);
+                    int low = Character.digit(value.charAt(++i), 16);
+                    if (high == -1 || low == -1) {
+                        return false;
+                    }
+                    character = (char) ((high << 4) | low);
+                }
+                if (!isMimeTokenCharacter(character)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static boolean isParameterValue(String value, int start, int end) {
+            if (start == end) {
+                return false;
+            }
+            for (int i = start; i < end; i++) {
+                char character = value.charAt(i);
+                if (character != '%') {
+                    if (!isMimeTokenCharacter(character)) {
+                        return false;
+                    }
+                    continue;
+                }
+                if (i + 2 >= end) {
+                    return false;
+                }
+                int high = Character.digit(value.charAt(++i), 16);
+                int low = Character.digit(value.charAt(++i), 16);
+                if (high == -1 || low == -1) {
+                    return false;
+                }
+                int decoded = (high << 4) | low;
+                if (decoded < 0x20 || decoded > 0x7e) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static boolean isMimeTokenCharacter(char character) {
+            if (character < 0x21 || character > 0x7e) {
+                return false;
+            }
+            return switch (character) {
+                case '(', ')', '<', '>', '@', ',', ';', ':', '\\', '"', '/', '[', ']', '?', '=' -> false;
+                default -> true;
+            };
         }
 
         private static String decodePercentEncoded(String value) {

@@ -72,8 +72,12 @@ class McpIconTest {
     @ValueSource(strings = {
             "data:;base64,AA==",
             "data:;base64,+w==",
+            "data:;charset=utf-8;base64,AA==",
             "data:image/png;base64,AQ%3D%3D",
-            "data:image/png;charset=utf-8;BASE64,iVBORw0KGgo="
+            "data:image/png;charset=utf-8;BASE64,iVBORw0KGgo=",
+            "data:image/svg+xml;profile=a%2Fb;base64,PHN2Zy8+",
+            "data:application/vnd.example.icon+png;name=small%20icon;base64,AAAA",
+            "data:image/png;base64=1;base64,AAAA"
     })
     void acceptsValidDataSources(String source) {
         assertThat(McpIcon.builder().source(source).build().source(), is(source));
@@ -105,6 +109,18 @@ class McpIconTest {
             "data:image/png;base64=1,AAAA",
             "data:image/png;base64;charset=utf-8,AAAA",
             "data:image;base64,AAAA",
+            "data:/png;base64,AAAA",
+            "data:image/;base64,AAAA",
+            "data:image/png/extra;base64,AAAA",
+            "data:image/png;;base64,AAAA",
+            "data:image/png;broken;base64,AAAA",
+            "data:image/png;=value;base64,AAAA",
+            "data:image/png;name=;base64,AAAA",
+            "data:image/png;name=a=b;base64,AAAA",
+            "data:image/png;name=a/b;base64,AAAA",
+            "data:image/png;name=%0A;base64,AAAA",
+            "data:image/png;name=%80;base64,AAAA",
+            "data:image/png;base64;base64,AAAA",
             "data:image/png;base64,AQ%3",
             "data://example.com/icon,abc",
             "data:/image/png,abc",

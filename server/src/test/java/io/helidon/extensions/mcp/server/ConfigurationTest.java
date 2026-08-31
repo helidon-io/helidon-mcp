@@ -98,6 +98,8 @@ class ConfigurationTest {
             "not a uri",
             "data:image/png,not-base64",
             "data:image/png;base64,@@@@",
+            "data:image/;base64,AAAA",
+            "data:image/png;broken;base64,AAAA",
             "data://example.com/icon,abc",
             "data:/image/png,abc",
             "file:///tmp/icon.svg",
