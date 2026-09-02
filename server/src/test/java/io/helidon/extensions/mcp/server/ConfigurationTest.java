@@ -16,9 +16,11 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.config.Config;
@@ -31,6 +33,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import static io.helidon.extensions.mcp.server.McpPagination.DEFAULT_PAGE_SIZE;
 import static io.helidon.extensions.mcp.server.McpSampling.DEFAULT_MAX_TOOL_ITERATIONS;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -65,6 +68,12 @@ class ConfigurationTest {
         assertThat(config.maxSamplingToolIterations(), is(3));
         assertThat(config.maxSessionCount(), is(1));
         assertThat(config.maxRequestsPerSession(), is(1));
+        McpProtectedResourceMetadataConfig metadata = config.protectedResourceMetadata().orElseThrow();
+        assertThat(metadata.scopesSupported(), contains("mcp:tools"));
+        assertThat(metadata.resource(), is(URI.create("https://mcp.example.com/path")));
+        assertThat(metadata.authorizationServers(), contains(URI.create("https://login.example.com/tenant")));
+        assertThat(metadata.metadataPath().isEmpty(), is(false));
+        assertThat(metadata.metadataPath().get(), is("/.well-known/oauth-protected-resource/internal/path"));
     }
 
     @Test
@@ -89,6 +98,7 @@ class ConfigurationTest {
         assertThat(config.maxSamplingToolIterations(), is(DEFAULT_MAX_TOOL_ITERATIONS));
         assertThat(config.maxSessionCount(), is(1000));
         assertThat(config.maxRequestsPerSession(), is(1000));
+        assertThat(config.protectedResourceMetadata().isEmpty(), is(true));
     }
 
     @ParameterizedTest

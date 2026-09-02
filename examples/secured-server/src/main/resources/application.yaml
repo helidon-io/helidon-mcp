@@ -16,12 +16,19 @@
 
 mcp:
   server:
-    path: "secured"
+    path: "/secured"
     name: "secured-mcp-server"
+    protected-resource-metadata:
+      resource: "http://localhost:8081/secured"
+      authorization-servers:
+        - "http://localhost:8080/realms/mcp-realm"
+      scopes-supported:
+        - "openid"
+        - "mcp-scope"
 
 server:
   port: 8081
-  host: 0.0.0.0
+  host: localhost
   features:
     security:
       # protected paths on the web server
@@ -36,6 +43,6 @@ security:
         client-id: "mcp-client"
         client-secret: "changeit"
         identity-uri: "http://localhost:8080/realms/mcp-realm"
-        audience: "mcp-scope"
+        audience: "http://localhost:8081/secured"
         header-use: "true"
         frontend-uri: "http://localhost:6274/oauth/callback/debug"

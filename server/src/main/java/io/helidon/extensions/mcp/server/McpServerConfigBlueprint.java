@@ -102,6 +102,16 @@ interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature>, 
     boolean stateless();
 
     /**
+     * OAuth 2.0 Protected Resource Metadata configuration.
+     *
+     * @return protected resource metadata configuration
+     */
+    @Option.Configured
+    default Optional<McpProtectedResourceMetadataConfig> protectedResourceMetadata() {
+        return Optional.empty();
+    }
+
+    /**
      * Server tools page size configuration.
      *
      * @return page size

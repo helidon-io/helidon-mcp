@@ -82,6 +82,49 @@ McpServerFeature.builder()
         .build();
 ```
 
+#### OAuth protected resource metadata
+
+An MCP server that uses OAuth must publish
+[OAuth 2.0 Protected Resource Metadata](https://www.rfc-editor.org/rfc/rfc9728.html). Configure the canonical, externally
+visible MCP URI and at least one authorization server issuer. The issuer must exactly match the `issuer` value in the
+authorization server's discovery document; it is not an authorization, token, or discovery endpoint.
+
+```yaml
+mcp:
+  server:
+    path: "/mcp"
+    protected-resource-metadata:
+      resource: "https://mcp.example.com/mcp"
+      authorization-servers:
+        - "https://login.example.com/tenant"
+      scopes-supported:
+        - "mcp:tools"
+```
+
+```java
+McpServerFeature.builder()
+        .path("/mcp")
+        .protectedResourceMetadata(metadata -> metadata
+                .resource(URI.create("https://mcp.example.com/mcp"))
+                .addAuthorizationServer(URI.create("https://login.example.com/tenant"))
+                .addScope("mcp:tools"))
+        .build();
+```
+
+Helidon derives the well-known route from the canonical resource URI path. For this resource, it serves metadata at
+`/.well-known/oauth-protected-resource/mcp`. MCP clients use this endpoint when a `401 Unauthorized` response does not include
+a `WWW-Authenticate` `resource_metadata` parameter. Keep the metadata endpoint unauthenticated and ensure a reverse proxy
+forwards its canonical path.
+
+When multiple canonical resources with the same path are routed through one Helidon server, configure a distinct local
+`metadata-path` for each and have the reverse proxy map each canonical well-known URL, including its query, to its local path.
+The override affects only local routing; the metadata response continues to identify the canonical `resource`. Local metadata
+paths on the same HTTP routing must be unique and must not match the MCP endpoint or `/.well-known/openid-configuration`.
+
+If `protected-resource-metadata` is omitted, Helidon does not publish the endpoint. In production, use HTTPS for both the
+resource and issuer URIs. An HTTP resource URI is accepted for localhost or loopback development. An HTTP authorization server
+URI is accepted only when both it and the protected resource use localhost or loopback literal hosts.
+
 ### Icons
 
 Server's configuration, tools, prompts, resources, and resource templates implement `McpIcons` and can expose one or more icons to clients using the
@@ -1548,4 +1591,6 @@ class McpServer {
 ## References
 
 - [MCP Specification](https://modelcontextprotocol.io/introduction)
+- [MCP Authorization](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization)
+- [OAuth 2.0 Protected Resource Metadata](https://www.rfc-editor.org/rfc/rfc9728.html)
 - [JSON Schema Specification](https://json-schema.org)

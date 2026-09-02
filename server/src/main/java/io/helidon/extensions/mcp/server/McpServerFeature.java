@@ -17,6 +17,7 @@
 package io.helidon.extensions.mcp.server;
 
 import java.lang.System.Logger.Level;
+import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -31,9 +32,13 @@ import java.util.function.Function;
 
 import io.helidon.builder.api.RuntimeType;
 import io.helidon.common.mapper.OptionalValue;
+import io.helidon.common.uri.UriEncoding;
+import io.helidon.common.uri.UriPath;
 import io.helidon.config.Config;
 import io.helidon.http.HeaderNames;
 import io.helidon.http.HeaderValues;
+import io.helidon.http.Method;
+import io.helidon.http.PathMatchers;
 import io.helidon.http.Status;
 import io.helidon.json.JsonException;
 import io.helidon.json.JsonNull;
@@ -84,6 +89,7 @@ import static io.helidon.jsonrpc.core.JsonRpcError.INVALID_REQUEST;
 public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpServerConfig> {
     private static final int RESOURCE_NOT_FOUND_CODE = -32002;
     private static final String DEFAULT_OIDC_METADATA_URI = "/.well-known/openid-configuration";
+    private static final String PROTECTED_RESOURCE_METADATA_URI = "/.well-known/oauth-protected-resource";
     private static final System.Logger LOGGER = System.getLogger(McpServerFeature.class.getName());
 
     private final String endpoint;
@@ -94,6 +100,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     private final McpPagination<McpTool> tools;
     private final McpPagination<McpPrompt> prompts;
     private final McpPagination<McpResource> resources;
+    private final String protectedResourceMetadataEndpoint;
     private final McpPagination<McpResourceTemplate> resourceTemplates;
     private final Set<McpCapability> capabilities = new HashSet<>();
     private final Map<String, McpCompletion> promptCompletions = new ConcurrentHashMap<>();
@@ -109,6 +116,30 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         this.config = config;
         this.stateless = config.stateless();
         this.endpoint = removeTrailingSlash(config.path());
+        String configuredMetadataPath = config.protectedResourceMetadata()
+                .flatMap(McpProtectedResourceMetadataConfig::metadataPath)
+                .orElse("");
+        if (!configuredMetadataPath.isEmpty()) {
+            this.protectedResourceMetadataEndpoint = configuredMetadataPath;
+        } else {
+            String metadataPath = config.protectedResourceMetadata()
+                    .map(it -> it.resource().getRawPath())
+                    .orElse(endpoint);
+            if (metadataPath.isEmpty() || metadataPath.equals("/")) {
+                this.protectedResourceMetadataEndpoint = PROTECTED_RESOURCE_METADATA_URI;
+            } else if (metadataPath.startsWith("/")) {
+                this.protectedResourceMetadataEndpoint = PROTECTED_RESOURCE_METADATA_URI + metadataPath;
+            } else {
+                this.protectedResourceMetadataEndpoint = PROTECTED_RESOURCE_METADATA_URI + "/" + metadataPath;
+            }
+        }
+        UriPath metadataUriPath = UriPath.createFromDecoded(UriEncoding.decodeUri(protectedResourceMetadataEndpoint));
+        if (config.protectedResourceMetadata().isPresent()
+                && (PathMatchers.create(endpoint).match(metadataUriPath).accepted()
+                || PathMatchers.create(DEFAULT_OIDC_METADATA_URI).match(metadataUriPath).accepted())) {
+            throw new IllegalArgumentException("Protected resource metadata path conflicts with an existing MCP server route: "
+                                                       + protectedResourceMetadataEndpoint);
+        }
         this.sessions = new McpSessions(config.maxSessionCount());
         for (McpResource resource : config.resources()) {
             if (isTemplate(resource)) {
@@ -214,9 +245,14 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         jsonRpcRouting.routing(routing);
 
         // additional HTTP routes for SSE and session disconnect
-        routing.get(DEFAULT_OIDC_METADATA_URI, this::mcpMetadata)
+        routing.get(DEFAULT_OIDC_METADATA_URI, this::oidcMetadataRedirect)
                 .get(endpoint, this::sse)
                 .delete(endpoint, this::disconnect);
+        if (config.protectedResourceMetadata().isPresent()) {
+            routing.route(Method.GET,
+                          PathMatchers.exact(protectedResourceMetadataEndpoint),
+                          this::protectedResourceMetadata);
+        }
     }
 
     @Override
@@ -224,7 +260,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         return config;
     }
 
-    private void mcpMetadata(ServerRequest request, ServerResponse response) {
+    private void oidcMetadataRedirect(ServerRequest request, ServerResponse response) {
         var config = Services.get(Config.class);
         var providers = config.get("security.providers").asList(Config.class);
 
@@ -251,6 +287,23 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         }
         response.status(Status.NOT_FOUND_404);
         response.send();
+    }
+
+    private void protectedResourceMetadata(ServerRequest request, ServerResponse response) {
+        McpProtectedResourceMetadataConfig metadataConfig = config.protectedResourceMetadata().orElseThrow();
+        JsonObject.Builder metadata = JsonObject.builder()
+                .set("resource", metadataConfig.resource().toString())
+                .setStrings("authorization_servers", metadataConfig.authorizationServers()
+                        .stream()
+                        .map(URI::toString)
+                        .toList())
+                .setStrings("bearer_methods_supported", List.of("header"));
+        if (!metadataConfig.scopesSupported().isEmpty()) {
+            metadata.setStrings("scopes_supported", metadataConfig.scopesSupported());
+        }
+        response.status(Status.OK_200);
+        response.header(HeaderValues.CONTENT_TYPE_JSON);
+        response.send(metadata.build().toString());
     }
 
     private void disconnect(ServerRequest request, ServerResponse response) {
