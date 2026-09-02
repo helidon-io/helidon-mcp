@@ -16,6 +16,7 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -75,6 +76,10 @@ public final class Mcp {
      *     <li>
      *         {@link io.helidon.extensions.mcp.server.Mcp.WebsiteUrl} -
      *         Set the optional MCP server website URL.
+     *     </li>
+     *     <li>
+     *         {@link io.helidon.extensions.mcp.server.Mcp.Icon} -
+     *         Add icon metadata to the MCP server.
      *     </li>
      *     <li>
      *         {@link io.helidon.extensions.mcp.server.Mcp.Path} -
@@ -173,6 +178,57 @@ public final class Mcp {
          * @return server path
          */
         String value();
+    }
+
+    /**
+     * Icon metadata for a server, tool, prompt, resource, or resource template.
+     */
+    @Target({TYPE, METHOD})
+    @Retention(RUNTIME)
+    @Repeatable(Icons.class)
+    public @interface Icon {
+        /**
+         * Icon source. This must be an {@code http} or {@code https} URL, or a
+         * {@code data} URI with a Base64-encoded payload.
+         *
+         * @return icon source
+         */
+        String value();
+
+        /**
+         * Icon MIME type.
+         *
+         * @return MIME type
+         */
+        String mimeType() default "";
+
+        /**
+         * Icon sizes, each formatted as {@code WxH} or {@code any}.
+         *
+         * @return icon sizes
+         */
+        String[] sizes() default {};
+
+        /**
+         * Optional icon theme.
+         *
+         * @return icon theme
+         */
+        McpIconTheme theme() default McpIconTheme.UNSPECIFIED;
+    }
+
+    /**
+     * Container for repeating {@link io.helidon.extensions.mcp.server.Mcp.Icon} annotations.
+     */
+    @Target({TYPE, METHOD})
+    @Retention(RUNTIME)
+    public @interface Icons {
+        /**
+         * Icons for the annotated MCP component.
+         *
+         * @return icons
+         */
+        Icon[] value();
     }
 
     /**

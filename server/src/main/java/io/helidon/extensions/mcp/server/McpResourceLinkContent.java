@@ -22,7 +22,7 @@ import io.helidon.common.media.type.MediaType;
 /**
  * MCP resource link content.
  */
-interface McpResourceLinkContent extends McpContent {
+interface McpResourceLinkContent extends McpContent, McpIcons {
     /**
      * Resource URI.
      *

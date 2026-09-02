@@ -15,6 +15,7 @@
  */
 package io.helidon.extensions.mcp.server;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -74,6 +75,14 @@ interface McpToolConfigBlueprint {
      * @return the tool output schema
      */
     Optional<String> outputSchema();
+
+    /**
+     * Icons for this tool.
+     *
+     * @return icons
+     */
+    @Option.Singular
+    List<McpIcon> icons();
 
     /**
      * Tool execution.

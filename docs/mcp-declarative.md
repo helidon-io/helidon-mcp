@@ -61,6 +61,7 @@ class McpServer {
 
 - **`@Mcp.Server`**: Defines the class as an MCP server and can override the default server name.
 - **`@Mcp.Description`**: Sets the optional server description.
+- **`@Mcp.Icon`**: Adds icon metadata to the server.
 - **`@Mcp.Path`**: Sets the HTTP endpoint path for the server.
 - **`@Mcp.Version`**: Establishes the server version.
 - **`@Mcp.WebsiteUrl`**: Sets the optional server website URL.
@@ -72,11 +73,12 @@ class McpServer {
 @Mcp.Description("Provides tools and resources for Example")
 @Mcp.WebsiteUrl("https://example.com/mcp")
 @Mcp.Server("MyServer")
+@Mcp.Icon("https://example.com/server.svg")
 class McpServer {
 }
 ```
 
-The description and website URL are included in `serverInfo` when the negotiated protocol version is `2025-11-25`.
+The description, website URL, and icons are included in `serverInfo` when the negotiated protocol version is `2025-11-25`.
 
 #### Stateless mode
 
@@ -98,6 +100,40 @@ or reusing a server session. Because request-to-request session state is not kep
 - Data in `sessionContext()` is not preserved across independent requests.
 - Client capabilities are normally negotiated during initialization; if a client skips this phase, capability-dependent
   features will be unavailable.
+
+### Icons
+
+Servers, tools, prompts, resources, and resource templates can expose one or more icons to clients using the
+[MCP `2025-11-25` protocol version](https://modelcontextprotocol.io/specification/2025-11-25).
+Older negotiated protocol versions omit this metadata.
+
+Place one or more `@Mcp.Icon` annotations alongside `@Mcp.Server` to configure server icons:
+
+```java
+@Mcp.Server("MyServer")
+@Mcp.Icon("https://example.com/server.svg")
+@Mcp.Icon("data:image/png;base64,...")
+class McpServer {
+}
+```
+
+For tools, prompts, resources, and resource templates, place the `@Mcp.Icon` annotations alongside the component annotation:
+
+```java
+@Mcp.Tool("Tool description")
+@Mcp.Icon(
+        value = "https://example.com/icon.svg",
+        mimeType = "image/svg+xml",
+        sizes = {"48x48", "96x96"},
+        theme = McpIconTheme.DARK)
+@Mcp.Icon("data:image/png;base64,...")
+String tool() {
+    return "result";
+}
+```
+
+The source can be an HTTP(S) URL or a `data:` URI with a Base64-encoded payload. Sizes use the `WxH` format or `any`.
+The same repeatable `@Mcp.Icon` annotations configure icons for both resources and resource templates.
 
 ### Tool
 

@@ -22,6 +22,11 @@ import java.util.Locale;
  */
 public enum McpIconTheme {
     /**
+     * No theme preference. This value is omitted from MCP responses.
+     */
+    UNSPECIFIED,
+
+    /**
      * Icon intended for a light background.
      */
     LIGHT,

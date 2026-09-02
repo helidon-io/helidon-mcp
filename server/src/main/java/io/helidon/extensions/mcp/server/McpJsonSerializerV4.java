@@ -50,6 +50,7 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
         JsonObject.Builder builder = super.serverInfo(config);
         config.description().ifPresent(description -> builder.set("description", description));
         config.websiteUrl().ifPresent(websiteUrl -> builder.set("websiteUrl", websiteUrl));
+        addIcons(builder, config);
         return builder;
     }
 
@@ -144,12 +145,8 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
     @Override
     public Optional<JsonObject.Builder> toJson(McpContent content) {
         Optional<JsonObject.Builder> result = super.toJson(content);
-        if (content instanceof McpToolResourceLinkContent link) {
-            result.ifPresent(builder -> {
-                if (!link.icons().isEmpty()) {
-                    builder.setValues("icons", link.icons().stream().map(this::toJson).toList());
-                }
-            });
+        if (content instanceof McpIcons component) {
+            result.ifPresent(builder -> addIcons(builder, component));
         }
         return result;
     }
@@ -169,6 +166,34 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
                 .set("name", content.name())
                 .set("input", content.input().asJsonObject()
                         .orElseThrow(() -> new McpSamplingException("Sampling tool input must be a JSON object")));
+    }
+
+    @Override
+    public JsonObject.Builder toJson(McpTool tool) {
+        JsonObject.Builder builder = super.toJson(tool);
+        addIcons(builder, tool);
+        return builder;
+    }
+
+    @Override
+    public JsonObject.Builder toJson(McpPrompt prompt) {
+        JsonObject.Builder builder = super.toJson(prompt);
+        addIcons(builder, prompt);
+        return builder;
+    }
+
+    @Override
+    public JsonObject.Builder toJson(McpResource resource) {
+        JsonObject.Builder builder = super.toJson(resource);
+        addIcons(builder, resource);
+        return builder;
+    }
+
+    @Override
+    public JsonObject.Builder resourceTemplates(McpResource resource) {
+        JsonObject.Builder builder = super.resourceTemplates(resource);
+        addIcons(builder, resource);
+        return builder;
     }
 
     @Override
@@ -359,26 +384,41 @@ class McpJsonSerializerV4 extends McpJsonSerializerV3 {
     }
 
     private McpIcon parseIcon(JsonObject icon) {
-        McpIcon.Builder builder = McpIcon.builder().src(icon.stringValue("src").orElseThrow());
+        McpIcon.Builder builder = McpIcon.builder().source(icon.stringValue("src").orElseThrow());
         icon.stringValue("mimeType").map(MediaTypes::create).ifPresent(builder::mediaType);
         icon.arrayValue("sizes").ifPresent(sizes -> sizes.values().stream()
                 .map(JsonValue::asString)
                 .map(JsonString::value)
                 .forEach(builder::addSize));
         icon.stringValue("theme")
-                .map(value -> value.toUpperCase(Locale.ROOT))
-                .map(McpIconTheme::valueOf)
+                .map(value -> switch (value.toLowerCase(Locale.ROOT)) {
+                    case "light" -> McpIconTheme.LIGHT;
+                    case "dark" -> McpIconTheme.DARK;
+                    default -> throw new IllegalArgumentException("Unsupported icon theme: " + value);
+                })
                 .ifPresent(builder::theme);
         return builder.build();
     }
 
+    private void addIcons(JsonObject.Builder builder, McpIcons component) {
+        List<JsonValue> values = component.icons().stream()
+                .map(this::toJson)
+                .map(JsonValue.class::cast)
+                .toList();
+        if (!values.isEmpty()) {
+            builder.setValues("icons", values);
+        }
+    }
+
     private JsonObject toJson(McpIcon icon) {
-        JsonObject.Builder builder = JsonObject.builder().set("src", icon.src());
+        JsonObject.Builder builder = JsonObject.builder().set("src", icon.source());
         icon.mediaType().ifPresent(mediaType -> builder.set("mimeType", mediaType.text()));
         if (!icon.sizes().isEmpty()) {
             builder.setStrings("sizes", icon.sizes());
         }
-        icon.theme().ifPresent(theme -> builder.set("theme", theme.text()));
+        icon.theme()
+                .filter(theme -> theme != McpIconTheme.UNSPECIFIED)
+                .ifPresent(theme -> builder.set("theme", theme.text()));
         return builder.build();
     }
 

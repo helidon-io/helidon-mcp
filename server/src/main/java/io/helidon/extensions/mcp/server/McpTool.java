@@ -20,7 +20,7 @@ import java.util.Optional;
 /**
  * MCP Tool.
  */
-public interface McpTool {
+public interface McpTool extends McpIcons {
     /**
      * Tool name.
      *
@@ -82,4 +82,5 @@ public interface McpTool {
     default Optional<String> outputSchema() {
         return Optional.empty();
     }
+
 }

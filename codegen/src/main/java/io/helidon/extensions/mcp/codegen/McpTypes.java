@@ -26,15 +26,14 @@ import static io.helidon.common.types.TypeNames.LIST;
 import static io.helidon.common.types.TypeNames.OPTIONAL;
 
 final class McpTypes {
-    private McpTypes() {
-    }
-
     //Annotations
     static final TypeName MCP_NAME = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Name");
     static final TypeName MCP_PATH = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Path");
     static final TypeName MCP_ROLE = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Role");
     static final TypeName MCP_TOOL = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Tool");
     static final TypeName MCP_SERVER = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Server");
+    static final TypeName MCP_ICON_ANNOTATION = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Icon");
+    static final TypeName MCP_ICONS = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Icons");
     static final TypeName MCP_PROMPT = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Prompt");
     static final TypeName MCP_VERSION = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Version");
     static final TypeName MCP_RESOURCE = TypeName.create("io.helidon.extensions.mcp.server.Mcp.Resource");
@@ -62,6 +61,8 @@ final class McpTypes {
     static final TypeName MCP_FEATURES = TypeName.create("io.helidon.extensions.mcp.server.McpFeatures");
     static final TypeName MCP_PROGRESS = TypeName.create("io.helidon.extensions.mcp.server.McpProgress");
     static final TypeName MCP_SAMPLING = TypeName.create("io.helidon.extensions.mcp.server.McpSampling");
+    static final TypeName MCP_ICON = TypeName.create("io.helidon.extensions.mcp.server.McpIcon");
+    static final TypeName MCP_ICON_THEME = TypeName.create("io.helidon.extensions.mcp.server.McpIconTheme");
     static final TypeName MCP_TOOL_INTERFACE = TypeName.create("io.helidon.extensions.mcp.server.McpTool");
     static final TypeName MCP_PARAMETERS = TypeName.create("io.helidon.extensions.mcp.server.McpParameters");
     static final TypeName MCP_TOOL_RESULT = TypeName.create("io.helidon.extensions.mcp.server.McpToolResult");
@@ -99,8 +100,12 @@ final class McpTypes {
     static final TypeName SERVICE_SINGLETON = TypeName.create("io.helidon.service.registry.Service.Singleton");
     static final TypeName HTTP_ROUTING_BUILDER = TypeName.create("io.helidon.webserver.http.HttpRouting.Builder");
     static final TypeName LIST_STRING = TypeName.builder(LIST).addTypeArgument(TypeNames.STRING).build();
+    static final TypeName LIST_MCP_ICON = TypeName.builder(LIST).addTypeArgument(MCP_ICON).build();
     static final TypeName CONSUMER_REQUEST = TypeName.builder(CONSUMER).addTypeArgument(MCP_REQUEST).build();
     static final TypeName OPTIONAL_STRING = TypeName.builder(OPTIONAL).addTypeArgument(TypeNames.STRING).build();
     static final TypeName LIST_MCP_PROMPT_ARGUMENT = TypeName.builder(LIST).addTypeArgument(MCP_PROMPT_ARGUMENT).build();
     static final TypeName OPTIONAL_TOOL_ANNOTATIONS = TypeName.builder(OPTIONAL).addTypeArgument(MCP_TOOL_ANNOTATIONS).build();
+
+    private McpTypes() {
+    }
 }

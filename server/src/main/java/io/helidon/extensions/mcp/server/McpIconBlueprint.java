@@ -23,30 +23,37 @@ import io.helidon.builder.api.Prototype;
 import io.helidon.common.media.type.MediaType;
 
 /**
- * An optionally-sized MCP icon.
+ * Icon metadata.
  */
 @Prototype.Blueprint
+@Prototype.Configured
+@Prototype.CustomMethods(McpIconSupport.class)
 interface McpIconBlueprint {
     /**
-     * Icon source URI or data URI.
+     * Icon source. This must be an {@code http} or {@code https} URL, or a
+     * {@code data} URI with a Base64-encoded payload.
      *
      * @return icon source
      */
-    String src();
+    @Option.Configured
+    @Option.Decorator(McpDecorators.IconSourceDecorator.class)
+    String source();
 
     /**
      * Optional MIME type override.
      *
      * @return MIME type
      */
+    @Option.Configured
     Optional<MediaType> mediaType();
 
     /**
-     * Sizes at which the icon can be used.
+     * Icon sizes, each formatted as {@code WxH} or {@code any}.
      *
      * @return icon sizes
      */
     @Option.Singular
+    @Option.Configured
     List<String> sizes();
 
     /**
@@ -54,5 +61,6 @@ interface McpIconBlueprint {
      *
      * @return icon theme
      */
+    @Option.Configured
     Optional<McpIconTheme> theme();
 }

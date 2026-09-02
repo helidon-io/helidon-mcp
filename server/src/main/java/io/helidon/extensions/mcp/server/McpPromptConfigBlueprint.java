@@ -62,4 +62,12 @@ interface McpPromptConfigBlueprint {
      * @return the prompt title
      */
     Optional<String> title();
+
+    /**
+     * Icons for this prompt.
+     *
+     * @return icons
+     */
+    @Option.Singular
+    List<McpIcon> icons();
 }

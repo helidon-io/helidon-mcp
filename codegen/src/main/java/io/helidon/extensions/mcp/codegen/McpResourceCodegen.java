@@ -30,6 +30,7 @@ import io.helidon.common.types.TypeNames;
 import io.helidon.common.types.TypedElementInfo;
 
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.MCP_TYPES;
+import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.addIcons;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.createClassName;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.getElementsWithAnnotation;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.isMcpType;
@@ -66,16 +67,14 @@ class McpResourceCodegen {
     private void generateResources(ClassModel.Builder classModel, TypeInfo type) {
         getElementsWithAnnotation(type, MCP_RESOURCE).forEach(element -> {
             TypeName innerTypeName = createClassName(element, "__Resource");
-            String uri = element.findAnnotation(MCP_RESOURCE)
-                    .flatMap(annotation -> annotation.stringValue("uri"))
+            Annotation resourceAnnotation = element.annotation(MCP_RESOURCE);
+            String uri = resourceAnnotation.stringValue("uri")
                     .orElseThrow(() -> new CodegenException("Resource " + element.elementName() + " must have a URI.",
                                                             element.originatingElementValue()));
-            String description = element.findAnnotation(MCP_RESOURCE)
-                    .flatMap(annotation -> annotation.stringValue("description"))
+            String description = resourceAnnotation.stringValue("description")
                     .orElseThrow(() -> new CodegenException("Resource " + element.elementName() + " must have a description.",
                                                             element.originatingElementValue()));
-            String mediaTypeContent = element.findAnnotation(MCP_RESOURCE)
-                    .flatMap(annotation -> annotation.stringValue("mediaType"))
+            String mediaTypeContent = resourceAnnotation.stringValue("mediaType")
                     .orElseThrow(() -> new CodegenException("Resource " + element.elementName() + " must have a Media Type.",
                                                             element.originatingElementValue()));
             recorder.resource(innerTypeName);
@@ -86,6 +85,7 @@ class McpResourceCodegen {
                     .addMethod(method -> addResourceUriMethod(method, uri))
                     .addMethod(method -> addResourceNameMethod(method, element))
                     .addMethod(method -> addResourceDescriptionMethod(method, description))
+                    .update(component -> addIcons(component, element))
                     .addMethod(method -> addResourceMethod(method, uri, classModel, element))
                     .addMethod(method -> addResourceMediaTypeMethod(method, mediaTypeContent)));
         });

@@ -53,6 +53,7 @@ class McpToolTest {
         assertThat(tool.title().isEmpty(), is(true));
         assertThat(tool.description(), is("description"));
         assertThat(tool.outputSchema().isPresent(), is(false));
+        assertThat(config.icons().isEmpty(), is(true));
     }
 
     @Test

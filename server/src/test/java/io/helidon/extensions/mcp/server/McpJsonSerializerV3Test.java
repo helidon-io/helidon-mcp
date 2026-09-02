@@ -200,7 +200,7 @@ class McpJsonSerializerV3Test {
         JsonObject params = JsonObject.builder()
                 .set("action", action.text())
                 .set("content", JsonObject.builder()
-                        .set("secret", "must-not-be-exposed")
+                        .set("marker", "ignored-content")
                         .build())
                 .build();
         JsonObject elicitation = MJS.createJsonRpcResultResponse(1, params);

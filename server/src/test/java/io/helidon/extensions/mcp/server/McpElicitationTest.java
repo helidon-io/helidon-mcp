@@ -62,7 +62,7 @@ class McpElicitationTest {
                   "result": {
                     "action": "accept",
                     "content": {
-                      "secret": "must-not-be-exposed"
+                      "marker": "ignored-content"
                     }
                   }
                 }

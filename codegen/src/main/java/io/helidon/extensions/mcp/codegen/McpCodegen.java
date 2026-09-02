@@ -34,6 +34,7 @@ import io.helidon.common.types.ElementKind;
 import io.helidon.common.types.TypeInfo;
 import io.helidon.common.types.TypeName;
 
+import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.addIconsToBuilder;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.generatedTypeName;
 import static io.helidon.extensions.mcp.codegen.McpTypes.HTTP_FEATURE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.HTTP_ROUTING_BUILDER;
@@ -150,6 +151,8 @@ final class McpCodegen implements CodegenExtension {
                 .ifPresent(description -> method.addContent("builder.description(")
                         .addContentLiteral(description)
                         .addContentLine(");"));
+
+        addIconsToBuilder(method, type);
 
         type.findAnnotation(MCP_VERSION)
                 .flatMap(Annotation::value)

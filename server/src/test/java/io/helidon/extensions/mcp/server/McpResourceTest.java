@@ -41,6 +41,7 @@ class McpResourceTest {
         assertThat(resource.title().isEmpty(), is(true));
         assertThat(resource.mediaType(), is(MediaTypes.TEXT_PLAIN));
         assertThat(resource.description(), is("No description available"));
+        assertThat(resource.icons().isEmpty(), is(true));
     }
 
     @Test
