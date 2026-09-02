@@ -15,6 +15,7 @@
  */
 package io.helidon.extensions.mcp.tests;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -38,6 +39,7 @@ import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.comparesEqualTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -176,7 +178,7 @@ class McpSdkStreamableElicitationDefaultsTest {
         assertThat(ageSchema.containsKey("default"), is(true));
         Object ageDefault = ageSchema.get("default");
         assertThat(ageDefault, instanceOf(Number.class));
-        assertThat(((Number) ageDefault).intValue(), is(30));
+        assertThat(new BigDecimal(ageDefault.toString()), comparesEqualTo(BigDecimal.valueOf(30)));
         assertThat(scoreSchema.containsKey("default"), is(true));
         Object scoreDefault = scoreSchema.get("default");
         assertThat(scoreDefault, instanceOf(Number.class));
