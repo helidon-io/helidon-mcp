@@ -136,6 +136,9 @@ the trusted requested URI plus the configured MCP path. The metadata identifies
 `http://localhost:8080/realms/mcp-realm` as its authorization server issuer. Configure `resource` explicitly when a proxy
 changes the public origin or MCP path; changing `metadata-path` alone only changes the local metadata route.
 
+OIDC redirects are disabled because MCP is an API protocol. An unauthenticated MCP request therefore returns a `401`
+challenge that the client can use to begin authorization instead of redirecting to a browser login page.
+
 ---
 
 ## 6. Run MCP Inspector

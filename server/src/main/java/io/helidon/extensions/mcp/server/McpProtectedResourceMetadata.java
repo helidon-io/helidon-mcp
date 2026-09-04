@@ -19,17 +19,25 @@ package io.helidon.extensions.mcp.server;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import io.helidon.builder.api.Prototype;
 import io.helidon.common.uri.UriPath;
+import io.helidon.http.HeaderNames;
 import io.helidon.http.HeaderValues;
 import io.helidon.http.Method;
 import io.helidon.http.PathMatcher;
 import io.helidon.http.PathMatchers;
+import io.helidon.http.RequestedUriDiscoveryContext;
+import io.helidon.http.ServerRequestHeaders;
 import io.helidon.http.Status;
+import io.helidon.http.WritableHeaders;
 import io.helidon.json.JsonObject;
 import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.http.ServerRequest;
@@ -37,6 +45,9 @@ import io.helidon.webserver.http.ServerResponse;
 
 final class McpProtectedResourceMetadata {
     private static final String METADATA_URI = "/.well-known/oauth-protected-resource";
+    private static final int PORT_PROBE = 65534;
+    private static final RequestedUriDiscoveryContext DEFAULT_REQUESTED_URI_DISCOVERY_CONTEXT =
+            RequestedUriDiscoveryContext.builder().build();
 
     private final boolean enabled;
     private final McpServerConfig config;
@@ -194,6 +205,134 @@ final class McpProtectedResourceMetadata {
                 || (scheme.equalsIgnoreCase("https") && port == 443);
     }
 
+    private static Optional<String> selectedExplicitPort(ServerRequest request,
+                                                         String requestedScheme,
+                                                         String requestedHost,
+                                                         int requestedPort) {
+        // UriInfo normalizes omitted and explicit default ports to the same value. Probe only lexically explicit
+        // authority candidates through the listener's own discovery context so its source order and trust rules still apply.
+        Map<String, String> probes = new LinkedHashMap<>();
+        WritableHeaders<?> headers = WritableHeaders.create(request.headers());
+
+        Optional<String> authorityProbe = probeAuthority(request.authority(), requestedHost, requestedPort, probes);
+        if (authorityProbe.isPresent()) {
+            headers.set(HeaderNames.HOST, authorityProbe.orElseThrow());
+        }
+
+        List<String> forwarded = headers.values(HeaderNames.FORWARDED);
+        if (!forwarded.isEmpty()) {
+            List<String> probedForwarded = new ArrayList<>(forwarded.size());
+            boolean forwardedProbed = false;
+            for (String value : forwarded) {
+                PortProbe forwardedProbe = probeForwarded(value, requestedHost, requestedPort, probes);
+                probedForwarded.add(forwardedProbe.value());
+                forwardedProbed |= forwardedProbe.changed();
+            }
+            if (forwardedProbed) {
+                headers.set(HeaderNames.FORWARDED, probedForwarded);
+            }
+        }
+
+        if (probes.isEmpty()) {
+            return Optional.empty();
+        }
+
+        RequestedUriDiscoveryContext discoveryContext = request.listenerContext()
+                .config()
+                .requestedUriDiscoveryContext()
+                .orElse(DEFAULT_REQUESTED_URI_DISCOVERY_CONTEXT);
+        var probedUri = discoveryContext.uriInfo(request.remotePeer().address(),
+                                                 request.localPeer().address(),
+                                                 request.path().absolute().path(),
+                                                 ServerRequestHeaders.create(headers),
+                                                 request.query(),
+                                                 request.isSecure());
+        if (probedUri.port() != PORT_PROBE || !probedUri.scheme().equalsIgnoreCase(requestedScheme)) {
+            return Optional.empty();
+        }
+        return probes.entrySet()
+                .stream()
+                .filter(entry -> hostsEqual(probedUri.host(), entry.getKey()))
+                .map(Map.Entry::getValue)
+                .findFirst();
+    }
+
+    private static Optional<String> probeAuthority(String authority,
+                                                   String requestedHost,
+                                                   int requestedPort,
+                                                   Map<String, String> probes) {
+        URI authorityUri;
+        try {
+            authorityUri = URI.create("http://" + authority);
+        } catch (IllegalArgumentException ignored) {
+            // Java 21 does not support unnamed catch variables.
+            return Optional.empty();
+        }
+        String authorityHost = authorityUri.getHost();
+        if (authorityHost == null
+                || authorityUri.getPort() != requestedPort
+                || !hostsEqual(authorityHost, requestedHost)) {
+            return Optional.empty();
+        }
+        int portSeparator = authority.lastIndexOf(':');
+        String probeHost = newProbeHost(probes);
+        probes.put(probeHost, authority.substring(portSeparator + 1));
+        return Optional.of(probeHost + ":" + PORT_PROBE);
+    }
+
+    private static PortProbe probeForwarded(String value,
+                                            String requestedHost,
+                                            int requestedPort,
+                                            Map<String, String> probes) {
+        String[] elements = value.split(",", -1);
+        boolean changed = false;
+        for (int elementIndex = 0; elementIndex < elements.length; elementIndex++) {
+            String[] directives = elements[elementIndex].split(";", -1);
+            for (int directiveIndex = 0; directiveIndex < directives.length; directiveIndex++) {
+                String directive = directives[directiveIndex];
+                int equals = directive.indexOf('=');
+                if (equals < 0 || !directive.substring(0, equals).trim().equalsIgnoreCase("host")) {
+                    continue;
+                }
+                String authority = directive.substring(equals + 1);
+                boolean quoted = authority.length() > 1
+                        && authority.charAt(0) == '"'
+                        && authority.charAt(authority.length() - 1) == '"';
+                String unquotedAuthority = quoted ? authority.substring(1, authority.length() - 1) : authority;
+                Optional<String> authorityProbe = probeAuthority(unquotedAuthority,
+                                                                 requestedHost,
+                                                                 requestedPort,
+                                                                 probes);
+                if (authorityProbe.isPresent()) {
+                    String replacement = authorityProbe.orElseThrow();
+                    directives[directiveIndex] = directive.substring(0, equals + 1)
+                            + (quoted ? '"' + replacement + '"' : replacement);
+                    changed = true;
+                }
+            }
+            elements[elementIndex] = String.join(";", directives);
+        }
+        return new PortProbe(String.join(",", elements), changed);
+    }
+
+    private static String newProbeHost(Map<String, String> probes) {
+        String probeHost;
+        do {
+            probeHost = "mcp-" + UUID.randomUUID() + ".invalid";
+        } while (probes.containsKey(probeHost));
+        return probeHost;
+    }
+
+    private static boolean hostsEqual(String first, String second) {
+        if (first.startsWith("[") && first.endsWith("]")) {
+            first = first.substring(1, first.length() - 1);
+        }
+        if (second.startsWith("[") && second.endsWith("]")) {
+            second = second.substring(1, second.length() - 1);
+        }
+        return first.equalsIgnoreCase(second);
+    }
+
     private URI protectedResource(ServerRequest request) {
         var requestedUri = request.requestedUri();
         String scheme = requestedUri.scheme().toLowerCase(Locale.ROOT);
@@ -206,8 +345,13 @@ final class McpProtectedResourceMetadata {
                 .append("://")
                 .append(host);
         int port = requestedUri.port();
-        if (port > 0 && !isDefaultPort(scheme, port)) {
-            resource.append(':').append(port);
+        if (port > 0) {
+            Optional<String> explicitPort = selectedExplicitPort(request, scheme, host, port);
+            if (explicitPort.isPresent()) {
+                resource.append(':').append(explicitPort.orElseThrow());
+            } else if (!isDefaultPort(scheme, port)) {
+                resource.append(':').append(port);
+            }
         }
         if (!serverEndpoint.isEmpty()) {
             if (!serverEndpoint.startsWith("/")) {
@@ -289,5 +433,8 @@ final class McpProtectedResourceMetadata {
         public Optional<String> matchingElement() {
             return Optional.of(path);
         }
+    }
+
+    private record PortProbe(String value, boolean changed) {
     }
 }

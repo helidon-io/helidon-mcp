@@ -118,8 +118,10 @@ a `WWW-Authenticate` `resource_metadata` parameter. Keep the metadata endpoint u
 forwards its public scheme and authority correctly.
 
 Configure `resource` explicitly when the canonical, externally visible resource cannot be derived from the request origin and
-the MCP server path, for example when a reverse proxy rewrites the public MCP path. An explicit resource is also required when
-the MCP server path is a routing pattern or when a query component is part of the resource identifier:
+the MCP server path, for example when a reverse proxy rewrites the public MCP path. This also applies when the canonical URI
+spells a default port but the proxy reports it only through `X-Forwarded-Port`, which does not indicate whether the client
+included that port explicitly. An explicit resource is also required when the MCP server path is a routing pattern or when a
+query component is part of the resource identifier:
 
 ```yaml
 mcp:

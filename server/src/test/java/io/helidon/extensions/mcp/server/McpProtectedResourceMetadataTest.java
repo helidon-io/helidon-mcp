@@ -16,6 +16,7 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -23,8 +24,12 @@ import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Optional;
 
+import io.helidon.http.HeaderNames;
+import io.helidon.http.Status;
 import io.helidon.json.JsonObject;
 import io.helidon.json.JsonParser;
+import io.helidon.webclient.api.HttpClientResponse;
+import io.helidon.webclient.api.WebClient;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.testing.junit5.ServerTest;
@@ -115,6 +120,12 @@ class McpProtectedResourceMetadataTest {
                                             .addAuthorizationServer(AUTHORIZATION_SERVER))
                                     .build())
                 .addFeature(McpServerFeature.builder()
+                                    .path("/explicit-default-port")
+                                    .protectedResourceMetadata(metadata -> metadata
+                                            .resource(URI.create("https://example.test:443/explicit-default-port"))
+                                            .addAuthorizationServer(AUTHORIZATION_SERVER))
+                                    .build())
+                .addFeature(McpServerFeature.builder()
                                     .path("/external-a")
                                     .protectedResourceMetadata(metadata -> metadata
                                             .resource(URI.create("https://a.example.test/shared?tenant=a"))
@@ -175,6 +186,31 @@ class McpProtectedResourceMetadataTest {
         JsonObject loopbackMetadata = JsonParser.create(loopbackResponse.body()).readJsonObject();
         assertThat(loopbackMetadata.stringValue("resource").orElseThrow(),
                    is("http://127.0.0.1:" + port + "/derived/mcp"));
+    }
+
+    @Test
+    void preservesExplicitDefaultPortWhenDerivingResource() {
+        String metadataPath = "/.well-known/oauth-protected-resource/derived/mcp";
+        JsonObject explicitPort = getWithAuthority("localhost:80", metadataPath);
+        JsonObject paddedPort = getWithAuthority("localhost:080", metadataPath);
+        JsonObject omittedPort = getWithAuthority("localhost", metadataPath);
+
+        assertThat(explicitPort.stringValue("resource").orElseThrow(),
+                   is("http://localhost:80/derived/mcp"));
+        assertThat(paddedPort.stringValue("resource").orElseThrow(),
+                   is("http://localhost:080/derived/mcp"));
+        assertThat(omittedPort.stringValue("resource").orElseThrow(),
+                   is("http://localhost/derived/mcp"));
+    }
+
+    @Test
+    void preservesExplicitDefaultPortInConfiguredResource() throws Exception {
+        HttpResponse<String> response = get("/.well-known/oauth-protected-resource/explicit-default-port");
+
+        assertThat(response.statusCode(), is(200));
+        JsonObject metadata = JsonParser.create(response.body()).readJsonObject();
+        assertThat(metadata.stringValue("resource").orElseThrow(),
+                   is("https://example.test:443/explicit-default-port"));
     }
 
     @Test
@@ -404,6 +440,21 @@ class McpProtectedResourceMetadataTest {
                 .stream()
                 .map(it -> it.asString().value())
                 .toList();
+    }
+
+    private JsonObject getWithAuthority(String authority, String path) {
+        WebClient client = WebClient.builder()
+                .baseUri("http://" + authority)
+                .build();
+        try (HttpClientResponse response = client.get(path)
+                .address(new InetSocketAddress("localhost", port))
+                .header(HeaderNames.HOST, authority)
+                .request()) {
+            assertThat(response.status(), is(Status.OK_200));
+            return JsonParser.create(response.as(String.class)).readJsonObject();
+        } finally {
+            client.closeResource();
+        }
     }
 
     private HttpResponse<String> get(String path) throws Exception {

@@ -43,5 +43,6 @@ security:
         client-secret: "changeit"
         identity-uri: "http://localhost:8080/realms/mcp-realm"
         audience: "http://localhost:8081/secured"
+        redirect: false
         header-use: "true"
         frontend-uri: "http://localhost:6274/oauth/callback/debug"

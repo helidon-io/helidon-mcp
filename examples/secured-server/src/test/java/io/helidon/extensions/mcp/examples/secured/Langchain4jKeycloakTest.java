@@ -16,9 +16,6 @@
 
 package io.helidon.extensions.mcp.examples.secured;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -66,15 +63,11 @@ class Langchain4jKeycloakTest {
     private static final String USERNAME = "mcp-user";
     private static final String PASSWORD = "mcp-password";
     private static final String TOOL_NAME = "secured-tool";
-    private static final ServerSocket SERVER_PORT_RESERVATION = reservePort();
-    private static final int SERVER_PORT = SERVER_PORT_RESERVATION.getLocalPort();
-    private static final URI RESOURCE_URI = URI.create("http://localhost:" + SERVER_PORT + "/secured");
 
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
 
     @Container
     private static final KeycloakContainer KEYCLOAK = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.5")
-            .withEnv("MCP_RESOURCE_URI", RESOURCE_URI.toString())
             .withRealmImportFile("/mcp-test-realm.json")
             .waitingFor(KeycloakContainer.LOG_WAIT_STRATEGY);
     private static String accessToken;
@@ -98,21 +91,17 @@ class Langchain4jKeycloakTest {
         Config config = testConfig();
         builder.config(config.get("server"))
                 .host("localhost")
-                .port(SERVER_PORT)
+                .port(0)
                 .shutdownHook(false);
     }
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {
-        try {
-            Config config = testConfig();
-            builder.addFeature(McpServerConfig.builder()
-                                       .config(config.get("mcp.server"))
-                                       .addTool(new SecuredTool()))
-                    .addFeature(OidcFeature.create(config));
-        } finally {
-            releaseServerPort();
-        }
+        Config config = testConfig();
+        builder.addFeature(McpServerConfig.builder()
+                                   .config(config.get("mcp.server"))
+                                   .addTool(new SecuredTool()))
+                .addFeature(OidcFeature.create(config));
     }
 
     @Test
@@ -132,7 +121,7 @@ class Langchain4jKeycloakTest {
 
     @Test
     void discoversAuthorizationServerAfterUnauthorizedResponse() throws Exception {
-        HttpRequest unauthorizedRequest = HttpRequest.newBuilder(RESOURCE_URI)
+        HttpRequest unauthorizedRequest = HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/secured"))
                 .GET()
                 .build();
         HttpResponse<String> unauthorized = HTTP_CLIENT.send(unauthorizedRequest,
@@ -155,7 +144,8 @@ class Langchain4jKeycloakTest {
         assertThat(metadataResponse.statusCode(), is(200));
         assertThat(metadataResponse.headers().firstValue("content-type").orElseThrow(), startsWith("application/json"));
         var metadata = JsonParser.create(metadataResponse.body()).readJsonObject();
-        assertThat(metadata.stringValue("resource").orElseThrow(), is(RESOURCE_URI.toString()));
+        assertThat(metadata.stringValue("resource").orElseThrow(),
+                   is("http://localhost:" + port + "/secured"));
         var authorizationServers = metadata.arrayValue("authorization_servers").orElseThrow();
         assertThat(authorizationServers.size(), is(1));
         assertThat(authorizationServers.get(0).orElseThrow().asString().value(),
@@ -197,26 +187,10 @@ class Langchain4jKeycloakTest {
                 .disableSystemPropertiesSource()
                 .sources(ConfigSources.create(Map.of(
                                  "security.providers.0.oidc.identity-uri", authorizationServer,
-                                 "security.providers.0.oidc.audience", RESOURCE_URI.toString(),
+                                 "security.providers.0.oidc.audience", "mcp-scope",
                                  "mcp.server.protected-resource-metadata.authorization-servers.0", authorizationServer)),
                          ConfigSources.classpath("application.yaml"))
                 .build();
-    }
-
-    private static ServerSocket reservePort() {
-        try {
-            return new ServerSocket(0);
-        } catch (IOException e) {
-            throw new UncheckedIOException("Failed to reserve a server port", e);
-        }
-    }
-
-    private static void releaseServerPort() {
-        try {
-            SERVER_PORT_RESERVATION.close();
-        } catch (IOException e) {
-            throw new UncheckedIOException("Failed to release the reserved server port", e);
-        }
     }
 
     private McpClient langchain4jClient() {

@@ -20,7 +20,6 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.config.Config;
