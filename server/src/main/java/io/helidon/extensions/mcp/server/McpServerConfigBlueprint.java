@@ -29,7 +29,7 @@ import static io.helidon.extensions.mcp.server.McpSampling.DEFAULT_MAX_TOOL_ITER
 /**
  * Configuration of an MCP server.
  */
-@Prototype.Blueprint
+@Prototype.Blueprint(decorator = McpDecorators.ServerConfigDecorator.class)
 @Prototype.IncludeDefaultMethods
 @Prototype.CustomMethods(McpServerFeatureSupport.class)
 @Prototype.Configured(McpServerConfigBlueprint.CONFIG_ROOT)

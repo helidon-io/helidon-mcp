@@ -70,7 +70,7 @@ class ConfigurationTest {
         assertThat(config.maxRequestsPerSession(), is(1));
         McpProtectedResourceMetadataConfig metadata = config.protectedResourceMetadata().orElseThrow();
         assertThat(metadata.scopesSupported(), contains("mcp:tools"));
-        assertThat(metadata.resource(), is(URI.create("https://mcp.example.com/path")));
+        assertThat(metadata.resource().isEmpty(), is(true));
         assertThat(metadata.authorizationServers(), contains(URI.create("https://login.example.com/tenant")));
         assertThat(metadata.metadataPath().isEmpty(), is(false));
         assertThat(metadata.metadataPath().get(), is("/.well-known/oauth-protected-resource/internal/path"));
@@ -99,6 +99,25 @@ class ConfigurationTest {
         assertThat(config.maxSessionCount(), is(1000));
         assertThat(config.maxRequestsPerSession(), is(1000));
         assertThat(config.protectedResourceMetadata().isEmpty(), is(true));
+    }
+
+    @Test
+    void testServerPathNormalization() {
+        McpServerConfig.Builder pathBuilder = McpServerConfig.builder()
+                .path("/path/");
+        McpServerConfig pathConfig = pathBuilder.buildPrototype();
+        McpServerConfig repeatedBuildConfig = pathBuilder.buildPrototype();
+        McpServerConfig repeatedSlashConfig = McpServerConfig.builder()
+                .path("/path//")
+                .buildPrototype();
+        McpServerConfig rootConfig = McpServerConfig.builder()
+                .path("/")
+                .buildPrototype();
+
+        assertThat(pathConfig.path(), is("/path"));
+        assertThat(repeatedBuildConfig.path(), is("/path"));
+        assertThat(repeatedSlashConfig.path(), is("/path"));
+        assertThat(rootConfig.path(), is(""));
     }
 
     @ParameterizedTest

@@ -19,7 +19,6 @@ mcp:
     path: "/secured"
     name: "secured-mcp-server"
     protected-resource-metadata:
-      resource: "http://localhost:8081/secured"
       authorization-servers:
         - "http://localhost:8080/realms/mcp-realm"
       scopes-supported:

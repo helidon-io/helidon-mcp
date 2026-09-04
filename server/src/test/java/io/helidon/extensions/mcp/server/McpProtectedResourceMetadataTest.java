@@ -71,6 +71,17 @@ class McpProtectedResourceMetadataTest {
                                             .addAuthorizationServer(AUTHORIZATION_SERVER))
                                     .build())
                 .addFeature(McpServerFeature.builder()
+                                    .path("/derived/mcp/")
+                                    .protectedResourceMetadata(metadata -> metadata
+                                            .addAuthorizationServer(AUTHORIZATION_SERVER))
+                                    .build())
+                .addFeature(McpServerFeature.builder()
+                                    .path("/derived/custom")
+                                    .protectedResourceMetadata(metadata -> metadata
+                                            .metadataPath("/.well-known/oauth-protected-resource/derived-local")
+                                            .addAuthorizationServer(AUTHORIZATION_SERVER))
+                                    .build())
+                .addFeature(McpServerFeature.builder()
                                     .path("/")
                                     .protectedResourceMetadata(metadata -> metadata
                                             .resource(URI.create("https://root.example.test"))
@@ -89,6 +100,18 @@ class McpProtectedResourceMetadataTest {
                                     .path("/literal-neighbor")
                                     .protectedResourceMetadata(metadata -> metadata
                                             .resource(URI.create("https://mcp.example.test/literal/neighbor"))
+                                            .addAuthorizationServer(AUTHORIZATION_SERVER))
+                                    .build())
+                .addFeature(McpServerFeature.builder()
+                                    .path("/literal-plus")
+                                    .protectedResourceMetadata(metadata -> metadata
+                                            .resource(URI.create("https://mcp.example.test/raw/a+b"))
+                                            .addAuthorizationServer(AUTHORIZATION_SERVER))
+                                    .build())
+                .addFeature(McpServerFeature.builder()
+                                    .path("/encoded-slash")
+                                    .protectedResourceMetadata(metadata -> metadata
+                                            .resource(URI.create("https://mcp.example.test/raw/a%2Fb"))
                                             .addAuthorizationServer(AUTHORIZATION_SERVER))
                                     .build())
                 .addFeature(McpServerFeature.builder()
@@ -138,6 +161,33 @@ class McpProtectedResourceMetadataTest {
     }
 
     @Test
+    void derivesResourceFromRequestAuthorityAndConfiguredMcpPath() throws Exception {
+        String metadataPath = "/.well-known/oauth-protected-resource/derived/mcp";
+        HttpResponse<String> localhostResponse = get("localhost", metadataPath + "?ignored=request-query");
+        HttpResponse<String> loopbackResponse = get("127.0.0.1", metadataPath);
+
+        assertThat(localhostResponse.statusCode(), is(200));
+        JsonObject localhostMetadata = JsonParser.create(localhostResponse.body()).readJsonObject();
+        assertThat(localhostMetadata.stringValue("resource").orElseThrow(),
+                   is("http://localhost:" + port + "/derived/mcp"));
+
+        assertThat(loopbackResponse.statusCode(), is(200));
+        JsonObject loopbackMetadata = JsonParser.create(loopbackResponse.body()).readJsonObject();
+        assertThat(loopbackMetadata.stringValue("resource").orElseThrow(),
+                   is("http://127.0.0.1:" + port + "/derived/mcp"));
+    }
+
+    @Test
+    void usesCustomMetadataPathWithoutChangingDerivedResource() throws Exception {
+        HttpResponse<String> response = get("/.well-known/oauth-protected-resource/derived-local");
+
+        assertThat(response.statusCode(), is(200));
+        JsonObject metadata = JsonParser.create(response.body()).readJsonObject();
+        assertThat(metadata.stringValue("resource").orElseThrow(),
+                   is("http://localhost:" + port + "/derived/custom"));
+    }
+
+    @Test
     void servesRootProtectedResourceMetadata() throws Exception {
         HttpResponse<String> response = get("/.well-known/oauth-protected-resource");
 
@@ -167,8 +217,25 @@ class McpProtectedResourceMetadataTest {
     }
 
     @Test
+    void preservesRawCanonicalResourcePathWhenRoutingMetadata() throws Exception {
+        HttpResponse<String> literalPlus = get("/.well-known/oauth-protected-resource/raw/a+b");
+        HttpResponse<String> encodedSpaceAlias = get("/.well-known/oauth-protected-resource/raw/a%20b");
+        HttpResponse<String> encodedSlash = get("/.well-known/oauth-protected-resource/raw/a%2Fb");
+        HttpResponse<String> decodedSlashAlias = get("/.well-known/oauth-protected-resource/raw/a/b");
+
+        assertThat(literalPlus.statusCode(), is(200));
+        assertThat(JsonParser.create(literalPlus.body()).readJsonObject().stringValue("resource").orElseThrow(),
+                   is("https://mcp.example.test/raw/a+b"));
+        assertThat(encodedSpaceAlias.statusCode(), is(404));
+        assertThat(encodedSlash.statusCode(), is(200));
+        assertThat(JsonParser.create(encodedSlash.body()).readJsonObject().stringValue("resource").orElseThrow(),
+                   is("https://mcp.example.test/raw/a%2Fb"));
+        assertThat(decodedSlashAlias.statusCode(), is(404));
+    }
+
+    @Test
     void usesDistinctLocalMetadataPathsForExternalResources() throws Exception {
-        HttpResponse<String> first = get("/.well-known/oauth-protected-resource/local/a");
+        HttpResponse<String> first = get("/.well-known/oauth-protected-resource/local/a?ignored=request-query");
         HttpResponse<String> second = get("/.well-known/oauth-protected-resource/local/b");
         HttpResponse<String> canonicalPath = get("/.well-known/oauth-protected-resource/shared?tenant=a");
 
@@ -185,7 +252,6 @@ class McpProtectedResourceMetadataTest {
     void requiresAuthorizationServer() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                                                            () -> McpProtectedResourceMetadataConfig.builder()
-                                                                   .resource(RESOURCE)
                                                                    .build());
 
         assertThat(exception.getMessage(), containsString("At least one authorization server"));
@@ -245,7 +311,6 @@ class McpProtectedResourceMetadataTest {
             "/mcp, /%6dcp",
             "/%6dcp, /mcp",
             "/m+cp, /m%20cp",
-            "/m%20cp, /m+cp",
             "/api/*, /api/prm",
             "/{path}, /metadata",
             "/, /",
@@ -263,6 +328,18 @@ class McpProtectedResourceMetadataTest {
                                                                    .build());
 
         assertThat(exception.getMessage(), containsString("conflicts with an existing MCP server route"));
+    }
+
+    @Test
+    void requiresExplicitResourceForPatternServerPath() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                                                           () -> McpServerFeature.builder()
+                                                                   .path("/api/*")
+                                                                   .protectedResourceMetadata(metadata -> metadata
+                                                                           .addAuthorizationServer(AUTHORIZATION_SERVER))
+                                                                   .build());
+
+        assertThat(exception.getMessage(), containsString("resource must be configured"));
     }
 
     @Test
@@ -307,7 +384,7 @@ class McpProtectedResourceMetadataTest {
                 .addAuthorizationServer(URI.create("http://[::1]:8080/issuer"))
                 .build();
 
-        assertThat(metadata.resource(), is(URI.create("http://127.0.0.2:8081/mcp")));
+        assertThat(metadata.resource(), is(Optional.of(URI.create("http://127.0.0.2:8081/mcp"))));
     }
 
     @Test
@@ -330,7 +407,11 @@ class McpProtectedResourceMetadataTest {
     }
 
     private HttpResponse<String> get(String path) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
+        return get("localhost", path);
+    }
+
+    private HttpResponse<String> get(String host, String path) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(URI.create("http://" + host + ":" + port + path))
                 .GET()
                 .build();
         return HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());

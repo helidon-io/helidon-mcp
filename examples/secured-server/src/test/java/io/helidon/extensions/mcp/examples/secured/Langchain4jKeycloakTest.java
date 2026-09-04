@@ -198,7 +198,6 @@ class Langchain4jKeycloakTest {
                 .sources(ConfigSources.create(Map.of(
                                  "security.providers.0.oidc.identity-uri", authorizationServer,
                                  "security.providers.0.oidc.audience", RESOURCE_URI.toString(),
-                                 "mcp.server.protected-resource-metadata.resource", RESOURCE_URI.toString(),
                                  "mcp.server.protected-resource-metadata.authorization-servers.0", authorizationServer)),
                          ConfigSources.classpath("application.yaml"))
                 .build();

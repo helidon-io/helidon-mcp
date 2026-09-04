@@ -131,8 +131,10 @@ The protected resource metadata endpoint must remain public:
 curl http://localhost:8081/.well-known/oauth-protected-resource/secured
 ```
 
-It identifies `http://localhost:8081/secured` as the resource and `http://localhost:8080/realms/mcp-realm` as its
-authorization server issuer.
+The example does not configure `resource` explicitly. Helidon derives `http://localhost:8081/secured` for each request from
+the trusted requested URI plus the configured MCP path. The metadata identifies
+`http://localhost:8080/realms/mcp-realm` as its authorization server issuer. Configure `resource` explicitly when a proxy
+changes the public origin or MCP path; changing `metadata-path` alone only changes the local metadata route.
 
 ---
 

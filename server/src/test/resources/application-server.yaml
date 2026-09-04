@@ -29,7 +29,6 @@ mcp:
     path: "/path"
     stateless: "true"
     protected-resource-metadata:
-      resource: "https://mcp.example.com/path"
       metadata-path: "/.well-known/oauth-protected-resource/internal/path"
       authorization-servers:
         - "https://login.example.com/tenant"

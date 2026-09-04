@@ -30,30 +30,28 @@ import io.helidon.builder.api.Prototype;
  * or loopback literal hosts.
  */
 @Prototype.Configured
-@Prototype.IncludeDefaultMethods("metadataPath")
-@Prototype.Blueprint(decorator = McpProtectedResourceMetadataConfigSupport.class)
+@Prototype.Blueprint(decorator = McpProtectedResourceMetadata.ConfigSupport.class)
 interface McpProtectedResourceMetadataConfigBlueprint {
     /**
-     * Canonical, externally visible URI of the MCP server.
+     * Canonical, externally visible URI of the MCP server. If not configured, the URI is derived for each metadata
+     * request from the requested URI and the configured MCP server path. Configure this explicitly when the public path
+     * differs from the server path, the server path is a routing pattern, or a query is part of the resource identifier.
      *
      * @return resource URI
      */
     @Option.Configured
-    @Option.Required
-    URI resource();
+    Optional<URI> resource();
 
     /**
      * Exact local HTTP path where Helidon serves the protected resource metadata.
      * This is intended for reverse proxies that map canonical metadata URLs to distinct local routes.
-     * If not configured, the path is derived from {@link #resource()}.
+     * If not configured, the path is derived from {@link #resource()} or the MCP server path.
      * It must not match the MCP server path or the legacy OpenID discovery path.
      *
      * @return local metadata path
      */
     @Option.Configured
-    default Optional<String> metadataPath() {
-        return Optional.empty();
-    }
+    Optional<String> metadataPath();
 
     /**
      * Authorization server issuer identifiers that can be used with this MCP server.
