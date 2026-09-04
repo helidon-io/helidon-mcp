@@ -107,9 +107,7 @@ interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature>, 
      * @return protected resource metadata configuration
      */
     @Option.Configured
-    default Optional<McpProtectedResourceMetadataConfig> protectedResourceMetadata() {
-        return Optional.empty();
-    }
+    Optional<McpProtectedResourceMetadataConfig> protectedResourceMetadata();
 
     /**
      * Server tools page size configuration.
