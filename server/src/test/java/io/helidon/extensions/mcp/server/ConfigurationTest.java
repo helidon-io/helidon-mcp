@@ -16,6 +16,7 @@
 
 package io.helidon.extensions.mcp.server;
 
+import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,7 @@ import java.util.Map;
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.config.Config;
 import io.helidon.config.ConfigSources;
+import io.helidon.webserver.http.HttpRouting;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -31,7 +33,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 import static io.helidon.extensions.mcp.server.McpPagination.DEFAULT_PAGE_SIZE;
 import static io.helidon.extensions.mcp.server.McpSampling.DEFAULT_MAX_TOOL_ITERATIONS;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -65,6 +69,12 @@ class ConfigurationTest {
         assertThat(config.maxSamplingToolIterations(), is(3));
         assertThat(config.maxSessionCount(), is(1));
         assertThat(config.maxRequestsPerSession(), is(1));
+        McpProtectedResourceMetadataConfig metadata = config.protectedResourceMetadata().orElseThrow();
+        assertThat(metadata.scopesSupported(), contains("mcp:tools"));
+        assertThat(metadata.resource().isEmpty(), is(true));
+        assertThat(metadata.authorizationServers(), contains(URI.create("https://login.example.com/tenant")));
+        assertThat(metadata.metadataPath().isEmpty(), is(false));
+        assertThat(metadata.metadataPath().get(), is("/.well-known/oauth-protected-resource/internal/path"));
     }
 
     @Test
@@ -89,6 +99,56 @@ class ConfigurationTest {
         assertThat(config.maxSamplingToolIterations(), is(DEFAULT_MAX_TOOL_ITERATIONS));
         assertThat(config.maxSessionCount(), is(1000));
         assertThat(config.maxRequestsPerSession(), is(1000));
+        assertThat(config.protectedResourceMetadata().isEmpty(), is(true));
+    }
+
+    @Test
+    void testServerPathIsPreserved() {
+        McpServerConfig.Builder pathBuilder = McpServerConfig.builder()
+                .path("/path/");
+        McpServerConfig pathConfig = pathBuilder.buildPrototype();
+        McpServerConfig repeatedBuildConfig = pathBuilder.buildPrototype();
+        McpServerConfig repeatedSlashConfig = McpServerConfig.builder()
+                .path("/path//")
+                .buildPrototype();
+        McpServerConfig rootConfig = McpServerConfig.builder()
+                .path("/")
+                .buildPrototype();
+
+        assertThat(pathConfig.path(), is("/path/"));
+        assertThat(repeatedBuildConfig.path(), is("/path/"));
+        assertThat(repeatedSlashConfig.path(), is("/path//"));
+        assertThat(rootConfig.path(), is("/"));
+    }
+
+    @Test
+    void rejectsDuplicateProtectedResourceMetadataPaths() {
+        String metadataPath = "/.well-known/oauth-protected-resource/shared";
+        McpServerFeature first = featureWithMetadataPath("/one", metadataPath);
+        McpServerFeature second = featureWithMetadataPath("/two", metadataPath);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                                                           () -> HttpRouting.builder()
+                                                                   .addFeature(first)
+                                                                   .addFeature(second)
+                                                                   .build());
+
+        assertThat(exception.getMessage(),
+                   is("Protected resource metadata path must be unique within an HTTP routing: " + metadataPath));
+    }
+
+    @Test
+    void allowsSameProtectedResourceMetadataPathInDifferentRoutings() {
+        String metadataPath = "/.well-known/oauth-protected-resource/shared";
+
+        assertThat(HttpRouting.builder()
+                           .addFeature(featureWithMetadataPath("/one", metadataPath))
+                           .build(),
+                   notNullValue());
+        assertThat(HttpRouting.builder()
+                           .addFeature(featureWithMetadataPath("/two", metadataPath))
+                           .build(),
+                   notNullValue());
     }
 
     @ParameterizedTest
@@ -153,5 +213,14 @@ class ConfigurationTest {
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), is("Maximum sampling tool iterations must be greater than zero"));
         }
+    }
+
+    private static McpServerFeature featureWithMetadataPath(String serverPath, String metadataPath) {
+        return McpServerFeature.builder()
+                .path(serverPath)
+                .protectedResourceMetadata(metadata -> metadata
+                        .metadataPath(metadataPath)
+                        .addAuthorizationServer(URI.create("https://auth.example.test")))
+                .build();
     }
 }

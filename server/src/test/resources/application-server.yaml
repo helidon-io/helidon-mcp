@@ -28,6 +28,12 @@ mcp:
       - source: "data:image/png;base64,iVBORw0KGgo="
     path: "/path"
     stateless: "true"
+    protected-resource-metadata:
+      metadata-path: "/.well-known/oauth-protected-resource/internal/path"
+      authorization-servers:
+        - "https://login.example.com/tenant"
+      scopes-supported:
+        - "mcp:tools"
     tools-page-size: 10
     prompts-page-size: 10
     resources-page-size: 10
