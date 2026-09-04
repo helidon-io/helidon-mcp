@@ -45,6 +45,9 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.AdditionalAnswers.delegatesTo;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 @ServerTest
 class McpProtectedResourceMetadataTest {
@@ -61,6 +64,14 @@ class McpProtectedResourceMetadataTest {
 
     @SetUpRoute
     static void routing(HttpRouting.Builder routing) {
+        McpServerConfig delegate = McpServerConfig.builder()
+                .path("/unused")
+                .protectedResourceMetadata(metadata -> metadata
+                        .addAuthorizationServer(AUTHORIZATION_SERVER))
+                .buildPrototype();
+        McpServerConfig customConfig = mock(McpServerConfig.class, delegatesTo(delegate));
+        doReturn("/custom-config/").when(customConfig).path();
+
         routing.addFeature(McpServerFeature.builder()
                                    .protectedResourceMetadata(metadata -> metadata
                                            .resource(RESOURCE)
@@ -138,7 +149,8 @@ class McpProtectedResourceMetadataTest {
                                             .resource(URI.create("https://b.example.test/shared?tenant=b"))
                                             .metadataPath("/.well-known/oauth-protected-resource/local/b")
                                             .addAuthorizationServer(SECOND_AUTHORIZATION_SERVER))
-                                    .build());
+                                    .build())
+                .addFeature(McpServerFeature.create(customConfig));
     }
 
     @Test
@@ -186,6 +198,37 @@ class McpProtectedResourceMetadataTest {
         JsonObject loopbackMetadata = JsonParser.create(loopbackResponse.body()).readJsonObject();
         assertThat(loopbackMetadata.stringValue("resource").orElseThrow(),
                    is("http://127.0.0.1:" + port + "/derived/mcp"));
+    }
+
+    @Test
+    void normalizesCustomServerConfigPathForRouting() throws Exception {
+        String initialize = """
+                {
+                  "jsonrpc": "2.0",
+                  "id": 1,
+                  "method": "initialize",
+                  "params": {
+                    "protocolVersion": "2025-06-18",
+                    "capabilities": {},
+                    "clientInfo": {"name": "test-client", "version": "1.0.0"}
+                  }
+                }
+                """;
+        HttpRequest initializeRequest = HttpRequest.newBuilder(URI.create("http://localhost:"
+                                                                                  + port
+                                                                                  + "/custom-config"))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(initialize))
+                .build();
+        HttpResponse<String> initializeResponse = HTTP_CLIENT.send(initializeRequest,
+                                                                    HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response = get("/.well-known/oauth-protected-resource/custom-config");
+
+        assertThat(initializeResponse.statusCode(), is(200));
+        assertThat(response.statusCode(), is(200));
+        JsonObject metadata = JsonParser.create(response.body()).readJsonObject();
+        assertThat(metadata.stringValue("resource").orElseThrow(),
+                   is("http://localhost:" + port + "/custom-config"));
     }
 
     @Test

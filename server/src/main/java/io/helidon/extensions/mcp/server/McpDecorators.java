@@ -39,23 +39,6 @@ final class McpDecorators {
     }
 
     /**
-     * Normalize MCP server configuration.
-     */
-    static class ServerConfigDecorator implements Prototype.BuilderDecorator<McpServerConfig.BuilderBase<?, ?>> {
-        @Override
-        public void decorate(McpServerConfig.BuilderBase<?, ?> builder) {
-            String path = builder.path();
-            int end = path.length();
-            while (end > 0 && path.charAt(end - 1) == '/') {
-                end--;
-            }
-            if (end != path.length()) {
-                builder.path(path.substring(0, end));
-            }
-        }
-    }
-
-    /**
      * Enforce positive page size.
      * <p>
      * See {@link io.helidon.extensions.mcp.server.McpPagination}.

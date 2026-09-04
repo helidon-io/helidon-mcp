@@ -148,6 +148,40 @@ class McpProtectedResourceMetadataForwardedTest {
                    is("https://example.test/derived/mcp"));
     }
 
+    @Test
+    void derivesResourceFromXForwardedHostWithPort() {
+        JsonObject metadata = get("backend.test:8443", request -> request
+                .header(HeaderNames.X_FORWARDED_FOR, "198.51.100.1", "127.0.0.1")
+                .header(HeaderNames.X_FORWARDED_HOST, "example.test:443")
+                .header(HeaderNames.X_FORWARDED_PROTO, "https"));
+
+        assertThat(metadata.stringValue("resource").orElseThrow(),
+                   is("https://example.test:443/derived/mcp"));
+    }
+
+    @Test
+    void derivesResourceFromXForwardedIpv6HostWithPort() {
+        JsonObject metadata = get("backend.test:8443", request -> request
+                .header(HeaderNames.X_FORWARDED_FOR, "198.51.100.1", "127.0.0.1")
+                .header(HeaderNames.X_FORWARDED_HOST, "[::1]:8080")
+                .header(HeaderNames.X_FORWARDED_PROTO, "http"));
+
+        assertThat(metadata.stringValue("resource").orElseThrow(),
+                   is("http://[::1]:8080/derived/mcp"));
+    }
+
+    @Test
+    void xForwardedPortOverridesPortInXForwardedHost() {
+        JsonObject metadata = get("backend.test:8443", request -> request
+                .header(HeaderNames.X_FORWARDED_FOR, "198.51.100.1", "127.0.0.1")
+                .header(HeaderNames.X_FORWARDED_HOST, "example.test:443")
+                .header(HeaderNames.X_FORWARDED_PROTO, "https")
+                .header(HeaderNames.X_FORWARDED_PORT, "8443"));
+
+        assertThat(metadata.stringValue("resource").orElseThrow(),
+                   is("https://example.test:8443/derived/mcp"));
+    }
+
     private JsonObject get(String authority, HeaderName discoveryHeader, String discoveryValue) {
         return get(authority, request -> request.header(discoveryHeader, discoveryValue));
     }

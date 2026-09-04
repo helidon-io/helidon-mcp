@@ -110,7 +110,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
 
         this.config = config;
         this.stateless = config.stateless();
-        this.endpoint = config.path();
+        this.endpoint = removeTrailingSlash(config.path());
         this.protectedMetadata = new McpProtectedResourceMetadata(config);
         this.sessions = new McpSessions(config.maxSessionCount());
         for (McpResource resource : config.resources()) {
@@ -207,6 +207,10 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         return McpServerConfig.builder();
     }
 
+    static String removeTrailingSlash(String path) {
+        return path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
+    }
+
     @Override
     public void setup(HttpRouting.Builder routing) {
         // add all the JSON-RPC routes first
@@ -243,7 +247,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         for (Config provider : providers.get()) {
             var identity = provider.get("oidc.identity-uri");
             if (identity.exists()) {
-                String identityUri = identity.asString().map(this::removeTrailingSlash).orElse("");
+                String identityUri = identity.asString().map(McpServerFeature::removeTrailingSlash).orElse("");
                 response.header(HeaderNames.LOCATION, identityUri + DEFAULT_OIDC_METADATA_URI);
                 response.status(Status.SEE_OTHER_303);
                 response.send();
@@ -963,10 +967,6 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                     .error(INVALID_REQUEST, "Session not found");
         }
         return session;
-    }
-
-    private String removeTrailingSlash(String path) {
-        return path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
     }
 
     private boolean isTemplate(McpResource resource) {

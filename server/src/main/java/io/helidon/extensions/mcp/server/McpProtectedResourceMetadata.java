@@ -20,12 +20,16 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.WeakHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 import io.helidon.builder.api.Prototype;
 import io.helidon.common.uri.UriPath;
@@ -48,6 +52,9 @@ final class McpProtectedResourceMetadata {
     private static final int PORT_PROBE = 65534;
     private static final RequestedUriDiscoveryContext DEFAULT_REQUESTED_URI_DISCOVERY_CONTEXT =
             RequestedUriDiscoveryContext.builder().build();
+    private static final ReentrantLock METADATA_ENDPOINTS_LOCK = new ReentrantLock();
+    // The routing builder is the only routing-scoped identity exposed while features are set up.
+    private static final Map<HttpRouting.Builder, Set<String>> METADATA_ENDPOINTS = new WeakHashMap<>();
 
     private final boolean enabled;
     private final McpServerConfig config;
@@ -56,7 +63,7 @@ final class McpProtectedResourceMetadata {
 
     McpProtectedResourceMetadata(McpServerConfig config) {
         this.config = config;
-        this.serverEndpoint = config.path();
+        this.serverEndpoint = McpServerFeature.removeTrailingSlash(config.path());
         this.enabled = config.protectedResourceMetadata().isPresent();
         if (!enabled) {
             this.metadataEndpoint = METADATA_URI;
@@ -76,9 +83,23 @@ final class McpProtectedResourceMetadata {
         if (!enabled) {
             return;
         }
+        registerMetadataEndpoint(routing, metadataEndpoint);
         routing.route(Method.GET,
                       new ExactRawPathMatcher(metadataEndpoint),
                       this::handle);
+    }
+
+    private static void registerMetadataEndpoint(HttpRouting.Builder routing, String metadataEndpoint) {
+        METADATA_ENDPOINTS_LOCK.lock();
+        try {
+            Set<String> endpoints = METADATA_ENDPOINTS.computeIfAbsent(routing, ignored -> new HashSet<>());
+            if (!endpoints.add(metadataEndpoint)) {
+                throw new IllegalArgumentException("Protected resource metadata path must be unique within an HTTP routing: "
+                                                           + metadataEndpoint);
+            }
+        } finally {
+            METADATA_ENDPOINTS_LOCK.unlock();
+        }
     }
 
     private static String metadataEndpoint(McpProtectedResourceMetadataConfig config, String serverEndpoint) {
@@ -203,6 +224,26 @@ final class McpProtectedResourceMetadata {
     private static boolean isDefaultPort(String scheme, int port) {
         return (scheme.equalsIgnoreCase("http") && port == 80)
                 || (scheme.equalsIgnoreCase("https") && port == 443);
+    }
+
+    private static Optional<HostPort> parseExplicitPortAuthority(String value) {
+        URI authority;
+        try {
+            authority = URI.create("http://" + value);
+        } catch (IllegalArgumentException ignored) {
+            // Java 21 does not support unnamed catch variables.
+            return Optional.empty();
+        }
+        if (authority.getHost() == null
+                || authority.getPort() < 1
+                || authority.getRawUserInfo() != null
+                || !value.equals(authority.getRawAuthority())) {
+            return Optional.empty();
+        }
+        int portSeparator = value.lastIndexOf(':');
+        return Optional.of(new HostPort(value.substring(0, portSeparator),
+                                        authority.getPort(),
+                                        value.substring(portSeparator + 1)));
     }
 
     private static Optional<String> selectedExplicitPort(ServerRequest request,
@@ -337,6 +378,18 @@ final class McpProtectedResourceMetadata {
         var requestedUri = request.requestedUri();
         String scheme = requestedUri.scheme().toLowerCase(Locale.ROOT);
         String host = requestedUri.host();
+        int port = requestedUri.port();
+        Optional<String> explicitPort = Optional.empty();
+        // X-Forwarded URI discovery leaves an authority-shaped X-Forwarded-Host value unsplit.
+        Optional<HostPort> parsedHost = parseExplicitPortAuthority(host);
+        if (parsedHost.isPresent()) {
+            HostPort hostPort = parsedHost.orElseThrow();
+            host = hostPort.host();
+            if (request.headers().first(HeaderNames.X_FORWARDED_PORT).isEmpty()) {
+                port = hostPort.port();
+                explicitPort = Optional.of(hostPort.portToken());
+            }
+        }
         if (host.indexOf(':') >= 0 && !host.startsWith("[")) {
             host = "[" + host + "]";
         }
@@ -344,9 +397,10 @@ final class McpProtectedResourceMetadata {
                 .append(scheme)
                 .append("://")
                 .append(host);
-        int port = requestedUri.port();
         if (port > 0) {
-            Optional<String> explicitPort = selectedExplicitPort(request, scheme, host, port);
+            if (explicitPort.isEmpty()) {
+                explicitPort = selectedExplicitPort(request, scheme, host, port);
+            }
             if (explicitPort.isPresent()) {
                 resource.append(':').append(explicitPort.orElseThrow());
             } else if (!isDefaultPort(scheme, port)) {
@@ -436,5 +490,8 @@ final class McpProtectedResourceMetadata {
     }
 
     private record PortProbe(String value, boolean changed) {
+    }
+
+    private record HostPort(String host, int port, String portToken) {
     }
 }
