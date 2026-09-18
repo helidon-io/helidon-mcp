@@ -26,8 +26,17 @@ import io.helidon.extensions.mcp.server.McpUnsubscribeRequest;
 @Mcp.Server
 @Mcp.Path("/subscribers")
 class McpSubscribersServer {
+    /**
+     * Content returned by the resource.
+     */
     public static final String RESOURCE_CONTENT = "resource content";
+    /**
+     * Description advertised for the resource.
+     */
     public static final String RESOURCE_DESCRIPTION = "Resource description";
+    /**
+     * Media type of the resource content.
+     */
     public static final String RESOURCE_MEDIA_TYPE = MediaTypes.TEXT_PLAIN_VALUE;
 
     @Mcp.Resource(

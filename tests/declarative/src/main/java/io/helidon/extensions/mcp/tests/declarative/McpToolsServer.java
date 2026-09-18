@@ -29,9 +29,21 @@ import io.helidon.json.schema.JsonSchema;
 @Mcp.Server
 @Mcp.Path("/tools")
 class McpToolsServer {
+    /**
+     * Content returned by the tools.
+     */
     public static final String TOOL_CONTENT = "Tool Content";
+    /**
+     * Description advertised for the tools.
+     */
     public static final String TOOL_DESCRIPTION = "Tool description";
+    /**
+     * Output schema for an object with no declared properties.
+     */
     public static final String OUTPUT_SCHEMA = "{\"type\":\"object\",\"properties\": {}}";
+    /**
+     * Multiline form of the output schema for an object with no declared properties.
+     */
     public static final String OUTPUT_SCHEMA_MULTI_LINE = """
     {
         "type":"object",
@@ -204,7 +216,13 @@ class McpToolsServer {
     @Json.Entity
     @JsonSchema.Schema
     public static class Foo {
+        /**
+         * Text value supplied to a tool.
+         */
         public String foo;
+        /**
+         * Numeric value supplied to a tool.
+         */
         public int bar;
     }
 

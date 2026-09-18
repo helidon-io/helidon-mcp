@@ -64,6 +64,9 @@ public class McpExceptionServer {
     }
 
     private static class ErrorTool implements McpTool {
+        /**
+         * Error message returned by the tool.
+         */
         protected static final String MESSAGE = "Tool error message";
 
         @Override
@@ -106,6 +109,9 @@ public class McpExceptionServer {
     }
 
     private static class ErrorResource implements McpResource {
+        /**
+         * Error message returned when reading the resource.
+         */
         protected static final String MESSAGE = "Resource error message";
 
         @Override
@@ -148,6 +154,9 @@ public class McpExceptionServer {
     }
 
     private static class ErrorPrompt implements McpPrompt {
+        /**
+         * Error message returned when retrieving the prompt.
+         */
         protected static final String MESSAGE = "Prompt error message";
 
         @Override
@@ -185,6 +194,9 @@ public class McpExceptionServer {
     }
 
     private static class ErrorCompletion implements McpCompletion {
+        /**
+         * Error message returned when requesting completion values.
+         */
         protected static final String MESSAGE = "Completion error message";
 
         @Override

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2016, 2025 Oracle and/or its affiliates.
+    Copyright (c) 2016, 2026 Oracle and/or its affiliates.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -37,9 +37,10 @@
 
 <module name="Checker">
 
-    <!-- exclude module-info.java check - checkstyle can't process it -->
+    <!-- Exclude test-only module descriptors and fixtures. -->
     <module name="BeforeExecutionExclusionFileFilter">
-        <property name="fileNamePattern" value="module\-info\.java$"/>
+        <property name="fileNamePattern"
+                value="[/\\](tests|provider-tests)[/\\].*[/\\]module-info\.java$|[/\\]src[/\\](test|it)[/\\].*[/\\]module-info\.java$"/>
     </module>
 
     <!--
@@ -117,11 +118,22 @@
             <property name="scope" value="protected"/>
         </module>
         <module name="JavadocVariable">
-            <property name="scope" value="protected"/>
+            <property name="accessModifiers" value="public, protected"/>
         </module>
-        <module name="JavadocStyle">
-            <!-- https://github.com/checkstyle/checkstyle/issues/3351 -->
-            <property name="checkHtml" value="false"/>
+        <module name="SummaryJavadoc"/>
+
+        <!-- MissingJavadocType does not support module declarations. Match the
+             Javadoc before the first annotation, or before the module/open keyword. -->
+        <module name="MatchXpath">
+            <property name="id" value="MissingModuleJavadoc"/>
+            <property name="query" value="//MODULE_DEF[not(
+                BLOCK_COMMENT_BEGIN[COMMENT_CONTENT[starts-with(@text, '*')]]
+                    [preceding-sibling::*[not(self::BLOCK_COMMENT_BEGIN or self::SINGLE_LINE_COMMENT)][1]
+                        [self::ANNOTATIONS and not(*)]]
+                | ANNOTATIONS/ANNOTATION[1]/BLOCK_COMMENT_BEGIN[COMMENT_CONTENT[starts-with(@text, '*')]]
+                    [not(preceding-sibling::*[not(self::BLOCK_COMMENT_BEGIN or self::SINGLE_LINE_COMMENT)])]
+            )]"/>
+            <message key="matchxpath.match" value="Missing Javadoc comment on module declaration."/>
         </module>
 
         <!-- Checks for Naming Conventions.                  -->
@@ -135,6 +147,23 @@
         <module name="ParameterName"/>
         <module name="StaticVariableName"/>
         <module name="TypeName"/>
+
+        <module name="MatchXpath">
+            <property name="id" value="ModuleName"/>
+            <!-- The innermost DOT contains the first two name components. -->
+            <property name="query" value="//MODULE_DEF[
+                not(DOT/descendant-or-self::DOT[IDENT[1][@text='io'] and IDENT[2][@text='helidon']])
+                or (DOT//IDENT)[not(matches(@text, '^[a-z][a-z0-9]*$'))]
+            ]"/>
+            <message key="matchxpath.match"
+                     value="Module name must be io.helidon or start with io.helidon. and use lowercase alphanumeric components starting with a letter."/>
+        </module>
+
+        <module name="ModuleDirectiveOrder">
+            <property name="order" value="requires,exports,uses,provides,opens"/>
+            <!-- Preserve logical groups within a directive kind. -->
+            <property name="validateBlockSeparation" value="false"/>
+        </module>
 
         <!-- Checks for imports                              -->
         <!-- See http://checkstyle.sf.net/config_import.html -->

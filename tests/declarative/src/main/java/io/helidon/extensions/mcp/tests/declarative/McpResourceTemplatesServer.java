@@ -26,8 +26,17 @@ import io.helidon.extensions.mcp.server.McpResourceResult;
 @Mcp.Server
 @Mcp.Path("/resource/templates")
 class McpResourceTemplatesServer {
+    /**
+     * Content returned by the resource templates.
+     */
     public static final String RESOURCE_CONTENT = "resource content";
+    /**
+     * Description advertised for the resource templates.
+     */
     public static final String RESOURCE_DESCRIPTION = "Resource description";
+    /**
+     * Media type of the resource template content.
+     */
     public static final String RESOURCE_MEDIA_TYPE = MediaTypes.TEXT_PLAIN_VALUE;
 
     @Mcp.Resource(

@@ -72,7 +72,7 @@
         <checkstyle.skip>false</checkstyle.skip>
 
         <version.lib.asm>9.8</version.lib.asm>
-        <version.lib.checkstyle>10.12.5</version.lib.checkstyle>
+        <version.lib.checkstyle>14.1.0</version.lib.checkstyle>
         <version.lib.langchain4j.mcp>1.15.1-beta25</version.lib.langchain4j.mcp>
         <version.lib.langchain4j>1.15.1</version.lib.langchain4j>
         <version.lib.mcp-sdk>2.0.0</version.lib.mcp-sdk>

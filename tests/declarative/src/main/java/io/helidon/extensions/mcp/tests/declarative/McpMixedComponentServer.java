@@ -55,15 +55,30 @@ class McpMixedComponentServer {
     @Json.Entity
     @JsonSchema.Schema
     public static class Alert {
+        /**
+         * Alert name.
+         */
         public String name;
+        /**
+         * Alert priority.
+         */
         public int priority;
+        /**
+         * Location associated with the alert.
+         */
         public Location location;
     }
 
     @Json.Entity
     @JsonSchema.Schema
     public static class Location {
+        /**
+         * Latitude of the location.
+         */
         public int latitude;
+        /**
+         * Longitude of the location.
+         */
         public int longitude;
     }
 }

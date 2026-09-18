@@ -21,7 +21,13 @@ import io.helidon.extensions.mcp.server.Mcp;
 @Mcp.Server
 @Mcp.Path("/toolAnnotations")
 class McpToolAnnotationsServer {
+    /**
+     * Content returned by the tools.
+     */
     public static final String TOOL_CONTENT = "Tool Content";
+    /**
+     * Description advertised for the tools.
+     */
     public static final String TOOL_DESCRIPTION = "Tool description";
 
     @Mcp.Tool(value = TOOL_DESCRIPTION)     // default annotations

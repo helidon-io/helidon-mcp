@@ -34,6 +34,9 @@ import static io.helidon.extensions.mcp.server.McpSampling.DEFAULT_MAX_TOOL_ITER
 @Prototype.CustomMethods(McpServerFeatureSupport.class)
 @Prototype.Configured(McpServerConfigBlueprint.CONFIG_ROOT)
 interface McpServerConfigBlueprint extends Prototype.Factory<McpServerFeature>, McpIcons {
+    /**
+     * Configuration root for an MCP server.
+     */
     String CONFIG_ROOT = "mcp.server";
 
     /**

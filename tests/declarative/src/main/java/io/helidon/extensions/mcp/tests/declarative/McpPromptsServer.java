@@ -26,7 +26,13 @@ import io.helidon.extensions.mcp.server.McpRole;
 @Mcp.Server
 @Mcp.Path("/prompts")
 class McpPromptsServer {
+    /**
+     * Content returned by the prompts.
+     */
     public static final String PROMPT_CONTENT = "prompt content";
+    /**
+     * Description advertised for the prompts.
+     */
     public static final String PROMPT_DESCRIPTION = "prompt description";
 
     @Mcp.Prompt(PROMPT_DESCRIPTION)

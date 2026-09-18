@@ -20,7 +20,7 @@ import java.util.Objects;
 import io.helidon.common.LazyValue;
 
 /**
- * Support for optional client features:
+ * Support for optional client features.
  * <p>
  * <ul>
  *     <li>
