@@ -22,7 +22,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.helidon.extensions.mcp</groupId>
     <artifactId>helidon4-extensions-mcp-project</artifactId>
-    <version>1.1.0-SNAPSHOT</version>
+    <version>27.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Helidon 4 MCP Extension</name>
@@ -59,8 +59,8 @@
     </developers>
 
     <properties>
-        <version.java>21</version.java>
-        <helidon.version>4.5.0</helidon.version>
+        <version.java>27</version.java>
+        <helidon.version>27.0.0</helidon.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -93,7 +93,7 @@
         <version.plugin.resources>3.3.1</version.plugin.resources>
         <version.plugin.source>3.3.1</version.plugin.source>
         <version.plugin.surefire>3.5.3</version.plugin.surefire>
-        <version.plugin.spotbugs>4.9.3.2</version.plugin.spotbugs>
+        <version.plugin.spotbugs>4.10.4.1</version.plugin.spotbugs>
         <version.pluging.services>4.0.16</version.pluging.services>
     </properties>
 
