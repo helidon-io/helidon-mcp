@@ -2,6 +2,50 @@
 
 All notable changes to this project will be documented in this file.
 
+## [27.0.0]
+
+This release of Helidon MCP adds partial support for MCP specification `2025-11-25` and upgrades to Helidon `27.0.0` 
+and Java 27. Earlier supported MCP protocol versions remain supported.
+
+Helidon MCP 27 will be supported until Helidon MCP 28 is released.
+
+### NOTABLE CHANGES
+
+- Upgrade Helidon version to 27.0.0 and require Java 27 or newer
+- Tool calling support in sampling, with automatic tool execution and configurable iteration limits
+- URL elicitation support
+- Titled and untitled single-select and multi-select enum schemas for form elicitation
+- Icon metadata for servers, tools, prompts, resources, resource templates, and resource links
+- Server implementation descriptions
+- Structured logging data and generic MCP parameter mapping
+
+### BREAKING CHANGES
+
+Helidon MCP `27.0.0` introduces platform and API changes that are not backward compatible.
+
+- Java 27 or newer is required, replacing the Java 21 baseline.
+- Helidon 27 does not include MicroProfile support. The MicroProfile calendar example has been removed.
+- The sampling API was refactored to adopt new specification requirements.
+
+Refer to the [API upgrade guide](docs/upgrade/upgrade_guide_1.3.md) to safely update your service.
+
+### CHANGES
+
+- Adopt Helidon 27.0.0 and Java 27 [214](https://github.com/helidon-io/helidon-mcp/pull/214)
+- Enforce module descriptor conventions with Checkstyle 14.1 [213](https://github.com/helidon-io/helidon-mcp/pull/213)
+- Add elicitation default value integration test [211](https://github.com/helidon-io/helidon-mcp/pull/211)
+- Add MCP 2025-11-25 icon metadata support [208](https://github.com/helidon-io/helidon-mcp/pull/208)
+- Add server implementation descriptions [210](https://github.com/helidon-io/helidon-mcp/pull/210)
+- Support 2025-11-25 elicitation enum schemas [209](https://github.com/helidon-io/helidon-mcp/pull/209)
+- Add URL elicitation support [207](https://github.com/helidon-io/helidon-mcp/pull/207)
+- Add tool calling support to sampling via tools and toolChoice parameters [202](https://github.com/helidon-io/helidon-mcp/pull/202)
+- Fix Helidoc documentation links [205](https://github.com/helidon-io/helidon-mcp/pull/205)
+- Update documentation for Helidoc [203](https://github.com/helidon-io/helidon-mcp/pull/203)
+- Add initial support for MCP specification 2025-11-25 [186](https://github.com/helidon-io/helidon-mcp/pull/186)
+- Add structured logging data support [179](https://github.com/helidon-io/helidon-mcp/pull/179)
+- Update Javadoc with structured content specification reference [188](https://github.com/helidon-io/helidon-mcp/pull/188)
+- Support generic MCP parameter mapping [190](https://github.com/helidon-io/helidon-mcp/pull/190)
+
 ## [1.2.0]
 
 This release of Helidon MCP contains bugfixes, dependency upgrades and is recommended for all users.
@@ -194,6 +238,7 @@ Requirements:
 
 Initial release.
 
+[27.0.0]: https://github.com/helidon-io/helidon-mcp/compare/1.2.0...27.0.0
 [1.2.0]: https://github.com/helidon-io/helidon-mcp/compare/1.1.1...1.2.0
 [1.1.1]: https://github.com/helidon-io/helidon-mcp/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/helidon-io/helidon-mcp/compare/1.0.3...1.1.0
