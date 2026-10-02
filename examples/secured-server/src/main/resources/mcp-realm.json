@@ -921,7 +921,7 @@
           "consentRequired": false,
           "config": {
             "introspection.token.claim": "true",
-            "included.custom.audience": "mcp-scope",
+            "included.custom.audience": "http://localhost:8081/secured",
             "userinfo.token.claim": "false",
             "id.token.claim": "false",
             "lightweight.claim": "false",
