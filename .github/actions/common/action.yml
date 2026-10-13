@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023, 2025 Oracle and/or its affiliates.
+# Copyright (c) 2023, 2026 Oracle and/or its affiliates.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -63,6 +63,9 @@ inputs:
   free-space:
     description: Whether to aggressively free disk space on the runner
     default: 'false'
+  setup-maven:
+    description: Whether to setup Maven
+    default: 'true'
 runs:
   using: "composite"
   steps:
@@ -95,6 +98,24 @@ runs:
       with:
         distribution: ${{ env.JAVA_DISTRO }}
         java-version: ${{ env.JAVA_VERSION }}
+    - if: ${{ inputs.setup-maven == 'true' }}
+      name: Cache Maven Installation
+      uses: actions/cache@v4.2.3
+      with:
+        path: .tools/apache-maven-*/**
+        enableCrossOsArchive: true
+        key: tools-maven-${{ env.MVN_VERSION }}
+    - if: ${{ inputs.setup-maven == 'true' && runner.os != 'Windows' }}
+      name: Set up Maven
+      shell: bash
+      run: |
+        if [ -z "${MVN_VERSION}" ] ; then echo "MVN_VERSION not set"; exit 1 ; fi
+        if [ ! -d ".tools/apache-maven-${MVN_VERSION}/bin" ] ; then
+          curl -fsSL --retry 3 -o "${RUNNER_TEMP}/apache-maven-${MVN_VERSION}-bin.zip" \
+            "https://archive.apache.org/dist/maven/maven-3/${MVN_VERSION}/binaries/apache-maven-${MVN_VERSION}-bin.zip"
+          unzip "${RUNNER_TEMP}/apache-maven-${MVN_VERSION}-bin.zip" -d .tools
+        fi
+        echo "${PWD}/.tools/apache-maven-${MVN_VERSION}/bin" >> "${GITHUB_PATH}"
     - name: Cache local Maven repository (read-write)
       if: ${{ inputs.maven-cache == 'read-write' }}
       uses: actions/cache@v4.2.3

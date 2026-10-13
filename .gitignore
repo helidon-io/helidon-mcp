@@ -27,6 +27,7 @@ hs_err_pid*
 # Maven
 target/
 .m2/
+.tools/
 dependency-reduced-pom.xml
 pom.xml.versionsBackup
 
