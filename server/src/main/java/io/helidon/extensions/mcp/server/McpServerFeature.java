@@ -17,6 +17,7 @@
 package io.helidon.extensions.mcp.server;
 
 import java.lang.System.Logger.Level;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,7 @@ import io.helidon.config.Config;
 import io.helidon.http.HeaderNames;
 import io.helidon.http.HeaderValues;
 import io.helidon.http.Status;
+import io.helidon.json.JsonArray;
 import io.helidon.json.JsonException;
 import io.helidon.json.JsonNull;
 import io.helidon.json.JsonObject;
@@ -85,6 +87,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     private static final int RESOURCE_NOT_FOUND_CODE = -32002;
     private static final String DEFAULT_OIDC_METADATA_URI = "/.well-known/openid-configuration";
     private static final System.Logger LOGGER = System.getLogger(McpServerFeature.class.getName());
+    private static final Map<String, JsonObject> INPUT_SCHEMA = new McpSchemaHashMap();
 
     private final String endpoint;
     private final McpSessions sessions;
@@ -435,6 +438,18 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
             return;
         }
 
+        List<String> missing = missingRequiredParameters(tool.get(),
+                parameters.get("arguments").asJsonObject().orElse(JsonObject.empty()));
+        if (!missing.isEmpty()) {
+            McpToolResult result = McpToolResult.builder()
+                    .error(true)
+                    .addTextContent(missingParametersMessage(missing))
+                    .build();
+            res.result(session.serializer().toolCall(tool.get(), result));
+            session.send(requestId, res);
+            return;
+        }
+
         McpFeatures features = session.createFeatures(requestId);
         session.beforeFeatureRequest(parameters, requestId);
         McpRequest request = McpRequest.builder()
@@ -453,6 +468,26 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         var toolCall = session.serializer().toolCall(tool.get(), result);
         res.result(toolCall);
         session.send(requestId, res);
+    }
+
+    private static List<String> missingRequiredParameters(McpTool tool, JsonObject arguments) {
+        JsonValue required = INPUT_SCHEMA.get(tool.schema()).value("required").orElse(JsonNull.instance());
+        if (!(required instanceof JsonArray requiredNames)) {
+            return List.of();
+        }
+        List<String> missing = new ArrayList<>();
+        for (JsonValue requiredName : requiredNames.values()) {
+            if (requiredName instanceof JsonString parameter && arguments.value(parameter.value()).isEmpty()) {
+                missing.add(parameter.value());
+            }
+        }
+        return missing;
+    }
+
+    private static String missingParametersMessage(List<String> missing) {
+        return missing.size() == 1
+                ? "Missing required parameter: " + missing.getFirst()
+                : "Missing required parameters: " + String.join(", ", missing);
     }
 
     private void resourcesListRpc(JsonRpcRequest req, JsonRpcResponse res) {
