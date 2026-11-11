@@ -1290,7 +1290,8 @@ Once your request is built, send it using the sampling feature.
 Each sampling message is an envelope with one role and an ordered collection of content blocks. A content block can contain
 text, image, audio, a tool use, or a tool result. Use `McpSamplingMessage.builder()` to create an envelope explicitly, then add
 it to the ordered `McpSamplingRequest.messages()` collection with `addMessage`. For a single text-content message, the request
-builder also provides `addTextMessage(String)` and `addTextMessage(McpRole, String)` convenience methods.
+builder also provides `addTextMessage(String)` and `addTextMessage(McpRole, String)` convenience methods. The single-argument
+method uses the `ASSISTANT` role; use the overload with `McpRole.USER` for user instructions.
 
 - **Text**: Text message content.
 - **Image**: Image message content with a custom media type.
@@ -1449,7 +1450,7 @@ class SamplingTool implements McpTool {
             McpSamplingResponse response = sampling.request(req -> req
                     .timeout(Duration.ofSeconds(10))
                     .systemPrompt("You are a concise, helpful assistant.")
-                    .addTextMessage("Write a 3-line summary of Helidon MCP Sampling."));
+                    .addTextMessage(McpRole.USER, "Write a 3-line summary of Helidon MCP Sampling."));
             return McpToolResult.create(response.asTextContent().text());
         } catch (McpSamplingException e) {
             return McpToolResult.builder()
