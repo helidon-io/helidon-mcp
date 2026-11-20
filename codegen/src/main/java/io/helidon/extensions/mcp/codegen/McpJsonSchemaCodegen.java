@@ -18,6 +18,7 @@ package io.helidon.extensions.mcp.codegen;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import io.helidon.codegen.classmodel.Method;
@@ -45,6 +46,13 @@ class McpJsonSchemaCodegen {
     }
 
     static void addSchemaMethodBody(Method.Builder method, List<TypedElementInfo> fields, List<String> required) {
+        addSchemaMethodBody(method, fields, required, Map.of());
+    }
+
+    static void addSchemaMethodBody(Method.Builder method,
+                                    List<TypedElementInfo> fields,
+                                    List<String> required,
+                                    Map<String, List<String>> enumConstants) {
         method.addContentLine("var builder = new StringBuilder();");
         method.addContentLine("builder.append(\"{\");");
         method.addContentLine("builder.append(\"\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\");");
@@ -52,7 +60,14 @@ class McpJsonSchemaCodegen {
         int n = fields.size();
         for (int i = 0; i < n; i++) {
             TypedElementInfo field = fields.get(i);
-            addPropertySchema(method, field);
+            List<String> constants = enumConstants.get(field.elementName());
+            if (constants == null) {
+                addPropertySchema(method, field);
+            } else if (isCollection(field.typeName())) {
+                addEnumArrayPropertySchema(method, field, constants);
+            } else {
+                addEnumPropertySchema(method, field, constants);
+            }
             if (i < n - 1) {
                 method.addContentLine("builder.append(\", \");");
             }
@@ -114,6 +129,49 @@ class McpJsonSchemaCodegen {
                 .addContent(".get(")
                 .addContent(mapElementName(element))
                 .addContentLine(".class).jsonSchema());");
+    }
+
+    private static void addEnumPropertySchema(Method.Builder method, TypedElementInfo element, List<String> constants) {
+        method.addContent("builder.append(\"\\\"")
+                .addContent(element.elementName())
+                .addContentLine("\\\": {\");");
+
+        getDescription(element).ifPresent(desc -> addDescription(method, desc));
+
+        method.addContent("builder.append(\"");
+        addEnumSchema(method, constants);
+        method.addContentLine("\");")
+                .addContentLine("builder.append(\"}\");");
+    }
+
+    private static void addEnumArrayPropertySchema(Method.Builder method,
+                                                   TypedElementInfo element,
+                                                   List<String> constants) {
+        method.addContent("builder.append(\"\\\"")
+                .addContent(element.elementName())
+                .addContentLine("\\\": {\");");
+
+        getDescription(element).ifPresent(desc -> addDescription(method, desc));
+
+        method.addContentLine("builder.append(\"\\\"type\\\": \\\"array\\\",\");")
+                .addContent("builder.append(\"\\\"items\\\": {");
+        addEnumSchema(method, constants);
+        method.addContentLine("}\");")
+                .addContentLine("builder.append(\"}\");");
+    }
+
+    private static void addEnumSchema(Method.Builder method, List<String> constants) {
+        method.addContent("\\\"type\\\": \\\"string\\\", \\\"enum\\\": [");
+        int n = constants.size();
+        for (int i = 0; i < n; i++) {
+            method.addContent("\\\"")
+                    .addContent(constants.get(i))
+                    .addContent("\\\"");
+            if (i < n - 1) {
+                method.addContent(", ");
+            }
+        }
+        method.addContent("]");
     }
 
     private static void addDescription(Method.Builder method, String description) {

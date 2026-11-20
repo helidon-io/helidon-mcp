@@ -19,6 +19,8 @@ package io.helidon.extensions.mcp.tests.declarative;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.mcp.client.McpClient;
+import dev.langchain4j.model.chat.request.json.JsonArraySchema;
+import dev.langchain4j.model.chat.request.json.JsonEnumSchema;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -26,7 +28,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import static io.helidon.extensions.mcp.tests.declarative.McpToolsServer.TOOL_CONTENT;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 
 abstract class AbstractLangchain4jToolsServerTest {
@@ -42,7 +46,7 @@ abstract class AbstractLangchain4jToolsServerTest {
     @Test
     void testListTools() {
         var list = client.listTools();
-        assertThat(list.size(), is(26));
+        assertThat(list.size(), is(28));
 
         ToolSpecification tool1 = list.get(19);
         assertThat(tool1.description(), is("Tool description block\n"));
@@ -134,5 +138,47 @@ abstract class AbstractLangchain4jToolsServerTest {
                                                 .arguments("{ \"aFloat\": 0.0}")
                                                 .build());
         assertThat(result.resultText(), is("0.0"));
+    }
+
+    @Test
+    void testToolEnumSchema() {
+        ToolSpecification tool = client.listTools().stream()
+                .filter(it -> "tool26".equals(it.name()))
+                .findFirst()
+                .orElseThrow();
+        var color = tool.parameters().properties().get("color");
+        assertThat(color, instanceOf(JsonEnumSchema.class));
+        assertThat(((JsonEnumSchema) color).enumValues(), contains("RED", "GREEN"));
+    }
+
+    @Test
+    void testToolEnum() {
+        var result = client.executeTool(ToolExecutionRequest.builder()
+                                                .name("tool26")
+                                                .arguments("{ \"color\": \"GREEN\"}")
+                                                .build());
+        assertThat(result.resultText(), is("color=GREEN"));
+    }
+
+    @Test
+    void testToolEnumListSchema() {
+        ToolSpecification tool = client.listTools().stream()
+                .filter(it -> "tool27".equals(it.name()))
+                .findFirst()
+                .orElseThrow();
+        var colors = tool.parameters().properties().get("colors");
+        assertThat(colors, instanceOf(JsonArraySchema.class));
+        var items = ((JsonArraySchema) colors).items();
+        assertThat(items, instanceOf(JsonEnumSchema.class));
+        assertThat(((JsonEnumSchema) items).enumValues(), contains("RED", "GREEN"));
+    }
+
+    @Test
+    void testToolEnumList() {
+        var result = client.executeTool(ToolExecutionRequest.builder()
+                                                .name("tool27")
+                                                .arguments("{ \"colors\": [\"GREEN\", \"RED\"]}")
+                                                .build());
+        assertThat(result.resultText(), is("colors=[GREEN, RED]"));
     }
 }
