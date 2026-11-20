@@ -63,6 +63,8 @@ class McpJsonSchemaCodegen {
             List<String> constants = enumConstants.get(field.elementName());
             if (constants == null) {
                 addPropertySchema(method, field);
+            } else if (isCollection(field.typeName())) {
+                addEnumArrayPropertySchema(method, field, constants);
             } else {
                 addEnumPropertySchema(method, field, constants);
             }
@@ -136,7 +138,30 @@ class McpJsonSchemaCodegen {
 
         getDescription(element).ifPresent(desc -> addDescription(method, desc));
 
-        method.addContent("builder.append(\"\\\"type\\\": \\\"string\\\", \\\"enum\\\": [");
+        method.addContent("builder.append(\"");
+        addEnumSchema(method, constants);
+        method.addContentLine("\");")
+                .addContentLine("builder.append(\"}\");");
+    }
+
+    private static void addEnumArrayPropertySchema(Method.Builder method,
+                                                   TypedElementInfo element,
+                                                   List<String> constants) {
+        method.addContent("builder.append(\"\\\"")
+                .addContent(element.elementName())
+                .addContentLine("\\\": {\");");
+
+        getDescription(element).ifPresent(desc -> addDescription(method, desc));
+
+        method.addContentLine("builder.append(\"\\\"type\\\": \\\"array\\\",\");")
+                .addContent("builder.append(\"\\\"items\\\": {");
+        addEnumSchema(method, constants);
+        method.addContentLine("}\");")
+                .addContentLine("builder.append(\"}\");");
+    }
+
+    private static void addEnumSchema(Method.Builder method, List<String> constants) {
+        method.addContent("\\\"type\\\": \\\"string\\\", \\\"enum\\\": [");
         int n = constants.size();
         for (int i = 0; i < n; i++) {
             method.addContent("\\\"")
@@ -146,8 +171,7 @@ class McpJsonSchemaCodegen {
                 method.addContent(", ");
             }
         }
-        method.addContentLine("]\");")
-                .addContentLine("builder.append(\"}\");");
+        method.addContent("]");
     }
 
     private static void addDescription(Method.Builder method, String description) {

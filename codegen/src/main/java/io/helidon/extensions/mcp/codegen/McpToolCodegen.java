@@ -155,7 +155,10 @@ class McpToolCodegen {
             if (param.hasAnnotation(MCP_REQUIRED)) {
                 required.add(param.elementName());
             }
-            enumConstants(param.typeName())
+            TypeName schemaType = isList(param.typeName())
+                    ? param.typeName().typeArguments().getFirst()
+                    : param.typeName();
+            enumConstants(schemaType)
                     .ifPresent(constants -> enumConstants.put(param.elementName(), constants));
         }
 
@@ -224,13 +227,15 @@ class McpToolCodegen {
             }
             if (isList(param.typeName())) {
                 TypeName typeArg = param.typeName().typeArguments().getFirst();
-                addToListMethod(classModel, typeArg);
+                addToListMethod(classModel);
                 parameters.add(param.elementName());
                 builder.addContent("var ")
                         .addContent(param.elementName())
                         .addContent(" = toList(request.arguments().get(")
                         .addContentLiteral(param.elementName())
-                        .addContentLine(").asList().orElse(null));");
+                        .addContent(").asList().orElse(null), ")
+                        .addContent(typeArg)
+                        .addContentLine(".class);");
                 continue;
             }
             parameters.add(param.elementName());

@@ -218,6 +218,11 @@ class McpToolsServer {
         return "color=" + color;
     }
 
+    @Mcp.Tool(TOOL_DESCRIPTION)
+    String tool27(List<Color> colors) {
+        return "colors=" + colors;
+    }
+
     @Json.Entity
     @JsonSchema.Schema
     public static class Foo {
