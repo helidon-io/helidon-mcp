@@ -27,7 +27,7 @@ Helidon MCP `27.0.0` introduces platform and API changes that are not backward c
 - Helidon 27 does not include MicroProfile support. The MicroProfile calendar example has been removed.
 - The sampling API was refactored to adopt new specification requirements.
 
-Refer to the [API upgrade guide](docs/upgrade/upgrade_guide_1.3.md) to safely update your service.
+Refer to the [API upgrade guide](docs/upgrade/upgrade_guide_27.0.md) to safely update your service.
 
 ### CHANGES
 
