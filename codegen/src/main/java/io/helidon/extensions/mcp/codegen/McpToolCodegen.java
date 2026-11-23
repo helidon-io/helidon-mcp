@@ -16,7 +16,9 @@
 package io.helidon.extensions.mcp.codegen;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import io.helidon.codegen.CodegenContext;
@@ -59,10 +61,12 @@ import static io.helidon.extensions.mcp.codegen.McpTypes.OPTIONAL_TOOL_ANNOTATIO
 class McpToolCodegen {
     private final McpRecorder recorder;
     private final CodegenLogger logger;
+    private final CodegenContext context;
 
     McpToolCodegen(McpRecorder recorder, CodegenContext context) {
         this.recorder = recorder;
         this.logger = context.logger();
+        this.context = context;
     }
 
     void generate(ClassModel.Builder classModel, TypeInfo type) {
@@ -129,6 +133,7 @@ class McpToolCodegen {
 
         List<TypedElementInfo> fields = new ArrayList<>();
         List<String> required = new ArrayList<>();
+        Map<String, List<String>> enumConstants = new HashMap<>();
         for (TypedElementInfo param : element.parameterArguments()) {
             if (isIgnoredSchemaElement(param.typeName())) {
                 if (param.hasAnnotation(MCP_REQUIRED)) {
@@ -150,13 +155,25 @@ class McpToolCodegen {
             if (param.hasAnnotation(MCP_REQUIRED)) {
                 required.add(param.elementName());
             }
+            enumConstants(param.typeName())
+                    .ifPresent(constants -> enumConstants.put(param.elementName(), constants));
         }
 
         if (!fields.isEmpty()) {
-            addSchemaMethodBody(method, fields, required);
+            addSchemaMethodBody(method, fields, required, enumConstants);
         } else {
             method.addContentLine("return \"\";");
         }
+    }
+
+    private Optional<List<String>> enumConstants(TypeName typeName) {
+        return context.typeInfo(typeName)
+                .filter(info -> info.kind() == ElementKind.ENUM)
+                .map(info -> info.elementInfo()
+                        .stream()
+                        .filter(it -> it.kind() == ElementKind.ENUM_CONSTANT)
+                        .map(TypedElementInfo::elementName)
+                        .toList());
     }
 
     private void addToolMethod(Method.Builder builder, ClassModel.Builder classModel, TypedElementInfo element) {
