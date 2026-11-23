@@ -71,7 +71,7 @@
         <failsafe.coverage.argline />
         <checkstyle.skip>false</checkstyle.skip>
 
-        <version.lib.asm>9.8</version.lib.asm>
+        <version.lib.asm>9.10.1</version.lib.asm>
         <version.lib.checkstyle>14.1.0</version.lib.checkstyle>
         <version.lib.langchain4j.mcp>1.15.1-beta25</version.lib.langchain4j.mcp>
         <version.lib.langchain4j>1.15.1</version.lib.langchain4j>
