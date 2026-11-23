@@ -28,6 +28,7 @@ import io.helidon.codegen.classmodel.Field;
 import io.helidon.codegen.classmodel.InnerClass;
 import io.helidon.codegen.classmodel.Method;
 import io.helidon.codegen.classmodel.Parameter;
+import io.helidon.codegen.classmodel.TypeArgument;
 import io.helidon.common.types.AccessModifier;
 import io.helidon.common.types.Annotated;
 import io.helidon.common.types.Annotation;
@@ -158,16 +159,20 @@ class McpCodegenUtil {
     }
 
     /**
-     * Add a new method to the generated class that convert a {@code List<McpParameters>} to
-     * a list of the provided type.
+     * Add a generic method to the generated class that converts a {@code List<McpParameters>} to
+     * a list of the provided element class. A single generic method is used for all element types,
+     * as one method per element type would clash after erasure.
      *
      * @param classModel generated class
-     * @param type generic type
      */
-    static void addToListMethod(ClassModel.Builder classModel, TypeName type) {
-        TypeName typeList = ResolvedType.create(TypeName.builder(LIST)
-                                                        .addTypeArgument(type)
-                                                        .build()).type();
+    static void addToListMethod(ClassModel.Builder classModel) {
+        TypeName t = TypeName.createFromGenericDeclaration("T");
+        TypeName typeList = TypeName.builder(LIST)
+                .addTypeArgument(t)
+                .build();
+        TypeName typeClass = TypeName.builder(TypeName.create(Class.class))
+                .addTypeArgument(t)
+                .build();
         TypeName parameterList = ResolvedType.create(TypeName.builder(LIST)
                                                              .addTypeArgument(MCP_PARAMETERS)
                                                              .build()).type();
@@ -175,11 +180,13 @@ class McpCodegenUtil {
                 .name("toList")
                 .isStatic(true)
                 .accessModifier(AccessModifier.PRIVATE)
+                .addGenericArgument(TypeArgument.create("T"))
                 .returnType(typeList)
                 .addParameter(Parameter.builder().name("list").type(parameterList).build())
+                .addParameter(Parameter.builder().name("type").type(typeClass).build())
                 .addContentLine("return list == null ? List.of()")
                 .increaseContentPadding()
-                .addContentLine(": list.stream().map(p -> p.as(" + type + ".class))")
+                .addContentLine(": list.stream().map(p -> p.as(type))")
                 .increaseContentPadding()
                 .addContentLine(".map(p -> p.get()).toList();");
         classModel.addMethod(method.build());

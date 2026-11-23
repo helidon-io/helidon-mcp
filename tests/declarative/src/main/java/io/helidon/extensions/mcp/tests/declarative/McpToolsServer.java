@@ -213,6 +213,16 @@ class McpToolsServer {
         return "values=" + String.join(",", values);
     }
 
+    @Mcp.Tool(TOOL_DESCRIPTION)
+    String tool26(Color color) {
+        return "color=" + color;
+    }
+
+    @Mcp.Tool(TOOL_DESCRIPTION)
+    String tool27(List<Color> colors) {
+        return "colors=" + colors;
+    }
+
     @Json.Entity
     @JsonSchema.Schema
     public static class Foo {
@@ -224,6 +234,17 @@ class McpToolsServer {
          * Numeric value supplied to a tool.
          */
         public int bar;
+    }
+
+    public enum Color {
+        /**
+         * Red.
+         */
+        RED,
+        /**
+         * Green.
+         */
+        GREEN
     }
 
     @JsonSchema.Schema
