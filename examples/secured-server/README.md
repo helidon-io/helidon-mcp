@@ -1,8 +1,8 @@
 # Helidon Secured MCP Server
 
-This guide demonstrates how to secure a Helidon server using the Model Context Protocol (MCP) with authorization provided 
-by Keycloak. Security support was introduced in the MCP specification as of the 
-[2025-03-26 release](https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization).
+This example secures a Helidon MCP server with Keycloak and publishes RFC 9728 protected resource metadata for
+[MCP 2025-11-25 authorization](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization). The example
+uses HTTP only for local development; production deployments must use HTTPS.
 
 ## Keycloak Configuration
 
@@ -78,7 +78,7 @@ Once created, you’ll see the new realm name in the top-left dropdown. You can 
   * Click **Create new mapper**
   * **Mapper Type**: `Audience`
   * **Name**: `mcp-audience`
-  * **Included Custom Audience**: `mcp-scope`
+  * **Included Custom Audience**: `http://localhost:8081/secured`
   * Click **Save**
 4. Assign the scope to the client:
 
@@ -123,6 +123,22 @@ mvn clean package
 java -jar target/helidon-mcp-secured-server.jar
 ```
 
+### Verify Authorization Discovery
+
+The protected resource metadata endpoint must remain public:
+
+```bash
+curl http://localhost:8081/.well-known/oauth-protected-resource/secured
+```
+
+The example does not configure `resource` explicitly. Helidon derives `http://localhost:8081/secured` for each request from
+the trusted requested URI plus the configured MCP path. The metadata identifies
+`http://localhost:8080/realms/mcp-realm` as its authorization server issuer. Configure `resource` explicitly when a proxy
+changes the public origin or MCP path; changing `metadata-path` alone only changes the local metadata route.
+
+OIDC redirects are disabled because MCP is an API protocol. An unauthenticated MCP request therefore returns a `401`
+challenge that the client can use to begin authorization instead of redirecting to a browser login page.
+
 ---
 
 ## 6. Run MCP Inspector
@@ -138,6 +154,9 @@ npx @modelcontextprotocol/inspector
 The inspector will open in a browser window.
 
 ### Configure the Inspector
+
+The Inspector discovers Keycloak from the protected resource metadata; a `resource_metadata` challenge parameter is not
+required.
 
 1. **Transport**: Select `Streamable HTTP`
 2. **Server URL**: `http://localhost:8081/secured`

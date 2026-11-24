@@ -49,7 +49,10 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.startsWith;
 
 @Testcontainers(disabledWithoutDocker = true)
 @ServerTest
@@ -85,14 +88,7 @@ class Langchain4jKeycloakTest {
 
     @SetUpServer
     static void server(WebServerConfig.Builder builder) {
-        Config config = Config.builder()
-                .disableEnvironmentVariablesSource()
-                .disableSystemPropertiesSource()
-                .sources(ConfigSources.create(Map.of(
-                                 "security.providers.0.oidc.identity-uri",
-                                 KEYCLOAK.getAuthServerUrl() + "/realms/" + REALM)),
-                         ConfigSources.classpath("application.yaml"))
-                .build();
+        Config config = testConfig();
         builder.config(config.get("server"))
                 .host("localhost")
                 .port(0)
@@ -101,14 +97,7 @@ class Langchain4jKeycloakTest {
 
     @SetUpRoute
     static void routing(HttpRouting.Builder builder) {
-        Config config = Config.builder()
-                .disableEnvironmentVariablesSource()
-                .disableSystemPropertiesSource()
-                .sources(ConfigSources.create(Map.of(
-                                 "security.providers.0.oidc.identity-uri",
-                                 KEYCLOAK.getAuthServerUrl() + "/realms/" + REALM)),
-                         ConfigSources.classpath("application.yaml"))
-                .build();
+        Config config = testConfig();
         builder.addFeature(McpServerConfig.builder()
                                    .config(config.get("mcp.server"))
                                    .addTool(new SecuredTool()))
@@ -130,16 +119,37 @@ class Langchain4jKeycloakTest {
         }
     }
 
-    private McpClient langchain4jClient() {
-        McpTransport transport = new StreamableHttpMcpTransport.Builder()
-                .url("http://localhost:" + port + "/secured")
-                .customHeaders(Map.of("Authorization", "Bearer " + accessToken))
+    @Test
+    void discoversAuthorizationServerAfterUnauthorizedResponse() throws Exception {
+        HttpRequest unauthorizedRequest = HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/secured"))
+                .GET()
                 .build();
+        HttpResponse<String> unauthorized = HTTP_CLIENT.send(unauthorizedRequest,
+                                                              HttpResponse.BodyHandlers.ofString());
 
-        return new DefaultMcpClient.Builder()
-                .protocolVersion("2025-06-18")
-                .transport(transport)
+        assertThat(unauthorized.statusCode(), is(401));
+        String challenge = String.join(",", unauthorized.headers().allValues("www-authenticate"));
+        assertThat(challenge, containsString("Bearer"));
+        assertThat(challenge, not(containsString("resource_metadata")));
+
+        HttpRequest metadataRequest = HttpRequest.newBuilder(URI.create("http://localhost:"
+                                                                                + port
+                                                                                + "/.well-known/"
+                                                                                + "oauth-protected-resource/secured"))
+                .GET()
                 .build();
+        HttpResponse<String> metadataResponse = HTTP_CLIENT.send(metadataRequest,
+                                                                  HttpResponse.BodyHandlers.ofString());
+
+        assertThat(metadataResponse.statusCode(), is(200));
+        assertThat(metadataResponse.headers().firstValue("content-type").orElseThrow(), startsWith("application/json"));
+        var metadata = JsonParser.create(metadataResponse.body()).readJsonObject();
+        assertThat(metadata.stringValue("resource").orElseThrow(),
+                   is("http://localhost:" + port + "/secured"));
+        var authorizationServers = metadata.arrayValue("authorization_servers").orElseThrow();
+        assertThat(authorizationServers.size(), is(1));
+        assertThat(authorizationServers.get(0).orElseThrow().asString().value(),
+                   is(KEYCLOAK.getAuthServerUrl() + "/realms/" + REALM));
     }
 
     private static String accessToken() throws Exception {
@@ -168,5 +178,30 @@ class Langchain4jKeycloakTest {
                 .readJsonObject()
                 .stringValue("access_token")
                 .orElseThrow();
+    }
+
+    private static Config testConfig() {
+        String authorizationServer = KEYCLOAK.getAuthServerUrl() + "/realms/" + REALM;
+        return Config.builder()
+                .disableEnvironmentVariablesSource()
+                .disableSystemPropertiesSource()
+                .sources(ConfigSources.create(Map.of(
+                                 "security.providers.0.oidc.identity-uri", authorizationServer,
+                                 "security.providers.0.oidc.audience", "mcp-scope",
+                                 "mcp.server.protected-resource-metadata.authorization-servers.0", authorizationServer)),
+                         ConfigSources.classpath("application.yaml"))
+                .build();
+    }
+
+    private McpClient langchain4jClient() {
+        McpTransport transport = new StreamableHttpMcpTransport.Builder()
+                .url("http://localhost:" + port + "/secured")
+                .customHeaders(Map.of("Authorization", "Bearer " + accessToken))
+                .build();
+
+        return new DefaultMcpClient.Builder()
+                .protocolVersion("2025-06-18")
+                .transport(transport)
+                .build();
     }
 }

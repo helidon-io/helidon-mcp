@@ -82,8 +82,9 @@ import static io.helidon.jsonrpc.core.JsonRpcError.INVALID_REQUEST;
  * Actual MCP server implemented as a Helidon {@link io.helidon.webserver.http.HttpFeature}.
  */
 public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpServerConfig> {
+    static final String DEFAULT_OIDC_METADATA_URI = "/.well-known/openid-configuration";
+
     private static final int RESOURCE_NOT_FOUND_CODE = -32002;
-    private static final String DEFAULT_OIDC_METADATA_URI = "/.well-known/openid-configuration";
     private static final System.Logger LOGGER = System.getLogger(McpServerFeature.class.getName());
 
     private final String endpoint;
@@ -94,6 +95,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
     private final McpPagination<McpTool> tools;
     private final McpPagination<McpPrompt> prompts;
     private final McpPagination<McpResource> resources;
+    private final McpProtectedResourceMetadata protectedMetadata;
     private final McpPagination<McpResourceTemplate> resourceTemplates;
     private final Set<McpCapability> capabilities = new HashSet<>();
     private final Map<String, McpCompletion> promptCompletions = new ConcurrentHashMap<>();
@@ -109,6 +111,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         this.config = config;
         this.stateless = config.stateless();
         this.endpoint = removeTrailingSlash(config.path());
+        this.protectedMetadata = new McpProtectedResourceMetadata(config);
         this.sessions = new McpSessions(config.maxSessionCount());
         for (McpResource resource : config.resources()) {
             if (isTemplate(resource)) {
@@ -204,6 +207,10 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         return McpServerConfig.builder();
     }
 
+    static String removeTrailingSlash(String path) {
+        return path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
+    }
+
     @Override
     public void setup(HttpRouting.Builder routing) {
         // add all the JSON-RPC routes first
@@ -214,9 +221,10 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         jsonRpcRouting.routing(routing);
 
         // additional HTTP routes for SSE and session disconnect
-        routing.get(DEFAULT_OIDC_METADATA_URI, this::mcpMetadata)
+        routing.get(DEFAULT_OIDC_METADATA_URI, this::oidcMetadataRedirect)
                 .get(endpoint, this::sse)
                 .delete(endpoint, this::disconnect);
+        protectedMetadata.setup(routing);
     }
 
     @Override
@@ -224,7 +232,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         return config;
     }
 
-    private void mcpMetadata(ServerRequest request, ServerResponse response) {
+    private void oidcMetadataRedirect(ServerRequest request, ServerResponse response) {
         var config = Services.get(Config.class);
         var providers = config.get("security.providers").asList(Config.class);
 
@@ -239,7 +247,7 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
         for (Config provider : providers.get()) {
             var identity = provider.get("oidc.identity-uri");
             if (identity.exists()) {
-                String identityUri = identity.asString().map(this::removeTrailingSlash).orElse("");
+                String identityUri = identity.asString().map(McpServerFeature::removeTrailingSlash).orElse("");
                 response.header(HeaderNames.LOCATION, identityUri + DEFAULT_OIDC_METADATA_URI);
                 response.status(Status.SEE_OTHER_303);
                 response.send();
@@ -959,10 +967,6 @@ public final class McpServerFeature implements HttpFeature, RuntimeType.Api<McpS
                     .error(INVALID_REQUEST, "Session not found");
         }
         return session;
-    }
-
-    private String removeTrailingSlash(String path) {
-        return path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
     }
 
     private boolean isTemplate(McpResource resource) {
