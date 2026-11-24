@@ -58,10 +58,12 @@ import static io.helidon.extensions.mcp.codegen.McpTypes.OPTIONAL_TOOL_ANNOTATIO
 
 class McpToolCodegen {
     private final McpRecorder recorder;
+    private final CodegenContext context;
     private final CodegenLogger logger;
 
     McpToolCodegen(McpRecorder recorder, CodegenContext context) {
         this.recorder = recorder;
+        this.context = context;
         this.logger = context.logger();
     }
 
@@ -153,7 +155,7 @@ class McpToolCodegen {
         }
 
         if (!fields.isEmpty()) {
-            addSchemaMethodBody(method, fields, required);
+            addSchemaMethodBody(method, fields, required, context);
         } else {
             method.addContentLine("return \"\";");
         }
@@ -217,7 +219,7 @@ class McpToolCodegen {
                 continue;
             }
             parameters.add(param.elementName());
-            builder.addContent(param.typeName().classNameWithEnclosingNames())
+            builder.addContent(param.typeName())
                     .addContent(" ")
                     .addContent(param.elementName())
                     .addContent(" = request.arguments().get(")

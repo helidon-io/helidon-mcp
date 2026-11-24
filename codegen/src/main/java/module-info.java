@@ -24,6 +24,7 @@ module io.helidon.extensions.mcp.codegen {
     requires io.helidon.service.codegen;
     requires io.helidon.common.types;
     requires io.helidon.codegen.classmodel;
+    requires io.helidon.json.schema;
 
     exports io.helidon.extensions.mcp.codegen;
 
