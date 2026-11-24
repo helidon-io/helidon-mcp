@@ -16,8 +16,10 @@
 package io.helidon.extensions.mcp.codegen;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import io.helidon.codegen.CodegenContext;
 import io.helidon.codegen.CodegenException;
@@ -129,6 +131,7 @@ class McpToolCodegen {
 
         List<TypedElementInfo> fields = new ArrayList<>();
         List<String> required = new ArrayList<>();
+        Set<String> nullable = new HashSet<>();
         for (TypedElementInfo param : element.parameterArguments()) {
             if (isIgnoredSchemaElement(param.typeName())) {
                 if (param.hasAnnotation(MCP_REQUIRED)) {
@@ -139,10 +142,15 @@ class McpToolCodegen {
                 }
                 continue;
             }
+            TypeName parameterType = param.typeName();
+            if (TypeNames.OPTIONAL.equals(parameterType)) {
+                parameterType = optionalValueType(param);
+                nullable.add(param.elementName());
+            }
             Optional<String> description = getDescription(param);
             var field = TypedElementInfo.builder()
                     .elementName(param.elementName())
-                    .typeName(param.typeName())
+                    .typeName(parameterType)
                     .kind(ElementKind.FIELD)
                     .accessModifier(AccessModifier.PUBLIC);
             description.ifPresent(desc -> field.addAnnotation(Annotation.create(MCP_DESCRIPTION, desc)));
@@ -153,7 +161,7 @@ class McpToolCodegen {
         }
 
         if (!fields.isEmpty()) {
-            addSchemaMethodBody(method, fields, required);
+            addSchemaMethodBody(method, fields, required, nullable);
         } else {
             method.addContentLine("return \"\";");
         }
@@ -176,28 +184,31 @@ class McpToolCodegen {
                 parameters.add("request");
                 continue;
             }
+            String argumentName = "argument" + parameters.size();
+            parameters.add(argumentName);
+            if (TypeNames.OPTIONAL.equals(param.typeName())) {
+                addOptionalParameter(builder, param, argumentName);
+                continue;
+            }
             if (TypeNames.STRING.equals(param.typeName())) {
-                parameters.add(param.elementName());
                 builder.addContent("var ")
-                        .addContent(param.elementName())
+                        .addContent(argumentName)
                         .addContent(" = request.arguments().get(")
                         .addContentLiteral(param.elementName())
                         .addContentLine(").asString().orElse(\"\");");
                 continue;
             }
             if (isBoolean(param.typeName())) {
-                parameters.add(param.elementName());
                 builder.addContent("boolean ")
-                        .addContent(param.elementName())
+                        .addContent(argumentName)
                         .addContent(" = request.arguments().get(")
                         .addContentLiteral(param.elementName())
                         .addContentLine(").asBoolean().orElse(false);");
                 continue;
             }
             if (isNumber(param.typeName())) {
-                parameters.add(param.elementName());
                 builder.addContent("var ")
-                        .addContent(param.elementName())
+                        .addContent(argumentName)
                         .addContent(" = request.arguments().get(")
                         .addContentLiteral(param.elementName())
                         .addContent(").as")
@@ -208,18 +219,16 @@ class McpToolCodegen {
             if (isList(param.typeName())) {
                 TypeName typeArg = param.typeName().typeArguments().getFirst();
                 addToListMethod(classModel, typeArg);
-                parameters.add(param.elementName());
                 builder.addContent("var ")
-                        .addContent(param.elementName())
+                        .addContent(argumentName)
                         .addContent(" = toList(request.arguments().get(")
                         .addContentLiteral(param.elementName())
                         .addContentLine(").asList().orElse(null));");
                 continue;
             }
-            parameters.add(param.elementName());
             builder.addContent(param.typeName().classNameWithEnclosingNames())
                     .addContent(" ")
-                    .addContent(param.elementName())
+                    .addContent(argumentName)
                     .addContent(" = request.arguments().get(")
                     .addContentLiteral(param.elementName())
                     .addContent(").as(")
@@ -251,6 +260,34 @@ class McpToolCodegen {
         }
         throw new CodegenException(String.format("Method %s must return one the following return type: %s",
                                                  element.elementName(), MCP_TOOL_RESULT));
+    }
+
+    private static TypeName optionalValueType(TypedElementInfo parameter) {
+        List<TypeName> typeArguments = parameter.typeName().typeArguments();
+        if (typeArguments.size() != 1) {
+            throw new CodegenException("Optional tool parameter '" + parameter.elementName() + "' must declare a value type");
+        }
+        return typeArguments.getFirst();
+    }
+
+    private static void addOptionalParameter(Method.Builder builder, TypedElementInfo parameter, String argumentName) {
+        TypeName valueType = optionalValueType(parameter);
+        builder.addContent("var ")
+                .addContent(argumentName)
+                .addContent(" = request.arguments().get(")
+                .addContentLiteral(parameter.elementName())
+                .addContent(").as(");
+        if (valueType.typeArguments().isEmpty()) {
+            builder.addContent(valueType)
+                    .addContent(".class");
+        } else {
+            builder.addContent("new ")
+                    .addContent(TypeNames.GENERIC_TYPE)
+                    .addContent("<")
+                    .addContent(valueType)
+                    .addContent(">() { }");
+        }
+        builder.addContentLine(").asOptional();");
     }
 
     private static String numberAccessor(TypeName typeName) {
