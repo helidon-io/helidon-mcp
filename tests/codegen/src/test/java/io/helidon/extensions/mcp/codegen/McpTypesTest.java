@@ -64,6 +64,8 @@ import io.helidon.extensions.mcp.server.McpToolAnnotations;
 import io.helidon.extensions.mcp.server.McpToolRequest;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.extensions.mcp.server.McpUnsubscribeRequest;
+import io.helidon.json.schema.spi.JsonSchemaProvider;
+import io.helidon.service.registry.Qualifier;
 import io.helidon.service.registry.Service;
 import io.helidon.service.registry.Services;
 import io.helidon.webserver.http.HttpFeature;
@@ -166,6 +168,8 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "MCP_RESOURCE_SUBSCRIBER_INTERFACE", McpResourceSubscriber.class);
         checkField(toCheck, checked, fields, "MCP_RESOURCE_UNSUBSCRIBER_INTERFACE", McpResourceUnsubscriber.class);
 
+        checkField(toCheck, checked, fields, "JSON_SCHEMA_PROVIDER", JsonSchemaProvider.class);
+        checkField(toCheck, checked, fields, "QUALIFIER", Qualifier.class);
         checkField(toCheck, checked, fields, "SERVICES", Services.class);
         checkField(toCheck, checked, fields, "OPTIONAL_STRING", Optional.class);
         checkField(toCheck, checked, fields, "OPTIONAL_TOOL_ANNOTATIONS", Optional.class);

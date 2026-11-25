@@ -25,8 +25,11 @@ import io.helidon.codegen.classmodel.Method;
 import io.helidon.common.types.TypeName;
 import io.helidon.common.types.TypeNames;
 import io.helidon.common.types.TypedElementInfo;
+import io.helidon.json.JsonString;
 
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.getDescription;
+import static io.helidon.extensions.mcp.codegen.McpTypes.JSON_SCHEMA_PROVIDER;
+import static io.helidon.extensions.mcp.codegen.McpTypes.QUALIFIER;
 import static io.helidon.extensions.mcp.codegen.McpTypes.SERVICES;
 
 /**
@@ -114,15 +117,15 @@ class McpJsonSchemaCodegen {
             method.addContentLine("builder.append(\"}\");");
             return;
         }
-        TypeName schemaType = TypeName.builder()
-                .packageName(typeName.packageName())
-                .className(typeName.className().replace('.', '_') + "__JsonSchema")
-                .build();
         method.addContent("builder.append(")
                 .addContent(SERVICES)
                 .addContent(".get(")
-                .addContent(schemaType)
-                .addContentLine(".class).jsonSchema());");
+                .addContent(JSON_SCHEMA_PROVIDER)
+                .addContent(".class, ")
+                .addContent(QUALIFIER)
+                .addContent(".createNamed(")
+                .addContent(typeName.genericTypeName())
+                .addContentLine(".class.getCanonicalName())).jsonSchema());");
     }
 
     private static void addTypeSchemaBody(Method.Builder method, TypeName typeName) {
@@ -138,9 +141,9 @@ class McpJsonSchemaCodegen {
     }
 
     private static void addDescription(Method.Builder method, String description) {
-        method.addContent("builder.append(\"\\\"description\\\": \\\"")
-                .addContent(description)
-                .addContentLine("\\\",\");");
+        method.addContent("builder.append(")
+                .addContentLiteral("\"description\": " + JsonString.create(description) + ",")
+                .addContentLine(");");
     }
 
     private static boolean isCollection(TypeName typeName) {

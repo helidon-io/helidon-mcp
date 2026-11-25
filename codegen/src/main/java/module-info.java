@@ -21,6 +21,7 @@ import io.helidon.extensions.mcp.codegen.McpCodegenProvider;
  */
 module io.helidon.extensions.mcp.codegen {
     requires transitive io.helidon.codegen;
+    requires io.helidon.json;
     requires io.helidon.service.codegen;
     requires io.helidon.common.types;
     requires io.helidon.codegen.classmodel;

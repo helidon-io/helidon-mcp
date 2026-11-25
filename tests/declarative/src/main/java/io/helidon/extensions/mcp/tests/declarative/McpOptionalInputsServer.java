@@ -20,8 +20,7 @@ import java.util.Optional;
 
 import io.helidon.extensions.mcp.server.Mcp;
 import io.helidon.extensions.mcp.server.McpToolRequest;
-import io.helidon.json.binding.Json;
-import io.helidon.json.schema.JsonSchema;
+import io.helidon.extensions.mcp.tests.declarative.model.Note;
 
 @Mcp.Server
 @Mcp.Path("/optional-inputs")
@@ -29,7 +28,7 @@ import io.helidon.json.schema.JsonSchema;
 class McpOptionalInputsServer {
     @Mcp.Tool("Update a note with optional values")
     String update(@Mcp.Required String id,
-                  @Mcp.Description("New title") Optional<String> title,
+                  @Mcp.Description("Use \"auto\" for C:\\notes.\nOtherwise supply a title.") Optional<String> title,
                   Optional<Integer> limit,
                   Optional<Boolean> enabled) {
         return id + "|" + title.map(value -> "set[" + value + "]").orElse("keep")
@@ -73,10 +72,5 @@ class McpOptionalInputsServer {
     @Mcp.Tool("Preserve existing argument fallbacks")
     String legacy(String title, Boolean enabled, Integer limit, List<String> values, Note note) {
         return "[" + title + "]|" + enabled + "|" + limit + "|" + values + "|" + note;
-    }
-
-    @Json.Entity
-    @JsonSchema.Schema
-    public record Note(String title) {
     }
 }

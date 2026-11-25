@@ -92,6 +92,8 @@ final class McpTypes {
     static final TypeName CONSUMER = TypeName.create(Consumer.class);
     static final TypeName FUNCTION = TypeName.create(Function.class);
     static final TypeName URI_PATH = TypeName.create("io.helidon.common.uri.UriPath");
+    static final TypeName JSON_SCHEMA_PROVIDER = TypeName.create("io.helidon.json.schema.spi.JsonSchemaProvider");
+    static final TypeName QUALIFIER = TypeName.create("io.helidon.service.registry.Qualifier");
     static final TypeName SERVICES = TypeName.create("io.helidon.service.registry.Services");
     static final TypeName SCOPE_ANNOTATION = TypeName.create("io.helidon.service.registry.Service.Scope");
     static final TypeName HTTP_FEATURE = TypeName.create("io.helidon.webserver.http.HttpFeature");

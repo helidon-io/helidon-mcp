@@ -21,6 +21,7 @@ import java.util.Map;
 import io.helidon.common.GenericType;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpToolResult;
+import io.helidon.extensions.mcp.tests.declarative.model.Note;
 import io.helidon.json.JsonObject;
 import io.helidon.json.JsonParser;
 import io.helidon.json.JsonValue;
@@ -91,7 +92,7 @@ class McpOptionalInputsTest {
                                                    """)
                                            .tool(request -> McpToolResult.create(delegate.object(
                                                    request.arguments().get("note")
-                                                           .as(McpOptionalInputsServer.Note.class).asOptional())))));
+                                                           .as(Note.class).asOptional())))));
     }
 
     @ParameterizedTest
@@ -272,7 +273,8 @@ class McpOptionalInputsTest {
     void generatesSchemasForWrappedTypes() {
         JsonObject expected = JsonParser.create("""
                 {"type":"object","properties":{"id":{"type":"string"},
-                "title":{"description":"New title","anyOf":[{"type":"string"},{"type":"null"}]},
+                "title":{"description":"Use \\"auto\\" for C:\\\\notes.\\nOtherwise supply a title.",
+                "anyOf":[{"type":"string"},{"type":"null"}]},
                 "limit":{"anyOf":[{"type":"integer"},{"type":"null"}]},
                 "enabled":{"anyOf":[{"type":"boolean"},{"type":"null"}]}},"required":["id"]}
                 """).readJsonObject();
