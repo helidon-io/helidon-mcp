@@ -34,7 +34,6 @@ import io.helidon.common.types.TypeNames;
 import io.helidon.common.types.TypedElementInfo;
 
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.addIcons;
-import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.addToListMethod;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.createClassName;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.getDescription;
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.getElementsWithAnnotation;
@@ -81,7 +80,7 @@ class McpToolCodegen {
                     .addMethod(method -> addToolNameMethod(method, element))
                     .addMethod(method -> addToolDescriptionMethod(method, description))
                     .addMethod(method -> addToolSchemaMethod(method, element))
-                    .addMethod(method -> addToolMethod(method, classModel, element))
+                    .addMethod(method -> addToolMethod(method, element))
                     .update(component -> addIcons(component, element))
                     .addMethod(method -> addToolAnnotationsMethod(method, toolAnnotation))
                     .addMethod(method -> addToolOutputSchema(method, element)));
@@ -161,7 +160,7 @@ class McpToolCodegen {
         }
     }
 
-    private void addToolMethod(Method.Builder builder, ClassModel.Builder classModel, TypedElementInfo element) {
+    private void addToolMethod(Method.Builder builder, TypedElementInfo element) {
         List<String> parameters = new ArrayList<>();
         TypeName returnType = element.signature().type();
 
@@ -178,28 +177,33 @@ class McpToolCodegen {
                 parameters.add("request");
                 continue;
             }
+            String argumentName = "argument" + parameters.size();
+            parameters.add(argumentName);
+            TypeName type = param.typeName();
+            TypeName itemType = isList(type) ? type.typeArguments().getFirst() : type.componentType().orElse(type);
+            if (context.typeInfo(itemType).filter(info -> info.kind() == ElementKind.ENUM).isPresent()) {
+                addEnumArgument(builder, param, argumentName, itemType);
+                continue;
+            }
             if (TypeNames.STRING.equals(param.typeName())) {
-                parameters.add(param.elementName());
                 builder.addContent("var ")
-                        .addContent(param.elementName())
+                        .addContent(argumentName)
                         .addContent(" = request.arguments().get(")
                         .addContentLiteral(param.elementName())
                         .addContentLine(").asString().orElse(\"\");");
                 continue;
             }
             if (isBoolean(param.typeName())) {
-                parameters.add(param.elementName());
                 builder.addContent("boolean ")
-                        .addContent(param.elementName())
+                        .addContent(argumentName)
                         .addContent(" = request.arguments().get(")
                         .addContentLiteral(param.elementName())
                         .addContentLine(").asBoolean().orElse(false);");
                 continue;
             }
             if (isNumber(param.typeName())) {
-                parameters.add(param.elementName());
                 builder.addContent("var ")
-                        .addContent(param.elementName())
+                        .addContent(argumentName)
                         .addContent(" = request.arguments().get(")
                         .addContentLiteral(param.elementName())
                         .addContent(").as")
@@ -209,19 +213,18 @@ class McpToolCodegen {
             }
             if (isList(param.typeName())) {
                 TypeName typeArg = param.typeName().typeArguments().getFirst();
-                addToListMethod(classModel, typeArg);
-                parameters.add(param.elementName());
                 builder.addContent("var ")
-                        .addContent(param.elementName())
-                        .addContent(" = toList(request.arguments().get(")
+                        .addContent(argumentName)
+                        .addContent(" = request.arguments().get(")
                         .addContentLiteral(param.elementName())
-                        .addContentLine(").asList().orElse(null));");
+                        .addContent(").asList(")
+                        .addContent(typeArg)
+                        .addContentLine(".class).get();");
                 continue;
             }
-            parameters.add(param.elementName());
             builder.addContent(param.typeName())
                     .addContent(" ")
-                    .addContent(param.elementName())
+                    .addContent(argumentName)
                     .addContent(" = request.arguments().get(")
                     .addContentLiteral(param.elementName())
                     .addContent(").as(")
@@ -253,6 +256,38 @@ class McpToolCodegen {
         }
         throw new CodegenException(String.format("Method %s must return one the following return type: %s",
                                                  element.elementName(), MCP_TOOL_RESULT));
+    }
+
+    private static void addEnumArgument(Method.Builder builder,
+                                        TypedElementInfo param,
+                                        String argumentName,
+                                        TypeName enumType) {
+        TypeName type = param.typeName();
+        boolean list = isList(type);
+        builder.addContent(type).addContent(" ").addContent(argumentName).addContentLine(";")
+                .addContentLine("try {")
+                .increaseContentPadding()
+                .addContent(argumentName).addContent(" = request.arguments().get(").addContentLiteral(param.elementName())
+                .addContent(type.array() || list ? ").asEnumList(" : ").asEnum(")
+                .addContent(enumType).addContent(".class)");
+        if (type.array()) {
+            builder.addContent(".map(items -> items.toArray(").addContent(type).addContent("::new))");
+        }
+        if (param.hasAnnotation(MCP_REQUIRED)) {
+            builder.addContentLine(".orElseThrow(() -> new IllegalArgumentException(\"Value is required\"));");
+        } else if (list) {
+            builder.addContent(".orElseGet(").addContent(List.class).addContentLine("::of);");
+        } else {
+            builder.addContentLine(".orElse(null);");
+        }
+        builder.decreaseContentPadding()
+                .addContentLine("} catch (IllegalArgumentException e) {")
+                .increaseContentPadding()
+                .addContent("return ").addContent(MCP_TOOL_RESULT).addContent(".builder().error(true).addTextContent(")
+                .addContentLiteral("Invalid argument '" + param.elementName() + "': ")
+                .addContentLine(" + e.getMessage()).build();")
+                .decreaseContentPadding()
+                .addContentLine("}");
     }
 
     private static String numberAccessor(TypeName typeName) {

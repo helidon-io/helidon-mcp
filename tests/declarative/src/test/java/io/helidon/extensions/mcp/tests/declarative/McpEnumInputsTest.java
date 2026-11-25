@@ -15,6 +15,9 @@
  */
 package io.helidon.extensions.mcp.tests.declarative;
 
+import java.util.List;
+
+import io.helidon.json.JsonArray;
 import io.helidon.json.JsonObject;
 import io.helidon.json.JsonParser;
 import io.helidon.json.JsonValue;
@@ -43,7 +46,7 @@ class McpEnumInputsTest {
         JsonObject expected = JsonParser.create("""
                 {"type":"object","properties":{
                   "projectName":{"type":"string"},
-                  "flavor":{"type":"string","description":"Helidon flavor","enum":["SE","MP"]}
+                  "flavor":{"type":"string","description":"Choose \\"SE\\" or \\"MP\\"\\tby name","enum":["SE","MP"]}
                 }}
                 """).readJsonObject();
 
@@ -106,7 +109,33 @@ class McpEnumInputsTest {
 
         JsonObject deployment = schema.objectValue("properties").orElseThrow().objectValue("deployment").orElseThrow();
 
-        assertThat(deployment.stringValue("title").orElseThrow(), is("Deployment environment"));
+        assertAll(() -> assertThat(deployment.stringValue("title").orElseThrow(), is("Deployment environment")),
+                  () -> assertThat(deployment.stringValue("type").orElseThrow(), is("string")),
+                  () -> assertThat(deployment.arrayValue("enum").orElseThrow(),
+                                   is(JsonArray.createStrings(List.of("DEVELOPMENT", "PRODUCTION")))));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"deploymentList", "deploymentArray"})
+    void preservesExplicitEnumItemSchema(String tool) {
+        JsonObject expected = schema("deployment").objectValue("properties").orElseThrow()
+                .objectValue("deployment").orElseThrow();
+
+        JsonObject items = schema(tool).objectValue("properties").orElseThrow()
+                .objectValue("deployments").orElseThrow().objectValue("items").orElseThrow();
+
+        assertThat(items, is(expected));
+    }
+
+    @Test
+    void bindsSecondEnumList() {
+        JsonObject input = JsonParser.create("""
+                {"deployments":["PRODUCTION","DEVELOPMENT"]}
+                """).readJsonObject();
+
+        JsonObject result = call("deploymentList", input);
+
+        assertThat(text(result), is("PRODUCTION,DEVELOPMENT"));
     }
 
     @ParameterizedTest
@@ -193,14 +222,14 @@ class McpEnumInputsTest {
     }
 
     @Test
-    void preservesNullEnumArrayFallback() {
+    void rejectsNullEnumArray() {
         JsonObject input = JsonParser.create("""
                 {"flavors":null}
                 """).readJsonObject();
 
         JsonObject result = call("flavorArray", input);
 
-        assertThat(text(result), is("unspecified"));
+        assertToolError(result, "Invalid argument 'flavors': Expected an array of HelidonFlavor constant names");
     }
 
     @Test
@@ -209,13 +238,9 @@ class McpEnumInputsTest {
                 {"flavors":["SE","UNKNOWN"]}
                 """).readJsonObject();
 
-        try (var response = client.rpcMethod("tools/call")
-                .rpcId(1)
-                .param("name", "flavorArray")
-                .param("arguments", input)
-                .submit()) {
-            assertThat(response.error().isPresent(), is(true));
-        }
+        JsonObject result = call("flavorArray", input);
+
+        assertToolError(result, "Invalid argument 'flavors': Unknown HelidonFlavor constant: UNKNOWN");
     }
 
     @Test
@@ -228,27 +253,55 @@ class McpEnumInputsTest {
     }
 
     @Test
-    void preservesNullEnumFallback() {
+    void rejectsNullEnum() {
         JsonObject input = JsonParser.create("""
                 {"projectName":"example","flavor":null}
                 """).readJsonObject();
 
         JsonObject result = call("createProject", input);
 
-        assertThat(text(result), is("example:unspecified"));
+        assertToolError(result, "Invalid argument 'flavor': Expected a string naming a HelidonFlavor constant");
     }
 
     @Test
     void rejectsUnknownEnumName() {
         JsonObject input = JsonObject.builder().set("projectName", "example").set("flavor", "UNKNOWN").build();
 
-        try (var response = client.rpcMethod("tools/call")
-                .rpcId(1)
-                .param("name", "createProject")
-                .param("arguments", input)
-                .submit()) {
-            assertThat(response.error().isPresent(), is(true));
-        }
+        JsonObject result = call("createProject", input);
+
+        assertToolError(result, "Invalid argument 'flavor': Unknown HelidonFlavor constant: UNKNOWN");
+    }
+
+    @Test
+    void rejectsNullEnumList() {
+        JsonObject input = JsonParser.create("""
+                {"flavors":null}
+                """).readJsonObject();
+
+        JsonObject result = call("flavors", input);
+
+        assertToolError(result, "Invalid argument 'flavors': Expected an array of HelidonFlavor constant names");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"flavors", "flavorArray"})
+    void rejectsNullEnumItem(String tool) {
+        JsonObject input = JsonParser.create("""
+                {"flavors":["SE",null]}
+                """).readJsonObject();
+
+        JsonObject result = call(tool, input);
+
+        assertToolError(result, "Invalid argument 'flavors': Expected a string naming a HelidonFlavor constant");
+    }
+
+    @Test
+    void rejectsMissingRequiredEnum() {
+        JsonObject input = JsonObject.empty();
+
+        JsonObject result = call("requiredFlavor", input);
+
+        assertToolError(result, "Invalid argument 'flavor': Value is required");
     }
 
     private JsonObject call(String tool, JsonObject arguments) {
@@ -269,6 +322,11 @@ class McpEnumInputsTest {
                     .findFirst().orElseThrow()
                     .objectValue("inputSchema").orElseThrow();
         }
+    }
+
+    private static void assertToolError(JsonObject result, String message) {
+        assertAll(() -> assertThat(result.booleanValue("isError").orElseThrow(), is(true)),
+                  () -> assertThat(text(result), is(message)));
     }
 
     private static String text(JsonObject result) {

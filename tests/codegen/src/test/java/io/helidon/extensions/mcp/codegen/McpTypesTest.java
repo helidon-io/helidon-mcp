@@ -64,6 +64,9 @@ import io.helidon.extensions.mcp.server.McpToolAnnotations;
 import io.helidon.extensions.mcp.server.McpToolRequest;
 import io.helidon.extensions.mcp.server.McpToolResult;
 import io.helidon.extensions.mcp.server.McpUnsubscribeRequest;
+import io.helidon.json.schema.JsonSchema;
+import io.helidon.json.schema.spi.JsonSchemaProvider;
+import io.helidon.service.registry.Qualifier;
 import io.helidon.service.registry.Service;
 import io.helidon.service.registry.Services;
 import io.helidon.webserver.http.HttpFeature;
@@ -109,6 +112,9 @@ class McpTypesTest {
             fields.put(name, declaredField);
         }
 
+        checkField(toCheck, checked, fields, "JSON_SCHEMA_PROVIDER", JsonSchemaProvider.class);
+        checkField(toCheck, checked, fields, "QUALIFIER", Qualifier.class);
+        checkField(toCheck, checked, fields, "JSON_SCHEMA", JsonSchema.Schema.class);
         checkField(toCheck, checked, fields, "CONSUMER", Consumer.class);
         checkField(toCheck, checked, fields, "FUNCTION", Function.class);
         checkField(toCheck, checked, fields, "URI_PATH", UriPath.class);

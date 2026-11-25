@@ -28,7 +28,7 @@ import io.helidon.json.schema.JsonSchema;
 @Mcp.Stateless
 class McpEnumInputsServer {
     @Mcp.Tool("Create a project for the selected Helidon flavor")
-    String createProject(String projectName, @Mcp.Description("Helidon flavor") HelidonFlavor flavor) {
+    String createProject(String projectName, @Mcp.Description("Choose \"SE\" or \"MP\"\tby name") HelidonFlavor flavor) {
         return projectName + ":" + (flavor == null ? "unspecified" : flavor.name());
     }
 
@@ -50,12 +50,24 @@ class McpEnumInputsServer {
     @Mcp.Tool("Select an array of Helidon flavors")
     String flavorArray(@Mcp.Description("Helidon flavors") HelidonFlavor[] flavors) {
         return flavors == null ? "unspecified"
-                : Arrays.stream(flavors).map(HelidonFlavor::name).collect(Collectors.joining(","));
+                : Arrays.stream(flavors)
+                        .map(flavor -> flavor == null ? "unspecified" : flavor.name())
+                        .collect(Collectors.joining(","));
     }
 
     @Mcp.Tool("Select a deployment environment")
     String deployment(Deployment deployment) {
         return deployment.name();
+    }
+
+    @Mcp.Tool("Select deployment environments")
+    String deploymentList(List<Deployment> deployments) {
+        return deployments.stream().map(Deployment::name).collect(Collectors.joining(","));
+    }
+
+    @Mcp.Tool("Select an array of deployment environments")
+    String deploymentArray(Deployment[] deployments) {
+        return Arrays.stream(deployments).map(Deployment::name).collect(Collectors.joining(","));
     }
 
     enum HelidonFlavor {

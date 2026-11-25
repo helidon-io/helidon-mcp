@@ -31,7 +31,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -50,7 +49,7 @@ abstract class AbstractLangchain4jEnumInputsTest {
     @Test
     void discoversEnumSchema() {
         JsonEnumSchema expected = JsonEnumSchema.builder()
-                .description("Helidon flavor")
+                .description("Choose \"SE\" or \"MP\"\tby name")
                 .enumValues("SE", "MP")
                 .build();
 
@@ -135,7 +134,7 @@ abstract class AbstractLangchain4jEnumInputsTest {
     }
 
     @Test
-    void preservesNullEnumFallback() {
+    void rejectsNullEnum() {
         ToolExecutionRequest request = ToolExecutionRequest.builder()
                 .name("createProject")
                 .arguments("""
@@ -143,9 +142,9 @@ abstract class AbstractLangchain4jEnumInputsTest {
                         """)
                 .build();
 
-        var result = client.executeTool(request);
+        var exception = assertThrows(ToolExecutionException.class, () -> client.executeTool(request));
 
-        assertThat(result.resultText(), is("example:unspecified"));
+        assertThat(exception.getMessage(), is("Invalid argument 'flavor': Expected a string naming a HelidonFlavor constant"));
     }
 
     @Test
@@ -203,7 +202,7 @@ abstract class AbstractLangchain4jEnumInputsTest {
     }
 
     @Test
-    void preservesNullEnumArrayFallback() {
+    void rejectsNullEnumArray() {
         ToolExecutionRequest request = ToolExecutionRequest.builder()
                 .name("flavorArray")
                 .arguments("""
@@ -211,9 +210,9 @@ abstract class AbstractLangchain4jEnumInputsTest {
                         """)
                 .build();
 
-        var result = client.executeTool(request);
+        var exception = assertThrows(ToolExecutionException.class, () -> client.executeTool(request));
 
-        assertThat(result.resultText(), is("unspecified"));
+        assertThat(exception.getMessage(), is("Invalid argument 'flavors': Expected an array of HelidonFlavor constant names"));
     }
 
     @Test
@@ -225,9 +224,9 @@ abstract class AbstractLangchain4jEnumInputsTest {
                         """)
                 .build();
 
-        ToolExecutionException exception = assertThrows(ToolExecutionException.class, () -> client.executeTool(request));
+        var exception = assertThrows(ToolExecutionException.class, () -> client.executeTool(request));
 
-        assertThat(exception.errorCode(), notNullValue());
+        assertThat(exception.getMessage(), is("Invalid argument 'flavor': Unknown HelidonFlavor constant: UNKNOWN"));
     }
 
     @Test
@@ -239,9 +238,9 @@ abstract class AbstractLangchain4jEnumInputsTest {
                         """)
                 .build();
 
-        ToolExecutionException exception = assertThrows(ToolExecutionException.class, () -> client.executeTool(request));
+        var exception = assertThrows(ToolExecutionException.class, () -> client.executeTool(request));
 
-        assertThat(exception.errorCode(), notNullValue());
+        assertThat(exception.getMessage(), is("Invalid argument 'flavors': Unknown HelidonFlavor constant: UNKNOWN"));
     }
 
     private ToolSpecification tool(String name) {

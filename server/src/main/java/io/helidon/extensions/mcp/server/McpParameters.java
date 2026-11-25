@@ -310,6 +310,43 @@ public final class McpParameters {
     }
 
     /**
+     * Read a Java enum constant by its exact name.
+     *
+     * @param type enum type
+     * @param <E> enum type
+     * @return the constant, or empty if the property was omitted
+     * @throws IllegalArgumentException if the supplied value is not a string naming a constant
+     */
+    public <E extends Enum<E>> Optional<E> asEnum(Class<E> type) {
+        Objects.requireNonNull(type);
+        if (this == EMPTY) {
+            return Optional.empty();
+        }
+        return Optional.of(enumConstant(value, type));
+    }
+
+    /**
+     * Read an array of Java enum constant names in input order.
+     *
+     * @param type enum type
+     * @param <E> enum type
+     * @return the constants, or empty if the property was omitted
+     * @throws IllegalArgumentException if the supplied value is not an array of valid constant names
+     */
+    public <E extends Enum<E>> Optional<List<E>> asEnumList(Class<E> type) {
+        Objects.requireNonNull(type);
+        if (this == EMPTY) {
+            return Optional.empty();
+        }
+        if (!(value instanceof JsonArray array)) {
+            throw new IllegalArgumentException("Expected an array of " + type.getSimpleName() + " constant names");
+        }
+        return Optional.of(array.values().stream()
+                .map(item -> enumConstant(item, type))
+                .toList());
+    }
+
+    /**
      * Get optional value of the parameter as a map.
      *
      * @return optional map value
@@ -392,6 +429,17 @@ public final class McpParameters {
         return value instanceof JsonObject object
                 ? Optional.of(object)
                 : Optional.empty();
+    }
+
+    private static <E extends Enum<E>> E enumConstant(JsonValue value, Class<E> type) {
+        if (value instanceof JsonString string) {
+            try {
+                return Enum.valueOf(type, string.value());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Unknown " + type.getSimpleName() + " constant: " + string.value(), e);
+            }
+        }
+        throw new IllegalArgumentException("Expected a string naming a " + type.getSimpleName() + " constant");
     }
 
     @SuppressWarnings("unchecked")

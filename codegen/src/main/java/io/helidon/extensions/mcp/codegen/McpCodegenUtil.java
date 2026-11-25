@@ -22,17 +22,14 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import io.helidon.codegen.CodegenException;
-import io.helidon.codegen.classmodel.ClassModel;
 import io.helidon.codegen.classmodel.ContentBuilder;
 import io.helidon.codegen.classmodel.Field;
 import io.helidon.codegen.classmodel.InnerClass;
 import io.helidon.codegen.classmodel.Method;
-import io.helidon.codegen.classmodel.Parameter;
 import io.helidon.common.types.AccessModifier;
 import io.helidon.common.types.Annotated;
 import io.helidon.common.types.Annotation;
 import io.helidon.common.types.Annotations;
-import io.helidon.common.types.ResolvedType;
 import io.helidon.common.types.TypeInfo;
 import io.helidon.common.types.TypeName;
 import io.helidon.common.types.TypeNames;
@@ -155,34 +152,6 @@ class McpCodegenUtil {
 
     static boolean isResourceTemplate(String uri) {
         return uri.contains("{") || uri.contains("}");
-    }
-
-    /**
-     * Add a new method to the generated class that convert a {@code List<McpParameters>} to
-     * a list of the provided type.
-     *
-     * @param classModel generated class
-     * @param type generic type
-     */
-    static void addToListMethod(ClassModel.Builder classModel, TypeName type) {
-        TypeName typeList = ResolvedType.create(TypeName.builder(LIST)
-                                                        .addTypeArgument(type)
-                                                        .build()).type();
-        TypeName parameterList = ResolvedType.create(TypeName.builder(LIST)
-                                                             .addTypeArgument(MCP_PARAMETERS)
-                                                             .build()).type();
-        Method.Builder method = Method.builder()
-                .name("toList")
-                .isStatic(true)
-                .accessModifier(AccessModifier.PRIVATE)
-                .returnType(typeList)
-                .addParameter(Parameter.builder().name("list").type(parameterList).build())
-                .addContentLine("return list == null ? List.of()")
-                .increaseContentPadding()
-                .addContentLine(": list.stream().map(p -> p.as(" + type + ".class))")
-                .increaseContentPadding()
-                .addContentLine(".map(p -> p.get()).toList();");
-        classModel.addMethod(method.build());
     }
 
     /**
