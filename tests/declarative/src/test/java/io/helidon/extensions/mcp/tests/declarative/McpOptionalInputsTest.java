@@ -21,7 +21,6 @@ import java.util.Map;
 import io.helidon.common.GenericType;
 import io.helidon.extensions.mcp.server.McpServerFeature;
 import io.helidon.extensions.mcp.server.McpToolResult;
-import io.helidon.extensions.mcp.tests.declarative.model.Note;
 import io.helidon.json.JsonObject;
 import io.helidon.json.JsonParser;
 import io.helidon.json.JsonValue;
@@ -92,7 +91,7 @@ class McpOptionalInputsTest {
                                                    """)
                                            .tool(request -> McpToolResult.create(delegate.object(
                                                    request.arguments().get("note")
-                                                           .as(Note.class).asOptional())))));
+                                                           .as(McpOptionalInputsServer.Note.class).asOptional())))));
     }
 
     @ParameterizedTest
@@ -273,8 +272,7 @@ class McpOptionalInputsTest {
     void generatesSchemasForWrappedTypes() {
         JsonObject expected = JsonParser.create("""
                 {"type":"object","properties":{"id":{"type":"string"},
-                "title":{"description":"Use \\"auto\\" for C:\\\\notes.\\nOtherwise supply a title.",
-                "anyOf":[{"type":"string"},{"type":"null"}]},
+                "title":{"description":"New title","anyOf":[{"type":"string"},{"type":"null"}]},
                 "limit":{"anyOf":[{"type":"integer"},{"type":"null"}]},
                 "enabled":{"anyOf":[{"type":"boolean"},{"type":"null"}]}},"required":["id"]}
                 """).readJsonObject();
@@ -497,6 +495,41 @@ class McpOptionalInputsTest {
         var validation = validate("legacy", arguments);
 
         assertThat(validation.valid(), is(false));
+    }
+
+    @Test
+    void preservesSpecialCharactersInOptionalParameterDescription() {
+        JsonObject properties = schema("describedTitle").objectValue("properties").orElseThrow();
+
+        String description = properties.objectValue("title").orElseThrow().stringValue("description").orElseThrow();
+
+        assertThat(description, is("Use \"auto\" for C:\\notes.\nOtherwise supply a title."));
+    }
+
+    @Test
+    void generatesSchemasForExternalNoteAndListItems() {
+        JsonObject properties = schema("externalNotes").objectValue("properties").orElseThrow();
+
+        JsonObject note = properties.objectValue("note").orElseThrow()
+                .arrayValue("anyOf").orElseThrow().get(0).orElseThrow().asObject();
+        JsonObject list = properties.objectValue("notes").orElseThrow()
+                .arrayValue("anyOf").orElseThrow().get(0).orElseThrow().asObject();
+
+        assertAll(() -> assertThat(note.objectValue("properties").orElseThrow().objectValue("title").orElseThrow()
+                                           .stringValue("type").orElseThrow(), is("string")),
+                  () -> assertThat(list.stringValue("type").orElseThrow(), is("array")),
+                  () -> assertThat(list.objectValue("items").orElseThrow(), is(note)));
+    }
+
+    @Test
+    void bindsOptionalExternalNoteAndListItems() {
+        JsonObject input = JsonParser.create("""
+                {"note":{"title":"first"},"notes":[{"title":"second"},{"title":"third"}]}
+                """).readJsonObject();
+
+        JsonObject result = call("/optional-inputs", "externalNotes", input);
+
+        assertThat(text(result), is("first|second,third"));
     }
 
     private JsonSchemaValidator.ValidationResponse validate(String tool, String arguments) {

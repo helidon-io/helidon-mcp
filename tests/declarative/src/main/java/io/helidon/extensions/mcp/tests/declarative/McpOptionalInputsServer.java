@@ -20,7 +20,9 @@ import java.util.Optional;
 
 import io.helidon.extensions.mcp.server.Mcp;
 import io.helidon.extensions.mcp.server.McpToolRequest;
-import io.helidon.extensions.mcp.tests.declarative.model.Note;
+import io.helidon.extensions.mcp.tests.declarative.model.ExternalNote;
+import io.helidon.json.binding.Json;
+import io.helidon.json.schema.JsonSchema;
 
 @Mcp.Server
 @Mcp.Path("/optional-inputs")
@@ -28,7 +30,7 @@ import io.helidon.extensions.mcp.tests.declarative.model.Note;
 class McpOptionalInputsServer {
     @Mcp.Tool("Update a note with optional values")
     String update(@Mcp.Required String id,
-                  @Mcp.Description("Use \"auto\" for C:\\notes.\nOtherwise supply a title.") Optional<String> title,
+                  @Mcp.Description("New title") Optional<String> title,
                   Optional<Integer> limit,
                   Optional<Boolean> enabled) {
         return id + "|" + title.map(value -> "set[" + value + "]").orElse("keep")
@@ -72,5 +74,21 @@ class McpOptionalInputsServer {
     @Mcp.Tool("Preserve existing argument fallbacks")
     String legacy(String title, Boolean enabled, Integer limit, List<String> values, Note note) {
         return "[" + title + "]|" + enabled + "|" + limit + "|" + values + "|" + note;
+    }
+
+    @Mcp.Tool("Read notes from the external model package")
+    String externalNotes(Optional<ExternalNote> note, Optional<List<ExternalNote>> notes) {
+        return note.map(ExternalNote::title).orElse("") + "|"
+                + String.join(",", notes.orElse(List.of()).stream().map(ExternalNote::title).toList());
+    }
+
+    @Mcp.Tool("Read a title with a quoted description")
+    String describedTitle(@Mcp.Description("Use \"auto\" for C:\\notes.\nOtherwise supply a title.") Optional<String> title) {
+        return title.orElse("");
+    }
+
+    @Json.Entity
+    @JsonSchema.Schema
+    public record Note(String title) {
     }
 }

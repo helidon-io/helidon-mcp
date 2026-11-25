@@ -25,5 +25,5 @@ import io.helidon.json.schema.JsonSchema;
  */
 @Json.Entity
 @JsonSchema.Schema
-public record Note(String title) {
+public record ExternalNote(String title) {
 }
