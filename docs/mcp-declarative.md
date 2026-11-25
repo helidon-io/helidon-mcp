@@ -138,9 +138,14 @@ The same repeatable `@Mcp.Icon` annotations configure icons for both resources a
 ### Tool
 
 `Tools` enable models to interact with external systems, such as querying databases, calling APIs, or performing computations.
-Define a tool by annotating a method with `@Mcp.Tool`. Method names become tool names unless overridden with `@Mcp.Name`. Input
-schemas are generated using the [JSON Schema Specification](https://json-schema.org/specification); Helidon auto generates schemas when inputs are primitive types
-(non-POJO). `Tools` are automatically registered when defined within a server class. You can inject `McpToolRequest` as a 
+Define a tool by annotating a method with `@Mcp.Tool`. Method names become tool names unless overridden with `@Mcp.Name`.
+Helidon generates [JSON Schema](https://json-schema.org/specification) descriptions for primitive types and Java enums.
+An enum needs no annotation. For a scalar enum, clients send a Java constant
+name such as `"SE"`, even when its `toString()` returns `"Helidon SE"`. For `List<Flavor>` or `Flavor[]`, clients send
+an array of constant names such as `["SE", "MP"]`. An explicit `@JsonSchema.Schema` on the enum also applies to array
+and list items.
+
+Tools are automatically registered when defined within a server class. You can inject `McpToolRequest` as a
 parameter to your tool method. It extends `McpRequest` and provides access to the `McpTool` instance via the `tool()` method.
 
 ```java

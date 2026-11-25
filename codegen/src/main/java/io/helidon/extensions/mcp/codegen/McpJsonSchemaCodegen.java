@@ -18,14 +18,22 @@ package io.helidon.extensions.mcp.codegen;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
+import io.helidon.codegen.CodegenContext;
 import io.helidon.codegen.classmodel.Method;
+import io.helidon.common.types.ElementKind;
 import io.helidon.common.types.TypeName;
 import io.helidon.common.types.TypeNames;
 import io.helidon.common.types.TypedElementInfo;
+import io.helidon.json.JsonObject;
+import io.helidon.json.JsonParser;
+import io.helidon.json.JsonString;
 
 import static io.helidon.extensions.mcp.codegen.McpCodegenUtil.getDescription;
+import static io.helidon.extensions.mcp.codegen.McpTypes.JSON_SCHEMA;
+import static io.helidon.extensions.mcp.codegen.McpTypes.JSON_SCHEMA_PROVIDER;
+import static io.helidon.extensions.mcp.codegen.McpTypes.QUALIFIER;
 import static io.helidon.extensions.mcp.codegen.McpTypes.SERVICES;
 
 /**
@@ -40,11 +48,14 @@ class McpJsonSchemaCodegen {
     private McpJsonSchemaCodegen() {
     }
 
-    static void addSchemaMethodBody(Method.Builder method, List<TypedElementInfo> fields) {
-        addSchemaMethodBody(method, fields, List.of());
+    static void addSchemaMethodBody(Method.Builder method, List<TypedElementInfo> fields, CodegenContext context) {
+        addSchemaMethodBody(method, fields, List.of(), context);
     }
 
-    static void addSchemaMethodBody(Method.Builder method, List<TypedElementInfo> fields, List<String> required) {
+    static void addSchemaMethodBody(Method.Builder method,
+                                    List<TypedElementInfo> fields,
+                                    List<String> required,
+                                    CodegenContext context) {
         method.addContentLine("var builder = new StringBuilder();");
         method.addContentLine("builder.append(\"{\");");
         method.addContentLine("builder.append(\"\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\");");
@@ -52,7 +63,7 @@ class McpJsonSchemaCodegen {
         int n = fields.size();
         for (int i = 0; i < n; i++) {
             TypedElementInfo field = fields.get(i);
-            addPropertySchema(method, field);
+            addPropertySchema(method, field, context);
             if (i < n - 1) {
                 method.addContentLine("builder.append(\", \");");
             }
@@ -75,51 +86,69 @@ class McpJsonSchemaCodegen {
         method.addContentLine("return builder.toString();");
     }
 
-    private static void addPropertySchema(Method.Builder method, TypedElementInfo element) {
+    private static void addPropertySchema(Method.Builder method, TypedElementInfo element, CodegenContext context) {
         TypeName typeName = element.typeName();
-        Optional<String> description = getDescription(element);
-        if (isPrimitiveJsonSchemaType(typeName)) {
-            method.addContent("builder.append(\"\\\"")
-                    .addContent(element.elementName())
-                    .addContentLine("\\\": {\");");
-
-            description.ifPresent(desc -> addDescription(method, desc));
-
-            method.addContent("builder.append(\"\\\"type\\\": \\\"")
-                    .addContent(mapTypeName(typeName))
-                    .addContentLine("\\\"\");")
-                    .addContentLine("builder.append(\"}\");");
-            return;
+        String description = getDescription(element)
+                .map(text -> "\"description\": " + JsonString.create(text) + ", ")
+                .orElse("");
+        method.addContent("builder.append(")
+                .addContentLiteral("\"" + element.elementName() + "\": ")
+                .addContentLine(");");
+        if (typeName.array() || isCollection(typeName)) {
+            TypeName itemType = typeName.array()
+                    ? typeName.componentType().orElseThrow()
+                    : typeName.typeArguments().getFirst();
+            method.addContent("builder.append(")
+                    .addContentLiteral("{" + description + "\"type\": \"array\", \"items\": ")
+                    .addContentLine(");");
+            addValueSchema(method, itemType, context, "");
+            method.addContentLine("builder.append(\"}\");");
+        } else {
+            addValueSchema(method, typeName, context, description);
         }
-        if (isCollection(typeName)) {
-            TypeName argument = typeName.boxed().typeArguments().getFirst();
-            method.addContent("builder.append(\"\\\"")
-                    .addContent(element.elementName())
-                    .addContentLine("\\\": {\");");
-
-            description.ifPresent(desc -> addDescription(method, desc));
-
-            method.addContentLine("builder.append(\"\\\"type\\\": \\\"array\\\",\");")
-                    .addContent("builder.append(\"\\\"items\\\": {\\\"type\\\": \\\"")
-                    .addContent(mapTypeName(argument))
-                    .addContentLine("\\\" }\");")
-                    .addContentLine("builder.append(\"}\");");
-            return;
-        }
-
-        method.addContent("builder.append(\"\\\"")
-                .addContent(element.elementName())
-                .addContent("\\\": \" + ")
-                .addContent(SERVICES)
-                .addContent(".get(")
-                .addContent(mapElementName(element))
-                .addContentLine(".class).jsonSchema());");
     }
 
-    private static void addDescription(Method.Builder method, String description) {
-        method.addContent("builder.append(\"\\\"description\\\": \\\"")
-                .addContent(description)
-                .addContentLine("\\\",\");");
+    private static void addValueSchema(Method.Builder method, TypeName typeName, CodegenContext context, String description) {
+        if (isPrimitiveJsonSchemaType(typeName)) {
+            method.addContent("builder.append(")
+                    .addContentLiteral("{" + description + "\"type\": \"" + mapTypeName(typeName) + "\"}")
+                    .addContentLine(");");
+            return;
+        }
+        var enumType = context.typeInfo(typeName).filter(type -> type.kind() == ElementKind.ENUM);
+        method.addContent("builder.append(");
+        if (enumType.isEmpty()) {
+            addDeclaredSchema(method, typeName);
+        } else {
+            String constants = enumType.get().elementInfo().stream()
+                    .filter(item -> item.kind() == ElementKind.ENUM_CONSTANT)
+                    .map(item -> "\"" + item.elementName() + "\"")
+                    .collect(Collectors.joining(", "));
+            if (enumType.get().hasAnnotation(JSON_SCHEMA)) {
+                // Helidon generates an object schema for an annotated enum. Keep its metadata on the string input.
+                method.addContent(JsonObject.class)
+                        .addContent(".builder().setStrings(\"enum\", ")
+                        .addContent(List.class)
+                        .addContent(".of(").addContent(constants).addContent(")).from(")
+                        .addContent(JsonParser.class).addContent(".create(");
+                addDeclaredSchema(method, typeName);
+                method.addContent(").readJsonObject()).set(\"type\", \"string\").build()");
+            } else {
+                method.addContentLiteral("{" + description + "\"type\": \"string\", \"enum\": [" + constants + "]}");
+            }
+        }
+        method.addContentLine(");");
+    }
+
+    private static void addDeclaredSchema(Method.Builder method, TypeName typeName) {
+        method.addContent(SERVICES)
+                .addContent(".get(")
+                .addContent(JSON_SCHEMA_PROVIDER)
+                .addContent(".class, ")
+                .addContent(QUALIFIER)
+                .addContent(".createNamed(")
+                .addContent(typeName.genericTypeName())
+                .addContent(".class.getCanonicalName())).jsonSchema()");
     }
 
     private static boolean isCollection(TypeName typeName) {
@@ -132,10 +161,6 @@ class McpJsonSchemaCodegen {
                 || isBoolean(typeName)
                 || isIntegerNumber(typeName)
                 || isRealNumber(typeName);
-    }
-
-    static String mapElementName(TypedElementInfo element) {
-        return element.typeName().className().replace('.', '_') + "__JsonSchema";
     }
 
     static String mapTypeName(TypeName typeName) {
