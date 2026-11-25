@@ -194,6 +194,39 @@ McpToolResult greet(@Mcp.Required String name) {
 `@Mcp.Required` on a framework-injected parameter (such as `McpFeatures` or `McpRequest`) is silently
 ignored and produces a codegen warning.
 
+#### Optional parameters
+
+Declare a tool parameter as `Optional<T>` to distinguish an omitted argument from an explicitly
+supplied value. Omission and JSON `null` both produce `Optional.empty()`. An empty string, zero,
+`false`, or an empty list produces a present optional containing that value.
+
+```java
+import java.util.Optional;
+
+@Mcp.Tool("Update a note")
+String updateNote(@Mcp.Required String id, Optional<String> title) {
+    return title.map(value -> "set title to [" + value + "]").orElse("keep title");
+}
+
+@Mcp.Tool("Search notes")
+String search(Optional<Integer> limit) {
+    return "Search limit: " + limit.orElse(20);
+}
+```
+
+Supported wrapped types include `String`, boxed numeric types, `Boolean`, custom JSON entity types,
+and lists of these types, including `Optional<List<Note>>`. Custom types require `@Json.Entity`,
+`@JsonSchema.Schema`, and the corresponding Helidon annotation processors. Declare the wrapped type
+explicitly; raw `Optional` is not supported.
+
+The generated property schema uses `anyOf` to accept either the wrapped type or JSON `null`. List
+items use their own value schemas. A parameter is omitted from `inputSchema.required` unless it has
+`@Mcp.Required`. With `@Mcp.Required Optional<T>`, the advertised schema requires the property to be
+present but still allows its value to be `null`; the annotation describes requiredness to clients.
+
+Existing non-`Optional` parameters retain their current fallbacks. Imperative handlers can obtain
+Java optionals with conversions such as `request.arguments().get("title").asString().asOptional()`.
+
 #### Structured content and output schema
 
 Structured content is returned as a JSON object in the `structuredContent` field of a result. For backwards compatibility,
