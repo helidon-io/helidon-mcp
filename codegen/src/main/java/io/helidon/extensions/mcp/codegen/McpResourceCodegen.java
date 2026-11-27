@@ -47,6 +47,7 @@ import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_SUBSCRIBER
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_UNSUBSCRIBER;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_RESOURCE_UNSUBSCRIBER_INTERFACE;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_SUBSCRIBE_REQUEST;
+import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_TEMPLATE_PARAM;
 import static io.helidon.extensions.mcp.codegen.McpTypes.MCP_UNSUBSCRIBE_REQUEST;
 import static io.helidon.extensions.mcp.codegen.McpTypes.URI_PATH;
 
@@ -183,11 +184,14 @@ class McpResourceCodegen {
             }
             if (isResourceTemplate(uri)) {
                 if (TypeNames.STRING.equals(parameter.typeName())) {
+                    String variableName = parameter.findAnnotation(MCP_TEMPLATE_PARAM)
+                            .flatMap(Annotation::value)
+                            .orElse(parameter.elementName());
                     parameters.add(parameter.elementName());
                     builder.addContent("String encoded_")
                             .addContent(parameter.elementName())
                             .addContent(" = request.parameters().get(")
-                            .addContentLiteral(parameter.elementName())
+                            .addContentLiteral(variableName)
                             .addContentLine(").asString().orElse(\"\");");
                     builder.addContent("String ")
                             .addContent(parameter.elementName())

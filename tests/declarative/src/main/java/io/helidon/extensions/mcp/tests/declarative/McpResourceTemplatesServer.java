@@ -86,4 +86,12 @@ class McpResourceTemplatesServer {
     String resource5(String protocol, String path, McpRequest request, McpFeatures features, McpParameters parameters) {
         return protocol + path;
     }
+
+    @Mcp.Resource(
+            uri = "docs://{collection}/{documentId}",
+            mediaType = RESOURCE_MEDIA_TYPE,
+            description = RESOURCE_DESCRIPTION)
+    String resource6(@Mcp.TemplateParam("documentId") String id, String collection) {
+        return collection + "/" + id;
+    }
 }
