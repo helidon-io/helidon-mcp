@@ -113,4 +113,9 @@ class McpResourcesServer {
     McpResourceResult resource8(McpResourceRequest request) {
         return McpResourceResult.create(RESOURCE_CONTENT);
     }
+
+    @Mcp.Resource(uri = "docs://{request}", mediaType = RESOURCE_MEDIA_TYPE, description = "Document ID")
+    String document(String request) {
+        return request;
+    }
 }

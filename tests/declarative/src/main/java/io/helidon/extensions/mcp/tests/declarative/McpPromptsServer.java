@@ -114,4 +114,9 @@ class McpPromptsServer {
     String prompt11(McpRequest request) {
         return PROMPT_CONTENT;
     }
+
+    @Mcp.Prompt(PROMPT_DESCRIPTION)
+    String echoArguments(String request, String t) {
+        return request + ":" + t;
+    }
 }

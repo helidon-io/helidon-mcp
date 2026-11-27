@@ -48,7 +48,7 @@ abstract class AbstractLangchain4jPromptsServerTest {
     @Test
     void testListPrompt() {
         List<McpPrompt> prompts = client.listPrompts();
-        assertThat(prompts.size(), is(15));
+        assertThat(prompts.size(), is(16));
 
         assertThat(prompts.get(13).description(), is("Description code block\n"));
         assertThat(prompts.get(14).description(), is("first line\n second line\n"));
@@ -68,6 +68,14 @@ abstract class AbstractLangchain4jPromptsServerTest {
     })
     void userTest(String promptName) {
         runTest(promptName, McpRole.USER);
+    }
+
+    @Test
+    void bindsArgumentsNamedRequestAndT() {
+        var result = client.getPrompt("echoArguments", Map.of("request", "hello", "t", "world"));
+
+        var text = (McpTextContent) result.messages().getFirst().content();
+        assertThat(text.text(), is("hello:world"));
     }
 
     void runTest(String promptName, McpRole role) {

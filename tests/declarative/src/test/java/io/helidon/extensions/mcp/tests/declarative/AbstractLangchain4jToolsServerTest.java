@@ -42,7 +42,7 @@ abstract class AbstractLangchain4jToolsServerTest {
     @Test
     void testListTools() {
         var list = client.listTools();
-        assertThat(list.size(), is(26));
+        assertThat(list.size(), is(27));
 
         ToolSpecification tool1 = list.get(19);
         assertThat(tool1.description(), is("Tool description block\n"));
@@ -125,6 +125,18 @@ abstract class AbstractLangchain4jToolsServerTest {
                                                 .arguments("{ \"aDouble\": 0.0}")
                                                 .build());
         assertThat(result.resultText(), is("0.0"));
+    }
+
+    @Test
+    void bindsArgumentsNamedRequestAndDelegate() {
+        var result = client.executeTool(ToolExecutionRequest.builder()
+                                                .name("echoArguments")
+                                                .arguments("""
+                                                        {"request":"hello","delegate":42}
+                                                        """)
+                                                .build());
+
+        assertThat(result.resultText(), is("hello:42"));
     }
 
     @Test

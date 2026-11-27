@@ -176,28 +176,27 @@ class McpToolCodegen {
                 parameters.add("request");
                 continue;
             }
+            String argumentName = param.elementName() + "$Arg";
+            parameters.add(argumentName);
             if (TypeNames.STRING.equals(param.typeName())) {
-                parameters.add(param.elementName());
                 builder.addContent("var ")
-                        .addContent(param.elementName())
+                        .addContent(argumentName)
                         .addContent(" = request.arguments().get(")
                         .addContentLiteral(param.elementName())
                         .addContentLine(").asString().orElse(\"\");");
                 continue;
             }
             if (isBoolean(param.typeName())) {
-                parameters.add(param.elementName());
                 builder.addContent("boolean ")
-                        .addContent(param.elementName())
+                        .addContent(argumentName)
                         .addContent(" = request.arguments().get(")
                         .addContentLiteral(param.elementName())
                         .addContentLine(").asBoolean().orElse(false);");
                 continue;
             }
             if (isNumber(param.typeName())) {
-                parameters.add(param.elementName());
                 builder.addContent("var ")
-                        .addContent(param.elementName())
+                        .addContent(argumentName)
                         .addContent(" = request.arguments().get(")
                         .addContentLiteral(param.elementName())
                         .addContent(").as")
@@ -208,18 +207,16 @@ class McpToolCodegen {
             if (isList(param.typeName())) {
                 TypeName typeArg = param.typeName().typeArguments().getFirst();
                 addToListMethod(classModel, typeArg);
-                parameters.add(param.elementName());
                 builder.addContent("var ")
-                        .addContent(param.elementName())
+                        .addContent(argumentName)
                         .addContent(" = toList(request.arguments().get(")
                         .addContentLiteral(param.elementName())
                         .addContentLine(").asList().orElse(null));");
                 continue;
             }
-            parameters.add(param.elementName());
             builder.addContent(param.typeName().classNameWithEnclosingNames())
                     .addContent(" ")
-                    .addContent(param.elementName())
+                    .addContent(argumentName)
                     .addContent(" = request.arguments().get(")
                     .addContentLiteral(param.elementName())
                     .addContent(").as(")

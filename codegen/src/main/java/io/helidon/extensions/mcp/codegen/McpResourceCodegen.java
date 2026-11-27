@@ -183,18 +183,20 @@ class McpResourceCodegen {
             }
             if (isResourceTemplate(uri)) {
                 if (TypeNames.STRING.equals(parameter.typeName())) {
-                    parameters.add(parameter.elementName());
-                    builder.addContent("String encoded_")
-                            .addContent(parameter.elementName())
+                    String argumentName = parameter.elementName() + "$Arg";
+                    String encodedName = parameter.elementName() + "$Enc";
+                    parameters.add(argumentName);
+                    builder.addContent("String ")
+                            .addContent(encodedName)
                             .addContent(" = request.parameters().get(")
                             .addContentLiteral(parameter.elementName())
                             .addContentLine(").asString().orElse(\"\");");
                     builder.addContent("String ")
-                            .addContent(parameter.elementName())
+                            .addContent(argumentName)
                             .addContent(" = ")
                             .addContent(URI_PATH)
-                            .addContent(".create(encoded_")
-                            .addContent(parameter.elementName())
+                            .addContent(".create(")
+                            .addContent(encodedName)
                             .addContentLine(").path();");
                     continue;
                 }

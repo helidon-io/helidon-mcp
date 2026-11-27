@@ -104,10 +104,7 @@ class McpCompletionCodegen {
                 continue;
             }
             if (parameter.typeName().equals(TypeNames.STRING)) {
-                parameters.add(parameter.elementName());
-                builder.addContent("var ")
-                        .addContent(parameter.elementName())
-                        .addContentLine(" = request.value();");
+                parameters.add("request.value()");
                 continue;
             }
             throw new CodegenException(String.format("Wrong parameter type for method: %s. Supported types are: %s, or String.",
