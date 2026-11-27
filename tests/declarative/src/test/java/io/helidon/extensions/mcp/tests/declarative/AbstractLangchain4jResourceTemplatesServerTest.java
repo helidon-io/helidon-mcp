@@ -45,7 +45,7 @@ abstract class AbstractLangchain4jResourceTemplatesServerTest {
     @Test
     void readResource() {
         List<McpResourceTemplate> result = client.listResourceTemplates();
-        assertThat(result.size(), is(6));
+        assertThat(result.size(), is(7));
 
         McpResourceTemplate first = result.getFirst();
         assertThat(first.name(), is("resource"));
@@ -82,6 +82,10 @@ abstract class AbstractLangchain4jResourceTemplatesServerTest {
         assertThat(sixth.uriTemplate(), is("{protocol}://{path}"));
         assertThat(sixth.mimeType(), is(RESOURCE_MEDIA_TYPE));
         assertThat(sixth.description(), is(RESOURCE_DESCRIPTION));
+
+        McpResourceTemplate seventh = result.get(6);
+        assertThat(seventh.name(), is("resource6"));
+        assertThat(seventh.uriTemplate(), is("docs://{collection}/{documentId}"));
     }
 
     @Test
@@ -112,5 +116,13 @@ abstract class AbstractLangchain4jResourceTemplatesServerTest {
         assertThat(text.text(), is("foobar"));
         assertThat(text.uri(), is("foo://bar"));
         assertThat(text.mimeType(), is(RESOURCE_MEDIA_TYPE));
+    }
+
+    @Test
+    void readResourceWithExplicitTemplateParam() {
+        McpReadResourceResult result = client.readResource("docs://manuals/42");
+
+        McpTextResourceContents content = (McpTextResourceContents) result.contents().getFirst();
+        assertThat(content.text(), is("manuals/42"));
     }
 }

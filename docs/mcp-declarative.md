@@ -365,6 +365,8 @@ Resource Templates utilize [URI templates](https://datatracker.ietf.org/doc/html
 The URI template is matched against the corresponding URI in the client request. To define a resource or template, the same
 API as `McpResource` is employed. Parameters enclosed in `{}` denote template variables, which can be accessed via `McpParameters`
 using keys that correspond to these variables.
+A `String` method parameter binds to the URI template variable with the same name by default.
+Use `@Mcp.TemplateParam` to bind a parameter to a variable with a different name.
 
 #### Configuration
 
@@ -375,12 +377,12 @@ Use `String` return types for text-only resources. The `@Mcp.Name` annotation le
 class Server {
     
     @Mcp.Resource(
-            uri = "file://{path}",
+            uri = "docs://{collection}/{documentId}",
             description = "Resource description",
             mediaType = MediaTypes.TEXT_PLAIN_VALUE)
     @Mcp.Name("MyResource")
-    String resource(String path) {
-        return "File at path " + path + " does not exist.";
+    String resource(String collection, @Mcp.TemplateParam("documentId") String id) {
+        return collection + "/" + id;
     }
 }
 ```

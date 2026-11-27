@@ -369,7 +369,7 @@ public final class Mcp {
     public @interface Resource {
         /**
          * URI of the resource. Use parameter within curly bracket, like {@code {parameter}}, to create
-         * a {@code Resource Template}.
+         * a {@code Resource Template}. Use {@link TemplateParam} when a method parameter has a different name.
          *
          * @return name
          */
@@ -388,6 +388,21 @@ public final class Mcp {
          * @return description
          */
         String description();
+    }
+
+    /**
+     * Binds a {@link String} parameter of a {@link Resource} method to a named variable in its URI template.
+     * Unannotated string parameters bind by their Java parameter names.
+     */
+    @Target(PARAMETER)
+    @Retention(RUNTIME)
+    public @interface TemplateParam {
+        /**
+         * Name of the URI template variable, without the surrounding braces.
+         *
+         * @return template variable name
+         */
+        String value();
     }
 
     /**

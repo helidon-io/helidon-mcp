@@ -120,6 +120,7 @@ class McpTypesTest {
         checkField(toCheck, checked, fields, "MCP_PROMPT", Mcp.Prompt.class);
         checkField(toCheck, checked, fields, "MCP_VERSION", Mcp.Version.class);
         checkField(toCheck, checked, fields, "MCP_RESOURCE", Mcp.Resource.class);
+        checkField(toCheck, checked, fields, "MCP_TEMPLATE_PARAM", Mcp.TemplateParam.class);
         checkField(toCheck, checked, fields, "MCP_STATELESS", Mcp.Stateless.class);
         checkField(toCheck, checked, fields, "MCP_WEBSITE_URL", Mcp.WebsiteUrl.class);
         checkField(toCheck, checked, fields, "MCP_TOOL_OUTPUT_SCHEMA", Mcp.ToolOutputSchema.class);
