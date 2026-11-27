@@ -114,10 +114,11 @@ class McpPromptCodegen {
                 continue;
             }
             if (param.typeName().equals(TypeNames.STRING)) {
-                parameters.add(param.elementName());
+                String argumentName = param.elementName() + "$Arg";
+                parameters.add(argumentName);
                 builder.addContent(param.typeName().classNameWithEnclosingNames())
                         .addContent(" ")
-                        .addContent(param.elementName())
+                        .addContent(argumentName)
                         .addContent(" = request.arguments().get(")
                         .addContentLiteral(param.elementName())
                         .addContentLine(").asString().orElse(\"\");");

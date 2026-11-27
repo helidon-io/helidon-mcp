@@ -70,4 +70,13 @@ abstract class AbstractLangchain4jResourcesServerTest {
         assertThat(text.mimeType(), is(RESOURCE_MEDIA_TYPE));
         assertThat(text.type(), is(McpResourceContents.Type.TEXT));
     }
+
+    @Test
+    void readResourceWithParameterNamedRequest() {
+        var result = client.readResource("docs://42");
+
+        assertThat(result.contents().size(), is(1));
+        McpTextResourceContents content = (McpTextResourceContents) result.contents().getFirst();
+        assertThat(content.text(), is("42"));
+    }
 }

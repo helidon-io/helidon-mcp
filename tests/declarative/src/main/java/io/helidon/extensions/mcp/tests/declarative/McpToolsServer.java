@@ -213,6 +213,11 @@ class McpToolsServer {
         return "values=" + String.join(",", values);
     }
 
+    @Mcp.Tool(TOOL_DESCRIPTION)
+    String echoArguments(String request, int delegate) {
+        return request + ":" + delegate;
+    }
+
     @Json.Entity
     @JsonSchema.Schema
     public static class Foo {

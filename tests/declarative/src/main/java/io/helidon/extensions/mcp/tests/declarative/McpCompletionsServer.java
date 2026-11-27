@@ -169,4 +169,14 @@ class McpCompletionsServer {
     List<String> completionStringMcpRequest(String argument, McpRequest request) {
         return List.of(argument);
     }
+
+    @Mcp.Completion("promptWithRequestParameter")
+    McpCompletionResult completionWithRequestParameter(String request) {
+        return McpCompletionResult.create(request);
+    }
+
+    @Mcp.Completion(value = "resource/{list}", type = McpCompletionType.RESOURCE)
+    List<String> completionWithListParameter(String list) {
+        return List.of(list);
+    }
 }
